@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { prisma } from "@/app/lib/prisma";
 
-const prisma = new PrismaClient();
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
   try {
@@ -15,26 +16,22 @@ export async function POST(req: Request) {
     if (!user) {
       return NextResponse.json(
         { error: "Usuário não encontrado." },
-        { status: 404 }
+        { status: 400 }
       );
     }
 
-    const senhaCorreta = await bcrypt.compare(senha, user.senha);
-
-    if (!senhaCorreta) {
+    const ok = await bcrypt.compare(senha, user.senha);
+    if (!ok) {
       return NextResponse.json(
         { error: "Senha incorreta." },
-        { status: 401 }
+        { status: 400 }
       );
     }
 
     return NextResponse.json({
-      user: {
-        id: user.id,
-        nome: user.nome,
-        email: user.email,
-        foto: user.foto,
-      },
+      id: user.id,
+      nome: user.nome,
+      email: user.email,
     });
   } catch (err) {
     console.error(err);

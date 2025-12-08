@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 
+export const runtime = "nodejs"; // 👈 FORÇA NODE RUNTIME
+export const dynamic = "force-dynamic"; // opcional, evita tentativas de SSG
+
 // Criar agendamento
 export async function POST(req: Request) {
   try {
@@ -37,8 +40,6 @@ export async function POST(req: Request) {
 }
 
 // Listar agendamentos
-// - ?userId=123  -> só do usuário
-// - ?all=true    -> todos (usado pro calendário)
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
@@ -48,7 +49,6 @@ export async function GET(req: Request) {
     let where: any = {};
 
     if (all === "true") {
-      // todos os agendamentos futuros
       where = {
         data: {
           gte: new Date(),
