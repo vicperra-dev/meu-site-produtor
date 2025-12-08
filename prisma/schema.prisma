@@ -1,0 +1,31 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id        Int           @id @default(autoincrement())
+  nome      String
+  email     String        @unique
+  senha     String
+  foto      String?
+  createdAt DateTime      @default(now())
+
+  agendamentos Appointment[]
+}
+
+model Appointment {
+  id              Int      @id @default(autoincrement())
+  userId          Int
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  data            DateTime
+  duracaoMinutos  Int
+  tipo            String
+  observacoes     String?
+  status          String   @default("pendente")
+  createdAt       DateTime @default(now())
+}
