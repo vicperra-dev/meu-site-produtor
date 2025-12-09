@@ -233,7 +233,7 @@ export default function AgendamentoPage() {
             TÍTULO / INTRODUÇÃO
         ========================================================== */}
         <section className="mb-10">
-          <h1 className="mb-4 text-center text-2xl font-semibold md:text-3xl">
+          <h1 className="mb-5 text-center text-3xl font-semibold md:text-5xl">
             Crie sua própria música na{" "}
             <span className="text-red-500">THouse Rec</span>
           </h1>
@@ -249,8 +249,8 @@ export default function AgendamentoPage() {
             SERVIÇOS DE ESTÚDIO E AVULSOS
         ========================================================== */}
         <section className="mb-10">
-          <div className="space-y-6 rounded-2xl border border-red-700/40 bg-zinc-950 p-6">
-            <h2 className="text-center text-xl font-semibold text-red-400">
+          <div className="space-y-3 rounded-2xl border border-red-700/40 bg-zinc-950 p-6">
+            <h2 className="text-center text-3xl font-semibold text-red-400">
               Serviços de Estúdio e Avulsos
             </h2>
             <p className="text-sm text-center leading-relaxed text-zinc-300 md:text-base">
@@ -259,7 +259,6 @@ export default function AgendamentoPage() {
               montar um fluxo de trabalho completo ou apenas o que precisa no
               momento.
             </p>
-
             <div className="grid gap-4 md:grid-cols-2">
               {SERVICOS_ESTUDIO.map((s) => {
                 const qtd = quantidadesServicos[s.id] || 0;
@@ -268,7 +267,7 @@ export default function AgendamentoPage() {
                 const cardClass =
                   "flex items-center justify-between rounded-xl border border-red-700/40 bg-zinc-900 p-4 text-sm" +
                   (isMixMaster
-                    ? " md:col-span-full md:w-full md:max-w-lg md:mx-auto md:flex-col md:gap-3 md:text-center"
+                    ? " md:col-span-full md:w-110 md:max-w-lg md:mx-auto md:flex-col md:gap-3 md:text-center"
                     : "");
 
                 const infoClass =
@@ -312,11 +311,13 @@ export default function AgendamentoPage() {
             </div>
 
             <div className="rounded-xl border border-yellow-600/60 bg-yellow-950/40 p-4 text-sm leading-relaxed text-yellow-100 md:text-base">
-              <strong>Direito à sessão:</strong> quando o tempo de estúdio é
-              usado para revisar arranjos, tirar dúvidas, orientar direção
-              criativa ou ajustar mix/master sem captação, é cobrado um
-              adicional de <strong>R$ 40/hora</strong>, exceto quando já houver
-              captação paga.
+              <p className= "space-y-3">
+                <strong>Direito à sessão:</strong> quando o tempo de estúdio é
+                usado para revisar arranjos, tirar dúvidas, orientar direção
+                criativa ou ajustar mix/master sem captação, é cobrado um
+                adicional de <strong>R$ 40/hora</strong>, exceto quando já houver
+                captação paga.
+              </p>
             </div>
           </div>
         </section>
@@ -324,9 +325,9 @@ export default function AgendamentoPage() {
         {/* =========================================================
             BEATS E PACOTES ESPECIAIS
         ========================================================== */}
-        <section className="mb-10">
-          <div className="space-y-6 rounded-2xl border border-red-700/40 bg-zinc-950 p-6">
-            <h2 className="text-center text-xl font-semibold text-red-400">
+        <section className="mb-5">
+          <div className="space-y-3 rounded-2xl border border-red-700/40 bg-zinc-950 p-6">
+            <h2 className="text-center text-3xl font-semibold text-red-400">
               Beats e Pacotes Especiais
             </h2>
             <p className="text-sm text-center leading-relaxed text-zinc-300 md:text-base">
@@ -404,7 +405,7 @@ export default function AgendamentoPage() {
         ========================================================== */}
         <section className="mb-10">
           <div className="space-y-6 rounded-2xl border border-red-700/40 bg-zinc-950 p-6">
-            <h2 className="text-center text-xl font-semibold text-red-400">
+            <h2 className="text-center text-3xl font-semibold text-red-400">
               Agendamento virtual
             </h2>
 
@@ -418,7 +419,7 @@ export default function AgendamentoPage() {
             <div className="grid gap-6 md:grid-cols-[1.2fr,1fr]">
               {/* Calendário */}
               <div>
-                <div className="mb-3 flex items-center justify-between text-xs font-semibold text-zinc-200">
+                <div className="mb-3 flex items-center justify-between text-base font-semibold text-zinc-200">
                   <button
                     type="button"
                     onClick={handleMesAnterior}
@@ -679,70 +680,77 @@ export default function AgendamentoPage() {
         {/* =========================================================
             RESUMO / VALOR TOTAL
         ========================================================== */}
-        <section className="mb-10">
-          <div className="space-y-4 rounded-2xl border border-zinc-800 bg-zinc-950 p-6 text-sm">
-            <h2 className="text-lg font-semibold text-red-400">
-              Resumo do agendamento
-            </h2>
+            <section className="rounded-2xl border border-red-700/40 bg-zinc-950/70 p-6">
+              <h2 className="mb-6 text-2xl font-semibold text-red-400 text-center">
+                Resumo do seu agendamento
+              </h2>
 
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <h3 className="text-sm font-semibold text-zinc-200">
-                  Serviços selecionados
-                </h3>
-                <ul className="space-y-1 text-xs text-zinc-300">
-                  {SERVICOS_ESTUDIO.map((s) => {
-                    const q = quantidadesServicos[s.id] || 0;
-                    if (!q) return null;
-                    return (
-                      <li key={s.id}>
-                        {q}x {s.nome} — R${" "}
-                        {(q * s.preco).toFixed(2).replace(".", ",")}
-                      </li>
-                    );
-                  })}
-                  {BEATS_PACOTES.map((s) => {
-                    const q = quantidadesBeats[s.id] || 0;
-                    if (!q) return null;
-                    return (
-                      <li key={s.id}>
-                        {q}x {s.nome} — R${" "}
-                        {(q * s.preco).toFixed(2).replace(".", ",")}
-                      </li>
-                    );
-                  })}
-                  {totalGeral === 0 && (
-                    <li className="text-zinc-500">
-                      Nenhum serviço selecionado ainda.
-                    </li>
-                  )}
-                </ul>
-              </div>
+              {/* linha com as duas colunas */}
+              <div className="flex flex-col gap-8 md:flex-row md:items-end">
+                {/* COLUNA ESQUERDA – SERVIÇOS */}
+                <div className="flex-1">
+                  <h3 className="mb-3 text-2xl font-semibold text-zinc-200">
+                    Serviços selecionados
+                  </h3>
 
-              <div className="space-y-2">
-                <h3 className="text-sm font-semibold text-zinc-200">
-                  Data, horário e valor
-                </h3>
-                <p className="text-xs text-zinc-300">
-                  <strong>Data:</strong>{" "}
-                  {dataSelecionada ? dataFormatada : "nenhuma data selecionada"}
-                </p>
-                <p className="text-xs text-zinc-300">
-                  <strong>Horário:</strong>{" "}
-                  {horaSelecionada || "nenhum horário selecionado"}
-                </p>
-                <p className="text-sm font-semibold text-yellow-300">
-                  Total estimado: R$ {totalGeral.toFixed(2).replace(".", ",")}
-                </p>
+                  <ul className="space-y-1 text-base text-zinc-300">
+                    {SERVICOS_ESTUDIO.map((s) => {
+                      const q = quantidadesServicos[s.id] || 0;
+                      if (!q) return null;
+                      return (
+                        <li key={s.id}>
+                          {q}x {s.nome} — R${" "}
+                          {(q * s.preco).toFixed(2).replace(".", ",")}
+                        </li>
+                      );
+                    })}
+
+                    {BEATS_PACOTES.map((s) => {
+                      const q = quantidadesBeats[s.id] || 0;
+                      if (!q) return null;
+                      return (
+                        <li key={s.id}>
+                          {q}x {s.nome} — R${" "}
+                          {(q * s.preco).toFixed(2).replace(".", ",")}
+                        </li>
+                      );
+                    })}
+
+                    {totalGeral === 0 && (
+                      <li className="text-zinc-500">
+                        Nenhum serviço selecionado ainda.
+                      </li>
+                    )}
+                  </ul>
+                </div>
+
+                {/* COLUNA DIREITA – HORÁRIO / DATA / TOTAL */}
+                <div className="flex flex-col items-end text-right gap-2">
+                  <p className="text-base md:text-2xl font-extrabold text-zinc-300 whitespace-nowrap">
+                    Horário:{" "}
+                    <span className="font-extrabold">
+                      {horaSelecionada || "nenhum horário selecionado"}
+                    </span>
+                  </p>
+
+                  <p className="text-base md:text-2xl font-extrabold text-zinc-300 whitespace-nowrap">
+                    Data:{" "}
+                    <span className="font-extrabold">
+                      {dataSelecionada ? dataFormatada : "nenhuma data selecionada"}
+                    </span>
+                  </p>
+
+                  <p className="mt-2 text-2xl md:text-3xl font-extrabold text-yellow-300 whitespace-nowrap">
+                    Total estimado: R$ {totalGeral.toFixed(2).replace(".", ",")}
+                  </p>
+                </div>
               </div>
-            </div>
-          </div>
-        </section>
+            </section>
 
         {/* =========================================================
             CONFIRMAR E IR PARA PAGAMENTO
         ========================================================== */}
-        <section className="mb-12">
+        <section className="my-12">
           <div className="space-y-3 rounded-2xl border border-red-700/40 bg-zinc-950 p-6 text-sm">
             <p className="text-sm text-center text-zinc-300 md:text-base">
               Ao prosseguir, você confirma que está ciente de que o agendamento
@@ -751,21 +759,21 @@ export default function AgendamentoPage() {
               podem ser alinhados diretamente com o estúdio.
             </p>
 
-            <p className="text-xs text-center text-zinc-400">
-              A confirmação do agendamento implica concordância com os{" "}
-              <strong>termos de uso</strong> e com o{" "}
-              <strong>contrato de prestação de serviço</strong> da THouse Rec.
-            </p>
-
-            <div className="mt-4 flex justify-center">
+            <div className="mt-10 flex justify-center">
               <button
                 type="button"
                 onClick={handleConfirmar}
-                className="w-full max-w-3xl rounded-full bg-red-600 px-6 py-3 text-sm font-semibold text-white hover:bg-red-500"
+                className="w-full max-w-6xl rounded-full bg-red-600 px-6 py-3 text-sm font-semibold text-white hover:bg-red-500"
               >
                 Confirmar agendamento e ir para pagamentos
               </button>
             </div>
+
+           <p className="text-xs text-center text-zinc-400">
+              A confirmação do agendamento implica concordância com os{" "}
+              <strong>termos de uso</strong> e com o{" "}
+              <strong>contrato de prestação de serviço</strong> da THouse Rec.
+            </p>
           </div>
         </section>
 

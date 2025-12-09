@@ -76,15 +76,15 @@ export default function Home() {
         ========================================================== */}
         <section
           id="inicio"
-          className="mb-16 grid items-start gap-10 md:grid-cols-[1.4fr,1fr]"
+          className="mb-12 grid items-start gap-6 md:grid-cols-[1.4fr,1fr]"
         >
           <div>
-            <p className="mb-3 text-xs uppercase tracking-[0.2em] text-red-500">
+            <p className="mb-4 text-xs uppercase tracking-[0.2em] text-red-500">
               Estúdio • Produção • Mix &amp; Master • Sonoplastia • Beatmaking
             </p>
 
             {/* TÍTULO THouse Rec */}
-            <h1 className="mb-5 space-y-2">
+            <h1 className="mb-6 space-y-2">
               <div className="flex flex-wrap items-baseline gap-2">
                 <span className="text-4xl font-semibold leading-none text-red-500 md:text-5xl">
                   T
@@ -94,14 +94,14 @@ export default function Home() {
                 </span>
               </div>
 
-            <p className="text-base font-medium text-zinc-100 md:text-lg">
+              <p className="text-base font-medium text-zinc-100 md:text-lg">
                 Crie sua música com identidade e qualidade profissional, em um
                 estúdio pensado para artistas independentes.
               </p>
             </h1>
 
             {/* INTRODUÇÃO EM CAIXA */}
-            <div className="space-y-4 rounded-2xl border border-zinc-800 bg-zinc-950/70 p-5">
+            <div className="space-y-6 rounded-2xl border border-zinc-800 bg-zinc-950/70 p-5">
               <p className="text-sm leading-relaxed text-zinc-300 md:text-base">
                 A THouse Rec é o estúdio independente criado por Victor Pereira
                 Ramos — o <strong>Tremv</strong> — produtor musical, artista e
@@ -131,9 +131,9 @@ export default function Home() {
               <p className="text-sm leading-relaxed text-zinc-300 md:text-base">
                 Hoje, a THouse Rec reúne produções lançadas no YouTube, Spotify
                 e SoundCloud, direção de shows, trabalhos como mestre de
-                cerimônia e consultorias musicais. A ideia é simples: transformar
-                suas referências e ideias em sons que tenham força, sentimento e
-                qualidade de lançamento.
+                cerimônia e consultorias musicais. A ideia é simples:
+                transformar suas referências e ideias em sons que tenham força,
+                sentimento e qualidade de lançamento.
               </p>
             </div>
           </div>
@@ -161,7 +161,7 @@ export default function Home() {
         {/* =========================================================
             TEXTO EXPLICATIVO ANTES DOS SERVIÇOS
         ========================================================== */}
-        <section className="mb-8">
+        <section className="mb-10">
           <p className="text-sm leading-relaxed text-zinc-300 md:text-base">
             Você pode contratar serviços avulsos ou combinar diferentes etapas
             da produção para montar a sessão ideal: captação, mix, master,
@@ -359,17 +359,17 @@ export default function Home() {
                   modoPlano === "mensal" ? plano.mensal : plano.anual;
 
                 const precoFormatado =
-                  (modoPlano === "mensal"
+                  modoPlano === "mensal"
                     ? `R$ ${valorBase.toFixed(2).replace(".", ",")} / mês`
-                    : `R$ ${valorBase.toFixed(2).replace(".", ",")} / ano`);
+                    : `R$ ${valorBase.toFixed(2).replace(".", ",")} / ano`;
 
                 return (
                   <div
                     key={plano.id}
                     className="
-                      flex flex-col justify-between
-                     rounded-2xl border border-red-700/40 bg-zinc-900
-                     p-6 h-full space-y-6
+                      flex h-full flex-col justify-between
+                      space-y-6 rounded-2xl border border-red-700/40 bg-zinc-900
+                      p-6
                     "
                   >
                     <h3 className="text-center text-lg font-semibold text-red-300">
@@ -437,11 +437,11 @@ export default function Home() {
             SHOPPING
         ========================================================== */}
         <section className="mb-16 border-t border-zinc-800 pt-10">
-          <h2 className="mb-3 text-lg font-semibold text-red-400">
+          <h2 className="mb-7 text-center text-lg font-semibold text-red-400">
             Loja Digital THouse Rec (em desenvolvimento)
           </h2>
 
-          <div className="space-y-4 rounded-2xl border border-zinc-800 bg-zinc-950/70 p-5">
+          <div className="mx-auto space-y-4 rounded-2xl border border-zinc-800 bg-zinc-950/70 p-6 text-center max-w-3xl">
             <p className="text-sm leading-relaxed text-zinc-300 md:text-base">
               Em breve você poderá adquirir camisetas, moletons, bonés e outros
               itens personalizados exclusivos da THouse Rec.
@@ -455,9 +455,41 @@ export default function Home() {
 
             <a
               href="/shopping"
-              className="inline-block rounded-full bg-red-600 px-5 py-2 text-sm font-semibold text-white hover:bg-red-500"
+              className="mx-auto inline-block rounded-full bg-red-600 px-8 py-3 text-base font-semibold text-white hover:bg-red-500"
             >
               Acessar Shopping
+            </a>
+          </div>
+        </section>
+
+        {/* =========================================================
+            CHAMADA FINAL
+        ========================================================== */}
+        <section className="border-t border-zinc-800 pt-12">
+          <h2 className="mb-3 text-center text-xl font-semibold">
+            Pronto para começar sua próxima faixa?
+          </h2>
+
+          <p className="mb-6 mx-auto max-w-3xl text-center text-sm text-zinc-300 md:text-base">
+            A THouse Rec existe para transformar ideias em música real. Se você
+            tem um projeto, um verso, um beat ou apenas vontade de começar, esse
+            pode ser o momento perfeito para dar o próximo passo com estrutura,
+            apoio e qualidade de estúdio.
+          </p>
+
+          <div className="flex flex-col gap-3 md:flex-row md:gap-4">
+            <a
+              href="/planos"
+              className="flex-1 rounded-full bg-red-600 px-6 py-3 text-center text-base font-semibold text-white hover:bg-red-500"
+            >
+              Ver planos e pagamentos
+            </a>
+
+            <a
+              href="/agendamento"
+              className="flex-1 rounded-full border border-red-600/60 px-6 py-3 text-center text-base font-semibold text-red-300 hover:border-red-400 hover:text-red-200"
+            >
+              Agendar sessão
             </a>
           </div>
         </section>
@@ -466,69 +498,39 @@ export default function Home() {
             DÚVIDAS / SUPORTE
         ========================================================== */}
         <section className="mb-16 border-t border-zinc-800 pt-10">
-          <h2 className="mb-3 text-lg font-semibold text-red-400">
+          <h2 className="mb-3 text-center text-lg font-semibold text-red-400">
             Ficou com alguma dúvida?
           </h2>
 
-          <p className="mb-4 text-sm text-zinc-300 md:text-base">
+          <p className="mb-4 mx-auto max-w-3xl text-center text-sm text-zinc-300 md:text-base">
             Se ainda restar alguma dúvida sobre sessões, prazos, valores ou
             questões técnicas, você pode consultar o FAQ ou falar diretamente
             com o suporte pelo chat. Estamos aqui para te ajudar a tirar o
             máximo proveito de cada sessão.
           </p>
 
-          <div className="flex flex-wrap gap-3 text-sm">
+          <div className="flex flex-wrap justify-center gap-4 text-sm">
             <a
               href="/faq"
-              className="rounded-full border border-zinc-700 px-5 py-2 text-xs font-semibold text-zinc-200 hover:border-red-500 hover:text-red-300"
+              className="rounded-full border border-zinc-700 px-6 py-3 text-sm font-semibold text-zinc-200 hover:border-red-500 hover:text-red-300"
             >
               Ver FAQ
             </a>
 
             <a
               href="/chat"
-              className="rounded-full border border-zinc-700 px-5 py-2 text-xs font-semibold text-zinc-200 hover:border-red-500 hover:text-red-300"
+              className="rounded-full border border-zinc-700 px-6 py-3 text-sm font-semibold text-zinc-200 hover:border-red-500 hover:text-red-300"
             >
               Suporte via Chat
             </a>
+          </div>
 
+          <div className="mt-4 text-center">
             <a
               href="/contato"
               className="text-xs text-zinc-400 underline-offset-4 hover:underline"
             >
               Contato direto
-            </a>
-          </div>
-        </section>
-
-        {/* =========================================================
-            CHAMADA FINAL
-        ========================================================== */}
-        <section className="border-t border-zinc-800 pt-10">
-          <h2 className="mb-3 text-xl font-semibold">
-            Pronto para começar sua próxima faixa?
-          </h2>
-
-          <p className="mb-4 text-sm text-zinc-300 md:text-base">
-            A THouse Rec existe para transformar ideias em música real. Se você
-            tem um projeto, um verso, um beat ou apenas vontade de começar, esse
-            pode ser o momento perfeito para dar o próximo passo com estrutura,
-            apoio e qualidade de estúdio.
-          </p>
-
-          <div className="flex flex-wrap gap-3">
-            <a
-              href="/planos"
-              className="rounded-full bg-red-600 px-5 py-2 text-sm font-semibold text-white hover:bg-red-500"
-            >
-              Ver planos e pagamentos
-            </a>
-
-            <a
-              href="/agendamento"
-              className="rounded-full border border-red-600/60 px-5 py-2 text-sm font-semibold text-red-300 hover:border-red-400 hover:text-red-200"
-            >
-              Agendar sessão
             </a>
           </div>
         </section>
