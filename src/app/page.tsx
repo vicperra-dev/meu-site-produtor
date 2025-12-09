@@ -437,11 +437,11 @@ export default function Home() {
             SHOPPING
         ========================================================== */}
         <section className="mb-16 border-t border-zinc-800 pt-10">
-          <h2 className="mb-7 text-center text-lg font-semibold text-red-400">
+          <h2 className="mb-7 text-center text-3xl font-semibold text-red-400">
             Loja Digital THouse Rec (em desenvolvimento)
           </h2>
 
-          <div className="mx-auto space-y-4 rounded-2xl border border-zinc-800 bg-zinc-950/70 p-6 text-center max-w-3xl">
+          <div className="mx-auto space-y-4 rounded-2xl border border-zinc-800 bg-zinc-950/70 p-6 text-center max-w-6xl">
             <p className="text-sm leading-relaxed text-zinc-300 md:text-base">
               Em breve você poderá adquirir camisetas, moletons, bonés e outros
               itens personalizados exclusivos da THouse Rec.
@@ -455,7 +455,7 @@ export default function Home() {
 
             <a
               href="/shopping"
-              className="mx-auto inline-block rounded-full bg-red-600 px-8 py-3 text-base font-semibold text-white hover:bg-red-500"
+              className="block rounded-full bg-red-600 w-full py-4 text-lg font-semibold text-white text-center hover:bg-red-500"
             >
               Acessar Shopping
             </a>
@@ -466,7 +466,7 @@ export default function Home() {
             CHAMADA FINAL
         ========================================================== */}
         <section className="border-t border-zinc-800 pt-12">
-          <h2 className="mb-3 text-center text-xl font-semibold">
+          <h2 className="mb-3 text-center text-3xl font-semibold">
             Pronto para começar sua próxima faixa?
           </h2>
 
