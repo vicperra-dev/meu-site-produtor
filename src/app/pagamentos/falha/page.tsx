@@ -15,7 +15,7 @@ export default function PagamentoFalhaPage() {
 
       <p className="mb-6 text-sm text-zinc-300">
         Se o valor tiver sido debitado, o Mercado Pago poderá realizar o
-        estorno automaticamente. Em caso de dúvida, fale com o suporte ou
+        estorno automaticamente. Em caso de dúvida, fale com o suporte, chat ou
         tente novamente.
       </p>
 
