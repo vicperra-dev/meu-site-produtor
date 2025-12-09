@@ -29,3 +29,26 @@ model Appointment {
   status          String   @default("pendente")
   createdAt       DateTime @default(now())
 }
+
+model FAQ {
+  id        String   @id @default(cuid())
+  question  String
+  answer    String
+  views     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userQuestions UserQuestion[]
+}
+
+model UserQuestion {
+  id        String   @id @default(cuid())
+  question  String
+  userName  String?   // opcional: nome de quem perguntou
+  userEmail String?   // opcional: contato
+  createdAt DateTime  @default(now())
+
+  // ligação opcional com uma FAQ oficial
+  faqId String?
+  faq   FAQ?    @relation(fields: [faqId], references: [id])
+}

@@ -339,10 +339,17 @@ export default function AgendamentoPage() {
             <div className="grid gap-3 md:grid-cols-2">
               {SERVICOS.map((s) => {
                 const q = quantServicos[s.id] || 0;
+                const isMixMaster = s.id === "mix_master"; // 👈 identifica o card Mix + Master
+
                 return (
                   <div
                     key={s.id}
-                    className="rounded-xl border border-zinc-700 bg-zinc-900/70 p-3 text-sm flex flex-col gap-2"
+                    className={
+                      "rounded-xl border border-zinc-700 bg-zinc-900/70 flex flex-col gap-2 " +
+                      (isMixMaster 
+                        ? "max-w-[260px] mx-auto w-full p-2 text-xs" 
+                        : "p-3 text-sm")
+                    }
                   >
                     <div className="flex items-center justify-between">
                       <span className="font-medium">{s.nome}</span>
@@ -359,11 +366,7 @@ export default function AgendamentoPage() {
                         <button
                           type="button"
                           onClick={() =>
-                            atualizarQuantidade(
-                              "servico",
-                              s.id,
-                              q - 1
-                            )
+                            atualizarQuantidade("servico", s.id, q - 1)
                           }
                           className="h-7 w-7 rounded-full border border-zinc-600 text-xs"
                         >
@@ -385,23 +388,19 @@ export default function AgendamentoPage() {
                         <button
                           type="button"
                           onClick={() =>
-                            atualizarQuantidade(
-                              "servico",
-                              s.id,
-                              q + 1
-                            )
-                          }
-                          className="h-7 w-7 rounded-full border border-zinc-600 text-xs"
-                        >
-                          +
-                        </button>
-                      </div>
+                            atualizarQuantidade("servico", s.id, q + 1)
+                        }
+                        className="h-7 w-7 rounded-full border border-zinc-600 text-xs"
+                      >
+                        +
+                      </button>
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          </section>
+                </div>
+              );
+            })}
+          </div>
+        </section>
 
           {/* Beats e pacotes */}
           <section className="rounded-2xl border border-red-700/40 bg-zinc-950/70 p-5">

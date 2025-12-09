@@ -34,7 +34,7 @@ const PLANOS: Plano[] = [
     id: "prata",
     nome: "Plano Prata",
     mensal: 349.99,
-    anual: 3799.99,
+    anual: 3499.99,
     descricao: "Para artistas que lançam com regularidade.",
     beneficios: [
       { label: "2h de captação por mês", included: true },
