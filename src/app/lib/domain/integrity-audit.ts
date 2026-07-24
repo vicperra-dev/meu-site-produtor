@@ -1,11 +1,18 @@
 /**
- * GO-H8B — Auditor de integridade (somente leitura; nunca corrige).
+ * GO-H8C — Auditor de integridade com severidades oficiais.
+ *
+ * Alta: quebra de domínio (órfãos operacionais).
+ * Média: divergências entre módulos / estados.
+ * Informativo: History (e Sync) cuja entidade operacional já foi removida —
+ *   Modelo A = log imutável de auditoria (HS-03B); NÃO é inconsistência.
  */
 import { prisma } from "@/app/lib/prisma";
 
+export type IntegritySeverity = "high" | "medium" | "info";
+
 export type IntegrityFinding = {
   code: string;
-  severity: "high" | "medium" | "low";
+  severity: IntegritySeverity;
   label: string;
   count: number;
   sampleIds: string[];
@@ -14,13 +21,19 @@ export type IntegrityFinding = {
 export type IntegrityAuditReport = {
   generatedAt: string;
   findings: IntegrityFinding[];
+  /** Soma de ocorrências high + medium (info excluído). */
   totalIssues: number;
+  highCount: number;
+  mediumCount: number;
+  infoCount: number;
+  /** true quando não há Alta nem Média. */
   ok: boolean;
+  historyModel: "immutable_audit_log";
 };
 
 async function finding(
   code: string,
-  severity: IntegrityFinding["severity"],
+  severity: IntegritySeverity,
   label: string,
   ids: string[]
 ): Promise<IntegrityFinding> {
@@ -36,7 +49,6 @@ async function finding(
 export async function auditDomainIntegrity(): Promise<IntegrityAuditReport> {
   const findings: IntegrityFinding[] = [];
 
-  // Coupon.appointmentId dangling
   const couponDanglingApt = await prisma.$queryRaw<Array<{ id: string }>>`
     SELECT c.id FROM "Coupon" c
     WHERE c."appointmentId" IS NOT NULL
@@ -54,7 +66,6 @@ export async function auditDomainIntegrity(): Promise<IntegrityAuditReport> {
     );
   }
 
-  // Coupon.rootPaymentId dangling
   const couponDanglingRoot = await prisma.$queryRaw<Array<{ id: string }>>`
     SELECT c.id FROM "Coupon" c
     WHERE c."rootPaymentId" IS NOT NULL
@@ -72,7 +83,6 @@ export async function auditDomainIntegrity(): Promise<IntegrityAuditReport> {
     );
   }
 
-  // Coupon.paymentId dangling (SetNull should prevent; still check)
   const couponDanglingPay = await prisma.$queryRaw<Array<{ id: string }>>`
     SELECT c.id FROM "Coupon" c
     WHERE c."paymentId" IS NOT NULL
@@ -90,7 +100,6 @@ export async function auditDomainIntegrity(): Promise<IntegrityAuditReport> {
     );
   }
 
-  // ServiceOrder without payment (órfão de pedido)
   const soNoPayment = await prisma.serviceOrder.findMany({
     where: { paymentId: null },
     select: { id: true },
@@ -100,14 +109,13 @@ export async function auditDomainIntegrity(): Promise<IntegrityAuditReport> {
     findings.push(
       await finding(
         "service_order_without_payment",
-        "medium",
+        "high",
         "Ordem de Serviço sem Pedido (paymentId null)",
         soNoPayment.map((r) => r.id)
       )
     );
   }
 
-  // ServiceOrder.appointmentId dangling
   const soDanglingApt = await prisma.$queryRaw<Array<{ id: string }>>`
     SELECT s.id FROM "ServiceOrder" s
     WHERE s."appointmentId" IS NOT NULL
@@ -125,7 +133,6 @@ export async function auditDomainIntegrity(): Promise<IntegrityAuditReport> {
     );
   }
 
-  // Payment.appointmentId dangling
   const payDanglingApt = await prisma.$queryRaw<Array<{ id: string }>>`
     SELECT p.id FROM "Payment" p
     WHERE p."appointmentId" IS NOT NULL
@@ -137,13 +144,12 @@ export async function auditDomainIntegrity(): Promise<IntegrityAuditReport> {
       await finding(
         "payment_dangling_appointment",
         "medium",
-        "Payment.appointmentId sem Appointment",
+        "Payment.appointmentId sem Appointment (referência stale)",
         payDanglingApt.map((r) => r.id)
       )
     );
   }
 
-  // Appointment sem ServiceOrder e sem Payment apontando (candidato órfão)
   const aptOrphans = await prisma.$queryRaw<Array<{ id: number }>>`
     SELECT a.id FROM "Appointment" a
     WHERE NOT EXISTS (
@@ -162,31 +168,55 @@ export async function auditDomainIntegrity(): Promise<IntegrityAuditReport> {
     findings.push(
       await finding(
         "appointment_without_order_or_payment",
-        "medium",
+        "high",
         "Appointment sem Order/Payment/Cupom vinculado",
         aptOrphans.map((r) => String(r.id))
       )
     );
   }
 
-  // Service sem Appointment (não é sempre erro — Serviços Gerais; flag medium se cancelado)
-  const svcCancelNoApt = await prisma.service.findMany({
-    where: { appointmentId: null, status: "cancelado" },
-    select: { id: true },
-    take: 100,
-  });
-  if (svcCancelNoApt.length) {
+  const couponNoOrder = await prisma.$queryRaw<Array<{ id: string }>>`
+    SELECT c.id FROM "Coupon" c
+    WHERE c."paymentId" IS NULL
+      AND c."rootPaymentId" IS NULL
+      AND c."userPlanId" IS NULL
+      AND NOT EXISTS (SELECT 1 FROM "ServiceOrder" so WHERE so."couponId" = c.id)
+      AND (
+        c."couponType" IN ('remarcacao', 'reembolso', 'REBOOK', 'REFUND')
+        OR c."couponCategory" = 'reembolso'
+        OR (c."assignedUserId" IS NULL AND c."usedBy" IS NULL)
+      )
+    LIMIT 100
+  `;
+  if (couponNoOrder.length) {
     findings.push(
       await finding(
-        "cancelled_service_without_appointment",
-        "low",
-        "Service cancelado sem Appointment (candidato a purge)",
-        svcCancelNoApt.map((r) => r.id)
+        "coupon_without_order_or_payment",
+        "high",
+        "Cupom sem Pedido Raiz / Payment / UserPlan / ServiceOrder",
+        couponNoOrder.map((r) => r.id)
       )
     );
   }
 
-  // Cancelled appointment vs SO phase
+  const deliveryOrphans = await prisma.$queryRaw<Array<{ id: string }>>`
+    SELECT s.id FROM "Service" s
+    WHERE s."deliveryAudioUrl" IS NOT NULL
+      AND s."appointmentId" IS NOT NULL
+      AND NOT EXISTS (SELECT 1 FROM "Appointment" a WHERE a.id = s."appointmentId")
+    LIMIT 100
+  `;
+  if (deliveryOrphans.length) {
+    findings.push(
+      await finding(
+        "delivery_without_appointment",
+        "high",
+        "Delivery (Service) sem Appointment válido",
+        deliveryOrphans.map((r) => r.id)
+      )
+    );
+  }
+
   const phaseMismatch = await prisma.$queryRaw<Array<{ id: string }>>`
     SELECT so.id FROM "Appointment" a
     JOIN "ServiceOrder" so ON so."appointmentId" = a.id
@@ -205,7 +235,27 @@ export async function auditDomainIntegrity(): Promise<IntegrityAuditReport> {
     );
   }
 
-  // History sem entidade
+  // Cancelado Service sem apt — baixa relevância operacional; média se "aceito/em_andamento" sem apt
+  const svcActiveNoApt = await prisma.service.findMany({
+    where: {
+      appointmentId: null,
+      status: { in: ["aceito", "em_andamento", "pendente"] },
+    },
+    select: { id: true },
+    take: 100,
+  });
+  if (svcActiveNoApt.length) {
+    findings.push(
+      await finding(
+        "active_service_without_appointment",
+        "medium",
+        "Service ativo sem Appointment (possível dessync de módulos)",
+        svcActiveNoApt.map((r) => r.id)
+      )
+    );
+  }
+
+  // Modelo A — History imutável: informativo, não é erro
   const histOrphans = await prisma.$queryRaw<Array<{ id: string }>>`
     SELECT h.id FROM "DomainTransitionHistory" h
     WHERE
@@ -224,44 +274,68 @@ export async function auditDomainIntegrity(): Promise<IntegrityAuditReport> {
       OR (LOWER(h.entity) IN ('serviceorder', 'service_order') AND NOT EXISTS (
         SELECT 1 FROM "ServiceOrder" s WHERE s.id = h."entityId"
       ))
-    LIMIT 100
+    LIMIT 200
   `;
   if (histOrphans.length) {
     findings.push(
       await finding(
         "history_without_entity",
-        "low",
-        "Histórico Domínio sem entidade correspondente",
+        "info",
+        "Histórico (log imutável) cuja entidade operacional já foi removida",
         histOrphans.map((r) => r.id)
       )
     );
   }
 
-  // Coupon sem Order e sem Pedido (crédito solto)
-  const couponNoOrder = await prisma.$queryRaw<Array<{ id: string }>>`
-    SELECT c.id FROM "Coupon" c
-    WHERE c."paymentId" IS NULL
-      AND c."rootPaymentId" IS NULL
-      AND c."userPlanId" IS NULL
-      AND NOT EXISTS (SELECT 1 FROM "ServiceOrder" so WHERE so."couponId" = c.id)
-    LIMIT 100
+  const syncOrphans = await prisma.$queryRaw<Array<{ id: string }>>`
+    SELECT e.id FROM "SynchronizationEvent" e
+    WHERE
+      (LOWER(e.entity) IN ('appointment') AND NOT EXISTS (
+        SELECT 1 FROM "Appointment" a WHERE a.id::text = e."entityId"
+      ))
+      OR (LOWER(e.entity) IN ('payment') AND NOT EXISTS (
+        SELECT 1 FROM "Payment" p WHERE p.id = e."entityId"
+      ))
+      OR (LOWER(e.entity) IN ('service') AND NOT EXISTS (
+        SELECT 1 FROM "Service" s WHERE s.id = e."entityId"
+      ))
+      OR (LOWER(e.entity) IN ('coupon') AND NOT EXISTS (
+        SELECT 1 FROM "Coupon" c WHERE c.id = e."entityId"
+      ))
+      OR (LOWER(e.entity) IN ('serviceorder', 'service_order') AND NOT EXISTS (
+        SELECT 1 FROM "ServiceOrder" s WHERE s.id = e."entityId"
+      ))
+    LIMIT 200
   `;
-  if (couponNoOrder.length) {
+  if (syncOrphans.length) {
     findings.push(
       await finding(
-        "coupon_without_order_or_payment",
-        "medium",
-        "Cupom sem Pedido Raiz / Payment / UserPlan / ServiceOrder",
-        couponNoOrder.map((r) => r.id)
+        "sync_without_entity",
+        "info",
+        "Evento de sincronização cuja entidade operacional já foi removida",
+        syncOrphans.map((r) => r.id)
       )
     );
   }
 
-  const totalIssues = findings.reduce((acc, f) => acc + f.count, 0);
+  const highCount = findings
+    .filter((f) => f.severity === "high")
+    .reduce((a, f) => a + f.count, 0);
+  const mediumCount = findings
+    .filter((f) => f.severity === "medium")
+    .reduce((a, f) => a + f.count, 0);
+  const infoCount = findings
+    .filter((f) => f.severity === "info")
+    .reduce((a, f) => a + f.count, 0);
+
   return {
     generatedAt: new Date().toISOString(),
     findings,
-    totalIssues,
-    ok: totalIssues === 0,
+    totalIssues: highCount + mediumCount,
+    highCount,
+    mediumCount,
+    infoCount,
+    ok: highCount + mediumCount === 0,
+    historyModel: "immutable_audit_log",
   };
 }

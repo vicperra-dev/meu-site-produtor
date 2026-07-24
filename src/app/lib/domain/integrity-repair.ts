@@ -1,6 +1,5 @@
 /**
- * GO-H8B — Reparo administrativo de integridade (somente sob demanda).
- * Nunca apaga registros válidos ligados a Pedido Raiz ativo.
+ * GO-H8C — Reparo administrativo (nunca apaga History/Sync — log imutável).
  */
 import { prisma } from "@/app/lib/prisma";
 import { auditDomainIntegrity, type IntegrityAuditReport } from "@/app/lib/domain/integrity-audit";
@@ -24,7 +23,6 @@ export async function repairDomainIntegrity(): Promise<IntegrityRepairReport> {
 
   await prisma.$transaction(
     async (tx) => {
-      // Null dangling coupon.appointmentId
       const c1 = await tx.$executeRaw`
         UPDATE "Coupon" c
         SET "appointmentId" = NULL
@@ -39,7 +37,6 @@ export async function repairDomainIntegrity(): Promise<IntegrityRepairReport> {
         });
       }
 
-      // Null dangling originAppointmentId
       const c1b = await tx.$executeRaw`
         UPDATE "Coupon" c
         SET "originAppointmentId" = NULL
@@ -54,7 +51,6 @@ export async function repairDomainIntegrity(): Promise<IntegrityRepairReport> {
         });
       }
 
-      // Null dangling payment.appointmentId
       const p1 = await tx.$executeRaw`
         UPDATE "Payment" p
         SET "appointmentId" = NULL
@@ -69,7 +65,6 @@ export async function repairDomainIntegrity(): Promise<IntegrityRepairReport> {
         });
       }
 
-      // Null dangling ServiceOrder.appointmentId
       const so1 = await tx.$executeRaw`
         UPDATE "ServiceOrder" s
         SET "appointmentId" = NULL
@@ -84,7 +79,6 @@ export async function repairDomainIntegrity(): Promise<IntegrityRepairReport> {
         });
       }
 
-      // Sync SO phase when appointment cancelled
       const so2 = await tx.$executeRaw`
         UPDATE "ServiceOrder" so
         SET phase = 'cancelled', "updatedAt" = NOW()
@@ -101,76 +95,8 @@ export async function repairDomainIntegrity(): Promise<IntegrityRepairReport> {
         });
       }
 
-      // Delete history for missing entities
-      const h1 = await tx.$executeRaw`
-        DELETE FROM "DomainTransitionHistory" h
-        WHERE
-          (LOWER(h.entity) IN ('appointment') AND NOT EXISTS (
-            SELECT 1 FROM "Appointment" a WHERE a.id::text = h."entityId"
-          ))
-          OR (LOWER(h.entity) IN ('payment') AND NOT EXISTS (
-            SELECT 1 FROM "Payment" p WHERE p.id = h."entityId"
-          ))
-          OR (LOWER(h.entity) IN ('service') AND NOT EXISTS (
-            SELECT 1 FROM "Service" s WHERE s.id = h."entityId"
-          ))
-          OR (LOWER(h.entity) IN ('coupon') AND NOT EXISTS (
-            SELECT 1 FROM "Coupon" c WHERE c.id = h."entityId"
-          ))
-          OR (LOWER(h.entity) IN ('serviceorder', 'service_order') AND NOT EXISTS (
-            SELECT 1 FROM "ServiceOrder" s WHERE s.id = h."entityId"
-          ))
-      `;
-      if (h1 > 0) {
-        actions.push({
-          code: "delete_orphan_history",
-          description: "Remover DomainTransitionHistory sem entidade",
-          affected: Number(h1),
-        });
-      }
-
-      // Delete sync events for missing entities (mesmo critério)
-      const s1 = await tx.$executeRaw`
-        DELETE FROM "SynchronizationEvent" e
-        WHERE
-          (LOWER(e.entity) IN ('appointment') AND NOT EXISTS (
-            SELECT 1 FROM "Appointment" a WHERE a.id::text = e."entityId"
-          ))
-          OR (LOWER(e.entity) IN ('payment') AND NOT EXISTS (
-            SELECT 1 FROM "Payment" p WHERE p.id = e."entityId"
-          ))
-          OR (LOWER(e.entity) IN ('service') AND NOT EXISTS (
-            SELECT 1 FROM "Service" s WHERE s.id = e."entityId"
-          ))
-          OR (LOWER(e.entity) IN ('coupon') AND NOT EXISTS (
-            SELECT 1 FROM "Coupon" c WHERE c.id = e."entityId"
-          ))
-          OR (LOWER(e.entity) IN ('serviceorder', 'service_order') AND NOT EXISTS (
-            SELECT 1 FROM "ServiceOrder" s WHERE s.id = e."entityId"
-          ))
-      `;
-      if (s1 > 0) {
-        actions.push({
-          code: "delete_orphan_sync_events",
-          description: "Remover SynchronizationEvent sem entidade",
-          affected: Number(s1),
-        });
-      }
-
-      // Clear dangling rootPaymentId on coupons (não apaga o cupom)
-      const c2 = await tx.$executeRaw`
-        UPDATE "Coupon" c
-        SET "rootPaymentId" = NULL
-        WHERE c."rootPaymentId" IS NOT NULL
-          AND NOT EXISTS (SELECT 1 FROM "Payment" p WHERE p.id = c."rootPaymentId")
-      `;
-      if (c2 > 0) {
-        actions.push({
-          code: "null_coupon_dangling_root",
-          description: "Zerar Coupon.rootPaymentId órfão",
-          affected: Number(c2),
-        });
-      }
+      // GO-H8C: NÃO apagar DomainTransitionHistory nem SynchronizationEvent.
+      // History = Modelo A (log imutável de auditoria).
     },
     { maxWait: 15_000, timeout: 60_000 }
   );

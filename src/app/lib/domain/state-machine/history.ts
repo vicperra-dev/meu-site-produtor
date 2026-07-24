@@ -1,5 +1,7 @@
 /**
- * HS-03B — Histórico de transições (persistente).
+ * HS-03B / GO-H8C — Histórico de transições (persistente).
+ * Modelo A: log imutável de auditoria. A entidade operacional pode ser removida;
+ * o History permanece e NÃO é inconsistência de domínio.
  * Preparado para StudioOS; não é Event Sourcing.
  */
 

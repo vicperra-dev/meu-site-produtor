@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * GO-H8B — Auditor e reparo de integridade do domínio.
+ * GO-H8B/H8C — Auditor e reparo de integridade do domínio.
  */
 import { useCallback, useState } from "react";
 import {
@@ -16,7 +16,7 @@ import {
 
 type Finding = {
   code: string;
-  severity: "high" | "medium" | "low";
+  severity: "high" | "medium" | "info";
   label: string;
   count: number;
   sampleIds: string[];
@@ -26,7 +26,11 @@ type Report = {
   generatedAt: string;
   findings: Finding[];
   totalIssues: number;
+  highCount?: number;
+  mediumCount?: number;
+  infoCount?: number;
   ok: boolean;
+  historyModel?: string;
 };
 
 type RepairReport = {
@@ -35,6 +39,12 @@ type RepairReport = {
   before: Report;
   after: Report;
 };
+
+function badgeIntent(severity: Finding["severity"]) {
+  if (severity === "high") return "error" as const;
+  if (severity === "medium") return "warning" as const;
+  return "info" as const;
+}
 
 export default function IntegridadeAdminPage() {
   const [busy, setBusy] = useState(false);
@@ -64,7 +74,7 @@ export default function IntegridadeAdminPage() {
   const reparar = useCallback(async () => {
     if (
       !window.confirm(
-        "Reparar integridade?\nApenas órfãos seguros serão corrigidos (null FKs, sync de fase, histórico solto).\nNenhum Pedido Raiz válido será apagado."
+        "Reparar integridade?\nApenas FKs stale e sync de fase serão corrigidos.\nHistory/Sync (log imutável) NÃO são apagados.\nNenhum Pedido Raiz válido será removido."
       )
     ) {
       return;
@@ -87,16 +97,20 @@ export default function IntegridadeAdminPage() {
     }
   }, []);
 
+  const highs = report?.findings.filter((f) => f.severity === "high") || [];
+  const mediums = report?.findings.filter((f) => f.severity === "medium") || [];
+  const infos = report?.findings.filter((f) => f.severity === "info") || [];
+
   return (
     <div className="space-y-6">
       <PageHeader
         title="Integridade do Domínio"
-        subtitle="Auditoria somente leitura + reparo sob demanda (GO-H8B). Fonte: Pedido Raiz → ServiceOrder."
+        subtitle="GO-H8C: Alta/Média = inconsistência · Informativo = History imutável (Modelo A)."
       />
 
       <Callout intent="info">
-        Esta tela não corrige automaticamente. Use &quot;Verificar Integridade&quot; para listar
-        órfãos e inconsistências. &quot;Reparar Integridade&quot; só age quando você confirmar.
+        History é log permanente de auditoria: a entidade pode sumir e o registro permanece.
+        Isso não é erro. Alta/Média exigem ação; Informativo é rastreabilidade.
       </Callout>
 
       <Card>
@@ -125,48 +139,51 @@ export default function IntegridadeAdminPage() {
           <Section title="Resultado da auditoria">
             <div className="flex flex-wrap items-center gap-2 mb-4">
               <Badge intent={report.ok ? "success" : "error"}>
-                {report.ok ? "ÍNTEGRO" : "ISSUES"}
+                {report.ok ? "ÍNTEGRO (Alta+Média=0)" : "ISSUES"}
               </Badge>
               <span className="text-xs text-zinc-500">{report.generatedAt}</span>
               <span className="text-sm text-zinc-300">
-                {report.totalIssues} ocorrência(s) · {report.findings.length} tipo(s)
+                Alta {report.highCount ?? highs.reduce((a, f) => a + f.count, 0)} · Média{" "}
+                {report.mediumCount ?? mediums.reduce((a, f) => a + f.count, 0)} · Info{" "}
+                {report.infoCount ?? infos.reduce((a, f) => a + f.count, 0)}
               </span>
             </div>
 
-            {report.findings.length === 0 ? (
-              <p className="text-sm text-emerald-300">Nenhum registro órfão encontrado.</p>
-            ) : (
-              <div className="space-y-3">
-                {report.findings.map((f) => (
-                  <div
-                    key={f.code}
-                    className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-3 text-sm"
-                  >
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Badge
-                        intent={
-                          f.severity === "high"
-                            ? "error"
-                            : f.severity === "medium"
-                              ? "warning"
-                              : "info"
-                        }
+            {(
+              [
+                ["Alta severidade", highs],
+                ["Média severidade", mediums],
+                ["Informativo", infos],
+              ] as const
+            ).map(([title, list]) => (
+              <div key={title} className="mb-5">
+                <h3 className="text-sm font-semibold text-zinc-200 mb-2">{title}</h3>
+                {list.length === 0 ? (
+                  <p className="text-sm text-emerald-300/90">0 ocorrências — PASS</p>
+                ) : (
+                  <div className="space-y-3">
+                    {list.map((f) => (
+                      <div
+                        key={f.code}
+                        className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-3 text-sm"
                       >
-                        {f.severity}
-                      </Badge>
-                      <span className="font-medium text-zinc-100">{f.label}</span>
-                      <span className="text-zinc-500">×{f.count}</span>
-                    </div>
-                    <p className="mt-1 text-xs text-zinc-500 font-mono">{f.code}</p>
-                    {f.sampleIds.length > 0 && (
-                      <p className="mt-1 text-xs text-zinc-400 break-all">
-                        Amostra: {f.sampleIds.join(", ")}
-                      </p>
-                    )}
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Badge intent={badgeIntent(f.severity)}>{f.severity}</Badge>
+                          <span className="font-medium text-zinc-100">{f.label}</span>
+                          <span className="text-zinc-500">×{f.count}</span>
+                        </div>
+                        <p className="mt-1 text-xs text-zinc-500 font-mono">{f.code}</p>
+                        {f.sampleIds.length > 0 && (
+                          <p className="mt-1 text-xs text-zinc-400 break-all">
+                            Amostra: {f.sampleIds.join(", ")}
+                          </p>
+                        )}
+                      </div>
+                    ))}
                   </div>
-                ))}
+                )}
               </div>
-            )}
+            ))}
           </Section>
         </Card>
       )}
@@ -188,8 +205,8 @@ export default function IntegridadeAdminPage() {
               </ul>
             )}
             <p className="mt-4 text-sm">
-              Antes: {repair.before.totalIssues} issue(s) · Depois:{" "}
-              {repair.after.totalIssues} issue(s){" "}
+              Issues (Alta+Média) antes: {repair.before.totalIssues} · depois:{" "}
+              {repair.after.totalIssues}{" "}
               <Badge intent={repair.after.ok ? "success" : "warning"}>
                 {repair.after.ok ? "OK" : "RESTANTE"}
               </Badge>
