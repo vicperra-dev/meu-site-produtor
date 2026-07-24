@@ -3,7 +3,8 @@
 /**
  * GO-03A — Card profissional de serviço (PARTE 5).
  * Ações no rodapé aparecem apenas quando o status permite — exatamente as
- * operações já certificadas (Aceitar, Iniciar, Entregar, Download, Excluir).
+ * operações já certificadas (Aceitar, Iniciar, Entregar, Download).
+ * GO-H8B: exclusão física isolada removida.
  */
 import { useState } from "react";
 import Link from "next/link";

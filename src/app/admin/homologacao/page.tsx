@@ -176,6 +176,9 @@ export default function HomologacaoAdminPage() {
   const [labMsg, setLabMsg] = useState<string | null>(null);
   const [realOrder, setRealOrder] = useState<RealOrder | null>(null);
   const [orderMsg, setOrderMsg] = useState<string | null>(null);
+  const [purgeScope, setPurgeScope] = useState<"simulation" | "homologation" | "both">("both");
+  const [purgePreview, setPurgePreview] = useState<Record<string, number> | null>(null);
+  const [purgeMsg, setPurgeMsg] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -345,25 +348,75 @@ export default function HomologacaoAdminPage() {
     }
   }
 
-  async function cleanup() {
+  async function previewPurge() {
+    setBusy(true);
+    setPurgeMsg(null);
+    setPurgePreview(null);
+    try {
+      const res = await fetch("/api/admin/homologation/purge", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ scope: purgeScope, dryRun: true }),
+      });
+      const dataRes = await res.json();
+      if (!res.ok) {
+        setPurgeMsg(dataRes.error || "Falha no dry-run.");
+        return;
+      }
+      const t = dataRes.result?.totals || {};
+      setPurgePreview({
+        pedidos: t.payments || 0,
+        ordens: t.serviceOrders || 0,
+        cupons: t.coupons || 0,
+        agendamentos: t.appointments || 0,
+        services: t.services || 0,
+        selecionados: t.selectedServices || 0,
+        entregas: t.deliveries || 0,
+        historico: t.history || 0,
+        sync: t.syncEvents || 0,
+        roots: (dataRes.result?.rootPaymentIds || []).length,
+      });
+      setPurgeMsg(
+        `Dry-run OK · ${dataRes.result?.rootPaymentIds?.length || 0} Pedido(s) Raiz no escopo "${purgeScope}".`
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function executePurge() {
+    const label =
+      purgeScope === "both"
+        ? "Simulation + Pedidos de Homologação"
+        : purgeScope === "simulation"
+          ? "apenas SimulationProvider"
+          : "apenas Pedidos de Homologação";
     if (
       !window.confirm(
-        "Remover artefatos do Laboratório (SimulationProvider)?\nPedidos de Homologação e Asaas não serão afetados."
+        `Confirmar limpeza transacional (${label})?\nCada Pedido Raiz será removido via purgeOrderTree (rollback se falhar).`
       )
     ) {
       return;
     }
     setBusy(true);
-    setMessage(null);
+    setPurgeMsg(null);
     try {
-      const res = await fetch("/api/admin/homologation/cleanup", { method: "POST" });
+      const res = await fetch("/api/admin/homologation/purge", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ scope: purgeScope, dryRun: false }),
+      });
       const dataRes = await res.json();
       if (!res.ok) {
-        setMessage(dataRes.error || "Falha na limpeza.");
+        setPurgeMsg(dataRes.error || "Falha na limpeza.");
         return;
       }
       setLatest(null);
-      setMessage(`Limpeza Lab OK: ${JSON.stringify(dataRes.result)}`);
+      setRealOrder(null);
+      setPurgePreview(null);
+      setPurgeMsg(`Limpeza OK: ${JSON.stringify(dataRes.result?.totals || dataRes.result)}`);
+      setMessage(null);
+      setOrderMsg(null);
       await refresh();
     } finally {
       setBusy(false);
@@ -423,30 +476,6 @@ export default function HomologacaoAdminPage() {
       );
       const dataRes = await res.json();
       if (res.ok && dataRes.order) setRealOrder(dataRes.order);
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function cleanupRealOrders() {
-    if (
-      !window.confirm(
-        "Remover exclusivamente Pedidos de Homologação (origin=HOMOLOGATION)?\nAsaas e Laboratório (Simulation) não serão afetados."
-      )
-    ) {
-      return;
-    }
-    setBusy(true);
-    setOrderMsg(null);
-    try {
-      const res = await fetch("/api/admin/homologation/order-cleanup", { method: "POST" });
-      const dataRes = await res.json();
-      if (!res.ok) {
-        setOrderMsg(dataRes.error || "Falha na limpeza de Pedidos.");
-        return;
-      }
-      setRealOrder(null);
-      setOrderMsg(`Limpeza Pedidos OK: ${JSON.stringify(dataRes.result)}`);
     } finally {
       setBusy(false);
     }
@@ -673,14 +702,6 @@ export default function HomologacaoAdminPage() {
               <Button variant="outline" disabled={busy} icon="refresh" onClick={() => void refresh()}>
                 {COPY.actions.refresh}
               </Button>
-              <Button
-                variant="outline"
-                disabled={busy}
-                onClick={() => void cleanup()}
-                className="!border-red-800 !text-red-300"
-              >
-                Limpar Homologação (Lab)
-              </Button>
             </div>
             {message && <p className="text-sm text-amber-100 mt-3">{message}</p>}
 
@@ -704,14 +725,6 @@ export default function HomologacaoAdminPage() {
                 </Button>
                 <Button
                   variant="outline"
-                  disabled={busy}
-                  onClick={() => void cleanupRealOrders()}
-                  className="!border-emerald-900 !text-emerald-300"
-                >
-                  Limpar Pedidos de Homologação
-                </Button>
-                <Button
-                  variant="outline"
                   disabled={busy || !realOrder}
                   onClick={() => void refreshRealOrder()}
                 >
@@ -719,6 +732,73 @@ export default function HomologacaoAdminPage() {
                 </Button>
               </div>
               {orderMsg && <p className="text-sm text-emerald-100">{orderMsg}</p>}
+            </div>
+
+            <div className="mt-6 border-t border-zinc-800 pt-4 space-y-3">
+              <h3 className="text-sm font-semibold text-red-300">
+                Limpeza da Homologação (GO-H8B)
+              </h3>
+              <p className="text-xs text-zinc-500">
+                Único ponto de exclusão: <code className="text-zinc-400">purgeOrderTree</code> por
+                Pedido Raiz. Dry-run obrigatório antes de confirmar. Asaas real nunca é tocado.
+              </p>
+              <div className="flex flex-col gap-2 text-sm text-zinc-300">
+                <label className="inline-flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name="purgeScope"
+                    checked={purgeScope === "simulation"}
+                    onChange={() => setPurgeScope("simulation")}
+                  />
+                  Limpar apenas SimulationProvider
+                </label>
+                <label className="inline-flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name="purgeScope"
+                    checked={purgeScope === "homologation"}
+                    onChange={() => setPurgeScope("homologation")}
+                  />
+                  Limpar apenas Pedidos de Homologação
+                </label>
+                <label className="inline-flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name="purgeScope"
+                    checked={purgeScope === "both"}
+                    onChange={() => setPurgeScope("both")}
+                  />
+                  Limpar ambos
+                </label>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button variant="outline" disabled={busy} onClick={() => void previewPurge()}>
+                  Pré-visualizar (dry-run)
+                </Button>
+                <Button
+                  variant="outline"
+                  disabled={busy || !purgePreview}
+                  onClick={() => void executePurge()}
+                  className="!border-red-800 !text-red-300"
+                >
+                  Confirmar limpeza
+                </Button>
+              </div>
+              {purgePreview && (
+                <ul className="text-xs text-zinc-400 grid grid-cols-2 sm:grid-cols-3 gap-1">
+                  <li>Pedidos Raiz: {purgePreview.roots}</li>
+                  <li>Pagamentos: {purgePreview.pedidos}</li>
+                  <li>Ordens: {purgePreview.ordens}</li>
+                  <li>Cupons: {purgePreview.cupons}</li>
+                  <li>Agendamentos: {purgePreview.agendamentos}</li>
+                  <li>Services: {purgePreview.services}</li>
+                  <li>Selecionados: {purgePreview.selecionados}</li>
+                  <li>Entregas: {purgePreview.entregas}</li>
+                  <li>Histórico: {purgePreview.historico}</li>
+                  <li>Sync: {purgePreview.sync}</li>
+                </ul>
+              )}
+              {purgeMsg && <p className="text-sm text-amber-100">{purgeMsg}</p>}
             </div>
           </Section>
         </Card>

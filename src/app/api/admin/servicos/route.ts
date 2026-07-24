@@ -192,22 +192,21 @@ export async function PATCH(req: Request) {
   }
 }
 
-export async function DELETE(req: Request) {
+/**
+ * GO-H8B — exclusão isolada de Service removida.
+ * Service não é entidade raiz; use cancelamento (status) ou purgeOrderTree do Pedido Raiz.
+ */
+export async function DELETE() {
   try {
     await requireAdmin();
-
-    const { searchParams } = new URL(req.url);
-    const id = searchParams.get("id");
-
-    if (!id) {
-      return NextResponse.json({ error: "ID é obrigatório" }, { status: 400 });
-    }
-
-    await prisma.service.delete({
-      where: { id },
-    });
-
-    return NextResponse.json({ success: true, message: "Serviço excluído com sucesso." });
+    return NextResponse.json(
+      {
+        error:
+          "Exclusão isolada de Service não é permitida. Interrompa via status (cancelado) ou limpe o Pedido Raiz (purgeOrderTree / Homologação).",
+        code: "SERVICE_NOT_ROOT",
+      },
+      { status: 409 }
+    );
   } catch (err: any) {
     if (err.message === "Acesso negado" || err.message === "Não autenticado") {
       return NextResponse.json({ error: "Acesso negado" }, { status: 403 });

@@ -4,7 +4,8 @@
  * GO-03A — Board compartilhado de serviços (Serviços Gerais + Selecionados).
  * Mesmo componente para todas as rotas /admin/servicos/* e
  * /admin/servicos-selecionados/*. Somente apresentação/consulta:
- * usa exclusivamente as APIs já certificadas (GET/PATCH/DELETE /api/admin/servicos).
+ * usa exclusivamente as APIs já certificadas (GET/PATCH /api/admin/servicos).
+ * GO-H8B: sem DELETE isolado de Service (Pedido Raiz / purgeOrderTree).
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -96,7 +97,7 @@ export function ServicosBoard({ variant, status }: { variant: BoardVariant; stat
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { notifyError, askDelete } = useFeedback();
+  const { notifyError } = useFeedback();
 
   const [servicos, setServicos] = useState<AdminService[]>([]);
   const [loading, setLoading] = useState(true);
@@ -219,31 +220,8 @@ export function ServicosBoard({ variant, status }: { variant: BoardVariant; stat
     }
   }
 
-  async function excluir(id: string) {
-    if (
-      !(await askDelete(
-        "Excluir este serviço cancelado do banco de dados?",
-        "Esta ação não pode ser desfeita."
-      ))
-    )
-      return;
-    try {
-      setBusyId(id);
-      const res = await fetch(`/api/admin/servicos?id=${encodeURIComponent(id)}`, { method: "DELETE" });
-      const data = await res.json().catch(() => ({}));
-      if (res.ok) {
-        await carregar();
-        notifyAppDataChanged("admin-servico-updated");
-      } else {
-        notifyError(data.error || "Erro ao excluir serviço.");
-      }
-    } catch (err) {
-      console.error(err);
-      notifyError("Erro ao excluir serviço.");
-    } finally {
-      setBusyId(null);
-    }
-  }
+  // GO-H8B: exclusão física isolada removida — Service não é raiz.
+  // Interromper via status cancelado; limpar árvore via Pedido Raiz / Homologação.
 
   /* ------------------------------- Derivações ------------------------------ */
 
@@ -353,7 +331,6 @@ export function ServicosBoard({ variant, status }: { variant: BoardVariant; stat
                 onAceitar: (id) => void patchStatus(id, "aceito", "aceitar"),
                 onIniciar: (id) => void patchStatus(id, "em_andamento", "iniciar"),
                 onEntregar: (svc) => setEntregaService(svc),
-                onExcluir: (id) => void excluir(id),
               }}
             />
           ))}

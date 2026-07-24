@@ -213,6 +213,15 @@ export async function cancelAppointment(params: {
   });
   if (!result.ok) return fail(result.error, result.httpStatus, result.code);
 
+  // GO-H8B: manter ServiceOrder alinhada ao Appointment
+  const { syncServiceOrderPhaseFromAppointment } = await import(
+    "@/app/lib/service-orders/persist"
+  );
+  await syncServiceOrderPhaseFromAppointment({
+    appointmentId,
+    appointmentStatus: "cancelado",
+  });
+
   return ok(
     { agendamento: { id: appointmentId, status: "cancelado" }, releasedCoupons: 0 },
     result.alreadyProcessed
