@@ -1,9 +1,9 @@
 "use client";
 
 /**
- * Portal do Cliente — Visão geral (dashboard do cliente).
- * Cards-resumo calculados exclusivamente a partir do payload de
- * /api/meus-dados, todos clicáveis para a aba correspondente.
+ * Portal do Cliente — Visão geral (GO-H9).
+ * Ordem: Próximos Agendamentos → Histórico Recente → Última Atividade.
+ * Status via paleta oficial; rótulo via Ordem de Serviço quando disponível.
  */
 
 import { useMemo } from "react";
@@ -19,12 +19,14 @@ import {
   formatDate,
   formatTime,
 } from "@/components/design-system";
-import type { PortalData } from "./types";
+import type { Agendamento, PortalData } from "./types";
 import type { TabKey } from "./tabs";
 import { collectDownloads } from "./DownloadsSection";
 import { buildNotifications } from "./NotificationsSection";
+import { serviceOrderLabel } from "@/app/lib/ui/service-order-visual";
+import { statusFromServiceOrderPhase } from "@/app/lib/ui/status-palette";
 
-const STATUS_ATIVOS = new Set(["pendente", "aceito", "confirmado", "em_andamento"]);
+const PROXIMOS_STATUS = new Set(["pendente", "aceito", "confirmado"]);
 
 function SummaryCard({
   icon,
@@ -63,6 +65,37 @@ function SummaryCard({
   );
 }
 
+function orderLabel(a: Agendamento): string {
+  return serviceOrderLabel(a.serviceOrderType || a.tipo);
+}
+
+function displayStatus(a: Agendamento): string {
+  if (a.serviceOrderPhase) return statusFromServiceOrderPhase(a.serviceOrderPhase);
+  return a.status;
+}
+
+function AppointmentRow({ a }: { a: Agendamento }) {
+  return (
+    <Card className="flex items-center gap-3">
+      <span className="flex flex-col items-center justify-center w-12 rounded-lg bg-zinc-800 border border-zinc-700 py-1">
+        <span className="text-[10px] uppercase text-zinc-500 leading-none">
+          {new Date(a.data).toLocaleDateString("pt-BR", { month: "short" })}
+        </span>
+        <span className="text-base font-bold text-zinc-100 leading-tight">
+          {new Date(a.data).getDate()}
+        </span>
+      </span>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-semibold text-zinc-100 truncate">{orderLabel(a)}</p>
+        <p className="text-[11px] text-zinc-500">
+          {formatDate(a.data)} às {formatTime(a.data)}
+        </p>
+      </div>
+      <StatusBadge status={displayStatus(a)} />
+    </Card>
+  );
+}
+
 export function DashboardHome({
   data,
   goTo,
@@ -74,28 +107,52 @@ export function DashboardHome({
   const agora = Date.now();
 
   const resumo = useMemo(() => {
-    const servicosAtivos = data.agendamentos.filter((a) => STATUS_ATIVOS.has(a.status)).length;
-    const proximos = data.agendamentos.filter(
-      (a) => STATUS_ATIVOS.has(a.status) && new Date(a.data).getTime() >= agora
-    );
+    const ativos = new Set(["pendente", "aceito", "confirmado", "em_andamento"]);
+    const servicosAtivos = data.agendamentos.filter((a) => ativos.has(a.status)).length;
     const downloads = collectDownloads(data.agendamentos).length;
     const cuponsDisponiveis = data.cupons.filter((c) => c.status === "disponivel").length;
     const planoAtual = data.planos.find((p) => p.ativo) ?? null;
     const pagamentosPendentes = (data.pagamentos ?? []).filter(
       (p) => p.status === "pending"
     ).length;
-    return { servicosAtivos, proximos, downloads, cuponsDisponiveis, planoAtual, pagamentosPendentes };
-  }, [data, agora]);
+    return { servicosAtivos, downloads, cuponsDisponiveis, planoAtual, pagamentosPendentes };
+  }, [data]);
+
+  const proximos = useMemo(() => {
+    return data.agendamentos
+      .filter((a) => {
+        const t = new Date(a.data).getTime();
+        if (t < agora) return false;
+        const st = displayStatus(a);
+        return PROXIMOS_STATUS.has(st) || PROXIMOS_STATUS.has(a.status);
+      })
+      .sort((a, b) => new Date(a.data).getTime() - new Date(b.data).getTime())
+      .slice(0, 5);
+  }, [data.agendamentos, agora]);
+
+  const historicoRecente = useMemo(() => {
+    return data.agendamentos
+      .filter((a) => {
+        const st = displayStatus(a);
+        if (st === "pendente" || a.status === "pendente") return false;
+        const t = new Date(a.data).getTime();
+        // Encerrados/processados: passado, em andamento, concluído, recusado, cancelado
+        if (["concluido", "recusado", "cancelado", "remarcado", "em_andamento"].includes(st)) {
+          return true;
+        }
+        if ((st === "aceito" || a.status === "aceito" || a.status === "confirmado") && t < agora) {
+          return true;
+        }
+        return false;
+      })
+      .sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime())
+      .slice(0, 5);
+  }, [data.agendamentos, agora]);
 
   const atividade = useMemo(() => buildNotifications(data).slice(0, 6), [data]);
-  const proximosTres = resumo.proximos
-    .slice()
-    .sort((a, b) => new Date(a.data).getTime() - new Date(b.data).getTime())
-    .slice(0, 3);
 
   return (
     <div className="space-y-6">
-      {/* Cards-resumo */}
       <Grid cols={3} className="lg:grid-cols-3 xl:grid-cols-6">
         <SummaryCard
           icon="music"
@@ -107,8 +164,8 @@ export function DashboardHome({
         <SummaryCard
           icon="calendar"
           label="Próximos agendamentos"
-          value={resumo.proximos.length}
-          hint="Agendamentos futuros confirmados ou pendentes"
+          value={proximos.length}
+          hint="Agendamentos futuros pendentes ou aceitos"
           onClick={() => goTo("agendamentos")}
         />
         <SummaryCard
@@ -145,77 +202,85 @@ export function DashboardHome({
         />
       </Grid>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Próximos agendamentos */}
-        <Section
-          title="Próximos agendamentos"
-          icon="calendar"
-          actions={
-            <button
-              onClick={() => goTo("agendamentos")}
-              className="text-xs font-semibold text-red-400 hover:text-red-300 inline-flex items-center gap-1"
-            >
-              Ver todos
-              <Icon name="arrow-right" className="w-3 h-3" />
-            </button>
-          }
-        >
-          {proximosTres.length === 0 ? (
-            <Card className="text-sm text-zinc-500 flex items-center gap-2">
-              <Icon name="calendar" className="w-4 h-4 text-zinc-600" />
-              Nenhum agendamento futuro. Que tal agendar uma sessão?
-            </Card>
-          ) : (
-            <div className="space-y-2">
-              {proximosTres.map((a) => (
-                <Card key={a.id} className="flex items-center gap-3">
-                  <span className="flex flex-col items-center justify-center w-12 rounded-lg bg-zinc-800 border border-zinc-700 py-1">
-                    <span className="text-[10px] uppercase text-zinc-500 leading-none">
-                      {new Date(a.data).toLocaleDateString("pt-BR", { month: "short" })}
-                    </span>
-                    <span className="text-base font-bold text-zinc-100 leading-tight">
-                      {new Date(a.data).getDate()}
-                    </span>
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-zinc-100 truncate">{a.tipo}</p>
-                    <p className="text-[11px] text-zinc-500">
-                      {formatDate(a.data)} às {formatTime(a.data)}
-                    </p>
-                  </div>
-                  <StatusBadge status={a.status} />
-                </Card>
-              ))}
-            </div>
-          )}
-        </Section>
+      {/* GO-H9 ordem: Próximos → Histórico → Última atividade */}
+      <Section
+        title="Próximos agendamentos"
+        icon="calendar"
+        actions={
+          <button
+            onClick={() => goTo("agendamentos")}
+            className="text-xs font-semibold text-red-400 hover:text-red-300 inline-flex items-center gap-1"
+          >
+            Ver todos
+            <Icon name="arrow-right" className="w-3 h-3" />
+          </button>
+        }
+      >
+        {proximos.length === 0 ? (
+          <Card className="text-sm text-zinc-500 flex items-center gap-2">
+            <Icon name="calendar" className="w-4 h-4 text-zinc-600" />
+            Nenhum agendamento futuro. Que tal agendar uma sessão?
+          </Card>
+        ) : (
+          <div className="space-y-2">
+            {proximos.map((a) => (
+              <AppointmentRow key={a.id} a={a} />
+            ))}
+          </div>
+        )}
+      </Section>
 
-        {/* Última atividade */}
-        <Section
-          title="Última atividade"
-          icon="bell"
-          actions={
-            <button
-              onClick={() => goTo("notificacoes")}
-              className="text-xs font-semibold text-red-400 hover:text-red-300 inline-flex items-center gap-1"
-            >
-              Ver tudo
-              <Icon name="arrow-right" className="w-3 h-3" />
-            </button>
-          }
-        >
-          {atividade.length === 0 ? (
-            <Card className="text-sm text-zinc-500 flex items-center gap-2">
-              <Icon name="bell" className="w-4 h-4 text-zinc-600" />
-              Nenhuma atividade recente.
-            </Card>
-          ) : (
-            <Card>
-              <Timeline items={atividade} compact />
-            </Card>
-          )}
-        </Section>
-      </div>
+      <Section
+        title="Histórico recente de agendamentos"
+        icon="history"
+        actions={
+          <button
+            onClick={() => goTo("agendamentos")}
+            className="text-xs font-semibold text-red-400 hover:text-red-300 inline-flex items-center gap-1"
+          >
+            Ver agenda
+            <Icon name="arrow-right" className="w-3 h-3" />
+          </button>
+        }
+      >
+        {historicoRecente.length === 0 ? (
+          <Card className="text-sm text-zinc-500 flex items-center gap-2">
+            <Icon name="history" className="w-4 h-4 text-zinc-600" />
+            Nenhum agendamento no histórico recente.
+          </Card>
+        ) : (
+          <div className="space-y-2">
+            {historicoRecente.map((a) => (
+              <AppointmentRow key={a.id} a={a} />
+            ))}
+          </div>
+        )}
+      </Section>
+
+      <Section
+        title="Última atividade"
+        icon="bell"
+        actions={
+          <button
+            onClick={() => goTo("notificacoes")}
+            className="text-xs font-semibold text-red-400 hover:text-red-300 inline-flex items-center gap-1"
+          >
+            Ver tudo
+            <Icon name="arrow-right" className="w-3 h-3" />
+          </button>
+        }
+      >
+        {atividade.length === 0 ? (
+          <Card className="text-sm text-zinc-500 flex items-center gap-2">
+            <Icon name="bell" className="w-4 h-4 text-zinc-600" />
+            Nenhuma atividade recente.
+          </Card>
+        ) : (
+          <Card>
+            <Timeline items={atividade} compact />
+          </Card>
+        )}
+      </Section>
     </div>
   );
 }

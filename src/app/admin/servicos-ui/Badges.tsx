@@ -29,11 +29,11 @@ const STATUS_INTENT: Record<string, Intent> = {
   pendente: "pending",
   aceito: "success",
   confirmado: "success",
-  em_andamento: "info",
-  concluido: "success",
-  cancelado: "error",
+  em_andamento: "warning",
+  concluido: "info",
+  cancelado: "cancelled",
   recusado: "error",
-  remarcado: "warning",
+  remarcado: "cancelled",
 };
 
 export function StatusBadge({ status, className = "" }: { status: string; className?: string }) {

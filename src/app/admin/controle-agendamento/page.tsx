@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo, type CSSProperties } from "react";
+import { useEffect, useState, useMemo, type CSSProperties, type ReactNode } from "react";
 import {
   useFeedback,
   LoadingBlock,
@@ -9,6 +9,14 @@ import {
   Button,
   Modal,
 } from "@/components/design-system";
+import {
+  formatOccupancyTooltip,
+  operationalCategoryFromServiceType,
+  serviceOrderLabel,
+  serviceOrderSlotClasses,
+  CALENDAR_OS_LEGEND,
+  type HourOccupancyDetail,
+} from "@/app/lib/ui/service-order-visual";
 import {
   OPERATIONAL_HOURS,
   type CalendarDayState,
@@ -27,7 +35,10 @@ function visualDayStyle(
   }
   switch (visual) {
     case "ocupado":
-      return { className: "border-red-600 bg-red-600/30 text-red-300 hover:bg-red-600/40" };
+      // GO-H9: dia cheio presencial = amarelo (vermelho só para bloqueio admin)
+      return {
+        className: "border-yellow-500 bg-yellow-500/25 text-yellow-200 hover:bg-yellow-500/35",
+      };
     case "parcial":
       return {
         className: "border-yellow-500 bg-yellow-500/20 text-yellow-300 hover:bg-yellow-500/30",
@@ -71,6 +82,9 @@ export default function AdminControleAgendamentoPage() {
 
   const [blockedSlots, setBlockedSlots] = useState<BlockedSlot[]>([]);
   const [dayStates, setDayStates] = useState<Record<string, CalendarDayState>>({});
+  const [hourOccupancyByDate, setHourOccupancyByDate] = useState<
+    Record<string, Record<string, HourOccupancyDetail>>
+  >({});
   const [loading, setLoading] = useState(true);
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [confirmando, setConfirmando] = useState(false);
@@ -120,6 +134,7 @@ export default function AdminControleAgendamentoPage() {
       if (resCal.ok) {
         const data = await resCal.json();
         setDayStates(data.dayStates || {});
+        setHourOccupancyByDate(data.hourOccupancyByDate || {});
       }
     } catch (err) {
       console.error("Erro ao carregar dados", err);
@@ -529,32 +544,12 @@ export default function AdminControleAgendamentoPage() {
         </div>
 
         <div className="mt-6 flex flex-wrap gap-4 text-sm text-zinc-400">
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded bg-green-600/20 border border-green-600"></div>
-            <span>Dia livre</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded bg-yellow-500/20 border border-yellow-500"></div>
-            <span>Parcialmente ocupado</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded bg-red-600/30 border border-red-600"></div>
-            <span>Dia completo</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded bg-purple-600/30 border border-purple-500"></div>
-            <span>Entrega de Produção</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div
-              className="w-4 h-4 rounded border border-yellow-500"
-              style={{
-                background:
-                  "linear-gradient(135deg, rgba(234,179,8,0.5) 50%, rgba(147,51,234,0.55) 50%)",
-              }}
-            ></div>
-            <span>Presencial + Entrega</span>
-          </div>
+          {CALENDAR_OS_LEGEND.map((item) => (
+            <div key={item.key} className="flex items-center gap-2">
+              <div className={`w-4 h-4 rounded border ${item.swatch}`} />
+              <span>{item.label}</span>
+            </div>
+          ))}
         </div>
       </Card>
 
@@ -598,9 +593,55 @@ export default function AdminControleAgendamentoPage() {
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
               {HORARIOS_PADRAO.map((hora) => {
                 const bloqueado = isSlotBlocked(selectedDay, hora);
-                const ocupadoPorAgendamento = selectedDayData.ocupados.has(hora) && !bloqueado;
-                const podeBloquear = !ocupadoPorAgendamento;
+                const occupancy = hourOccupancyByDate[selectedDay || ""]?.[hora];
+                const ocupadoPorOs =
+                  occupancy?.kind === "service_order" ||
+                  (selectedDayData.ocupados.has(hora) && !bloqueado && occupancy?.kind !== "blocked");
+                const podeBloquear = !ocupadoPorOs;
                 const horarioPassado = selectedDay ? isHorarioPassado(selectedDay, hora) : false;
+
+                let slotClass =
+                  "bg-green-600/20 text-green-300 border-green-600 hover:bg-green-600/30";
+                let title = "Clique para bloquear";
+                let body: ReactNode = hora;
+
+                if (horarioPassado) {
+                  slotClass =
+                    "bg-red-900/60 text-red-200 border-red-700 cursor-not-allowed opacity-60";
+                  title = "Horário já passou";
+                } else if (bloqueado || occupancy?.kind === "blocked") {
+                  slotClass = "bg-red-600 text-white border-red-500 hover:bg-red-500";
+                  title = "Clique para desbloquear";
+                  body = (
+                    <span className="flex flex-col items-center gap-0.5">
+                      <span>{hora}</span>
+                      <span className="text-[10px] font-normal opacity-90">Bloqueado</span>
+                    </span>
+                  );
+                } else if (ocupadoPorOs) {
+                  const cat =
+                    occupancy?.category ||
+                    operationalCategoryFromServiceType(occupancy?.serviceType);
+                  slotClass = `${serviceOrderSlotClasses(cat)} cursor-not-allowed`;
+                  const detail: HourOccupancyDetail = occupancy?.kind === "service_order"
+                    ? occupancy
+                    : {
+                        kind: "service_order",
+                        label: serviceOrderLabel(occupancy?.serviceType),
+                        category: cat,
+                        categoryLabel:
+                          cat === "presencial" ? "Atendimento Presencial" : "Produção",
+                      };
+                  title = formatOccupancyTooltip(detail);
+                  body = (
+                    <span className="flex flex-col items-center gap-0.5">
+                      <span>{hora}</span>
+                      <span className="text-[10px] font-semibold leading-tight text-center">
+                        {detail.label}
+                      </span>
+                    </span>
+                  );
+                }
 
                 return (
                   <button
@@ -610,45 +651,23 @@ export default function AdminControleAgendamentoPage() {
                         toggleSlot(selectedDay, hora);
                       }
                     }}
-                    disabled={ocupadoPorAgendamento || horarioPassado}
-                    className={`rounded-lg border px-4 py-3 text-sm font-medium transition ${
-                      horarioPassado
-                        ? "bg-red-900/60 text-red-200 border-red-700 cursor-not-allowed opacity-60"
-                        : bloqueado
-                        ? "bg-red-600 text-white border-red-500 hover:bg-red-500"
-                        : ocupadoPorAgendamento
-                        ? "bg-zinc-700 text-zinc-500 border-zinc-600 cursor-not-allowed"
-                        : "bg-green-600/20 text-green-300 border-green-600 hover:bg-green-600/30"
-                    }`}
-                    title={
-                      horarioPassado
-                        ? "Horário já passou"
-                        : bloqueado
-                        ? "Clique para desbloquear"
-                        : ocupadoPorAgendamento
-                        ? "Ocupado por agendamento"
-                        : "Clique para bloquear"
-                    }
+                    disabled={ocupadoPorOs || horarioPassado}
+                    className={`rounded-lg border px-3 py-3 text-sm font-medium transition whitespace-pre-line ${slotClass}`}
+                    title={title}
                   >
-                    {hora}
+                    {body}
                   </button>
                 );
               })}
             </div>
 
             <div className="flex flex-wrap gap-4 text-sm text-zinc-400">
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded bg-green-600/20 border border-green-600"></div>
-                <span>Disponível</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded bg-red-600"></div>
-                <span>Bloqueado</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded bg-zinc-700"></div>
-                <span>Ocupado (agendamento)</span>
-              </div>
+              {CALENDAR_OS_LEGEND.map((item) => (
+                <div key={item.key} className="flex items-center gap-2">
+                  <div className={`w-4 h-4 rounded border ${item.swatch}`} />
+                  <span>{item.label}</span>
+                </div>
+              ))}
             </div>
           </div>
         )}

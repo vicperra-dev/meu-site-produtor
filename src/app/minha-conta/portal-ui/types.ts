@@ -26,6 +26,11 @@ export interface Agendamento {
   refundProcessedAt?: string | null;
   cancelCouponCode?: string | null;
   entregas?: EntregaServico[];
+  /** GO-H9 — Ordem de Serviço (fonte oficial). */
+  serviceOrderLabel?: string | null;
+  serviceOrderType?: string | null;
+  serviceOrderPhase?: string | null;
+  rootPaymentId?: string | null;
   pagamento: {
     id: string;
     amount: number;

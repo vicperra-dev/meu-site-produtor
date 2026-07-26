@@ -5,6 +5,7 @@ import { getDatabaseProvider } from "@/app/lib/db-utils";
 import { deriveAppointmentStatusFromServiceStatuses } from "@/app/lib/domain/statuses";
 import { resolveCanonicalCouponType } from "@/app/lib/domain/coupon-types";
 import { resolveCouponCategoryFromRow } from "@/app/lib/domain/coupon-category";
+import { serviceOrderLabel } from "@/app/lib/ui/service-order-visual";
 
 export async function GET() {
   try {
@@ -532,9 +533,37 @@ export async function GET() {
       }[]
     >();
     const serviceStatusesPorAgendamento = new Map<number, string[]>();
+    const serviceOrderPorAgendamento = new Map<
+      number,
+      { id: string; serviceType: string; phase: string; paymentId: string | null }
+    >();
     try {
       const aptIds = agendamentosComPagamento.map((a) => a.id);
       if (aptIds.length > 0) {
+        const orders = await prisma.serviceOrder.findMany({
+          where: { appointmentId: { in: aptIds } },
+          select: {
+            id: true,
+            appointmentId: true,
+            serviceType: true,
+            phase: true,
+            paymentId: true,
+            sequenceIndex: true,
+          },
+          orderBy: { sequenceIndex: "asc" },
+        });
+        for (const o of orders) {
+          if (o.appointmentId == null) continue;
+          if (!serviceOrderPorAgendamento.has(o.appointmentId)) {
+            serviceOrderPorAgendamento.set(o.appointmentId, {
+              id: o.id,
+              serviceType: o.serviceType,
+              phase: o.phase,
+              paymentId: o.paymentId,
+            });
+          }
+        }
+
         const allServices = await prisma.service.findMany({
           where: {
             appointmentId: { in: aptIds },
@@ -573,7 +602,7 @@ export async function GET() {
         }
       }
     } catch (e) {
-      console.warn("[meus-dados] Busca de Services (domínio) falhou:", e);
+      console.warn("[meus-dados] Busca de Services/SO (domínio) falhou:", e);
     }
 
     // Serializar agendamentos e buscar readAt usando query raw adaptada para PostgreSQL
@@ -606,6 +635,7 @@ export async function GET() {
         const serviceStatuses = serviceStatusesPorAgendamento.get(a.id) || [];
         const derived = deriveAppointmentStatusFromServiceStatuses(a.status, serviceStatuses);
         const operationalStatus = derived || a.status;
+        const so = serviceOrderPorAgendamento.get(a.id) || null;
 
         return {
           ...a,
@@ -613,6 +643,10 @@ export async function GET() {
           adminStatus: a.status,
           operationalStatus,
           serviceStatuses,
+          serviceOrderType: so?.serviceType ?? a.tipo ?? null,
+          serviceOrderPhase: so?.phase ?? null,
+          serviceOrderLabel: serviceOrderLabel(so?.serviceType ?? a.tipo),
+          rootPaymentId: so?.paymentId ?? a.pagamento?.id ?? null,
           data: a.data instanceof Date ? a.data.toISOString() : a.data,
           createdAt: a.createdAt instanceof Date ? a.createdAt.toISOString() : a.createdAt,
           readAt: readAt,

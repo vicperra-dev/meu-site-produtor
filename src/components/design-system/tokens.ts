@@ -11,6 +11,7 @@ export type Intent =
   | "warning"
   | "info"
   | "pending"
+  | "cancelled"
   | "neutral";
 
 /** Superfícies padrão (cards, painéis, modais). */
@@ -83,11 +84,20 @@ export const intentClasses: Record<
     dot: "bg-sky-400",
   },
   pending: {
-    text: "text-orange-300",
-    bg: "bg-orange-500/10",
-    border: "border-orange-500/40",
-    solid: "bg-orange-600",
-    dot: "bg-orange-400",
+    // GO-H9: Pendente = cinza
+    text: "text-zinc-300",
+    bg: "bg-zinc-500/15",
+    border: "border-zinc-500/50",
+    solid: "bg-zinc-600",
+    dot: "bg-zinc-400",
+  },
+  cancelled: {
+    // GO-H9: Cancelado = cinza escuro
+    text: "text-zinc-400",
+    bg: "bg-zinc-800/80",
+    border: "border-zinc-600",
+    solid: "bg-zinc-800",
+    dot: "bg-zinc-500",
   },
   neutral: {
     text: "text-zinc-300",

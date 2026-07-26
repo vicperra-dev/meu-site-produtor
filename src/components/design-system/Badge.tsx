@@ -2,12 +2,12 @@
 
 /**
  * Design System — Badges e Tags padronizados.
- * Inclui mapeamento único de status de domínio → intenção visual,
- * reutilizável por Minha Conta, Admin, Dashboard etc.
+ * GO-H9: mapeamento único de status → paleta oficial.
  */
 
 import React from "react";
 import { cx, Intent, intentClasses } from "./tokens";
+import { statusVisualMeta } from "@/app/lib/ui/status-palette";
 
 export function Badge({
   intent = "neutral",
@@ -20,7 +20,7 @@ export function Badge({
   dot?: boolean;
   className?: string;
 }) {
-  const c = intentClasses[intent];
+  const c = intentClasses[intent] ?? intentClasses.neutral;
   return (
     <span
       className={cx(
@@ -46,7 +46,7 @@ export function Tag({
   children: React.ReactNode;
   className?: string;
 }) {
-  const c = intentClasses[intent];
+  const c = intentClasses[intent] ?? intentClasses.neutral;
   return (
     <span
       className={cx(
@@ -61,16 +61,16 @@ export function Tag({
   );
 }
 
-/** Mapeamento único de status (agendamento/serviço/pagamento) para o padrão visual. */
+/** @deprecated Use statusVisualMeta — mantido para compatibilidade de imports. */
 export const STATUS_INTENT: Record<string, { label: string; intent: Intent }> = {
   pendente: { label: "Pendente", intent: "pending" },
   aceito: { label: "Aceito", intent: "success" },
-  confirmado: { label: "Confirmado", intent: "success" },
-  em_andamento: { label: "Em andamento", intent: "info" },
-  concluido: { label: "Concluído", intent: "success" },
+  confirmado: { label: "Aceito", intent: "success" },
+  em_andamento: { label: "Em andamento", intent: "warning" },
+  concluido: { label: "Concluído", intent: "info" },
   recusado: { label: "Recusado", intent: "error" },
-  cancelado: { label: "Cancelado", intent: "error" },
-  remarcado: { label: "Remarcado", intent: "warning" },
+  cancelado: { label: "Cancelado", intent: "cancelled" },
+  remarcado: { label: "Remarcado", intent: "cancelled" },
   approved: { label: "Aprovado", intent: "success" },
   pending: { label: "Pendente", intent: "pending" },
   rejected: { label: "Recusado", intent: "error" },
@@ -79,7 +79,7 @@ export const STATUS_INTENT: Record<string, { label: string; intent: Intent }> = 
   usado: { label: "Usado", intent: "neutral" },
   expirado: { label: "Expirado", intent: "error" },
   active: { label: "Ativo", intent: "success" },
-  cancelled: { label: "Cancelado", intent: "error" },
+  cancelled: { label: "Cancelado", intent: "cancelled" },
   respondida: { label: "Respondida", intent: "success" },
   recusada: { label: "Recusada", intent: "error" },
 };
@@ -92,9 +92,9 @@ export function StatusBadge({
   status: string;
   className?: string;
 }) {
-  const meta = STATUS_INTENT[status] ?? { label: status, intent: "neutral" as Intent };
+  const meta = statusVisualMeta(status);
   return (
-    <Badge intent={meta.intent} dot className={className}>
+    <Badge intent={meta.intent as Intent} dot className={className}>
       {meta.label}
     </Badge>
   );

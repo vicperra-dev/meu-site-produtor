@@ -213,25 +213,25 @@ export function getCalendarDayState(
 }
 
 export const CALENDAR_LEGEND = [
-  { visual: "livre" as const, label: "Todos os horários livres", color: "Verde" },
+  { visual: "livre" as const, label: "Disponível", color: "Verde" },
   {
     visual: "parcial" as const,
-    label: "Alguns horários presenciais ocupados",
+    label: "Atendimento Presencial (parcial)",
     color: "Amarelo",
   },
   {
     visual: "ocupado" as const,
-    label: "Todos os horários presenciais ocupados",
-    color: "Vermelho",
+    label: "Atendimento Presencial (dia completo)",
+    color: "Amarelo",
   },
   {
     visual: "entrega" as const,
-    label: "Entrega de Produção",
+    label: "Produção",
     color: "Roxo",
   },
   {
     visual: "parcial_entrega" as const,
-    label: "Presencial parcial + Entrega de Produção",
+    label: "Presencial + Produção",
     color: "Amarelo/Roxo",
   },
 ];
