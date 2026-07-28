@@ -1,0 +1,163 @@
+{
+  "at": "2026-07-28T21:46:01.282Z",
+  "base": "https://www.thouse-rec.com.br",
+  "failed": 0,
+  "passed": 16,
+  "total": 16,
+  "ok": true,
+  "results": [
+    {
+      "name": "Home",
+      "url": "https://www.thouse-rec.com.br/",
+      "status": 200,
+      "ok": true,
+      "expect": [
+        200
+      ]
+    },
+    {
+      "name": "Planos",
+      "url": "https://www.thouse-rec.com.br/planos",
+      "status": 200,
+      "ok": true,
+      "expect": [
+        200
+      ]
+    },
+    {
+      "name": "FAQ",
+      "url": "https://www.thouse-rec.com.br/faq",
+      "status": 200,
+      "ok": true,
+      "expect": [
+        200
+      ]
+    },
+    {
+      "name": "Shopping",
+      "url": "https://www.thouse-rec.com.br/shopping",
+      "status": 200,
+      "ok": true,
+      "expect": [
+        200
+      ]
+    },
+    {
+      "name": "Login",
+      "url": "https://www.thouse-rec.com.br/login",
+      "status": 200,
+      "ok": true,
+      "expect": [
+        200
+      ]
+    },
+    {
+      "name": "Cadastro",
+      "url": "https://www.thouse-rec.com.br/registro",
+      "status": 200,
+      "ok": true,
+      "expect": [
+        200
+      ]
+    },
+    {
+      "name": "Minha Conta (redirect/auth)",
+      "url": "https://www.thouse-rec.com.br/minha-conta",
+      "status": 200,
+      "ok": true,
+      "expect": [
+        200,
+        307,
+        302
+      ]
+    },
+    {
+      "name": "Carrinho",
+      "url": "https://www.thouse-rec.com.br/carrinho",
+      "status": 200,
+      "ok": true,
+      "expect": [
+        200,
+        307,
+        302
+      ]
+    },
+    {
+      "name": "Termos",
+      "url": "https://www.thouse-rec.com.br/termos-contratos",
+      "status": 200,
+      "ok": true,
+      "expect": [
+        200
+      ]
+    },
+    {
+      "name": "site-status",
+      "url": "https://www.thouse-rec.com.br/api/site-status",
+      "status": 200,
+      "ok": true,
+      "expect": [
+        200
+      ]
+    },
+    {
+      "name": "payment-provider",
+      "url": "https://www.thouse-rec.com.br/api/payment-provider",
+      "status": 200,
+      "ok": true,
+      "expect": [
+        200
+      ]
+    },
+    {
+      "name": "legacy planos/cancelar",
+      "url": "https://www.thouse-rec.com.br/api/planos/cancelar",
+      "status": 410,
+      "ok": true,
+      "expect": [
+        410,
+        401,
+        403
+      ]
+    },
+    {
+      "name": "legacy mercadopago checkout",
+      "url": "https://www.thouse-rec.com.br/api/mercadopago/checkout",
+      "status": 410,
+      "ok": true,
+      "expect": [
+        410
+      ]
+    },
+    {
+      "name": "legacy infinitypay checkout",
+      "url": "https://www.thouse-rec.com.br/api/infinitypay/checkout",
+      "status": 410,
+      "ok": true,
+      "expect": [
+        410
+      ]
+    },
+    {
+      "name": "entregas proxy unauth",
+      "url": "https://www.thouse-rec.com.br/api/entregas/00000000-0000-0000-0000-000000000000",
+      "status": 401,
+      "ok": true,
+      "expect": [
+        401,
+        404
+      ]
+    },
+    {
+      "name": "admin unauth",
+      "url": "https://www.thouse-rec.com.br/admin",
+      "status": 200,
+      "ok": true,
+      "expect": [
+        200,
+        307,
+        302
+      ]
+    }
+  ]
+}

@@ -3,6 +3,8 @@
 **Status:** FROZEN  
 **Candidata Beta:** `v1.0.0-beta.1`  
 **Base commit (pré-release):** `62fde1c` (`main`)  
+**Commit candidata Beta:** `179faf2ba40d5f1e4a03960124d200af5bacdf8d`  
+**Tag lógica:** `v1.0.0-beta.1`  
 **Escopo congelado:** GO-H10A → GO-H11A (somente)  
 **Data do freeze:** 2026-07-28
 
