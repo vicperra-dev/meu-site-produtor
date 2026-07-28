@@ -38,7 +38,7 @@ export default function CarrinhoPage() {
   const { notifyError, notify } = useFeedback();
   const [cart, setCart] = useState<CartItem[]>([]);
   const [carregando, setCarregando] = useState(false);
-  const [paymentProvider, setPaymentProvider] = useState<"asaas" | "infinitypay" | "mercadopago">("asaas");
+  const paymentProvider = "asaas" as const;
 
   const [formData, setFormData] = useState({
     nome: "",
@@ -71,15 +71,6 @@ export default function CarrinhoPage() {
       return;
     }
   }, [user, authLoading, router]);
-
-  useEffect(() => {
-    fetch("/api/payment-provider")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.provider) setPaymentProvider(data.provider);
-      })
-      .catch(() => {});
-  }, []);
 
   useEffect(() => {
     if (authLoading || !user) return;

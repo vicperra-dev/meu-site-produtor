@@ -1,0 +1,129 @@
+{
+  "at": "2026-07-28T20:28:36.427Z",
+  "rootCauseNotes": [
+    "coupon_dangling_appointment: Coupon.appointmentId apontava para Appointment inexistente — causa raiz: DELETE admin de Appointment e cleanup de órfãos apagavam o agendamento sem nullificar cupons (purgeOrderTree já fazia; esses caminhos não).",
+    "appointment_without_order_or_payment: Appointments 32/33 sem Payment/ServiceOrder/Coupon — residual sem Pedido Raiz (teste/homologação ou criação incompleta)."
+  ],
+  "coupon": {
+    "id": "12e8943b-45fe-4c31-9f47-b2ea5d475740",
+    "code": "TESTE_0HOPR6F6",
+    "couponType": "test",
+    "couponCategory": "servico",
+    "discountType": "service",
+    "discountValue": 0,
+    "serviceType": "sessao",
+    "serviceId": "efb9eda9-c261-488c-8339-34df9756718d",
+    "minValue": null,
+    "maxDiscount": null,
+    "used": true,
+    "usedAt": "2026-07-24T18:23:27.638Z",
+    "usedBy": "79f9f28b-582c-45c8-85b8-cd3600c21747",
+    "appointmentId": 31,
+    "originAppointmentId": null,
+    "rootPaymentId": "b293bfc1-8100-4b4c-b748-ce2e3cabd866",
+    "parentCouponId": null,
+    "cancelReason": null,
+    "userPlanId": null,
+    "paymentId": "b293bfc1-8100-4b4c-b748-ce2e3cabd866",
+    "assignedUserId": "79f9f28b-582c-45c8-85b8-cd3600c21747",
+    "expiresAt": "2026-08-23T18:22:41.391Z",
+    "refundRequestedAt": null,
+    "refundProcessedAt": null,
+    "refundAmount": null,
+    "refundAsaasStatus": null,
+    "refundUserConfirmedAt": null,
+    "refundUserDisputedAt": null,
+    "userRemovedAt": null,
+    "createdAt": "2026-07-24T18:22:41.392Z"
+  },
+  "appointments": [
+    {
+      "id": 32,
+      "userId": "79f9f28b-582c-45c8-85b8-cd3600c21747",
+      "data": "2026-07-29T17:00:00.000Z",
+      "duracaoMinutos": 60,
+      "tipo": "sessao",
+      "observacoes": "asasdas",
+      "status": "cancelado",
+      "blocked": false,
+      "blockedAt": null,
+      "blockedReason": null,
+      "readAt": null,
+      "cancelReason": "sdfsdfs",
+      "cancelledAt": "2026-07-24T18:26:09.037Z",
+      "cancelRefundOption": "cupom",
+      "refundProcessedAt": null,
+      "refundAsaasStatus": null,
+      "refundUserConfirmedAt": null,
+      "refundUserDisputedAt": null,
+      "refundCouponId": "958b83b5-4aea-4100-962d-e5a7a853c674",
+      "userHiddenAt": null,
+      "adminArchivedAt": null,
+      "adminArchivedReason": null,
+      "createdAt": "2026-07-24T18:24:47.940Z",
+      "services": [
+        {
+          "id": "ca31ef0f-7071-488f-8f10-4b5ed916b026",
+          "status": "cancelado",
+          "tipo": "sessao"
+        }
+      ]
+    },
+    {
+      "id": 33,
+      "userId": "79f9f28b-582c-45c8-85b8-cd3600c21747",
+      "data": "2026-07-29T15:00:00.000Z",
+      "duracaoMinutos": 60,
+      "tipo": "sessao",
+      "observacoes": "sadas",
+      "status": "aceito",
+      "blocked": false,
+      "blockedAt": null,
+      "blockedReason": null,
+      "readAt": null,
+      "cancelReason": null,
+      "cancelledAt": null,
+      "cancelRefundOption": null,
+      "refundProcessedAt": null,
+      "refundAsaasStatus": null,
+      "refundUserConfirmedAt": null,
+      "refundUserDisputedAt": null,
+      "refundCouponId": null,
+      "userHiddenAt": null,
+      "adminArchivedAt": null,
+      "adminArchivedReason": null,
+      "createdAt": "2026-07-24T18:28:05.584Z",
+      "services": [
+        {
+          "id": "b62da51c-c1d3-4de5-9950-b7b6752aad93",
+          "status": "aceito",
+          "tipo": "sessao"
+        }
+      ]
+    }
+  ],
+  "paymentsForApts": 0,
+  "paymentsMaybe": 0,
+  "couponsPointing": [],
+  "serviceOrders": [],
+  "historySample": [
+    {
+      "id": "cmrz9xauu000412jd8a0j7003",
+      "entity": "appointment",
+      "entityId": "33",
+      "createdAt": "2026-07-24T18:28:39.606Z"
+    },
+    {
+      "id": "cmrz9u316000c11n243tbeuwd",
+      "entity": "appointment",
+      "entityId": "32",
+      "createdAt": "2026-07-24T18:26:09.498Z"
+    },
+    {
+      "id": "cmrz9stre0008sy7mb6q8u6qq",
+      "entity": "appointment",
+      "entityId": "32",
+      "createdAt": "2026-07-24T18:25:10.827Z"
+    }
+  ]
+}

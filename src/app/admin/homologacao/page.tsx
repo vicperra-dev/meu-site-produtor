@@ -1,10 +1,12 @@
 "use client";
 
 /**
- * GO-H6/H7 — Homologação: Laboratório (Simulation) + Pedido real (HOMOLOGATION).
+ * GO-H10A — Homologação: sessões Livre / Beats / Planos / Ferramentas.
+ * Laboratório (Simulation) + Pedido real (HOMOLOGATION).
  */
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   PageHeader,
   Card,
@@ -18,6 +20,10 @@ import {
   COPY,
 } from "@/components/design-system";
 import { SchedulingCalendar } from "@/app/agendamento/components/SchedulingCalendar";
+import {
+  CatalogSelectionPanels,
+  CatalogPurchaseSummary,
+} from "@/app/agendamento/components/CatalogSelectionPanels";
 import {
   CHECKOUT_CATALOG,
   type CanonicalServiceId,
@@ -34,6 +40,12 @@ import {
   PRODUCTION_SCHEDULE_DEFAULT_HOUR,
   exigeAgendamentoHora,
 } from "@/app/lib/agendamento-payment-rules";
+import { IntegridadePanel } from "./IntegridadePanel";
+import {
+  HomologationPlanButtons,
+  type PlanModo,
+  type PlanTier,
+} from "./HomologationPlanButtons";
 
 type Check = { key: string; label: string; ok: boolean; detail?: string };
 type Timeline = { at: string; step: string; ok: boolean; detail?: string };
@@ -115,6 +127,9 @@ type RealOrder = {
   flow: RealOrderFlow;
 };
 
+type SessionId = "livre" | "beats" | "planos" | "ferramentas";
+type ToolId = "integridade" | "limpeza" | "pedido" | "lab" | "modo-livre";
+
 const FLOW_LABELS: Array<{ key: keyof RealOrderFlow; label: string }> = [
   { key: "pedidoCriado", label: "Pedido criado" },
   { key: "pagamentoConfirmado", label: "Pagamento confirmado" },
@@ -127,6 +142,21 @@ const FLOW_LABELS: Array<{ key: keyof RealOrderFlow; label: string }> = [
   { key: "entrega", label: "Entrega" },
   { key: "downloadPronto", label: "Download" },
   { key: "concluido", label: "Concluído" },
+];
+
+const SESSIONS: Array<{ id: SessionId; label: string }> = [
+  { id: "livre", label: "Seleção Livre" },
+  { id: "beats", label: "Beats e Produções" },
+  { id: "planos", label: "Planos" },
+  { id: "ferramentas", label: "Ferramentas" },
+];
+
+const TOOLS: Array<{ id: ToolId; label: string }> = [
+  { id: "lab", label: "Simulation / Teste" },
+  { id: "pedido", label: "Pedido de Homologação" },
+  { id: "limpeza", label: "Limpeza / Dry Run" },
+  { id: "integridade", label: "Integridade" },
+  { id: "modo-livre", label: "Modo Livre" },
 ];
 
 const CATALOG_IDS = Object.keys(CHECKOUT_CATALOG) as CanonicalServiceId[];
@@ -155,7 +185,57 @@ function tomorrowIso(): string {
   return d.toISOString().slice(0, 10);
 }
 
+function parseSession(raw: string | null): SessionId {
+  if (raw === "beats" || raw === "planos" || raw === "ferramentas" || raw === "livre") {
+    return raw;
+  }
+  return "livre";
+}
+
+function parseTool(raw: string | null): ToolId {
+  if (
+    raw === "integridade" ||
+    raw === "limpeza" ||
+    raw === "pedido" ||
+    raw === "lab" ||
+    raw === "modo-livre"
+  ) {
+    return raw;
+  }
+  return "lab";
+}
+
 export default function HomologacaoAdminPage() {
+  return (
+    <Suspense fallback={<LoadingBlock label="Carregando Homologação…" />}>
+      <HomologacaoAdminContent />
+    </Suspense>
+  );
+}
+
+function HomologacaoAdminContent() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  const session = parseSession(searchParams.get("session"));
+  const tool = parseTool(searchParams.get("tool"));
+
+  const setSessionNav = useCallback(
+    (nextSession: SessionId, nextTool?: ToolId) => {
+      const params = new URLSearchParams(searchParams.toString());
+      params.set("session", nextSession);
+      if (nextSession === "ferramentas") {
+        params.set("tool", nextTool || tool || "lab");
+      } else {
+        params.delete("tool");
+      }
+      const qs = params.toString();
+      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+    },
+    [pathname, router, searchParams, tool]
+  );
+
   const [latest, setLatest] = useState<Run | null>(null);
   const [runs, setRuns] = useState<Run[]>([]);
   const [loading, setLoading] = useState(true);
@@ -171,6 +251,7 @@ export default function HomologacaoAdminPage() {
     "approved"
   );
   const [planId, setPlanId] = useState<string>("");
+  const [planModo, setPlanModo] = useState<PlanModo>("mensal");
   const [runRefund, setRunRefund] = useState(false);
   const [labPhase, setLabPhase] = useState<string>("reserved");
   const [labMsg, setLabMsg] = useState<string | null>(null);
@@ -242,6 +323,7 @@ export default function HomologacaoAdminPage() {
     if (!preset) return;
     setRunRefund(Boolean(preset.runRefund));
     setPlanId(preset.planId || "");
+    setPlanModo("mensal");
     if (preset.qty) {
       setQty({ ...preset.qty });
     } else if (id === "livre") {
@@ -250,10 +332,14 @@ export default function HomologacaoAdminPage() {
       // cenários sem qty (plano / desconto / refund) — limpa catálogo
       setQty(emptyQty());
     }
-    if (opensSchedule || (preset.qty && countServiceOrders(
-      qtyToLines(preset.qty || {}).servicos,
-      qtyToLines(preset.qty || {}).beats
-    ) === 1)) {
+    if (
+      opensSchedule ||
+      (preset.qty &&
+        countServiceOrders(
+          qtyToLines(preset.qty || {}).servicos,
+          qtyToLines(preset.qty || {}).beats
+        ) === 1)
+    ) {
       setData(tomorrowIso());
       setHora(needsHour ? "14:00" : PRODUCTION_SCHEDULE_DEFAULT_HOUR);
     }
@@ -261,6 +347,7 @@ export default function HomologacaoAdminPage() {
 
   function bumpQty(id: CanonicalServiceId, delta: number) {
     setPresetId("livre");
+    setPlanId("");
     setQty((prev) => {
       const next = { ...prev };
       const v = Math.max(0, Math.min(20, (next[id] || 0) + delta));
@@ -278,7 +365,7 @@ export default function HomologacaoAdminPage() {
       const lines = qtyToLines(useQty);
       const preset = LAB_PRESETS.find((p) => p.id === presetId);
 
-      // Plano / cenários oficiais sem seleção livre
+      // Plano / cenários oficiais sem seleção livre (mesmo pipeline do botão dedicado)
       if (planId || (preset?.scenarioId && !preset.qty && presetId !== "livre")) {
         const res = await fetch("/api/admin/homologation/run", {
           method: "POST",
@@ -287,6 +374,7 @@ export default function HomologacaoAdminPage() {
             scenarioId: preset?.scenarioId,
             planId: planId || undefined,
             tipo: planId ? "plano" : undefined,
+            modo: planId ? planModo : undefined,
             runRefund: runRefund || preset?.runRefund,
             paymentOutcome,
           }),
@@ -321,9 +409,7 @@ export default function HomologacaoAdminPage() {
       };
       if (immediate) {
         body.data = data || tomorrowIso();
-        body.hora = presencial
-          ? hora || "14:00"
-          : PRODUCTION_SCHEDULE_DEFAULT_HOUR;
+        body.hora = presencial ? hora || "14:00" : PRODUCTION_SCHEDULE_DEFAULT_HOUR;
         body.duracaoMinutos = 60;
       }
 
@@ -340,6 +426,74 @@ export default function HomologacaoAdminPage() {
       setLatest(dataRes.run);
       setLastQty(useQty);
       setMessage(dataRes.run.ok ? "Simulação PASS." : "Simulação com falhas — veja debug.");
+      await refresh();
+    } catch (e) {
+      setMessage(e instanceof Error ? e.message : "Erro inesperado.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function runPlanSimulation(selectedPlanId: PlanTier, modo: PlanModo) {
+    setBusy(true);
+    setMessage(null);
+    setPlanId(selectedPlanId);
+    setPlanModo(modo);
+    setPresetId("plano");
+    try {
+      // Sem scenarioId — anual precisa do modo explícito no engine.
+      const res = await fetch("/api/admin/homologation/run", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tipo: "plano",
+          planId: selectedPlanId,
+          modo,
+          paymentOutcome,
+          runRefund,
+        }),
+      });
+      const dataRes = await res.json();
+      if (!res.ok) {
+        setMessage(dataRes.error || "Falha na simulação de plano.");
+        return;
+      }
+      setLatest(dataRes.run);
+      setMessage(
+        dataRes.run.ok
+          ? `Plano ${selectedPlanId} (${modo}) PASS.`
+          : "Simulação de plano com falhas — veja debug."
+      );
+      await refresh();
+    } catch (e) {
+      setMessage(e instanceof Error ? e.message : "Erro inesperado.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function forceRenewLatestPlan() {
+    setBusy(true);
+    setMessage(null);
+    try {
+      const paymentDbId = latest?.paymentDbId;
+      if (!paymentDbId) {
+        setMessage("Execute um plano primeiro (precisa de paymentDbId no run).");
+        return;
+      }
+      const res = await fetch("/api/admin/homologation/renew-benefits", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ paymentDbId }),
+      });
+      const dataRes = await res.json();
+      if (!res.ok) {
+        setMessage(dataRes.error || "Falha na renovação do ciclo.");
+        return;
+      }
+      setMessage(
+        `Ciclo renovado: ${dataRes.result?.generatedCoupons ?? 0} cupons novos · ${dataRes.result?.substitutedCoupons ?? 0} substituídos (ativos=${dataRes.activeCoupons?.length ?? 0} / esperados=${dataRes.expectedCycleCoupons}).`
+      );
       await refresh();
     } catch (e) {
       setMessage(e instanceof Error ? e.message : "Erro inesperado.");
@@ -533,19 +687,93 @@ export default function HomologacaoAdminPage() {
 
   const selectedPreset = LAB_PRESETS.find((p) => p.id === presetId);
 
-  return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Homologação — Laboratório + Pedido Real"
-        subtitle={
-          <>
-            Dois modos: <code className="text-zinc-300">SimulationProvider</code> (lab descartável) e{" "}
-            <code className="text-zinc-300">origin=HOMOLOGATION</code> (pedido operacional real, sem Asaas).
-          </>
-        }
-        icon="sparkles"
-      />
+  function renderOrderMeta() {
+    return (
+      <div className="rounded-md border border-zinc-800 bg-zinc-950/50 p-3 text-xs space-y-1">
+        <div>
+          Ordens de Serviço previstas:{" "}
+          <span className="text-amber-300 font-semibold">{orderCount}</span>
+        </div>
+        <div className="text-zinc-400">
+          {orderCount === 0
+            ? "Selecione produtos."
+            : orderCount === 1
+              ? "Regra: 1 Ordem → calendário imediato."
+              : "Regra: 2+ Ordens → cupons (sem agenda no checkout)."}
+        </div>
+        {orderPreview.length > 0 && (
+          <div className="text-zinc-500">
+            {orderPreview.map((o) => o.serviceType).join(" → ")}
+          </div>
+        )}
+        {opensSchedule && <Badge intent="success">Calendário imediato</Badge>}
+        {emitsCoupons && <Badge intent="warning">Emite cupons</Badge>}
+      </div>
+    );
+  }
 
+  function renderSimulationControls() {
+    return (
+      <div className="space-y-3">
+        <Field label="Pagamento simulado">
+          <Select
+            value={paymentOutcome}
+            onChange={(e) =>
+              setPaymentOutcome(e.target.value as "approved" | "pending" | "refused")
+            }
+            options={[
+              { value: "approved", label: "Aprovado (confirmar)" },
+              { value: "pending", label: "Pendente" },
+              { value: "refused", label: "Recusado" },
+            ]}
+          />
+        </Field>
+        <label className="flex items-center gap-2 text-xs text-zinc-400">
+          <input
+            type="checkbox"
+            checked={runRefund}
+            onChange={(e) => setRunRefund(e.target.checked)}
+          />
+          Executar reembolso após confirmar
+        </label>
+      </div>
+    );
+  }
+
+  function renderTesteActions() {
+    return (
+      <div className="space-y-2">
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant="primary"
+            loading={busy}
+            onClick={() => void simulatePayment()}
+            className="!bg-amber-600 hover:!bg-amber-500"
+          >
+            Teste
+          </Button>
+          <Button
+            variant="outline"
+            disabled={busy || !lastQty}
+            onClick={() => void simulatePayment({ repeat: true })}
+          >
+            Repetir Cenário
+          </Button>
+          <Button variant="outline" disabled={busy} icon="refresh" onClick={() => void refresh()}>
+            {COPY.actions.refresh}
+          </Button>
+        </div>
+        <p className="text-xs text-zinc-500">
+          Usa o mesmo pipeline do <code className="text-zinc-400">SimulationProvider</code>{" "}
+          (criação → webhook oficial → efeitos de domínio).
+        </p>
+        {message && <p className="text-sm text-amber-100">{message}</p>}
+      </div>
+    );
+  }
+
+  function renderPresets() {
+    return (
       <Callout intent="info" title="Presets rápidos (compartilhados)">
         <div className="flex flex-wrap gap-2 mt-2">
           {LAB_PRESETS.map((p) => (
@@ -564,245 +792,269 @@ export default function HomologacaoAdminPage() {
           <p className="text-xs text-zinc-400 mt-2">{selectedPreset.description}</p>
         )}
       </Callout>
+    );
+  }
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card>
-          <Section title="Seleção livre de serviços">
-            <ul className="space-y-2 text-sm max-h-[320px] overflow-y-auto">
-              {CATALOG_IDS.map((id) => {
-                const item = CHECKOUT_CATALOG[id];
-                const n = qty[id] || 0;
-                return (
-                  <li
-                    key={id}
-                    className="flex items-center justify-between gap-2 border-b border-zinc-800 py-1.5"
-                  >
-                    <div>
-                      <div className="text-zinc-200">{item.nome}</div>
-                      <div className="text-[11px] text-zinc-500">
-                        {item.category} · R$ {item.preco}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        size="xs"
-                        variant="outline"
-                        disabled={busy || n < 1}
-                        onClick={() => bumpQty(id, -1)}
-                      >
-                        −
-                      </Button>
-                      <span className="w-6 text-center tabular-nums">{n}</span>
-                      <Button
-                        size="xs"
-                        variant="outline"
-                        disabled={busy}
-                        onClick={() => bumpQty(id, 1)}
-                      >
-                        +
-                      </Button>
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
+  function renderPedidoHomologacao() {
+    return (
+      <div className="space-y-3">
+        <h3 className="text-sm font-semibold text-emerald-300">
+          Pedido de Homologação (fluxo real)
+        </h3>
+        <p className="text-xs text-zinc-500">
+          Confirma pagamento internamente e executa o mesmo{" "}
+          <code className="text-zinc-400">processPaymentWebhook</code> do Asaas. Cupons SERVICE,
+          valor de catálogo, origin=HOMOLOGATION.
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant="primary"
+            loading={busy}
+            onClick={() => void createRealOrder()}
+            className="!bg-emerald-700 hover:!bg-emerald-600"
+          >
+            Criar Pedido de Homologação
+          </Button>
+          <Button
+            variant="outline"
+            disabled={busy || !realOrder}
+            onClick={() => void refreshRealOrder()}
+          >
+            Atualizar Fluxo Real
+          </Button>
+        </div>
+        {orderMsg && <p className="text-sm text-emerald-100">{orderMsg}</p>}
+      </div>
+    );
+  }
 
-            <div className="mt-4 rounded-md border border-zinc-800 bg-zinc-950/50 p-3 text-xs space-y-1">
-              <div>
-                Ordens de Serviço previstas:{" "}
-                <span className="text-amber-300 font-semibold">{orderCount}</span>
-              </div>
-              <div className="text-zinc-400">
-                {orderCount === 0
-                  ? "Selecione produtos."
-                  : orderCount === 1
-                    ? "Regra: 1 Ordem → calendário imediato."
-                    : "Regra: 2+ Ordens → cupons (sem agenda no checkout)."}
-              </div>
-              {orderPreview.length > 0 && (
-                <div className="text-zinc-500">
-                  {orderPreview.map((o) => o.serviceType).join(" → ")}
-                </div>
-              )}
-              {opensSchedule && <Badge intent="success">Calendário imediato</Badge>}
-              {emitsCoupons && <Badge intent="warning">Emite cupons</Badge>}
-            </div>
+  function renderLimpeza() {
+    return (
+      <div className="space-y-3">
+        <h3 className="text-sm font-semibold text-red-300">Limpeza da Homologação (GO-H8B)</h3>
+        <p className="text-xs text-zinc-500">
+          Único ponto de exclusão: <code className="text-zinc-400">purgeOrderTree</code> por Pedido
+          Raiz. Dry-run obrigatório antes de confirmar. Asaas real nunca é tocado.
+        </p>
+        <div className="flex flex-col gap-2 text-sm text-zinc-300">
+          <label className="inline-flex items-center gap-2">
+            <input
+              type="radio"
+              name="purgeScope"
+              checked={purgeScope === "simulation"}
+              onChange={() => setPurgeScope("simulation")}
+            />
+            Limpar apenas SimulationProvider
+          </label>
+          <label className="inline-flex items-center gap-2">
+            <input
+              type="radio"
+              name="purgeScope"
+              checked={purgeScope === "homologation"}
+              onChange={() => setPurgeScope("homologation")}
+            />
+            Limpar apenas Pedidos de Homologação
+          </label>
+          <label className="inline-flex items-center gap-2">
+            <input
+              type="radio"
+              name="purgeScope"
+              checked={purgeScope === "both"}
+              onChange={() => setPurgeScope("both")}
+            />
+            Limpar ambos
+          </label>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" disabled={busy} onClick={() => void previewPurge()}>
+            Pré-visualizar (dry-run)
+          </Button>
+          <Button
+            variant="outline"
+            disabled={busy || !purgePreview}
+            onClick={() => void executePurge()}
+            className="!border-red-800 !text-red-300"
+          >
+            Confirmar limpeza
+          </Button>
+        </div>
+        {purgePreview && (
+          <ul className="text-xs text-zinc-400 grid grid-cols-2 sm:grid-cols-3 gap-1">
+            <li>Pedidos Raiz: {purgePreview.roots}</li>
+            <li>Pagamentos: {purgePreview.pedidos}</li>
+            <li>Ordens: {purgePreview.ordens}</li>
+            <li>Cupons: {purgePreview.cupons}</li>
+            <li>Agendamentos: {purgePreview.agendamentos}</li>
+            <li>Services: {purgePreview.services}</li>
+            <li>Selecionados: {purgePreview.selecionados}</li>
+            <li>Entregas: {purgePreview.entregas}</li>
+            <li>Histórico: {purgePreview.historico}</li>
+            <li>Sync: {purgePreview.sync}</li>
+          </ul>
+        )}
+        {purgeMsg && <p className="text-sm text-amber-100">{purgeMsg}</p>}
+      </div>
+    );
+  }
 
-            {opensSchedule && (
-              <div className="mt-4">
-                <SchedulingCalendar
-                  serviceType={primaryType}
-                  serviceName={CHECKOUT_CATALOG[primaryType as CanonicalServiceId]?.nome}
-                  showHours={needsHour}
-                  dataSelecionada={data}
-                  horaSelecionada={hora}
-                  onDataChange={setData}
-                  onHoraChange={setHora}
-                  title="Calendário (mesmo componente do checkout)"
-                />
-              </div>
-            )}
+  function renderModoLivre() {
+    if (!latest) {
+      return <p className="text-sm text-zinc-500">Nenhuma simulação ainda para controlar.</p>;
+    }
+    return (
+      <div className="space-y-3">
+        <p className="text-xs text-zinc-500">
+          Controles exclusivos da Homologação — usam o workflow oficial, sem alterar regras. Só
+          atuam em artefatos SimulationProvider.
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <span className="text-xs text-zinc-500 self-center">Refund:</span>
+          {(["APPROVED", "PENDING", "FAILED", "TIMEOUT"] as const).map((o) => (
+            <Button
+              key={o}
+              variant="outline"
+              size="xs"
+              disabled={busy}
+              onClick={() => void refundLatest(o)}
+            >
+              {o}
+            </Button>
+          ))}
+        </div>
 
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              <Field label="Pagamento simulado">
-                <Select
-                  value={paymentOutcome}
-                  onChange={(e) =>
-                    setPaymentOutcome(e.target.value as "approved" | "pending" | "refused")
+        {(latest.appointmentIds || []).length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            <span className="text-xs text-zinc-500 self-center">Agendamento:</span>
+            {(latest.appointmentIds || []).map((id) => (
+              <div key={id} className="flex flex-wrap gap-1 items-center">
+                <span className="text-xs text-zinc-400">#{id}</span>
+                <Button
+                  size="xs"
+                  variant="outline"
+                  disabled={busy}
+                  onClick={() =>
+                    void labAction({ action: "approve_appointment", appointmentId: id })
                   }
-                  options={[
-                    { value: "approved", label: "Aprovado (confirmar)" },
-                    { value: "pending", label: "Pendente" },
-                    { value: "refused", label: "Recusado" },
-                  ]}
-                />
-              </Field>
-              <Field label="Plano (opcional)">
+                >
+                  Aceitar
+                </Button>
+                <Button
+                  size="xs"
+                  variant="outline"
+                  disabled={busy}
+                  onClick={() =>
+                    void labAction({ action: "reject_appointment", appointmentId: id })
+                  }
+                >
+                  Recusar
+                </Button>
+                <Button
+                  size="xs"
+                  variant="outline"
+                  disabled={busy}
+                  onClick={() =>
+                    void labAction({ action: "start_appointment", appointmentId: id })
+                  }
+                >
+                  Iniciar
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {latest.providerPaymentId && (
+          <div className="flex flex-wrap gap-2">
+            <span className="text-xs text-zinc-500 self-center">Pagamento:</span>
+            <Button
+              size="xs"
+              variant="outline"
+              disabled={busy}
+              onClick={() =>
+                void labAction({
+                  action: "confirm_payment",
+                  providerPaymentId: latest.providerPaymentId,
+                })
+              }
+            >
+              Confirmar
+            </Button>
+            <Button
+              size="xs"
+              variant="outline"
+              disabled={busy}
+              onClick={() =>
+                void labAction({
+                  action: "cancel_payment",
+                  providerPaymentId: latest.providerPaymentId,
+                })
+              }
+            >
+              Cancelar / Recusar
+            </Button>
+          </div>
+        )}
+
+        {(latest.serviceOrders || []).length > 0 && (
+          <div className="space-y-2">
+            <div className="flex flex-wrap gap-2 items-end">
+              <Field label="Fase da Ordem" className="min-w-[160px]">
                 <Select
-                  value={planId}
-                  onChange={(e) => {
-                    setPlanId(e.target.value);
-                    if (e.target.value) setPresetId("plano");
-                  }}
-                  options={[
-                    { value: "", label: "— nenhum —" },
-                    { value: "bronze", label: "Bronze" },
-                    { value: "prata", label: "Prata" },
-                    { value: "ouro", label: "Ouro" },
-                  ]}
+                  value={labPhase}
+                  onChange={(e) => setLabPhase(e.target.value)}
+                  options={SERVICE_ORDER_PHASES.map((p) => ({ value: p, label: p }))}
                 />
               </Field>
             </div>
+            {(latest.serviceOrders || []).map((o) => (
+              <div key={o.id} className="flex flex-wrap gap-2 items-center text-xs">
+                <span className="text-zinc-400">
+                  {o.serviceType} ({o.phase})
+                </span>
+                <Button
+                  size="xs"
+                  variant="outline"
+                  disabled={busy}
+                  onClick={() =>
+                    void labAction({
+                      action: "set_order_phase",
+                      serviceOrderId: o.id,
+                      phase: labPhase,
+                    })
+                  }
+                >
+                  Aplicar fase
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
 
-            <label className="mt-3 flex items-center gap-2 text-xs text-zinc-400">
-              <input
-                type="checkbox"
-                checked={runRefund}
-                onChange={(e) => setRunRefund(e.target.checked)}
-              />
-              Executar reembolso após confirmar
-            </label>
-
-            <div className="mt-4 flex flex-wrap gap-2">
+        {(latest.serviceIds || []).length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            <span className="text-xs text-zinc-500 self-center">Entrega:</span>
+            {(latest.serviceIds || []).map((sid) => (
               <Button
-                variant="primary"
-                loading={busy}
-                onClick={() => void simulatePayment()}
-                className="!bg-amber-600 hover:!bg-amber-500"
-              >
-                Simular Pagamento (Lab)
-              </Button>
-              <Button
+                key={sid}
+                size="xs"
                 variant="outline"
-                disabled={busy || !lastQty}
-                onClick={() => void simulatePayment({ repeat: true })}
+                disabled={busy}
+                onClick={() => void labAction({ action: "simulate_delivery", serviceId: sid })}
               >
-                Repetir Cenário
+                Simular entrega {sid.slice(0, 8)}
               </Button>
-              <Button variant="outline" disabled={busy} icon="refresh" onClick={() => void refresh()}>
-                {COPY.actions.refresh}
-              </Button>
-            </div>
-            {message && <p className="text-sm text-amber-100 mt-3">{message}</p>}
+            ))}
+          </div>
+        )}
 
-            <div className="mt-6 border-t border-zinc-800 pt-4 space-y-3">
-              <h3 className="text-sm font-semibold text-emerald-300">
-                Pedido de Homologação (fluxo real)
-              </h3>
-              <p className="text-xs text-zinc-500">
-                Confirma pagamento internamente e executa o mesmo{" "}
-                <code className="text-zinc-400">processPaymentWebhook</code> do Asaas. Cupons SERVICE,
-                valor de catálogo, origin=HOMOLOGATION.
-              </p>
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  variant="primary"
-                  loading={busy}
-                  onClick={() => void createRealOrder()}
-                  className="!bg-emerald-700 hover:!bg-emerald-600"
-                >
-                  Criar Pedido de Homologação
-                </Button>
-                <Button
-                  variant="outline"
-                  disabled={busy || !realOrder}
-                  onClick={() => void refreshRealOrder()}
-                >
-                  Atualizar Fluxo Real
-                </Button>
-              </div>
-              {orderMsg && <p className="text-sm text-emerald-100">{orderMsg}</p>}
-            </div>
+        {labMsg && <p className="text-sm text-amber-100">{labMsg}</p>}
+      </div>
+    );
+  }
 
-            <div className="mt-6 border-t border-zinc-800 pt-4 space-y-3">
-              <h3 className="text-sm font-semibold text-red-300">
-                Limpeza da Homologação (GO-H8B)
-              </h3>
-              <p className="text-xs text-zinc-500">
-                Único ponto de exclusão: <code className="text-zinc-400">purgeOrderTree</code> por
-                Pedido Raiz. Dry-run obrigatório antes de confirmar. Asaas real nunca é tocado.
-              </p>
-              <div className="flex flex-col gap-2 text-sm text-zinc-300">
-                <label className="inline-flex items-center gap-2">
-                  <input
-                    type="radio"
-                    name="purgeScope"
-                    checked={purgeScope === "simulation"}
-                    onChange={() => setPurgeScope("simulation")}
-                  />
-                  Limpar apenas SimulationProvider
-                </label>
-                <label className="inline-flex items-center gap-2">
-                  <input
-                    type="radio"
-                    name="purgeScope"
-                    checked={purgeScope === "homologation"}
-                    onChange={() => setPurgeScope("homologation")}
-                  />
-                  Limpar apenas Pedidos de Homologação
-                </label>
-                <label className="inline-flex items-center gap-2">
-                  <input
-                    type="radio"
-                    name="purgeScope"
-                    checked={purgeScope === "both"}
-                    onChange={() => setPurgeScope("both")}
-                  />
-                  Limpar ambos
-                </label>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <Button variant="outline" disabled={busy} onClick={() => void previewPurge()}>
-                  Pré-visualizar (dry-run)
-                </Button>
-                <Button
-                  variant="outline"
-                  disabled={busy || !purgePreview}
-                  onClick={() => void executePurge()}
-                  className="!border-red-800 !text-red-300"
-                >
-                  Confirmar limpeza
-                </Button>
-              </div>
-              {purgePreview && (
-                <ul className="text-xs text-zinc-400 grid grid-cols-2 sm:grid-cols-3 gap-1">
-                  <li>Pedidos Raiz: {purgePreview.roots}</li>
-                  <li>Pagamentos: {purgePreview.pedidos}</li>
-                  <li>Ordens: {purgePreview.ordens}</li>
-                  <li>Cupons: {purgePreview.cupons}</li>
-                  <li>Agendamentos: {purgePreview.agendamentos}</li>
-                  <li>Services: {purgePreview.services}</li>
-                  <li>Selecionados: {purgePreview.selecionados}</li>
-                  <li>Entregas: {purgePreview.entregas}</li>
-                  <li>Histórico: {purgePreview.historico}</li>
-                  <li>Sync: {purgePreview.sync}</li>
-                </ul>
-              )}
-              {purgeMsg && <p className="text-sm text-amber-100">{purgeMsg}</p>}
-            </div>
-          </Section>
-        </Card>
-
+  function renderDebugPanels() {
+    return (
+      <>
         <Card>
           <Section title="Debug operacional (tempo real)">
             {loading && <LoadingBlock />}
@@ -821,8 +1073,7 @@ export default function HomologacaoAdminPage() {
 
                 <ol className="space-y-2 border-l border-zinc-700 pl-3">
                   <li>
-                    Pedido{" "}
-                    <code className="text-zinc-300">{latest.paymentDbId || "—"}</code>
+                    Pedido <code className="text-zinc-300">{latest.paymentDbId || "—"}</code>
                     {latest.providerPaymentId && (
                       <span className="text-zinc-500"> · {latest.providerPaymentId}</span>
                     )}
@@ -927,274 +1178,306 @@ export default function HomologacaoAdminPage() {
             )}
           </Section>
         </Card>
+
+        {realOrder && (
+          <Card>
+            <Section title="Fluxo Real (banco)">
+              <div className="flex flex-wrap items-center gap-2 mb-3">
+                <Badge intent="success">origin=HOMOLOGATION</Badge>
+                <span className="text-xs text-zinc-500">{realOrder.paymentDbId}</span>
+                <span className="text-xs text-zinc-400">
+                  R$ {Number(realOrder.amount).toFixed(2)} · {realOrder.paymentStatus}
+                </span>
+              </div>
+              <ol className="space-y-2 border-l border-emerald-900 pl-3 text-sm">
+                {FLOW_LABELS.map((step) => {
+                  const ok = realOrder.flow[step.key];
+                  return (
+                    <li key={step.key} className="flex gap-2 items-center">
+                      <span className={ok ? "text-emerald-400" : "text-zinc-600"}>
+                        {ok ? "✓" : "○"}
+                      </span>
+                      <span className={ok ? "text-zinc-200" : "text-zinc-500"}>{step.label}</span>
+                    </li>
+                  );
+                })}
+              </ol>
+              <div className="mt-4 text-xs text-zinc-400 space-y-1">
+                <div>
+                  {realOrder.orderCount} Ordem(ns):{" "}
+                  {realOrder.serviceOrders.map((o) => o.serviceType).join(", ") || "—"}
+                </div>
+                <div>
+                  Cupons ({(realOrder.couponCategories || realOrder.couponTypes).join(", ") || "—"}
+                  ): {realOrder.couponCodes.join(", ") || "—"}
+                </div>
+                <div>
+                  Agendamentos: {realOrder.appointmentIds.join(", ") || "—"}
+                  {realOrder.appointments.length > 0 &&
+                    ` · status=${realOrder.appointments.map((a) => a.status).join(",")}`}
+                </div>
+                <div>
+                  Serviços:{" "}
+                  {realOrder.services.map((s) => `${s.tipo}:${s.status}`).join(", ") || "—"}
+                </div>
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2 text-xs">
+                <Link href="/admin/pagamentos" className="text-emerald-400 hover:underline">
+                  Pagamentos
+                </Link>
+                <Link href="/admin/agendamentos" className="text-emerald-400 hover:underline">
+                  Agendamentos
+                </Link>
+                <Link href="/admin/servicos" className="text-emerald-400 hover:underline">
+                  Serviços
+                </Link>
+                <Link
+                  href="/admin/servicos-selecionados"
+                  className="text-emerald-400 hover:underline"
+                >
+                  Serviços Selecionados
+                </Link>
+                <Link href="/admin" className="text-emerald-400 hover:underline">
+                  Dashboard
+                </Link>
+                <Link
+                  href="/admin/controle-agendamento"
+                  className="text-emerald-400 hover:underline"
+                >
+                  Controle Operacional
+                </Link>
+                <Link href="/minha-conta" className="text-emerald-400 hover:underline">
+                  Minha Conta
+                </Link>
+              </div>
+            </Section>
+          </Card>
+        )}
+
+        {latest && (
+          <Card>
+            <Section title="Timeline">
+              <ol className="space-y-2 max-h-[40vh] overflow-y-auto text-xs">
+                {latest.timeline.map((t, i) => (
+                  <li key={`${t.at}-${i}`} className="border-b border-zinc-800 pb-2">
+                    <div className="text-zinc-500">{new Date(t.at).toLocaleString("pt-BR")}</div>
+                    <div className={t.ok ? "text-zinc-200" : "text-red-300"}>
+                      {t.step}
+                      {t.detail ? ` — ${t.detail}` : ""}
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            </Section>
+          </Card>
+        )}
+
+        {runs.length > 1 && (
+          <Card>
+            <Section title="Runs recentes">
+              <ul className="text-xs text-zinc-400 space-y-1">
+                {runs.slice(0, 12).map((r) => (
+                  <li key={r.runId}>
+                    <button
+                      type="button"
+                      className="hover:text-zinc-200 text-left"
+                      onClick={() => setLatest(r)}
+                    >
+                      {r.runId} · {r.ok ? "PASS" : "FAIL"} ·{" "}
+                      {r.scenarioId || (r.input?.freeLab ? "livre" : r.input?.tipo) || "?"} ·{" "}
+                      {r.orderCount ?? r.serviceOrders?.length ?? "?"} OS ·{" "}
+                      {new Date(r.startedAt).toLocaleString("pt-BR")}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </Section>
+          </Card>
+        )}
+      </>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <PageHeader
+        title="Homologação"
+        subtitle={
+          <>
+            Sessões de QA: catálogo compartilhado com Agendamento, planos Mensal/Anual e
+            ferramentas (Lab <code className="text-zinc-300">SimulationProvider</code> + Pedido{" "}
+            <code className="text-zinc-300">origin=HOMOLOGATION</code>).
+          </>
+        }
+        icon="sparkles"
+      />
+
+      <div className="flex flex-wrap gap-2">
+        {SESSIONS.map((s) => (
+          <Button
+            key={s.id}
+            size="sm"
+            variant={session === s.id ? "primary" : "outline"}
+            onClick={() => setSessionNav(s.id, s.id === "ferramentas" ? tool : undefined)}
+          >
+            {s.label}
+          </Button>
+        ))}
       </div>
 
-      {realOrder && (
-        <Card>
-          <Section title="Fluxo Real (banco)">
-            <div className="flex flex-wrap items-center gap-2 mb-3">
-              <Badge intent="success">origin=HOMOLOGATION</Badge>
-              <span className="text-xs text-zinc-500">{realOrder.paymentDbId}</span>
-              <span className="text-xs text-zinc-400">
-                R$ {Number(realOrder.amount).toFixed(2)} · {realOrder.paymentStatus}
-              </span>
-            </div>
-            <ol className="space-y-2 border-l border-emerald-900 pl-3 text-sm">
-              {FLOW_LABELS.map((step) => {
-                const ok = realOrder.flow[step.key];
-                return (
-                  <li key={step.key} className="flex gap-2 items-center">
-                    <span className={ok ? "text-emerald-400" : "text-zinc-600"}>
-                      {ok ? "✓" : "○"}
-                    </span>
-                    <span className={ok ? "text-zinc-200" : "text-zinc-500"}>{step.label}</span>
-                  </li>
-                );
-              })}
-            </ol>
-            <div className="mt-4 text-xs text-zinc-400 space-y-1">
-              <div>
-                {realOrder.orderCount} Ordem(ns):{" "}
-                {realOrder.serviceOrders.map((o) => o.serviceType).join(", ") || "—"}
-              </div>
-              <div>
-                Cupons ({(realOrder.couponCategories || realOrder.couponTypes).join(", ") || "—"}):{" "}
-                {realOrder.couponCodes.join(", ") || "—"}
-              </div>
-              <div>
-                Agendamentos: {realOrder.appointmentIds.join(", ") || "—"}
-                {realOrder.appointments.length > 0 &&
-                  ` · status=${realOrder.appointments.map((a) => a.status).join(",")}`}
-              </div>
-              <div>
-                Serviços:{" "}
-                {realOrder.services.map((s) => `${s.tipo}:${s.status}`).join(", ") || "—"}
-              </div>
-            </div>
-            <div className="mt-3 flex flex-wrap gap-2 text-xs">
-              <Link href="/admin/pagamentos" className="text-emerald-400 hover:underline">
-                Pagamentos
-              </Link>
-              <Link href="/admin/agendamentos" className="text-emerald-400 hover:underline">
-                Agendamentos
-              </Link>
-              <Link href="/admin/servicos" className="text-emerald-400 hover:underline">
-                Serviços
-              </Link>
-              <Link
-                href="/admin/servicos-selecionados"
-                className="text-emerald-400 hover:underline"
-              >
-                Serviços Selecionados
-              </Link>
-              <Link href="/admin" className="text-emerald-400 hover:underline">
-                Dashboard
-              </Link>
-              <Link
-                href="/admin/controle-agendamento"
-                className="text-emerald-400 hover:underline"
-              >
-                Controle Operacional
-              </Link>
-              <Link href="/minha-conta" className="text-emerald-400 hover:underline">
-                Minha Conta
-              </Link>
-            </div>
-          </Section>
-        </Card>
-      )}
-
-      {latest && (
-        <Card>
-          <Section title="Modo Livre (admin)">
-            <p className="text-xs text-zinc-500 mb-3">
-              Controles exclusivos da Homologação — usam o workflow oficial, sem alterar regras.
-              Só atuam em artefatos SimulationProvider.
-            </p>
-            <div className="flex flex-wrap gap-2 mb-3">
-              <span className="text-xs text-zinc-500 self-center">Refund:</span>
-              {(["APPROVED", "PENDING", "FAILED", "TIMEOUT"] as const).map((o) => (
-                <Button
-                  key={o}
-                  variant="outline"
-                  size="xs"
-                  disabled={busy}
-                  onClick={() => void refundLatest(o)}
-                >
-                  {o}
-                </Button>
-              ))}
-            </div>
-
-            {(latest.appointmentIds || []).length > 0 && (
-              <div className="flex flex-wrap gap-2 mb-3">
-                <span className="text-xs text-zinc-500 self-center">Agendamento:</span>
-                {(latest.appointmentIds || []).map((id) => (
-                  <div key={id} className="flex flex-wrap gap-1 items-center">
-                    <span className="text-xs text-zinc-400">#{id}</span>
-                    <Button
-                      size="xs"
-                      variant="outline"
-                      disabled={busy}
-                      onClick={() =>
-                        void labAction({ action: "approve_appointment", appointmentId: id })
-                      }
-                    >
-                      Aceitar
-                    </Button>
-                    <Button
-                      size="xs"
-                      variant="outline"
-                      disabled={busy}
-                      onClick={() =>
-                        void labAction({ action: "reject_appointment", appointmentId: id })
-                      }
-                    >
-                      Recusar
-                    </Button>
-                    <Button
-                      size="xs"
-                      variant="outline"
-                      disabled={busy}
-                      onClick={() =>
-                        void labAction({ action: "start_appointment", appointmentId: id })
-                      }
-                    >
-                      Iniciar
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {latest.providerPaymentId && (
-              <div className="flex flex-wrap gap-2 mb-3">
-                <span className="text-xs text-zinc-500 self-center">Pagamento:</span>
-                <Button
-                  size="xs"
-                  variant="outline"
-                  disabled={busy}
-                  onClick={() =>
-                    void labAction({
-                      action: "confirm_payment",
-                      providerPaymentId: latest.providerPaymentId,
-                    })
-                  }
-                >
-                  Confirmar
-                </Button>
-                <Button
-                  size="xs"
-                  variant="outline"
-                  disabled={busy}
-                  onClick={() =>
-                    void labAction({
-                      action: "cancel_payment",
-                      providerPaymentId: latest.providerPaymentId,
-                    })
-                  }
-                >
-                  Cancelar / Recusar
-                </Button>
-              </div>
-            )}
-
-            {(latest.serviceOrders || []).length > 0 && (
-              <div className="space-y-2 mb-3">
-                <div className="flex flex-wrap gap-2 items-end">
-                  <Field label="Fase da Ordem" className="min-w-[160px]">
-                    <Select
-                      value={labPhase}
-                      onChange={(e) => setLabPhase(e.target.value)}
-                      options={SERVICE_ORDER_PHASES.map((p) => ({ value: p, label: p }))}
+      {session === "livre" && (
+        <div className="space-y-6">
+          <CatalogSelectionPanels
+            qty={qty}
+            onBump={bumpQty}
+            showStudio
+            showBeats={false}
+            sectionStyle="marketing"
+          />
+          <div className="grid gap-4 lg:grid-cols-2">
+            <Card>
+              <Section title="Resumo e Teste">
+                <CatalogPurchaseSummary qty={qty} />
+                <div className="mt-4">{renderOrderMeta()}</div>
+                {opensSchedule && (
+                  <div className="mt-4">
+                    <SchedulingCalendar
+                      serviceType={primaryType}
+                      serviceName={CHECKOUT_CATALOG[primaryType as CanonicalServiceId]?.nome}
+                      showHours={needsHour}
+                      dataSelecionada={data}
+                      horaSelecionada={hora}
+                      onDataChange={setData}
+                      onHoraChange={setHora}
+                      title="Calendário (mesmo componente do checkout)"
                     />
-                  </Field>
-                </div>
-                {(latest.serviceOrders || []).map((o) => (
-                  <div key={o.id} className="flex flex-wrap gap-2 items-center text-xs">
-                    <span className="text-zinc-400">
-                      {o.serviceType} ({o.phase})
-                    </span>
-                    <Button
-                      size="xs"
-                      variant="outline"
-                      disabled={busy}
-                      onClick={() =>
-                        void labAction({
-                          action: "set_order_phase",
-                          serviceOrderId: o.id,
-                          phase: labPhase,
-                        })
-                      }
-                    >
-                      Aplicar fase
-                    </Button>
                   </div>
-                ))}
-              </div>
-            )}
-
-            {(latest.serviceIds || []).length > 0 && (
-              <div className="flex flex-wrap gap-2 mb-3">
-                <span className="text-xs text-zinc-500 self-center">Entrega:</span>
-                {(latest.serviceIds || []).map((sid) => (
-                  <Button
-                    key={sid}
-                    size="xs"
-                    variant="outline"
-                    disabled={busy}
-                    onClick={() => void labAction({ action: "simulate_delivery", serviceId: sid })}
-                  >
-                    Simular entrega {sid.slice(0, 8)}
-                  </Button>
-                ))}
-              </div>
-            )}
-
-            {labMsg && <p className="text-sm text-amber-100">{labMsg}</p>}
-          </Section>
-        </Card>
+                )}
+                <div className="mt-4">{renderSimulationControls()}</div>
+                <div className="mt-4">{renderTesteActions()}</div>
+              </Section>
+            </Card>
+            {renderDebugPanels()}
+          </div>
+        </div>
       )}
 
-      {latest && (
-        <Card>
-          <Section title="Timeline">
-            <ol className="space-y-2 max-h-[40vh] overflow-y-auto text-xs">
-              {latest.timeline.map((t, i) => (
-                <li key={`${t.at}-${i}`} className="border-b border-zinc-800 pb-2">
-                  <div className="text-zinc-500">{new Date(t.at).toLocaleString("pt-BR")}</div>
-                  <div className={t.ok ? "text-zinc-200" : "text-red-300"}>
-                    {t.step}
-                    {t.detail ? ` — ${t.detail}` : ""}
-                  </div>
-                </li>
-              ))}
-            </ol>
-          </Section>
-        </Card>
+      {session === "beats" && (
+        <div className="space-y-6">
+          <CatalogSelectionPanels
+            qty={qty}
+            onBump={bumpQty}
+            showStudio={false}
+            showBeats
+            sectionStyle="marketing"
+          />
+          <div className="grid gap-4 lg:grid-cols-2">
+            <Card>
+              <Section title="Resumo e Teste">
+                <CatalogPurchaseSummary qty={qty} />
+                <div className="mt-4">{renderOrderMeta()}</div>
+                <div className="mt-4">{renderSimulationControls()}</div>
+                <div className="mt-4">{renderTesteActions()}</div>
+              </Section>
+            </Card>
+            {renderDebugPanels()}
+          </div>
+        </div>
       )}
 
-      {runs.length > 1 && (
-        <Card>
-          <Section title="Runs recentes">
-            <ul className="text-xs text-zinc-400 space-y-1">
-              {runs.slice(0, 12).map((r) => (
-                <li key={r.runId}>
-                  <button
-                    type="button"
-                    className="hover:text-zinc-200 text-left"
-                    onClick={() => setLatest(r)}
-                  >
-                    {r.runId} · {r.ok ? "PASS" : "FAIL"} ·{" "}
-                    {r.scenarioId || (r.input?.freeLab ? "livre" : r.input?.tipo) || "?"} ·{" "}
-                    {r.orderCount ?? r.serviceOrders?.length ?? "?"} OS ·{" "}
-                    {new Date(r.startedAt).toLocaleString("pt-BR")}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </Section>
-        </Card>
+      {session === "planos" && (
+        <div className="space-y-6">
+          <Card>
+            <Section title="Planos (Mensal / Anual)">
+              <HomologationPlanButtons
+                busy={busy}
+                onSelect={(id, modo) => void runPlanSimulation(id, modo)}
+              />
+              <div className="mt-4">{renderSimulationControls()}</div>
+              {message && <p className="text-sm text-amber-100 mt-3">{message}</p>}
+              <div className="mt-4 border-t border-zinc-800 pt-4 space-y-2">
+                <p className="text-xs text-zinc-500">
+                  GO-H10B — Força a renovação mensal do último UserPlan gerado (substitui cupons
+                  não usados e emite o novo ciclo via PLAN_DEFINITIONS).
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={busy || !latest?.paymentDbId}
+                  loading={busy}
+                  onClick={() => void forceRenewLatestPlan()}
+                >
+                  Renovar ciclo mensal (último plano)
+                </Button>
+              </div>
+            </Section>
+          </Card>
+          {renderDebugPanels()}
+        </div>
+      )}
+
+      {session === "ferramentas" && (
+        <div className="space-y-6">
+          <div className="flex flex-wrap gap-2">
+            {TOOLS.map((t) => (
+              <Button
+                key={t.id}
+                size="xs"
+                variant={tool === t.id ? "primary" : "outline"}
+                onClick={() => setSessionNav("ferramentas", t.id)}
+              >
+                {t.label}
+              </Button>
+            ))}
+          </div>
+
+          {tool === "lab" && (
+            <div className="space-y-4">
+              {renderPresets()}
+              <div className="grid gap-4 lg:grid-cols-2">
+                <Card>
+                  <Section title="Lab / Teste">
+                    <CatalogPurchaseSummary qty={qty} />
+                    <div className="mt-4">{renderOrderMeta()}</div>
+                    <div className="mt-4">{renderSimulationControls()}</div>
+                    <div className="mt-4">{renderTesteActions()}</div>
+                  </Section>
+                </Card>
+                {renderDebugPanels()}
+              </div>
+            </div>
+          )}
+
+          {tool === "pedido" && (
+            <div className="space-y-4">
+              <Card>
+                <Section title="Pedido de Homologação">
+                  <CatalogPurchaseSummary qty={qty} />
+                  <div className="mt-4">{renderOrderMeta()}</div>
+                  <div className="mt-4">{renderPedidoHomologacao()}</div>
+                </Section>
+              </Card>
+              {renderDebugPanels()}
+            </div>
+          )}
+
+          {tool === "limpeza" && (
+            <Card>
+              <Section title="Limpeza">{renderLimpeza()}</Section>
+            </Card>
+          )}
+
+          {tool === "integridade" && <IntegridadePanel embedded />}
+
+          {tool === "modo-livre" && (
+            <div className="space-y-4">
+              <Card>
+                <Section title="Modo Livre (admin)">{renderModoLivre()}</Section>
+              </Card>
+              {renderDebugPanels()}
+            </div>
+          )}
+        </div>
       )}
     </div>
   );

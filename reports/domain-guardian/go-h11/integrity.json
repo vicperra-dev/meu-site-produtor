@@ -1,0 +1,86 @@
+{
+  "generatedAt": "2026-07-27T03:27:05.372Z",
+  "findings": [
+    {
+      "code": "coupon_dangling_appointment",
+      "severity": "high",
+      "label": "Cupom com appointmentId sem Appointment",
+      "count": 1,
+      "sampleIds": [
+        "12e8943b-45fe-4c31-9f47-b2ea5d475740"
+      ]
+    },
+    {
+      "code": "appointment_without_order_or_payment",
+      "severity": "high",
+      "label": "Appointment sem Order/Payment/Cupom vinculado",
+      "count": 2,
+      "sampleIds": [
+        "32",
+        "33"
+      ]
+    },
+    {
+      "code": "history_without_entity",
+      "severity": "info",
+      "label": "Histórico (log imutável) cuja entidade operacional já foi removida",
+      "count": 27,
+      "sampleIds": [
+        "cmrxwx426000010k56kaq53v8",
+        "cmrxwx6k0000310k5r1f8ljpb",
+        "cmrxwyx3r0000q33x8i6ivuca",
+        "cmrxwyyow0002q33x1qni5mbf",
+        "cmry4w57k0000s1iwxas1drvj",
+        "cmry4w6tf0002s1iwaq6owjqt",
+        "cmry5j2xp0005mjuklnfeiv34",
+        "cmry5j5db0008mjuk2p479eva",
+        "cmry5j9pq000amjuknu2obr63",
+        "cmry5jay0000cmjuks6rttkof",
+        "cmry5kg2w000emjukwrqewoq8",
+        "cmry5kh83000gmjukdncptq36",
+        "cmrydej3m000014dhgm45hnnv",
+        "cmrydellt000314dhi43vk3p9",
+        "cmrylfgrq000684ovmc35mwgy",
+        "cmrylfj33000984ovsasers0t",
+        "cmrylgb7x000b84ovj590n3ub",
+        "cmrylgcfz000d84ov7vv5nrod",
+        "cmrylhdga000f84ovi6ztjv16",
+        "cmrylhece000i84ovndfhzvbz"
+      ]
+    },
+    {
+      "code": "sync_without_entity",
+      "severity": "info",
+      "label": "Evento de sincronização cuja entidade operacional já foi removida",
+      "count": 75,
+      "sampleIds": [
+        "cmrxwrcdm000010r9qbmdvhun",
+        "cmrxwrd74000110r92kkjks0w",
+        "cmrxwrdag000210r94smn5ha8",
+        "cmrxwrg1z000310r90lr8m54b",
+        "cmrxwx4f5000110k592c5mi81",
+        "cmrxwx4lm000210k5odzefav2",
+        "cmrxwx6tn000410k5dree8ua1",
+        "cmrxwyxgi0001q33xnaanvqey",
+        "cmrxwyyye0003q33x3ihhazh0",
+        "cmry4w5kl0001s1iwgigiujpz",
+        "cmry4w72v0003s1iw524vqeoz",
+        "cmry5gf470000mjukr0j8x2tm",
+        "cmry5iio40001mjuks495jpjr",
+        "cmry5ijeg0002mjuky77g7tw9",
+        "cmry5ijhr0003mjukzweqg4rr",
+        "cmry5ilwl0004mjuk52woo5o7",
+        "cmry5j3ar0006mjukfhmn84nb",
+        "cmry5j3e20007mjuksbadpk5z",
+        "cmry5j5n30009mjukyaczvwbs",
+        "cmry5ja2e000bmjuko99yb326"
+      ]
+    }
+  ],
+  "totalIssues": 3,
+  "highCount": 3,
+  "mediumCount": 0,
+  "infoCount": 102,
+  "ok": false,
+  "historyModel": "immutable_audit_log"
+}

@@ -3,14 +3,11 @@ import { prisma } from "@/app/lib/prisma";
 import { requireAuth } from "@/app/lib/auth";
 import { refundAsaasPayment } from "@/app/lib/asaas-refund";
 import { logFinancialFailure, logFinancialInfo } from "@/app/lib/financial-ops-log";
+import { buildSubscriptionRefundPreview } from "@/app/lib/subscription-refund";
 
 /**
- * Solicita reembolso do plano cancelado.
- * Valor reembolsado = valor do plano proporcional aos cupons que ainda estavam ativos (não utilizados).
- * Cupons já utilizados não são reembolsáveis.
- *
- * GO-04A.2: persiste refundAsaasStatus pending/failed/confirmed path;
- * reserva atômica (idempotência) antes de chamar o gateway.
+ * Solicita reembolso do plano cancelado (GO-H10C).
+ * Cálculo: valorPago − Σ valores internos dos benefícios utilizados.
  */
 export async function POST(req: Request) {
   try {
@@ -24,7 +21,7 @@ export async function POST(req: Request) {
 
     const userPlan = await prisma.userPlan.findUnique({
       where: { id: userPlanId },
-      include: { coupons: true },
+      include: { subscription: true },
     });
 
     if (!userPlan) {
@@ -33,7 +30,7 @@ export async function POST(req: Request) {
     if (userPlan.userId !== user.id) {
       return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
     }
-    if (userPlan.status !== "cancelled") {
+    if (userPlan.status !== "cancelled" && userPlan.subscription?.status !== "cancelled") {
       return NextResponse.json(
         { error: "Reembolso só está disponível para planos cancelados." },
         { status: 400 }
@@ -49,45 +46,34 @@ export async function POST(req: Request) {
       );
     }
 
-    const totalCupons = userPlan.coupons.length;
-    const cuponsUsados = userPlan.coupons.filter((c) => c.used);
-    const cuponsNaoUsados = totalCupons - cuponsUsados.length;
-
-    const valorReembolsavel =
-      totalCupons > 0
-        ? (userPlan.amount / totalCupons) * cuponsNaoUsados
-        : userPlan.amount;
-
-    const valorReembolsavelArredondado = Math.round(valorReembolsavel * 100) / 100;
-    if (valorReembolsavelArredondado <= 0) {
+    const preview = await buildSubscriptionRefundPreview(userPlanId);
+    if (!preview || !preview.refundAvailable) {
       return NextResponse.json(
         {
           error:
-            "Não há valor a reembolsar. Todos os cupons deste plano já foram utilizados.",
+            preview?.message ||
+            "Não há reembolso disponível: benefícios utilizados cobrem o valor pago.",
+          preview,
         },
         { status: 400 }
       );
     }
 
-    const userPlanCreated = new Date(userPlan.createdAt).getTime();
-    const janelaMs = 48 * 60 * 60 * 1000;
-
-    const pagamentosPlano = await prisma.payment.findMany({
-      where: {
-        userId: user.id,
-        type: "plano",
-        status: "approved",
-        asaasId: { not: null },
-      },
-      orderBy: { createdAt: "desc" },
-    });
+    const valorReembolsavelArredondado = preview.refundAmount;
 
     const payment =
-      pagamentosPlano.find(
-        (p) => Math.abs(new Date(p.createdAt).getTime() - userPlanCreated) <= janelaMs
-      ) ??
-      pagamentosPlano[0] ??
-      null;
+      (userPlan.subscription?.rootPaymentId
+        ? await prisma.payment.findUnique({ where: { id: userPlan.subscription.rootPaymentId } })
+        : null) ||
+      (await prisma.payment.findFirst({
+        where: {
+          userId: user.id,
+          type: "plano",
+          status: "approved",
+          asaasId: { not: null },
+        },
+        orderBy: { createdAt: "desc" },
+      }));
 
     if (!payment?.asaasId) {
       logFinancialFailure({
@@ -101,19 +87,17 @@ export async function POST(req: Request) {
       return NextResponse.json(
         {
           error:
-            "Pagamento do plano não encontrado ou sem vínculo com o Asaas. Entre em contato com o suporte para solicitar o reembolso.",
+            "Pagamento do plano não encontrado ou sem vínculo com o Asaas. Entre em contato com o suporte.",
         },
         { status: 400 }
       );
     }
 
     const now = new Date();
-    // RC-12: reserva atômica — só um request consegue o slot
     const reserved = await prisma.userPlan.updateMany({
       where: {
         id: userPlanId,
         userId: user.id,
-        status: "cancelled",
         refundProcessedAt: null,
       },
       data: {
@@ -125,16 +109,8 @@ export async function POST(req: Request) {
     });
 
     if (reserved.count === 0) {
-      const again = await prisma.userPlan.findUnique({
-        where: { id: userPlanId },
-        select: { refundProcessedAt: true, refundAsaasStatus: true },
-      });
       return NextResponse.json(
-        {
-          error: "O reembolso deste plano já foi solicitado.",
-          refundAsaasStatus: again?.refundAsaasStatus ?? "pending",
-          alreadyProcessed: true,
-        },
+        { error: "O reembolso deste plano já foi solicitado.", alreadyProcessed: true },
         { status: 409 }
       );
     }
@@ -144,7 +120,7 @@ export async function POST(req: Request) {
       await refundAsaasPayment(
         payment.asaasId,
         valorReembolsavelArredondado,
-        `Reembolso do plano ${userPlan.planName} (cupons não utilizados)`
+        `Reembolso do plano ${userPlan.planName} (benefícios utilizados descontados)`
       );
       logFinancialInfo({
         paymentId: payment.id,
@@ -153,12 +129,17 @@ export async function POST(req: Request) {
         motivo: "Reembolso de plano solicitado no gateway",
         status: "pending",
         code: "PLAN_REFUND_REQUESTED",
-        extra: { userPlanId, refundAmount: valorReembolsavelArredondado },
+        extra: {
+          userPlanId,
+          refundAmount: valorReembolsavelArredondado,
+          usedInternalTotal: preview.usedInternalTotal,
+          refundAvailable: preview.refundAvailable,
+        },
       });
     } catch (err: unknown) {
       const errAny = err as { message?: string; body?: unknown };
       const msg = String(errAny?.message || "").toLowerCase();
-      const body =
+      const bodyStr =
         typeof errAny?.body === "string"
           ? errAny.body
           : JSON.stringify(errAny?.body || {});
@@ -166,26 +147,13 @@ export async function POST(req: Request) {
         msg.includes("400") ||
         msg.includes("já está em andamento") ||
         msg.includes("already in progress") ||
-        (body.includes("estorno") && body.includes("em andamento"))
+        (bodyStr.includes("estorno") && bodyStr.includes("em andamento"))
       ) {
         reembolsoJaEmAndamento = true;
-        logFinancialInfo({
-          paymentId: payment.id,
-          provider: "asaas",
-          providerPaymentId: payment.asaasId,
-          motivo: "Estorno já em andamento no Asaas — tratado como sucesso idempotente",
-          status: "pending",
-          code: "PLAN_REFUND_ALREADY_IN_PROGRESS",
-          extra: { userPlanId },
-        });
       } else {
         await prisma.userPlan.updateMany({
           where: { id: userPlanId, refundAsaasStatus: "pending" },
-          data: {
-            refundAsaasStatus: "failed",
-            // Libera nova tentativa; mantém refundRequestedAt/refundAmount para auditoria
-            refundProcessedAt: null,
-          },
+          data: { refundAsaasStatus: "failed", refundProcessedAt: null },
         });
         logFinancialFailure({
           paymentId: payment.id,
@@ -209,27 +177,17 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       message: reembolsoJaEmAndamento
-        ? "O reembolso desta cobrança já estava em andamento no Asaas. O valor será creditado em até 5 dias úteis."
+        ? "O reembolso desta cobrança já estava em andamento no Asaas."
         : "Reembolso solicitado com sucesso. O valor será creditado em até 5 dias úteis.",
       refundAmount: valorReembolsavelArredondado,
       refundAsaasStatus: "pending",
-      cuponsNaoUsados,
-      totalCupons,
+      preview,
     });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
     if (message === "Acesso negado" || message === "Não autenticado") {
       return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
     }
-    logFinancialFailure({
-      provider: "asaas",
-      motivo: message || "Erro ao solicitar reembolso de plano",
-      status: "failed",
-      code: "PLAN_REFUND_UNHANDLED",
-    });
-    return NextResponse.json(
-      { error: message || "Erro ao solicitar reembolso." },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: message || "Erro ao solicitar reembolso." }, { status: 500 });
   }
 }

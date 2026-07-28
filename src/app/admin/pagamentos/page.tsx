@@ -326,7 +326,7 @@ export default function AdminPagamentosPage() {
                           <p className="text-zinc-200 font-mono text-xs">{p.asaasId || "-"}</p>
                         </div>
                         <div>
-                          <span className="text-zinc-400">ID Mercado Pago:</span>
+                          <span className="text-zinc-400">ID legado (MP):</span>
                           <p className="text-zinc-200 font-mono text-xs">{p.mercadopagoId || "-"}</p>
                         </div>
                         <div>

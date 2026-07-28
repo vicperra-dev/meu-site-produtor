@@ -17,7 +17,28 @@ async function post(url: string, body?: unknown): Promise<ActionResult> {
 }
 
 export function cancelarPlano(userPlanId: string): Promise<ActionResult> {
-  return post("/api/planos/cancelar", { userPlanId });
+  return post("/api/assinatura/cancel", {
+    userPlanId,
+    confirm: true,
+    requestRefund: false,
+  });
+}
+
+export function cancelarAssinaturaComReembolso(userPlanId: string): Promise<ActionResult> {
+  return post("/api/assinatura/cancel", {
+    userPlanId,
+    confirm: true,
+    requestRefund: true,
+  });
+}
+
+export async function previewCancelamentoAssinatura(userPlanId: string): Promise<ActionResult> {
+  const res = await fetch(
+    `/api/assinatura/cancel-preview?userPlanId=${encodeURIComponent(userPlanId)}`,
+    { cache: "no-store" }
+  );
+  const data = await res.json().catch(() => ({}));
+  return { ok: res.ok, data };
 }
 
 export function solicitarReembolsoPlano(userPlanId: string): Promise<ActionResult> {

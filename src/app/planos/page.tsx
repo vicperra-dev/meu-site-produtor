@@ -12,6 +12,7 @@ import {
   Select,
   useFeedback,
 } from "@/components/design-system";
+import { PLAN_DEFINITIONS, type PlanTierId } from "@/app/lib/plan-definitions";
 
 // =========================================================
 // TIPOS
@@ -26,59 +27,19 @@ type Plano = {
 };
 
 // =========================================================
-// DADOS FIXOS
+// GO-H10B — Fonte única PLAN_DEFINITIONS
 // =========================================================
-const PLANOS: Plano[] = [
-  {
-    id: "bronze",
-    nome: "Plano Bronze",
-    mensal: 249.99,
-    anual: 2499.90,
-    descricao: "Para quem está começando a gravar com frequência.",
-    beneficios: [
-      { label: "1 sessão por mês", included: true },
-      { label: "2h de captação por mês", included: true },
-      { label: "1 Mix por mês", included: true },
-      { label: "10% de desconto em serviços avulsos", included: true },
-      { label: "Sem beats personalizados", included: false },
-      { label: "Sem acesso a descontos promocionais", included: false },
-      { label: "Não tem acompanhamento artístico", included: false },
-    ],
-  },
-  {
-    id: "prata",
-    nome: "Plano Prata",
-    mensal: 449.99,
-    anual: 4499.90,
-    descricao: "Para artistas que gravam com regularidade e já possuem músicas próprias.",
-    beneficios: [
-      { label: "1 sessão por mês", included: true },
-      { label: "2h de captação por mês", included: true },
-      { label: "1 Mix & Master por mês", included: true },
-      { label: "1 Beat por mês", included: true },
-      { label: "Acesso a descontos promocionais do site", included: true },
-      { label: "Não tem desconto em serviços ou beats", included: false },
-      { label: "Não tem acompanhamento artístico", included: false },
-    ],
-  },
-  {
-    id: "ouro",
-    nome: "Plano Ouro",
-    mensal: 799.99,
-    anual: 7999.90,
-    descricao: "Acompanhamento profissional contínuo com TremV e 2 Produções completas por mês.",
-    beneficios: [
-      { label: "2 sessões por mês", included: true },
-      { label: "4h de captação por mês", included: true },
-      { label: "2 Mix & Master por mês", included: true },
-      { label: "2 Beats por mês", included: true },
-      { label: "Desconto de 10% em serviços avulsos", included: true },
-      { label: "Desconto de 10% em beats", included: true },
-      { label: "Acesso a descontos promocionais do site", included: true },
-      { label: "Acompanhamento artístico", included: true },
-    ],
-  },
-];
+const PLANOS: Plano[] = (["bronze", "prata", "ouro"] as PlanTierId[]).map((id) => {
+  const p = PLAN_DEFINITIONS[id];
+  return {
+    id: p.id,
+    nome: p.nome,
+    mensal: p.mensal,
+    anual: p.anual,
+    descricao: p.descricao,
+    beneficios: p.marketingBenefits,
+  };
+});
 
 // =========================================================
 // COMPONENTE
@@ -143,7 +104,7 @@ export default function PlanosPage() {
       <section className="mb-8 flex flex-col items-center justify-center w-full">
         <PageHeader
           title={<>Planos da <span className="text-red-500">THouse Rec</span></>}
-          subtitle="Escolha o plano que melhor se encaixa na sua rotina de lançamentos."
+          subtitle="Benefícios mensais sem acúmulo — no anual você tem 12 ciclos. Escolha o plano que melhor se encaixa na sua rotina."
           className="justify-center text-center mb-6 sm:mb-8 md:mb-10"
         />
 
@@ -407,8 +368,8 @@ export default function PlanosPage() {
           >
             <p className="text-sm md:text-base leading-relaxed text-white mb-4 text-justify md:text-center px-2 md:px-0" style={{ textShadow: "0 2px 8px rgba(0, 0, 0, 0.8)" }}>
               Assinar um plano da THouse Rec é a forma mais inteligente de produzir
-              com constância. Além do desconto financeiro, os planos oferecem
-              prioridade na agenda e acompanhamento contínuo do seu projeto.
+              com constância. Os planos oferecem benefícios mensais por ciclo
+              (cupons de serviço e/ou desconto), conforme o tier escolhido.
             </p>
             
             <p className="text-xs md:text-sm text-zinc-300 mt-4 text-justify md:text-center px-2 md:px-0" style={{ textShadow: "0 2px 8px rgba(0, 0, 0, 0.8)" }}>

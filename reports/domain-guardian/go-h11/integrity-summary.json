@@ -1,0 +1,31 @@
+{
+  "ok": false,
+  "highCount": 3,
+  "mediumCount": 0,
+  "infoCount": 102,
+  "high": [
+    {
+      "code": "coupon_dangling_appointment",
+      "label": "Cupom com appointmentId sem Appointment",
+      "count": 1
+    },
+    {
+      "code": "appointment_without_order_or_payment",
+      "label": "Appointment sem Order/Payment/Cupom vinculado",
+      "count": 2
+    }
+  ],
+  "medium": [],
+  "info": [
+    {
+      "code": "history_without_entity",
+      "label": "Histórico (log imutável) cuja entidade operacional já foi removida",
+      "count": 27
+    },
+    {
+      "code": "sync_without_entity",
+      "label": "Evento de sincronização cuja entidade operacional já foi removida",
+      "count": 75
+    }
+  ]
+}

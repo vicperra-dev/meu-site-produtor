@@ -388,6 +388,18 @@ export async function DELETE(req: Request) {
       return NextResponse.json({ error: gate.reason }, { status: 400 });
     }
 
+    await prisma.coupon.updateMany({
+      where: { appointmentId: parseInt(id) },
+      data: { appointmentId: null },
+    });
+    await prisma.serviceOrder.updateMany({
+      where: { appointmentId: parseInt(id) },
+      data: { appointmentId: null },
+    });
+    await prisma.service.deleteMany({
+      where: { appointmentId: parseInt(id) },
+    });
+
     await prisma.appointment.delete({
       where: { id: parseInt(id) },
     });

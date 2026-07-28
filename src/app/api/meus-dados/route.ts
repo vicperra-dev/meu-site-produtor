@@ -6,6 +6,7 @@ import { deriveAppointmentStatusFromServiceStatuses } from "@/app/lib/domain/sta
 import { resolveCanonicalCouponType } from "@/app/lib/domain/coupon-types";
 import { resolveCouponCategoryFromRow } from "@/app/lib/domain/coupon-category";
 import { serviceOrderLabel } from "@/app/lib/ui/service-order-visual";
+import { userHasPromotionAccess } from "@/app/lib/plan-promotion-access";
 
 export async function GET() {
   try {
@@ -268,18 +269,24 @@ export async function GET() {
     // Classificar cupons por status
     const agora = new Date();
     const cupons = todosCupons.map(cupom => {
-      let status: "disponivel" | "usado" | "expirado" = "disponivel";
+      let status: "disponivel" | "usado" | "expirado" | "substituido" = "disponivel";
       
       if (cupom.used) {
         status = "usado";
       } else {
-        // Verificar se expirou pela data de expiração
-        if (cupom.expiresAt && new Date(cupom.expiresAt) < agora) {
+        const cancelReason = String((cupom as { cancelReason?: string | null }).cancelReason || "");
+        if (cancelReason === "ciclo_mensal_substituido" || cancelReason === "substituido") {
+          status = "substituido";
+        } else if (cupom.expiresAt && new Date(cupom.expiresAt) < agora) {
           status = "expirado";
         }
         
         // Verificar regra especial: cupons de plano (serviço ou percent) expiram 1 mês após expiração do plano
-        if (cupom.userPlanId && (cupom.discountType === "service" || cupom.discountType === "percent")) {
+        if (
+          status === "disponivel" &&
+          cupom.userPlanId &&
+          (cupom.discountType === "service" || cupom.discountType === "percent")
+        ) {
           const userPlan = userPlansMap.get(cupom.userPlanId);
           if (userPlan && userPlan.endDate) {
             const umMesAposPlano = new Date(userPlan.endDate);
@@ -590,7 +597,8 @@ export async function GET() {
               id: s.id,
               tipo: s.tipo,
               description: s.description,
-              deliveryAudioUrl: s.deliveryAudioUrl,
+              // GO-H11A: nunca expor URL bruta de Blob/local ao cliente
+              deliveryAudioUrl: `/api/entregas/${s.id}`,
               deliveryAudioFormat: s.deliveryAudioFormat,
               deliveredAt: s.updatedAt ? s.updatedAt.toISOString() : null,
               status: s.status,
@@ -716,12 +724,15 @@ export async function GET() {
 
     console.log(`[API /meus-dados] Retornando ${faqSerializados.length} pergunta(s) FAQ serializada(s)`);
 
+    const hasPromotionAccess = await userHasPromotionAccess(user.id);
+
     return NextResponse.json({
       agendamentos: agendamentosSerializados,
       pagamentos: pagamentosSerializados,
       planos: planosFormatados,
       cupons: cuponsSerializados,
       faqQuestions: faqSerializados,
+      hasPromotionAccess,
     });
   } catch (err: any) {
     if (err.message === "Não autenticado") {

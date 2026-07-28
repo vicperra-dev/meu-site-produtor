@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
+import { renewDuePlanBenefits } from "@/app/lib/plan-benefit-renewal";
+import { processSubscriptionDelinquency } from "@/app/lib/subscription-lifecycle";
 
 /**
- * Endpoint para renovar/expirar planos automaticamente
- * Deve ser chamado diariamente via cron job ou agendador de tarefas
+ * GO-H10B/C — Expira planos vencidos, processa inadimplência e
+ * renova ciclos mensais de benefícios (H10B respeita Assinatura ativa).
  */
 export async function GET(req: Request) {
   try {
-    // Verificar autenticação via header (cron secret)
     const authHeader = req.headers.get("authorization");
     const cronSecret = process.env.CRON_SECRET;
 
@@ -21,49 +22,35 @@ export async function GET(req: Request) {
     }
 
     const agora = new Date();
-    const planosExpirados: string[] = [];
-    const planosRenovados: string[] = [];
+    const delinquency = await processSubscriptionDelinquency(agora);
+    const renewal = await renewDuePlanBenefits({ now: agora });
 
-    // Buscar planos ativos que expiraram
-    const planosExpiradosList = await prisma.userPlan.findMany({
-      where: {
-        status: "active",
-        endDate: {
-          lte: agora,
-        },
-      },
-    });
-
-    // Marcar planos como inativos
-    for (const plano of planosExpiradosList) {
-      await prisma.userPlan.update({
-        where: { id: plano.id },
-        data: { status: "inactive" },
-      });
-      planosExpirados.push(plano.id);
-      console.log(`[Cron] Plano ${plano.id} expirado e marcado como inativo`);
-    }
-
-    // Buscar planos que estão próximos de expirar (opcional: enviar notificação)
-    const planosProximosExpirar = await prisma.userPlan.findMany({
+    const proximosExpirar = await prisma.userPlan.count({
       where: {
         status: "active",
         endDate: {
           gte: agora,
-          lte: new Date(agora.getTime() + 7 * 24 * 60 * 60 * 1000), // 7 dias
+          lte: new Date(agora.getTime() + 7 * 24 * 60 * 60 * 1000),
         },
       },
     });
 
-    console.log(`[Cron] ${planosExpirados.length} planos expirados, ${planosProximosExpirar.length} próximos de expirar`);
+    console.log(
+      `[Cron] delinquencia=${delinquency.length} expirados=${renewal.expiredPlans.length} renovados=${renewal.renewed.length} gerados=${renewal.generatedCoupons}`
+    );
 
     return NextResponse.json({
       success: true,
-      planosExpirados: planosExpirados.length,
-      planosProximosExpirar: planosProximosExpirar.length,
+      planosExpirados: renewal.expiredPlans.length,
+      planosRenovados: renewal.renewed.length,
+      cuponsSubstituidos: renewal.substitutedCoupons,
+      cuponsGerados: renewal.generatedCoupons,
+      delinquency,
+      planosProximosExpirar: proximosExpirar,
+      detail: renewal,
       message: "Processamento concluído",
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[Cron] Erro ao processar renovações:", error);
     return NextResponse.json(
       { error: "Erro ao processar renovações" },

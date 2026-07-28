@@ -73,7 +73,9 @@ export function CouponsSection({
   const reembolsoDisp = cupons.filter((c) => c.status === "disponivel" && isRefundFamilyCoupon(c));
   const descontoDisp = cupons.filter((c) => c.status === "disponivel" && isDiscountFamilyCoupon(c));
   const usados = cupons.filter((c) => c.status === "usado");
-  const expirados = cupons.filter((c) => c.status === "expirado");
+  const expirados = cupons.filter(
+    (c) => c.status === "expirado" || c.status === "substituido"
+  );
 
   async function handleRenunciar(cupom: Cupom) {
     if (
@@ -151,7 +153,7 @@ export function CouponsSection({
                       </p>
                     )}
                     <p className="text-xs text-emerald-400">
-                      Este cupom zera o valor do serviço específico. Agende quando quiser!
+                      Este cupom zera o valor do serviço específico. Use dentro da validade do ciclo (benefícios não acumulam).
                     </p>
                     <Button
                       variant="success"
@@ -344,7 +346,9 @@ export function CouponsSection({
 
           {expirados.length > 0 && (
             <div className="space-y-2">
-              <h3 className="text-sm font-semibold text-red-400">Expirados ({expirados.length})</h3>
+              <h3 className="text-sm font-semibold text-red-400">
+                Expirados / Substituídos ({expirados.length})
+              </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {expirados.map((cupom) => (
                   <Card key={cupom.id} className="!border-red-500/30 !bg-red-500/5 opacity-60 space-y-2">

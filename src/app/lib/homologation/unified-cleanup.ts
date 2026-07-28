@@ -142,6 +142,10 @@ async function sweepOrphans(
   }
 
   if (aptIds.length > 0) {
+    await prisma.coupon.updateMany({
+      where: { appointmentId: { in: aptIds } },
+      data: { appointmentId: null },
+    });
     services = (
       await prisma.service.deleteMany({ where: { appointmentId: { in: aptIds } } })
     ).count;

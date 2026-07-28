@@ -73,9 +73,14 @@ export function couponStatusLabel(coupon: {
   used?: boolean | null;
   expiresAt?: Date | string | null;
   refundRequestedAt?: Date | string | null;
+  cancelReason?: string | null;
 }): string {
   if (coupon.refundRequestedAt) return "bloqueado_reembolso";
   if (coupon.used) return "utilizado";
+  const reason = String(coupon.cancelReason || "");
+  if (reason === "ciclo_mensal_substituido" || reason === "substituido") {
+    return "substituido";
+  }
   if (coupon.expiresAt && new Date(coupon.expiresAt) < new Date()) return "expirado";
   return "criado";
 }

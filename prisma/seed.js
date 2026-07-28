@@ -8,15 +8,15 @@ const faqs = [
   // ==========================
   {
     question: "Como funciona o pagamento no site?",
-    answer: "O pagamento é processado através do Mercado Pago, aceitando cartão de crédito, débito, Pix e boleto. Após selecionar seu plano ou serviço, você será redirecionado para a plataforma segura do Mercado Pago para finalizar o pagamento."
+    answer: "O pagamento é processado pelo Asaas, aceitando cartão de crédito, débito, Pix e boleto conforme o checkout. Após selecionar seu plano ou serviço, você conclui o pagamento no ambiente seguro do Asaas."
   },
   {
     question: "Meu pagamento ficou pendente e não liberou o plano.",
-    answer: "Pagamentos pendentes geralmente são análises do banco ou do próprio Mercado Pago. Aguarde alguns minutos e atualize a página. Se o status continuar pendente por mais de 30 minutos, verifique no seu extrato do Mercado Pago ou do cartão. Se aparecer como recusado ou cancelado, será necessário tentar novamente."
+    answer: "Pagamentos pendentes geralmente são análises do banco ou do Asaas. Aguarde alguns minutos e atualize a página. Se o status continuar pendente por mais de 30 minutos, verifique no seu extrato bancário ou do cartão. Se aparecer como recusado ou cancelado, será necessário tentar novamente."
   },
   {
     question: "O pagamento foi recusado, mas o limite do cartão está ok.",
-    answer: "A recusa pode ocorrer por regras de segurança do banco emissor ou do Mercado Pago. Tente novamente usando outro cartão, outra forma de pagamento (como Pix ou boleto) ou entre em contato com o seu banco para liberar a transação online."
+    answer: "A recusa pode ocorrer por regras de segurança do banco emissor ou do Asaas. Tente novamente usando outro cartão, outra forma de pagamento (como Pix ou boleto) ou entre em contato com o seu banco para liberar a transação online."
   },
   {
     question: "Como faço pagamento via Pix?",
@@ -35,16 +35,16 @@ const faqs = [
     answer: "A ativação do plano depende da confirmação do pagamento e do processamento interno do sistema. Em geral, isso ocorre em poucos minutos. Se já se passaram mais de 30 minutos e nada mudou, atualize a página, faça logout e login novamente. Persistindo o problema, envie o comprovante para o suporte para ativação manual."
   },
   {
-    question: "O valor cobrado pelo Mercado Pago foi diferente do valor exibido no site.",
-    answer: "Diferenças podem ocorrer por taxas de IOF, parcelamento, variação de bandeira ou arredondamento. Verifique o detalhamento da transação no extrato do Mercado Pago ou do cartão. Se a diferença for relevante e não estiver justificada por parcelamento ou taxas, entre em contato com o suporte informando o valor exibido no site e o valor cobrado."
+    question: "O valor cobrado pelo Asaas foi diferente do valor exibido no site.",
+    answer: "Diferenças podem ocorrer por taxas de IOF, parcelamento, variação de bandeira ou arredondamento. Verifique o detalhamento da transação no extrato do Asaas/banco ou do cartão. Se a diferença for relevante e não estiver justificada por parcelamento ou taxas, entre em contato com o suporte informando o valor exibido no site e o valor cobrado."
   },
   {
     question: "Meu pagamento foi cobrado duas vezes.",
-    answer: "Antes de tudo, verifique se realmente há duas transações aprovadas no extrato. Em alguns casos, uma delas aparece como pendente ou cancelada. Se houver duas cobranças aprovadas para o mesmo serviço ou plano, entre em contato imediatamente com o suporte e com o Mercado Pago, anexando o comprovante das duas operações."
+    answer: "Antes de tudo, verifique se realmente há duas transações aprovadas no extrato. Em alguns casos, uma delas aparece como pendente ou cancelada. Se houver duas cobranças aprovadas para o mesmo serviço ou plano, entre em contato imediatamente com o suporte e com o Asaas, anexando o comprovante das duas operações."
   },
   {
     question: "O site mostra erro ao tentar criar o pagamento.",
-    answer: "Isso pode ser um erro temporário de comunicação com o Mercado Pago. Feche a página de pagamento, volte para a página de planos ou agendamentos e tente novamente. Se o erro persistir, limpe o cache do navegador ou experimente outro dispositivo."
+    answer: "Isso pode ser um erro temporário de comunicação com o Asaas. Feche a página de pagamento, volte para a página de planos ou agendamentos e tente novamente. Se o erro persistir, limpe o cache do navegador ou experimente outro dispositivo."
   },
 
   // ==========================
@@ -80,7 +80,7 @@ const faqs = [
   },
   {
     question: "Posso remarcar ou cancelar um agendamento pelo site?",
-    answer: "As regras de remarcação ou cancelamento variam conforme o tipo de sessão e o prazo. Em geral, você deve solicitar a remarcação com antecedência mínima, conforme previsto nos termos de uso. Em breve, a plataforma poderá permitir remarcações diretamente pelo painel. Até lá, entre em contato com o estúdio para reorganizar sua sessão."
+    answer: "Sim. Em cancelamento ou recusa de agendamento pago, use a Minha Conta para escolher reembolso financeiro (via Asaas) ou cupom de remarcação. Detalhes estão na Política de Cancelamento em /termos-contratos."
   },
   {
     question: "Não encontrei um horário que encaixa com a minha agenda.",
@@ -96,15 +96,15 @@ const faqs = [
   // ==========================
   {
     question: "Qual a diferença entre os planos Bronze, Prata e Ouro?",
-    answer: "O Plano Bronze é ideal para quem está começando, com 2h de captação, 1 mix & master e desconto em serviços. O Plano Prata oferece 2h de captação, 2 mix & master, 1 beat e prioridade intermediária. O Plano Ouro é o mais completo, com 4h de captação, 2 mix & master, 2 beats, descontos e acompanhamento artístico profissional."
+    answer: "Bronze: 1 sessão, 2h de captação, 1 Mix e 10% em serviços avulsos (sem Shopping exclusivo). Prata: 1 sessão, 2h captação, 1 Mix, 1 Master, 1 Beat e promoções exclusivas do Shopping. Ouro: 2 sessões, 4h captação, 2 Mix, 2 Master, 2 Beats, 10% em serviços e beats, Shopping exclusivo e acompanhamento artístico. Benefícios são mensais e não acumulam."
   },
   {
     question: "Qual a diferença entre contratar avulso e assinar um plano?",
-    answer: "Nos serviços avulsos você paga por sessão ou por faixa, enquanto os planos oferecem um pacote de horas e serviços com melhor custo-benefício e prioridade na agenda. Planos são ideais para quem quer manter uma rotina de lançamentos ou projetos recorrentes."
+    answer: "Nos serviços avulsos você paga por sessão ou por faixa. Os planos oferecem um pacote de benefícios por ciclo mensal (cupons) com melhor previsibilidade de custo. Consulte a página de Planos e os Termos para detalhes."
   },
   {
     question: "O que acontece se eu não usar todas as horas do meu plano no mês?",
-    answer: "As regras podem variar conforme o plano, mas em muitos casos as horas não utilizadas não são acumuladas para o próximo mês. Por isso, é importante organizar sua agenda para aproveitar bem os créditos de cada ciclo. Consulte os termos do plano antes de contratar."
+    answer: "Benefícios não utilizados no ciclo mensal expiram e não acumulam para o mês seguinte. No plano anual há 12 ciclos mensais consecutivos. Organize sua agenda para aproveitar os cupons de cada ciclo."
   },
   {
     question: "Posso alterar de plano Bronze para Prata ou Ouro depois?",
@@ -112,27 +112,27 @@ const faqs = [
   },
   {
     question: "Meu plano foi cobrado automaticamente e eu não queria renovar.",
-    answer: "Se o plano é recorrente, a cobrança é feita automaticamente enquanto estiver ativo. Verifique na sua área de usuário ou entre em contato com o suporte para solicitar o cancelamento futuro. Dependendo da data da cobrança, pode não ser possível estornar o mês já iniciado."
+    answer: "Se o plano é recorrente, a cobrança pode ser feita automaticamente enquanto a assinatura estiver ativa. Cancele pela Minha Conta para impedir novas cobranças (efeito imediato). O reembolso, quando elegível, desconta os benefícios já utilizados e é processado via Asaas."
   },
   {
     question: "Os planos têm desconto se eu pagar anualmente?",
-    answer: "Sim, os planos oferecem opção de pagamento mensal ou anual. O pagamento anual geralmente oferece um desconto significativo comparado ao pagamento mensal. Verifique na página de planos os valores e benefícios de cada modalidade."
+    answer: "Sim, os planos oferecem opção de pagamento mensal ou anual. Confira os valores na página de Planos. No anual, os benefícios continuam sendo liberados em 12 ciclos mensais."
   },
   {
     question: "O que está incluído no Plano Bronze?",
-    answer: "O Plano Bronze inclui 2h de captação por mês, 1 Mix & Master, 10% de desconto em serviços avulsos. Não inclui beats personalizados, acesso a descontos promocionais ou acompanhamento artístico."
+    answer: "O Plano Bronze inclui 1 sessão (1h) por mês, 2h de captação por mês, 1 Mix por mês e 10% de desconto em serviços avulsos. Não inclui beats personalizados, promoções exclusivas do Shopping nem acompanhamento artístico."
   },
   {
     question: "O que está incluído no Plano Prata?",
-    answer: "O Plano Prata inclui 2h de captação por mês, 2 Mix & Master por mês, 1 Beat por mês, acesso a descontos promocionais do site e prioridade intermediária na agenda. Não inclui desconto em serviços ou beats, nem acompanhamento artístico."
+    answer: "O Plano Prata inclui 1 sessão por mês, 2h de captação, 1 Mix, 1 Master, 1 Beat e acesso a promoções exclusivas do Shopping. Não inclui desconto percentual em serviços/beats nem acompanhamento artístico."
   },
   {
     question: "O que está incluído no Plano Ouro?",
-    answer: "O Plano Ouro é o mais completo, incluindo 4 horas de captação por mês, 2 mix & master por mês, 2 Beats, desconto de 10% em serviços avulsos, desconto de 10% em beats, acesso a descontos promocionais do site e acompanhamento artístico profissional contínuo com TremV."
+    answer: "O Plano Ouro inclui 2 sessões, 4h de captação, 2 Mix, 2 Master, 2 Beats, 10% em serviços avulsos, 10% em beats, promoções exclusivas do Shopping e acompanhamento artístico com Tremv."
   },
   {
     question: "Posso cancelar meu plano a qualquer momento?",
-    answer: "Sim, você pode cancelar seu plano a qualquer momento. O cancelamento geralmente entra em vigor no final do período já pago. Entre em contato com o suporte para processar o cancelamento e verificar as condições específicas do seu plano."
+    answer: "Sim. O cancelamento é imediato na Minha Conta: cessam novas cobranças e novos ciclos. Cupons não usados são invalidados. Se houver reembolso elegível, o valor é calculado descontando benefícios utilizados (critério interno) e o estorno é via Asaas. Veja /termos-contratos."
   },
 
   // ==========================
@@ -196,7 +196,7 @@ const faqs = [
   },
   {
     question: "Não aparece o botão para pagar, apenas uma mensagem de erro.",
-    answer: "Isso pode ser causado por bloqueio de scripts de terceiros (como bloqueador de anúncios) ou falha ao carregar o SDK do Mercado Pago. Desative bloqueadores de anúncios, atualize a página e teste em outro navegador. Se o erro continuar, envie o print da tela para o suporte."
+    answer: "Isso pode ser causado por bloqueio de scripts de terceiros (como bloqueador de anúncios) ou falha ao carregar o checkout do Asaas. Desative bloqueadores de anúncios, atualize a página e teste em outro navegador. Se o erro continuar, envie o print da tela para o suporte."
   },
   {
     question: "Selecionei serviços e pacotes, mas o total estimado não aparece.",

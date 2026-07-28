@@ -33,6 +33,9 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
+# GO-H11A — entregas locais (fora de public/)
+/storage/deliveries/
+
 # vercel
 .vercel
 

@@ -30,8 +30,11 @@ export type HomologationScenarioId =
   | "sessao_mix"
   | "beat_mix"
   | "plano_bronze"
+  | "plano_bronze_anual"
   | "plano_prata"
+  | "plano_prata_anual"
   | "plano_ouro"
+  | "plano_ouro_anual"
   | "cupom_desconto"
   | "cupom_remarcacao"
   | "refund_approved"
@@ -208,7 +211,7 @@ export const HOMOLOGATION_SCENARIOS: HomologationScenarioDef[] = [
   {
     id: "plano_bronze",
     label: "Plano Bronze",
-    description: "Pagamento simbólico de plano Bronze.",
+    description: "Pagamento simbólico de plano Bronze (+ Assinatura H10C).",
     expectedServiceCoupons: null,
     buildInput: (base) => ({
       ...base,
@@ -219,9 +222,22 @@ export const HOMOLOGATION_SCENARIOS: HomologationScenarioDef[] = [
     }),
   },
   {
+    id: "plano_bronze_anual",
+    label: "Plano Bronze Anual",
+    description: "Assinatura anual Bronze — 12 ciclos de benefício (H10B/C).",
+    expectedServiceCoupons: null,
+    buildInput: (base) => ({
+      ...base,
+      tipo: "plano",
+      planId: "bronze",
+      modo: "anual",
+      runRefund: false,
+    }),
+  },
+  {
     id: "plano_prata",
     label: "Plano Prata",
-    description: "Pagamento simbólico de plano Prata.",
+    description: "Pagamento simbólico de plano Prata (+ Assinatura).",
     expectedServiceCoupons: null,
     buildInput: (base) => ({
       ...base,
@@ -234,13 +250,39 @@ export const HOMOLOGATION_SCENARIOS: HomologationScenarioDef[] = [
   {
     id: "plano_ouro",
     label: "Plano Ouro",
-    description: "Pagamento simbólico de plano Ouro.",
+    description: "Pagamento simbólico de plano Ouro (+ Assinatura).",
     expectedServiceCoupons: null,
     buildInput: (base) => ({
       ...base,
       tipo: "plano",
       planId: "ouro",
       modo: "mensal",
+      runRefund: false,
+    }),
+  },
+  {
+    id: "plano_prata_anual",
+    label: "Plano Prata Anual",
+    description: "Assinatura anual Prata.",
+    expectedServiceCoupons: null,
+    buildInput: (base) => ({
+      ...base,
+      tipo: "plano",
+      planId: "prata",
+      modo: "anual",
+      runRefund: false,
+    }),
+  },
+  {
+    id: "plano_ouro_anual",
+    label: "Plano Ouro Anual",
+    description: "Assinatura anual Ouro.",
+    expectedServiceCoupons: null,
+    buildInput: (base) => ({
+      ...base,
+      tipo: "plano",
+      planId: "ouro",
+      modo: "anual",
       runRefund: false,
     }),
   },

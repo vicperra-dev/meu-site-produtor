@@ -4,6 +4,10 @@ import { generatePlanServiceCoupons } from "@/app/lib/plan-coupons";
 import { resolvePlanIsTestPayment, SYMBOLIC_PLANO_BRL } from "@/app/lib/plan-payment-simulation";
 import { sendPlanPaymentConfirmationEmail } from "@/app/lib/sendEmail";
 import { findActiveUserPlan, ACTIVE_PLAN_BLOCK_MESSAGE } from "@/app/lib/checkout-active-plan-gate";
+import {
+  ensureLocalSubscription,
+  findActiveSubscriptionForUser,
+} from "@/app/lib/subscription-lifecycle";
 
 export type ProcessPlanoPaymentEffectsResult = {
   userPlanId: string | null;
@@ -114,7 +118,8 @@ export async function processPlanoPaymentEffects(params: {
   }
 
   const planoAtivo = await findActiveUserPlan(userId);
-  if (planoAtivo) {
+  const assinaturaAtiva = await findActiveSubscriptionForUser(userId);
+  if (planoAtivo || assinaturaAtiva) {
     await prisma.payment.update({
       where: { id: paymentDbId },
       data: {
@@ -125,7 +130,7 @@ export async function processPlanoPaymentEffects(params: {
       },
     });
     return {
-      userPlanId: planoAtivo.id,
+      userPlanId: planoAtivo?.id || assinaturaAtiva?.userPlanId || null,
       paymentLinked: true,
       couponsCount: 0,
       emailsSent: false,
@@ -171,6 +176,29 @@ export async function processPlanoPaymentEffects(params: {
     paymentId: paymentDbId,
     isTestPayment: symbolic,
   });
+
+  // GO-H10C — Assinatura é a entidade comercial oficial (não o Payment).
+  try {
+    await ensureLocalSubscription({
+      userId,
+      userPlanId: userPlan.id,
+      modo,
+      paymentMethod: String(metadata.paymentMethod || "pix"),
+      billingDay: Number(metadata.billingDay) || startDate.getDate(),
+      startDate,
+      endDate,
+      rootPaymentId: paymentDbId,
+      planValue: userPlan.amount,
+      planDescription: `${planName} - ${modo}`,
+      // Recorrência remota Asaas: apenas produção não-simbólica com customer quando disponível
+      createRemote: !symbolic && Boolean(metadata.asaasCustomerId),
+      asaasCustomerId: metadata.asaasCustomerId
+        ? String(metadata.asaasCustomerId)
+        : null,
+    });
+  } catch (subErr) {
+    console.error("[PlanoEffects] Falha ao criar Assinatura (non-fatal):", subErr);
+  }
 
   let emailsSent = false;
   if (sendEmails) {

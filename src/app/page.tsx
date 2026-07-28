@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useAuth } from "@/app/context/AuthContext";
 import ProfessionalBox from "@/app/components/ProfessionalBox";
 import { Button, LinkButton } from "@/components/design-system";
+import { PLAN_DEFINITIONS, type PlanTierId } from "@/app/lib/plan-definitions";
 
 // ID do vídeo do YouTube - Substitua pelo ID real do vídeo
 // Para obter o ID: pegue a URL do YouTube (ex: https://www.youtube.com/watch?v=VIDEO_ID)
@@ -30,7 +31,7 @@ const BIO = {
 };
 
 /* =========================
-   PLANOS
+   PLANOS (GO-H10B — PLAN_DEFINITIONS)
 ========================= */
 type Plano = {
   id: string;
@@ -41,57 +42,17 @@ type Plano = {
   beneficios: { label: string; included: boolean; useTilde?: boolean }[];
 };
 
-const PLANOS: Plano[] = [
-  {
-    id: "bronze",
-    nome: "Plano Bronze",
-    mensal: 249.99,
-    anual: 2499.90,
-    descricao: "Para quem está começando a gravar com frequência.",
-    beneficios: [
-      { label: "1 sessão por mês", included: true },
-      { label: "2h de captação por mês", included: true },
-      { label: "1 Mix por mês", included: true },
-      { label: "10% de desconto em serviços avulsos", included: true },
-      { label: "Sem beats personalizados", included: false },
-      { label: "Sem acesso a descontos promocionais", included: false },
-      { label: "Não tem acompanhamento artístico", included: false },
-    ],
-  },
-  {
-    id: "prata",
-    nome: "Plano Prata",
-    mensal: 449.99,
-    anual: 4499.90,
-    descricao: "Para artistas que gravam com regularidade e já possuem músicas próprias.",
-    beneficios: [
-      { label: "1 sessão por mês", included: true },
-      { label: "2h de captação por mês", included: true },
-      { label: "1 Mix & Master por mês", included: true },
-      { label: "1 Beat por mês", included: true },
-      { label: "Acesso a descontos promocionais do site", included: true },
-      { label: "Não tem desconto em serviços ou beats", included: false },
-      { label: "Não tem acompanhamento artístico", included: false },
-    ],
-  },
-  {
-    id: "ouro",
-    nome: "Plano Ouro",
-    mensal: 799.99,
-    anual: 7999.90,
-    descricao: "Acompanhamento profissional contínuo com TremV e 2 Produções completas por mês.",
-    beneficios: [
-      { label: "2 sessões por mês", included: true },
-      { label: "4h de captação por mês", included: true },
-      { label: "2 Mix & Master por mês", included: true },
-      { label: "2 Beats por mês", included: true },
-      { label: "Desconto de 10% em serviços avulsos", included: true },
-      { label: "Desconto de 10% em beats", included: true },
-      { label: "Acesso a descontos promocionais do site", included: true },
-      { label: "Acompanhamento artístico", included: true },
-    ],
-  },
-];
+const PLANOS: Plano[] = (["bronze", "prata", "ouro"] as PlanTierId[]).map((id) => {
+  const p = PLAN_DEFINITIONS[id];
+  return {
+    id: p.id,
+    nome: p.nome,
+    mensal: p.mensal,
+    anual: p.anual,
+    descricao: p.descricao,
+    beneficios: p.marketingBenefits,
+  };
+});
 
 export default function Home() {
   const { user } = useAuth();
@@ -359,7 +320,7 @@ export default function Home() {
                 </p>
                 <p className="mt-0.5 text-sm md:text-base font-bold text-red-400">R$ 450</p>
                 <p className="mt-0.5 text-[9px] md:text-[10px] text-zinc-300">
-                  4h captação + beat + mix + master
+                  2h Sessão + 2h Captação + beat + mix + master
                 </p>
               </Link>
             </div>
@@ -407,8 +368,8 @@ export default function Home() {
 
               <p className="mx-auto max-w-2xl text-center text-xs text-white md:text-sm" style={{ textShadow: "0 2px 8px rgba(0, 0, 0, 0.8)" }}>
               Os planos da THouse Rec foram pensados para artistas que desejam
-              manter uma rotina de lançamentos, garantir prioridade na agenda e
-              ter o melhor custo-benefício em relação aos serviços avulsos.
+              manter uma rotina de lançamentos e aproveitar benefícios mensais
+              do seu plano, com melhor previsibilidade em relação aos serviços avulsos.
             </p>
 
             {/* Toggle Mensal / Anual */}
@@ -564,14 +525,14 @@ export default function Home() {
               <div className="space-y-2 md:space-y-0 overflow-visible">
                 {/* Mobile: dois parágrafos — padding maior para não cortar nas laterais */}
                 <p className="md:hidden text-xs leading-relaxed text-white text-justify px-6 min-w-0 w-full" style={{ textShadow: "0 2px 8px rgba(0, 0, 0, 0.8)", boxSizing: "border-box" }}>
-                  Em breve você poderá adquirir roupas estilizadas, beats originais, promoções sazonais e ingressos para eventos exclusivos da Thouse Rec.
+                  Em breve você poderá adquirir roupas estilizadas, beats originais e outros produtos. Assinantes Prata e Ouro já têm acesso às promoções exclusivas quando disponíveis.
                 </p>
                 <p className="md:hidden text-xs leading-relaxed text-white text-justify px-6 min-w-0 w-full" style={{ textShadow: "0 2px 8px rgba(0, 0, 0, 0.8)", boxSizing: "border-box" }}>
-                  A aba <strong className="text-red-300">Shopping</strong> está em construção e será atualizada conforme os produtos forem lançados, sempre alinhados à estética e à identidade do estúdio.
+                  A aba <strong className="text-red-300">Shopping</strong> está em preparação para o catálogo de compra e será atualizada conforme os produtos forem lançados.
                 </p>
                 {/* Desktop: um único texto juntado */}
                 <p className="hidden md:block text-base leading-relaxed text-white text-center px-4 md:px-0" style={{ textShadow: "0 2px 8px rgba(0, 0, 0, 0.8)" }}>
-                  Em breve você poderá adquirir roupas estilizadas, beats originais, promoções sazonais e ingressos para eventos exclusivos da Thouse Rec. A aba <strong className="text-red-300">Shopping</strong> está em construção e será atualizada conforme os produtos forem lançados, sempre alinhados à estética e à identidade do estúdio.
+                  Em breve você poderá adquirir roupas estilizadas, beats originais e outros produtos. Assinantes Prata e Ouro já têm acesso às promoções exclusivas quando disponíveis. A aba <strong className="text-red-300">Shopping</strong> está em preparação para o catálogo de compra.
                 </p>
               </div>
 

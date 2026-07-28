@@ -1,10 +1,23 @@
-// Respostas pré-definidas para perguntas clássicas do chat
-// Estas respostas são retornadas diretamente sem chamar a IA
+/**
+ * Respostas rápidas do Chat — GO-H10D2.
+ * Preços e planos derivados das fontes canônicas.
+ */
+import { CHECKOUT_CATALOG } from "@/app/lib/service-catalog";
+import { PLAN_DEFINITIONS, formatPlanPriceBRL } from "@/app/lib/plan-definitions";
 
 export interface QuickAnswer {
   keywords: string[];
   resposta: string;
 }
+
+function brl(n: number): string {
+  return formatPlanPriceBRL(n);
+}
+
+const c = CHECKOUT_CATALOG;
+const bronze = PLAN_DEFINITIONS.bronze;
+const prata = PLAN_DEFINITIONS.prata;
+const ouro = PLAN_DEFINITIONS.ouro;
 
 export const QUICK_ANSWERS: QuickAnswer[] = [
   {
@@ -13,29 +26,29 @@ export const QUICK_ANSWERS: QuickAnswer[] = [
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-📌 SERVIÇOS DE ESTÚDIO
+SERVIÇOS DE ESTÚDIO
 
-• Sessão: R$ 40,00/hora
-• Captação: R$ 50,00/hora
-• Mixagem: R$ 110,00
-• Masterização: R$ 60,00
-• Mix + Master: R$ 160,00
-• Sonoplastia (a partir de): R$ 320,00
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-🎵 BEATS E PACOTES
-
-• 1 Beat: R$ 150,00
-• 2 Beats: R$ 250,00
-• 3 Beats: R$ 350,00
-• 4 Beats: R$ 400,00
-• Beat + Mix + Master: R$ 280,00
-• Produção Completa (2h Sessão + 2h Captação + Beat + Mix + Master): R$ 450,00
+• Sessão: ${brl(c.sessao.preco)}/hora
+• Captação: ${brl(c.captacao.preco)}/hora
+• Mixagem: ${brl(c.mix.preco)}
+• Masterização: ${brl(c.master.preco)}
+• Mix + Master: ${brl(c.mix_master.preco)}
+• Sonoplastia: ${brl(c.sonoplastia.preco)}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Para agendar ou mais informações, acesse a página de Agendamento.`,
+BEATS E PACOTES
+
+• 1 Beat: ${brl(c.beat1.preco)}
+• 2 Beats: ${brl(c.beat2.preco)}
+• 3 Beats: ${brl(c.beat3.preco)}
+• 4 Beats: ${brl(c.beat4.preco)}
+• Beat + Mix + Master: ${brl(c.beat_mix_master.preco)}
+• Produção Completa (2h Sessão + 2h Captação + Beat + Mix + Master): ${brl(c.producao_completa.preco)}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Para agendar, acesse a página de Agendamento. Pagamentos via Asaas.`,
   },
   {
     keywords: ["agendamento", "agendar", "como funciona o agendamento", "como agendar"],
@@ -43,24 +56,18 @@ Para agendar ou mais informações, acesse a página de Agendamento.`,
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-1️⃣ Acesse a página de Agendamento
-
-2️⃣ Selecione os serviços ou pacotes desejados
-
-3️⃣ Escolha uma data disponível no calendário
-
-4️⃣ Selecione um horário
-   (disponível das 10h às 22h)
-
-5️⃣ Revise o resumo e aceite os termos de contrato
-
-6️⃣ Confirme o pagamento via Mercado Pago
+1. Acesse a página de Agendamento
+2. Selecione os serviços ou pacotes desejados
+3. Escolha uma data disponível no calendário
+4. Selecione um horário (disponível das 10h às 22h)
+5. Revise o resumo e aceite os termos de contrato
+6. Confirme o pagamento via Asaas
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-💳 Formas de pagamento: Cartão, Débito, Pix ou Boleto
+Formas de pagamento (conforme checkout): Cartão, Débito, Pix ou Boleto.
 
-O agendamento é confirmado após o pagamento.`,
+O agendamento é confirmado após o pagamento. Em caso de cancelamento ou recusa, você pode escolher na Minha Conta: reembolso financeiro ou cupom de remarcação.`,
   },
   {
     keywords: ["planos", "plano", "quais planos", "planos disponíveis", "assinatura"],
@@ -68,46 +75,54 @@ O agendamento é confirmado após o pagamento.`,
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-🥉 PLANO BRONZE
-R$ 249,99/mês ou R$ 2.499,90/ano
+PLANO BRONZE
+${brl(bronze.mensal)}/mês ou ${brl(bronze.anual)}/ano
 
+✓ 1 sessão (1h) por mês
 ✓ 2h de captação por mês
-✓ 1 Mix & Master por mês
+✓ 1 Mix por mês
 ✓ 10% de desconto em serviços avulsos
-
-Ideal para quem está começando.
+✗ Sem promoções exclusivas do Shopping
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-🥈 PLANO PRATA
-R$ 449,99/mês ou R$ 4.499,90/ano
+PLANO PRATA
+${brl(prata.mensal)}/mês ou ${brl(prata.anual)}/ano
 
+✓ 1 sessão por mês
 ✓ 2h de captação por mês
-✓ 2 Mix & Master por mês
+✓ 1 Mix + 1 Master por mês
 ✓ 1 Beat por mês
-✓ Acesso a descontos promocionais
-✓ Prioridade intermediária na agenda
-
-Para artistas que gravam regularmente.
+✓ Acesso a promoções exclusivas do Shopping
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-🥇 PLANO OURO
-R$ 799,99/mês ou R$ 7.999,90/ano
+PLANO OURO
+${brl(ouro.mensal)}/mês ou ${brl(ouro.anual)}/ano
 
-✓ 4 horas de captação por mês
-✓ 2 mix & master por mês
-✓ 2 Beat por mês
-✓ 10% de desconto em serviços avulsos
-✓ 10% de desconto em beats
-✓ Acesso a descontos promocionais
+✓ 2 sessões por mês
+✓ 4h de captação por mês
+✓ 2 Mix + 2 Master por mês
+✓ 2 Beats por mês
+✓ 10% em serviços e 10% em beats
+✓ Promoções exclusivas do Shopping
 ✓ Acompanhamento artístico
 
-Acompanhamento profissional contínuo.
-
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Confira todos os detalhes na página de Planos!`,
+Benefícios são mensais (também no plano anual): o que não for usado no ciclo expira e não acumula. Novos cupons saem no início de cada mês de vigência, com assinatura ativa.
+
+Cancelamento é imediato. Reembolso elegível = valor pago − benefícios utilizados (critério interno), via Asaas.
+
+Confira detalhes na página de Planos e em /termos-contratos.`,
+  },
+  {
+    keywords: ["pagamento", "pagar", "asaas", "pix", "cartão", "mercado pago", "mercadopago"],
+    resposta: `Pagamentos na THouse Rec são processados pelo Asaas.
+
+Formas disponíveis conforme o checkout: Pix, cartão de crédito, cartão de débito e boleto.
+
+A THouse Rec não utiliza Mercado Pago nem InfinityPay no fluxo comercial atual.`,
   },
   {
     keywords: ["serviços", "quais serviços", "o que vocês fazem", "trabalhos"],
@@ -115,7 +130,7 @@ Confira todos os detalhes na página de Planos!`,
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-🎙️ SERVIÇOS DE ESTÚDIO
+SERVIÇOS DE ESTÚDIO
 
 • Sessão - Gravação de áudio
 • Captação - Captura de áudio profissional
@@ -126,35 +141,25 @@ Confira todos os detalhes na página de Planos!`,
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-🎵 BEATS E PRODUÇÃO
+BEATS E PRODUÇÃO
 
-• Beats personalizados - Instrumentais exclusivos
+• Beats personalizados
 • Produção completa - 2h Sessão + 2h Captação + Beat + Mix + Master
-• Beat + Mix + Master - Pacote completo de produção
+• Beat + Mix + Master
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Você pode contratar serviços avulsos ou combinar diferentes etapas da produção.
-
-Para ver preços e agendar, acesse a página de Agendamento!`,
+Para ver preços e agendar, acesse a página de Agendamento.`,
   },
 ];
 
-/**
- * Busca resposta pré-definida baseada nas palavras-chave
- */
 export function getQuickAnswer(message: string): string | null {
   const messageLower = message.toLowerCase().trim();
-  
+
   for (const answer of QUICK_ANSWERS) {
     const match = answer.keywords.some((keyword) =>
       messageLower.includes(keyword.toLowerCase())
     );
-    
-    if (match) {
-      return answer.resposta;
-    }
+    if (match) return answer.resposta;
   }
-  
+
   return null;
 }

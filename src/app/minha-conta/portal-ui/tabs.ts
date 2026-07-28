@@ -18,7 +18,7 @@ export const TABS: Array<{ key: TabKey; label: string; icon: IconName }> = [
   { key: "agendamentos", label: "Agendamentos", icon: "calendar" },
   { key: "downloads", label: "Downloads", icon: "download" },
   { key: "cupons", label: "Cupons", icon: "ticket" },
-  { key: "plano", label: "Plano", icon: "box" },
+  { key: "plano", label: "Assinatura", icon: "box" },
   { key: "historico", label: "Histórico", icon: "history" },
   { key: "notificacoes", label: "Notificações", icon: "bell" },
   { key: "perfil", label: "Perfil", icon: "user" },

@@ -11,8 +11,11 @@ import {
 const REQUIRED: HomologationScenarioId[] = [
   ...OFFICIAL_SKU_SCENARIO_IDS,
   "plano_bronze",
+  "plano_bronze_anual",
   "plano_prata",
+  "plano_prata_anual",
   "plano_ouro",
+  "plano_ouro_anual",
   "cupom_desconto",
   "cupom_remarcacao",
   "refund_approved",

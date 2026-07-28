@@ -46,21 +46,42 @@ export function DeliveryModal({
 
   const doUpload = useCallback(
     async (file: File) => {
+      const diagId = `upl_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+      const log = (step: string, data?: Record<string, unknown>) => {
+        console.log(`[GO-H2B-UPLOAD][${diagId}] ${step}`, {
+          t: new Date().toISOString(),
+          serviceId: service.id,
+          ...data,
+        });
+      };
+
       setError(null);
       const ext = (file.name.split(".").pop() || "").toLowerCase();
+      log("Arquivo selecionado", {
+        name: file.name,
+        ext,
+        mime: file.type || "(empty)",
+        sizeBytes: file.size,
+        sizeMB: Number((file.size / (1024 * 1024)).toFixed(3)),
+      });
+
       if (!ALLOWED.includes(ext as Formato)) {
         setError("Formato não permitido. Use WAV, MP3 ou ZIP.");
+        log("VALIDACAO_REJEITADA", { reason: "ext" });
         return;
       }
       if (file.size <= 0 || file.size > MAX_BYTES) {
         setError("Arquivo inválido ou maior que 80MB.");
+        log("VALIDACAO_REJEITADA", { reason: "size" });
         return;
       }
       setUploading(true);
       setProgress(0);
       setUploaded(null);
+      log("Preparando upload");
 
       const finish = (url: string) => {
+        log("Upload finalizado", { url });
         setUploaded({
           url,
           formato: (ext === "mp3" ? "mp3" : ext === "zip" ? "zip" : "wav") as Formato,
@@ -75,19 +96,38 @@ export function DeliveryModal({
       const uploadMultipart = () =>
         new Promise<string>((resolve, reject) => {
           const xhr = new XMLHttpRequest();
+          log("Enviando arquivo", {
+            mode: "xhr-multipart",
+            endpoint: "/api/admin/servicos/upload-entrega",
+            method: "POST",
+          });
           xhr.open("POST", "/api/admin/servicos/upload-entrega");
           xhr.withCredentials = true;
           xhr.upload.onprogress = (ev) => {
             if (ev.lengthComputable && ev.total > 0) {
-              setProgress(Math.min(99, Math.round((ev.loaded / ev.total) * 100)));
+              const pct = Math.min(99, Math.round((ev.loaded / ev.total) * 100));
+              setProgress(pct);
+              if (pct === 1 || pct % 10 === 0 || pct >= 95) {
+                log("XHR_PROGRESS", { loaded: ev.loaded, total: ev.total, pct });
+              }
             } else if (ev.loaded > 0) {
               setProgress((p) => Math.min(90, Math.max(p, 15)));
             }
           };
           xhr.onload = () => {
+            log("Resposta recebida", {
+              mode: "xhr-multipart",
+              status: xhr.status,
+              statusText: xhr.statusText,
+              bodyPreview: String(xhr.responseText || "").slice(0, 500),
+            });
             try {
               const data = JSON.parse(xhr.responseText || "{}");
               if (xhr.status >= 200 && xhr.status < 300 && data.deliveryAudioUrl) {
+                log("Upload concluído", {
+                  mode: "xhr-multipart",
+                  deliveryAudioUrl: data.deliveryAudioUrl,
+                });
                 resolve(String(data.deliveryAudioUrl));
               } else {
                 reject(new Error(data.error || `Falha no upload (${xhr.status})`));
@@ -96,8 +136,14 @@ export function DeliveryModal({
               reject(new Error(`Falha no upload (${xhr.status})`));
             }
           };
-          xhr.onerror = () => reject(new Error("Falha de rede no upload."));
-          xhr.ontimeout = () => reject(new Error("Tempo esgotado no upload."));
+          xhr.onerror = () => {
+            log("XHR_ERROR", { readyState: xhr.readyState, status: xhr.status });
+            reject(new Error("Falha de rede no upload."));
+          };
+          xhr.ontimeout = () => {
+            log("XHR_TIMEOUT", { timeoutMs: xhr.timeout });
+            reject(new Error("Tempo esgotado no upload."));
+          };
           xhr.timeout = 10 * 60 * 1000;
           const fd = new FormData();
           fd.append("file", file);
@@ -106,16 +152,15 @@ export function DeliveryModal({
         });
 
       try {
-        // Até 4MB: multipart com progresso confiável (API grava Blob ou disco local).
-        // Acima: client upload Vercel Blob — PUT simples (sem multipart).
-        // multipart:true + onUploadProgress travava em ~5% (Promise nunca resolvia).
         const VERCEL_BODY_SAFE = 4 * 1024 * 1024;
         if (file.size <= VERCEL_BODY_SAFE) {
+          log("RAMO", { path: "xhr-multipart", reason: `size<=${VERCEL_BODY_SAFE}` });
           const url = await uploadMultipart();
           finish(url);
           return;
         }
 
+        log("RAMO", { path: "vercel-blob-client", reason: `size>${VERCEL_BODY_SAFE}` });
         setProgress(5);
         const safeBase = file.name
           .replace(/\.[^.]+$/, "")
@@ -131,30 +176,187 @@ export function DeliveryModal({
               ? "audio/mpeg"
               : "audio/wav");
 
-        const blob = await upload(pathname, file, {
-          access: "public",
-          handleUploadUrl: "/api/admin/servicos/upload-entrega",
+        log("Solicitando Upload URL", {
+          pathname,
           contentType,
-          // PUT único: progresso via onUploadProgress sem deadlock do multipart+stream
+          handleUploadUrl: "/api/admin/servicos/upload-entrega",
           multipart: false,
-          onUploadProgress: ({ loaded, total, percentage }) => {
-            if (typeof percentage === "number" && Number.isFinite(percentage)) {
-              setProgress(Math.max(5, Math.min(99, Math.round(percentage))));
-            } else if (total && total > 0) {
-              setProgress(Math.max(5, Math.min(99, Math.round((loaded / total) * 100))));
-            } else if (loaded > 0) {
-              setProgress((p) => Math.min(90, Math.max(p, 20)));
+          note: "Promise pendente = upload() [@vercel/blob/client] — stages internas: retrieveClientToken → PUT blob",
+        });
+
+        const t0 = performance.now();
+        let firstProgressAt: number | null = null;
+        let lastPct = 5;
+        const networkHits: Array<Record<string, unknown>> = [];
+
+        // Instrumentação temporária GO-H2B: observar fetch/XHR do SDK sem alterar o fluxo.
+        const origFetch = window.fetch.bind(window);
+        window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+          const url =
+            typeof input === "string"
+              ? input
+              : input instanceof URL
+                ? input.href
+                : input.url;
+          const method = (init?.method || (input instanceof Request ? input.method : "GET")).toUpperCase();
+          const isUploadApi = url.includes("/api/admin/servicos/upload-entrega");
+          const isBlobHost = /blob\.vercel-storage\.com|vercel-storage\.com/i.test(url);
+          if (isUploadApi || isBlobHost) {
+            log("NETWORK_FETCH_OUT", { url: url.slice(0, 180), method });
+            const tf = performance.now();
+            try {
+              const res = await origFetch(input, init);
+              const hit = {
+                kind: "fetch",
+                url: url.slice(0, 180),
+                method,
+                status: res.status,
+                elapsedMs: Math.round(performance.now() - tf),
+              };
+              networkHits.push(hit);
+              log("NETWORK_FETCH_IN", hit);
+              return res;
+            } catch (e) {
+              const err = e instanceof Error ? e : new Error(String(e));
+              log("NETWORK_FETCH_ERR", {
+                url: url.slice(0, 180),
+                method,
+                name: err.name,
+                message: err.message,
+              });
+              throw e;
             }
-          },
+          }
+          return origFetch(input, init);
+        };
+
+        const XHRProto = XMLHttpRequest.prototype;
+        const origOpen = XHRProto.open;
+        const origSend = XHRProto.send;
+        XHRProto.open = function (method: string, url: string | URL, ...rest: unknown[]) {
+          (this as XMLHttpRequest & { __h2bUrl?: string; __h2bMethod?: string }).__h2bUrl =
+            String(url);
+          (this as XMLHttpRequest & { __h2bMethod?: string }).__h2bMethod = method;
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          return (origOpen as any).apply(this, [method, url, ...rest]);
+        };
+        XHRProto.send = function (body?: Document | XMLHttpRequestBodyInit | null) {
+          const self = this as XMLHttpRequest & { __h2bUrl?: string; __h2bMethod?: string };
+          const url = self.__h2bUrl || "";
+          const method = self.__h2bMethod || "GET";
+          const isBlobHost = /blob\.vercel-storage\.com|vercel-storage\.com/i.test(url);
+          if (isBlobHost) {
+            const ts = performance.now();
+            log("NETWORK_XHR_OUT", { url: url.slice(0, 180), method });
+            self.addEventListener("loadend", () => {
+              const hit = {
+                kind: "xhr",
+                url: url.slice(0, 180),
+                method,
+                status: self.status,
+                elapsedMs: Math.round(performance.now() - ts),
+              };
+              networkHits.push(hit);
+              log("NETWORK_XHR_IN", hit);
+            });
+            self.addEventListener("error", () => {
+              log("NETWORK_XHR_ERR", { url: url.slice(0, 180), method, status: self.status });
+            });
+            self.addEventListener("timeout", () => {
+              log("NETWORK_XHR_TIMEOUT", { url: url.slice(0, 180), method });
+            });
+          }
+          return origSend.call(this, body);
+        };
+
+        const heartbeat = window.setInterval(() => {
+          const elapsedMs = Math.round(performance.now() - t0);
+          log("HEARTBEAT_await_upload", {
+            elapsedMs,
+            lastPct,
+            firstProgressAt,
+            networkHits: networkHits.length,
+            lastNetwork: networkHits[networkHits.length - 1] || null,
+            pending:
+              firstProgressAt == null
+                ? "likely retrieveClientToken (POST handleUploadUrl) ou aguardando 1º byte"
+                : "likely PUT to Blob storage ainda em andamento",
+          });
+        }, 10000);
+
+        let blob;
+        try {
+          blob = await upload(pathname, file, {
+            access:
+              process.env.NEXT_PUBLIC_BLOB_DELIVERY_ACCESS === "private"
+                ? "private"
+                : "public",
+            handleUploadUrl: "/api/admin/servicos/upload-entrega",
+            contentType,
+            multipart: false,
+            onUploadProgress: ({ loaded, total, percentage }) => {
+              if (firstProgressAt == null) {
+                firstProgressAt = Math.round(performance.now() - t0);
+                log("Upload URL recebida (inferido: 1º progresso)", {
+                  firstProgressAtMs: firstProgressAt,
+                  loaded,
+                  total,
+                  percentage,
+                });
+              }
+              if (typeof percentage === "number" && Number.isFinite(percentage)) {
+                lastPct = Math.max(5, Math.min(99, Math.round(percentage)));
+                setProgress(lastPct);
+              } else if (total && total > 0) {
+                lastPct = Math.max(5, Math.min(99, Math.round((loaded / total) * 100)));
+                setProgress(lastPct);
+              } else if (loaded > 0) {
+                setProgress((p) => {
+                  lastPct = Math.min(90, Math.max(p, 20));
+                  return lastPct;
+                });
+              }
+              const pct =
+                typeof percentage === "number"
+                  ? Math.round(percentage)
+                  : total
+                    ? Math.round((loaded / total) * 100)
+                    : -1;
+              if (pct <= 5 || pct % 10 === 0 || pct >= 95) {
+                log("BLOB_PROGRESS", { loaded, total, percentage, pct });
+              }
+            },
+          });
+        } finally {
+          window.clearInterval(heartbeat);
+          window.fetch = origFetch;
+          XHRProto.open = origOpen;
+          XHRProto.send = origSend;
+          log("NETWORK_SUMMARY", { hits: networkHits });
+        }
+        log("Upload URL recebida / Upload concluído", {
+          mode: "vercel-blob-client",
+          elapsedMs: Math.round(performance.now() - t0),
+          url: blob?.url || null,
+          pathname: blob?.pathname || null,
+          firstProgressAtMs: firstProgressAt,
         });
         if (!blob?.url) {
           throw new Error("Upload Blob concluído sem URL.");
         }
+        log("Resposta recebida", { mode: "vercel-blob-client", url: blob.url });
         finish(blob.url);
       } catch (e) {
-        const msg = e instanceof Error && e.message ? e.message : "Falha no upload.";
+        const err = e instanceof Error ? e : new Error(String(e));
+        log("ERRO", {
+          name: err.name,
+          message: err.message,
+          stack: err.stack?.slice(0, 800),
+        });
+        const msg = err.message || "Falha no upload.";
         setError(msg.includes("Formato não permitido") ? msg : `Falha no upload. ${msg}`);
       } finally {
+        log("FINALLY_uploading=false");
         setUploading(false);
       }
     },
@@ -163,6 +365,12 @@ export function DeliveryModal({
 
   async function salvar() {
     if (!uploaded) return;
+    const diagId = `save_${Date.now()}`;
+    console.log(`[GO-H2B-UPLOAD][${diagId}] Atualizando Service`, {
+      serviceId: service.id,
+      deliveryAudioUrl: uploaded.url,
+      deliveryAudioFormat: uploaded.formato,
+    });
     setSaving(true);
     setError(null);
     try {
@@ -176,13 +384,19 @@ export function DeliveryModal({
         }),
       });
       const data = await res.json().catch(() => ({}));
+      console.log(`[GO-H2B-UPLOAD][${diagId}] PATCH resposta`, {
+        status: res.status,
+        body: data,
+      });
       if (!res.ok) {
         setError(data.error || "Erro ao concluir. Verifique o arquivo.");
         return;
       }
+      console.log(`[GO-H2B-UPLOAD][${diagId}] Upload finalizado (domínio)`);
       await onSaved();
       onClose();
-    } catch {
+    } catch (e) {
+      console.error(`[GO-H2B-UPLOAD][${diagId}] PATCH erro`, e);
       setError("Erro ao salvar a entrega. Tente novamente.");
     } finally {
       setSaving(false);

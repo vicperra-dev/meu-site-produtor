@@ -224,6 +224,8 @@ model UserPlan {
   status                String        @default("active")
   startDate             DateTime      @default(now())
   endDate               DateTime?
+  /// GO-H10B — início do ciclo mensal de benefícios atualmente vigente.
+  lastBenefitCycleAt    DateTime?
   readAt                DateTime? // Quando o usuário visualizou o plano confirmado
   refundRequestedAt     DateTime? // Quando o usuário solicitou reembolso do plano
   refundProcessedAt     DateTime? // Quando o estorno foi registrado no Asaas
@@ -253,9 +255,16 @@ model Subscription {
   asaasSubscriptionId String?   @unique // ID da assinatura no Asaas
   paymentMethod       String // "pix", "cartao_credito", "cartao_debito", "boleto"
   billingDay          Int // Dia do mês para cobrança (1-28)
-  status              String    @default("active") // "active", "paused", "cancelled"
+  /// GO-H10C: active | pending | cancelled | expired | delinquent | suspended
+  status              String    @default("active")
   nextBillingDate     DateTime // Próxima data de cobrança
   lastBillingDate     DateTime? // Última data de cobrança realizada
+  /// Ciclos mensais de benefício restantes (plano anual após o 1º ciclo).
+  cyclesRemaining     Int?
+  failureCount        Int       @default(0)
+  lastFailureAt       DateTime?
+  gracePeriodEndsAt   DateTime?
+  rootPaymentId       String? // Payment inicial que originou a assinatura
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
 

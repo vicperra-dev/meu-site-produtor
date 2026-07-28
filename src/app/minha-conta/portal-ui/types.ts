@@ -74,7 +74,7 @@ export interface Cupom {
   createdAt?: string;
   used?: boolean;
   usedAt?: string | null;
-  status: "disponivel" | "usado" | "expirado";
+  status: "disponivel" | "usado" | "expirado" | "substituido";
   paymentId?: string | null;
   rootPaymentId?: string | null;
   parentCouponId?: string | null;

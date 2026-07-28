@@ -555,7 +555,7 @@ export default function TermosContratosPage() {
             {activeDoc === "termos" && (
               <>
                 <p className="mt-1 text-center text-xs text-zinc-400">
-                  Última atualização: Fevereiro/2025
+                  Última atualização: Julho/2026
                 </p>
 
                 <p>
@@ -641,30 +641,30 @@ export default function TermosContratosPage() {
                   4.6. O sistema armazena apenas informações necessárias para identificação do pagamento (ID do pagamento, valor, status, método de pagamento selecionado) e associação com agendamentos/planos, sem dados bancários ou de cartão.
                 </p>
                 <p>
-                  4.7. <strong>Sistema de Cupons:</strong> A plataforma oferece cupons de desconto que podem ser aplicados em agendamentos ou planos. Cupons podem ser gerados automaticamente (ex: reembolsos) ou fornecidos pela THouse Rec. Cada cupom possui regras específicas de validade, tipo de desconto e serviços aplicáveis.
+                  4.7. <strong>Sistema de Cupons:</strong> A plataforma oferece cupons de plano (benefícios de ciclo), cupons de desconto promocional e cupons de remarcação/reembolso de agendamento. Cada cupom possui validade, tipo e serviços aplicáveis conforme as regras do próprio cupom e da Política de Cancelamento.
                 </p>
                 <p>
-                  4.8. Cupons de reembolso são gerados automaticamente quando um agendamento é cancelado dentro do prazo legal, podendo ser utilizados em futuros agendamentos ou convertidos conforme política de cancelamento.
+                  4.8. Em cancelamento ou recusa de agendamento com pagamento, o Cliente pode escolher, na área logada, <strong>reembolso financeiro</strong> ou <strong>cupom de remarcação</strong>, conforme a Política de Cancelamento vigente.
                 </p>
 
                 <h3 className="mt-4 font-semibold">
                   5. Planos mensais e assinaturas
                 </h3>
                 <p>
-                  5.1. Alguns serviços podem ser oferecidos como planos
-                  mensais com horas de estúdio e benefícios.
+                  5.1. A THouse Rec oferece planos de assinatura (mensal ou anual) com benefícios liberados em <strong>ciclos mensais</strong>, conforme o Contrato dos Planos e a oferta vigente no momento da contratação.
                 </p>
-                <p>5.2. Cada plano possui regras próprias de:</p>
+                <p>5.2. Cada plano define:</p>
                 <ul className="mt-1 list-disc pl-5 space-y-1">
-                  <li>horas incluídas;</li>
-                  <li>validade;</li>
-                  <li>acúmulo ou não de horas;</li>
-                  <li>prioridade de agenda;</li>
-                  <li>política de cancelamento.</li>
+                  <li>benefícios por ciclo (serviços e/ou descontos);</li>
+                  <li>preço mensal e anual;</li>
+                  <li>acesso ou não a promoções exclusivas do Shopping;</li>
+                  <li>regras de renovação, inadimplência, cancelamento e reembolso.</li>
                 </ul>
                 <p className="mt-2">
-                  5.3. Ao assinar um plano, o usuário aceita também as
-                  regras específicas do plano escolhido.
+                  5.3. Benefícios não utilizados no ciclo mensal <strong>expiram e não acumulam</strong>. Detalhes estão no Contrato dos Planos / Assinaturas.
+                </p>
+                <p className="mt-2">
+                  5.4. Ao assinar um plano, o usuário aceita também o Contrato dos Planos e a Política de Cancelamento.
                 </p>
 
                 <h3 className="mt-4 font-semibold">
@@ -764,17 +764,12 @@ export default function TermosContratosPage() {
                   10. Cancelamentos, remarcações e reembolsos
                 </h3>
                 <p>
-                  10.1. Remarcações devem ser feitas com antecedência mínima.
+                  10.1. Cancelamentos, remarcações e reembolsos de agendamentos e de planos seguem a <strong>Política de Cancelamento, Remarcação e Reembolso</strong> e o <strong>Contrato dos Planos</strong>, ambos disponíveis nesta página.
                 </p>
                 <p>
-                  10.2. Cancelamentos podem gerar custos ou retenção de parte
-                  do valor.
+                  10.2. Em resumo: agendamentos pagos podem gerar reembolso financeiro ou cupom de remarcação, conforme escolha do Cliente na plataforma; planos cancelados seguem o cálculo de reembolso por benefícios utilizados (valores internos), via Asaas, quando elegível.
                 </p>
-                <p>
-                  10.3. Planos mensais seguem regras próprias de
-                  cancelamento.
-                </p>
-                <p>10.4. Atrasos reduzem o tempo de sessão.</p>
+                <p>10.3. Atrasos do Cliente reduzem o tempo de sessão e não geram extensão automática.</p>
 
                 <h3 className="mt-4 font-semibold">
                   11. Responsabilidades da THouse Rec
@@ -792,10 +787,9 @@ export default function TermosContratosPage() {
                   </li>
                   <li>backups de arquivos após o prazo acordado.</li>
                 </ul>
-                <p>11.2. O estúdio se responsabiliza
-                  pelos direitos citados na sessão 11.1. apenas quando o usuário 
-                  possui o plano Ouro e tem acesso ao acompanhamento artístico personalizado 
-                  feito pelo produtor </p>
+                <p className="mt-2">
+                  11.2. O acompanhamento artístico do plano Ouro não transfere à THouse Rec as responsabilidades listadas no item 11.1 (por exemplo, rejeição em plataformas de streaming ou disputas de direitos autorais do Cliente).
+                </p>
                 <h3 className="mt-4 font-semibold">
                   12. Responsabilidades do usuário
                 </h3>
@@ -953,7 +947,7 @@ export default function TermosContratosPage() {
             {activeDoc === "privacidade" && (
               <>
                 <p className="mt-1 text-center text-xs text-zinc-400">
-                  Última atualização: Fevereiro/2025
+                  Última atualização: Julho/2026
                 </p>
                 <p>
                   A THouse Rec respeita sua privacidade e protege seus dados
@@ -1323,110 +1317,125 @@ export default function TermosContratosPage() {
             {activeDoc === "planos" && (
               <>
                 <p className="mt-1 text-center text-xs text-zinc-400">
-                  Última atualização: Fevereiro/2025
-                </p>
-                <p>
-                  Este contrato regula a assinatura de planos mensais de
-                  estúdio da THouse Rec, com horas de gravação, mix, master,
-                  beats e benefícios adicionais, conforme o plano escolhido.
+                  Última atualização: Julho/2026
                 </p>
 
                 <h3 className="mt-4 font-semibold">
                   1. Objetivo do plano
                 </h3>
                 <p>
-                  Os planos oferecem horas de estúdio, prioridade de agenda e
-                  benefícios específicos, descritos na página de planos no
-                  momento da contratação.
+                  Os planos oferecem benefícios de estúdio e produção (cupons
+                  de serviço e/ou desconto) conforme a oferta vigente na
+                  página de Planos no momento da contratação. Os benefícios
+                  exatos de cada tier (Bronze, Prata, Ouro) são os publicados
+                  no site e registrados no sistema no ato da compra.
                 </p>
 
                 <h3 className="mt-4 font-semibold">
-                  2. Vigência e renovação automática
+                  2. Vigência, cobrança e ciclos mensais de benefícios
                 </h3>
                 <p>
-                  2.1. A assinatura é mensal ou anual (conforme escolha do Cliente), com renovação automática na mesma data da compra, até cancelamento pelo Cliente.
+                  2.1. A assinatura é <strong>mensal</strong> ou <strong>anual</strong>, conforme escolha do Cliente. A cobrança recorrente, quando aplicável, é processada pelo <strong>Asaas</strong>.
                 </p>
                 <p className="mt-2">
-                  2.2. Cobranças são feitas via <strong>Asaas</strong> (processador de pagamento), que oferece múltiplas formas de pagamento: PIX, cartão de crédito, cartão de débito ou boleto bancário.
+                  2.2. Formas de pagamento disponíveis via Asaas: PIX, cartão de crédito, cartão de débito ou boleto bancário, conforme oferta do checkout.
                 </p>
                 <p>
-                  2.3. <strong>Notificações de Plano:</strong> O usuário recebe notificação quando um plano é confirmado e ativado após pagamento aprovado. A notificação desaparece automaticamente ao visualizar a página "Minha Conta".
+                  2.3. <strong>Notificações:</strong> O usuário recebe notificação quando o plano é confirmado e ativado após pagamento aprovado.
                 </p>
                 <p className="mt-2">
-                  2.4. <strong>Sistema de Cupons para Planos:</strong> Cupons de desconto podem ser aplicados na assinatura de planos, reduzindo o valor da mensalidade ou anualidade conforme regras do cupom.
+                  2.4. <strong>Cupons de desconto na contratação:</strong> Quando houver cupom promocional aplicável à assinatura, o desconto segue as regras daquele cupom.
+                </p>
+                <p className="mt-2">
+                  2.5. <strong>Renovação mensal dos benefícios:</strong> Os benefícios (cupons de serviço e/ou desconto) são disponibilizados <strong>mensalmente</strong> durante a vigência da assinatura — inclusive nos planos anuais, que concedem o direito a <strong>12 ciclos mensais</strong> consecutivos. Benefícios não utilizados até o encerramento do ciclo mensal <strong>expiram automaticamente</strong> e <strong>não são acumulados</strong>. Novos benefícios são emitidos no início de cada ciclo apenas enquanto a assinatura estiver <strong>ativa</strong>. Cupons já utilizados permanecem no histórico; cupons não utilizados podem ser marcados como expirados ou substituídos, sem apagar o registro.
+                </p>
+                <p className="mt-2">
+                  2.6. <strong>Promoções do Shopping:</strong> Os planos Prata e Ouro incluem acesso às promoções exclusivas do Shopping. O plano Bronze não inclui este benefício. O catálogo de compra de produtos do Shopping pode estar em preparação; o acesso às promoções exclusivas segue as regras do plano ativo.
                 </p>
 
                 <h3 className="mt-4 font-semibold">
-                  3. Cancelamento da assinatura
+                  3. Estados da assinatura, inadimplência e suspensão
                 </h3>
                 <p>
-                  O Cliente pode cancelar a qualquer momento. O cancelamento
-                  evita novas cobranças, mas não gera reembolso do mês já
-                  pago. O acesso ao plano permanece até o fim do ciclo.
+                  3.1. A assinatura pode estar, entre outros estados: pendente, ativa, inadimplente, suspensa, cancelada ou expirada.
+                </p>
+                <p className="mt-2">
+                  3.2. Em falha de cobrança, a assinatura pode entrar em inadimplência com período de tolerância (grace). Persistindo a inadimplência, pode haver suspensão e, após o limite de tentativas, cancelamento por inadimplência.
+                </p>
+                <p className="mt-2">
+                  3.3. A renovação automática dos benefícios do ciclo mensal ocorre somente com assinatura <strong>ativa</strong>.
                 </p>
 
                 <h3 className="mt-4 font-semibold">
-                  4. Horas mensais e uso do estúdio
+                  4. Cancelamento da assinatura
                 </h3>
                 <p>
-                  Cada plano inclui um número de horas mensais de estúdio e
-                  serviços. Horas não utilizadas normalmente não acumulam
-                  para o mês seguinte, salvo promoção específica. Horas
-                  extras podem ser cobradas à parte.
+                  4.1. O Cliente pode cancelar a qualquer momento pela área logada (Minha Conta).
+                </p>
+                <p className="mt-2">
+                  4.2. O cancelamento é <strong>imediato</strong> no sistema: a assinatura passa a cancelada, cessam novas cobranças e não são emitidos novos ciclos de benefícios.
+                </p>
+                <p className="mt-2">
+                  4.3. Cupons de benefício do plano <strong>não utilizados</strong> são invalidados. Cupons já utilizados permanecem no histórico.
                 </p>
 
                 <h3 className="mt-4 font-semibold">
-                  5. Prioridade na agenda
+                  5. Reembolso da assinatura
                 </h3>
                 <p>
-                  Planos podem ter prioridade padrão, intermediária ou
-                  máxima na agenda. Isso aumenta as chances de encontrar
-                  horários, mas não garante disponibilidade absoluta.
+                  5.1. Quando solicitado e elegível, o reembolso financeiro é calculado pela fórmula:
+                </p>
+                <p className="mt-2 font-medium">
+                  reembolso = valor pago − soma dos valores internos dos benefícios efetivamente utilizados
+                </p>
+                <p className="mt-2">
+                  (resultado nunca inferior a zero). &quot;Benefício utilizado&quot; significa cupom do plano marcado como usado no sistema.
+                </p>
+                <p className="mt-2">
+                  5.2. Os valores internos são critério comercial de apuração e <strong>não</strong> correspondem necessariamente aos preços públicos de vitrine dos serviços avulsos.
+                </p>
+                <p className="mt-2">
+                  5.3. O estorno, quando houver valor a devolver, é processado via <strong>Asaas</strong>.
                 </p>
 
                 <h3 className="mt-4 font-semibold">
-                  6. Beats, produções e materiais incluídos
+                  6. Uso dos benefícios
                 </h3>
                 <p>
-                  Quando o plano inclui beats, produções ou revisões, o
-                  Cliente só recebe os arquivos, conforme descrito na oferta,
-                  quando solicitado ao produtor.
-                  Direitos autorais seguem as regras gerais da THouse Rec,
-                  com créditos obrigatórios.
+                  Cada plano inclui o conjunto mensal de benefícios descrito na oferta vigente. Serviços ou horas extras podem ser cobrados à parte. Benefícios não utilizados não acumulam para o ciclo seguinte.
                 </p>
 
                 <h3 className="mt-4 font-semibold">
-                  7. Direitos autorais e créditos
+                  7. Beats, produções e materiais incluídos
                 </h3>
                 <p>
-                  O Cliente mantém direitos sobre sua interpretação vocal,
-                  enquanto beats, arranjos, mix e master permanecem sob
-                  direitos do produtor. Créditos obrigatórios devem ser
-                  respeitados em qualquer lançamento.
+                  Quando o plano inclui beats, produções ou revisões, o Cliente recebe os arquivos conforme a oferta, quando solicitado e executado pelo produtor. Direitos autorais seguem as regras gerais da THouse Rec, com créditos obrigatórios.
                 </p>
 
                 <h3 className="mt-4 font-semibold">
-                  8. Cancelamentos, remarcações e faltas
+                  8. Direitos autorais e créditos
                 </h3>
                 <p>
-                  As regras de remarcação e faltas seguem a Política de
-                  Cancelamento específica da THouse Rec. Horas perdidas por
-                  falta ou atraso excessivo podem ser debitadas normalmente.
+                  O Cliente mantém direitos sobre sua interpretação vocal, enquanto beats, arranjos, mix e master permanecem sob direitos do produtor, conforme os demais termos. Créditos obrigatórios devem ser respeitados em qualquer lançamento.
                 </p>
 
                 <h3 className="mt-4 font-semibold">
-                  9. Limitação de responsabilidade
+                  9. Cancelamentos de sessões e faltas
                 </h3>
                 <p>
-                  A THouse Rec não responde por rejeições de música em
-                  plataformas, disputas de direitos entre artistas ou perda
-                  de arquivos após o prazo de backup.
+                  As regras de cancelamento e remarcação de agendamentos seguem a Política de Cancelamento específica. Horas ou serviços perdidos por falta ou atraso excessivo podem ser considerados utilizados.
                 </p>
 
-                <h3 className="mt-4 font-semibold">10. Foro</h3>
+                <h3 className="mt-4 font-semibold">
+                  10. Limitação de responsabilidade
+                </h3>
                 <p>
-                  Fica eleito o Foro da Comarca do Rio de Janeiro – RJ para
-                  resolução de conflitos relacionados a este contrato.
+                  A THouse Rec não responde por rejeições de música em plataformas, disputas de direitos entre artistas ou perda de arquivos após o prazo de backup.
+                </p>
+
+                <h3 className="mt-4 font-semibold">11. Foro</h3>
+                <p>
+                  Fica eleito o Foro da Comarca do Rio de Janeiro – RJ para resolução de conflitos relacionados a este contrato.
                 </p>
               </>
             )}
@@ -1435,84 +1444,88 @@ export default function TermosContratosPage() {
             {activeDoc === "cancelamento" && (
               <>
                 <p className="mt-1 text-center text-xs text-zinc-400">
-                  Última atualização: Fevereiro/2025
+                  Última atualização: Julho/2026
                 </p>
                 <p>
-                  Esta Política organiza de forma justa os cancelamentos,
-                  remarcações, faltas (no-show) e pedidos de reembolso em
-                  sessões, pacotes e planos mensais da THouse Rec.
+                  Esta Política organiza cancelamentos, remarcações, faltas
+                  (no-show) e pedidos de reembolso de agendamentos e de
+                  planos/assinaturas da THouse Rec, alinhada ao funcionamento
+                  da plataforma.
                 </p>
 
                 <h3 className="mt-4 font-semibold">
-                  1. Cancelamento de sessões agendadas
+                  1. Cancelamento ou recusa de agendamentos pagos
                 </h3>
                 <p>
-                  1.1. Cancelamentos com pelo menos 48 horas de antecedência
-                  podem ser convertidos em crédito para uso futuro.
+                  1.1. Quando um agendamento pago é cancelado ou recusado e há valor elegível, o Cliente pode escolher na área logada (Minha Conta):
                 </p>
-                <p>
-                  1.2. Cancelamentos com menos de 48 horas irão gerar
-                  retenção de 50% do valor.
+                <ul className="mt-1 list-disc pl-5 space-y-1">
+                  <li><strong>Reembolso financeiro</strong> do valor elegível, processado via Asaas; ou</li>
+                  <li><strong>Cupom de remarcação</strong> (crédito) para reagendar serviço equivalente, conforme regras do cupom.</li>
+                </ul>
+                <p className="mt-2">
+                  1.2. Sobras de crédito de cupom de remarcação não utilizadas em um novo agendamento <strong>não acumulam</strong> como saldo residual.
                 </p>
-                <p>
-                  1.3. Cancelamentos com menos de 24 horas não
-                  geram reembolso, nem crédito, sendo o horário considerado
-                  como utilizado.
+                <p className="mt-2">
+                  1.3. Serviços já realizados, total ou parcialmente, em regra não geram reembolso do trecho executado.
                 </p>
 
                 <h3 className="mt-4 font-semibold">
-                  2. Remarcação de sessões
+                  2. Remarcação
                 </h3>
                 <p>
-                  Remarcações podem ser feitas sem custo dentro do prazo
-                  mínimo definido (48 horas). Remarcações fora do prazo
-                  podem ser limitadas ou tratadas como cancelamento/utilizado.
+                  A remarcação com cupom de remarcação é feita pelo fluxo de agendamento da plataforma, utilizando o código do cupom. Remarcações operacionais também podem ser tratadas pelos canais oficiais da THouse Rec.
                 </p>
 
-                <h3 className="mt-4 font-semibold">3. Faltas (no-show)</h3>
+                <h3 className="mt-4 font-semibold">3. Faltas (no-show) e atrasos</h3>
                 <p>
-                  Quando o Cliente não comparece sem avisar, a sessão é
-                  considerada realizada, sem direito a reembolso ou crédito.
+                  Quando o Cliente não comparece sem aviso adequado, a sessão pode ser considerada realizada, sem direito a reembolso ou cupom. Atrasos reduzem o tempo disponível e não estendem o horário automaticamente.
                 </p>
 
                 <h3 className="mt-4 font-semibold">
-                  4. Reembolsos e créditos
-                 </h3>
-                <p>
-                  Serviços já realizados, total ou parcialmente, não geram
-                  reembolso. Serviços ainda não iniciados podem, em alguns
-                  casos, gerar reembolso ou crédito, especialmente dentro do
-                  prazo legal de cancelamento (quando aplicável).
-                </p>
-
-                <h3 className="mt-4 font-semibold">
-                  5. Planos mensais e assinaturas
+                  4. Cancelamento de planos e assinaturas
                 </h3>
                 <p>
-                  Mensalidades já pagas podem ser reembolsadas no caso de 
-                  cancelamento dentro do prazo legal de 2 semanas, exceto 
-                  quando o usuário já tenha solicitado algum serviço. 
-                  O cancelamento impede futuras cobranças e o Cliente mantém acesso ao
-                  plano até o fim do ciclo atual, caso já tenha solicitado algum serviço.
+                  4.1. O Cliente pode cancelar a assinatura a qualquer momento pela Minha Conta. O efeito é <strong>imediato</strong>: status cancelado, sem novas cobranças e sem novos ciclos de benefícios.
+                </p>
+                <p className="mt-2">
+                  4.2. Cupons de benefício não utilizados são invalidados; cupons já usados permanecem no histórico.
+                </p>
+
+                <h3 className="mt-4 font-semibold">
+                  5. Reembolso de planos e assinaturas
+                </h3>
+                <p>
+                  5.1. O reembolso financeiro de plano, quando solicitado e elegível, obedece a:
+                </p>
+                <p className="mt-2 font-medium">
+                  reembolso = valor pago − soma dos valores internos dos benefícios efetivamente utilizados
+                </p>
+                <p className="mt-2">
+                  (nunca inferior a zero). Benefício utilizado = cupom do plano marcado como usado.
+                </p>
+                <p className="mt-2">
+                  5.2. Os valores internos são critério comercial de apuração e não necessariamente coincidem com os preços públicos de serviços avulsos.
+                </p>
+                <p className="mt-2">
+                  5.3. O estorno é realizado via Asaas quando houver valor a devolver.
+                </p>
+                <p className="mt-2">
+                  5.4. Direitos legais do consumidor previstos em lei aplicável continuam respeitados; esta Política descreve o critério operacional padrão da plataforma.
                 </p>
 
                 <h3 className="mt-4 font-semibold">
                   6. Cancelamento por parte da THouse Rec
                 </h3>
                 <p>
-                  Em caso de problemas técnicos, saúde, manutenção ou força
-                  maior, a THouse Rec pode remarcar ou cancelar sessões,
-                  oferecendo nova data, crédito ou, em alguns casos,
-                  reembolso proporcional.
+                  Em caso de problemas técnicos, saúde, manutenção ou força maior, a THouse Rec pode remarcar ou cancelar sessões, oferecendo nova data, cupom de remarcação ou, quando cabível, reembolso.
                 </p>
 
                 <h3 className="mt-4 font-semibold">
                   7. Como solicitar
                 </h3>
                 <p>
-                  Cancelamentos, remarcações e dúvidas podem ser tratados
-                  pelo site, e-mail ou canais de contato oficiais da THouse
-                  Rec. O estúdio se compromete a responder em prazo razoável.
+                  Preferencialmente pela própria plataforma (Minha Conta / fluxos de cancelamento e escolha de reembolso ou cupom). Também pelos canais oficiais de contato da THouse Rec. O estúdio responde em prazo razoável.
                 </p>
               </>
             )}

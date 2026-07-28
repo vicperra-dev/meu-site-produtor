@@ -16,6 +16,7 @@ import type {
   HomologationTimelineEvent,
 } from "@/app/lib/homologation/types";
 import { totalPricedCheckoutItems, priceCheckoutItems } from "@/app/lib/service-catalog";
+import { countPlanCycleCoupons } from "@/app/lib/plan-definitions";
 import type { RefundLifecycleStatus } from "@/app/lib/payment-provider/types";
 
 function pushTimeline(
@@ -409,6 +410,10 @@ export async function runHomologationSimulation(
         couponsOk = false;
         couponDetail += " — nem todos usam página exclusiva";
       }
+    } else if (tipo === "plano") {
+      const planExpected = countPlanCycleCoupons(String(input.planId || "bronze"));
+      couponsOk = coupons.length === planExpected;
+      couponDetail = `plano ${input.planId || "bronze"}: esperado=${planExpected} obtido=${coupons.length} [${coupons.map((c) => `${c.serviceType || c.discountType}`).join(", ")}]`;
     }
 
     mark(checks, "couponsCreated", couponsOk, couponDetail);

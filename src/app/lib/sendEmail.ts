@@ -477,17 +477,17 @@ export async function sendPlanCancellationEmail(
     
     const refundSection = refundAmount && refundAmount > 0
       ? `<div style="background-color: #fef3c7; border: 2px solid #f59e0b; border-radius: 8px; padding: 20px; margin: 20px 0;">
-           <p style="color: #92400e; margin: 0 0 10px 0; font-weight: bold;">💰 Reembolso:</p>
+           <p style="color: #92400e; margin: 0 0 10px 0; font-weight: bold;">Reembolso:</p>
            <p style="color: #1f2937; font-size: 24px; font-weight: bold; margin: 0;">R$ ${refundAmount.toFixed(2).replace(".", ",")}</p>
-           <p style="color: #92400e; margin: 10px 0 0 0; font-size: 14px;">${couponCode ? `Cupom de reembolso: ${couponCode}` : "O reembolso será processado em até 5 dias úteis."}</p>
+           <p style="color: #92400e; margin: 10px 0 0 0; font-size: 14px;">O estorno é solicitado via Asaas. O valor considera o pagamento menos os benefícios efetivamente utilizados (critério interno do plano).</p>
          </div>`
-      : `<p style="color: #4b5563; font-size: 14px;">Você utilizou todos os serviços inclusos no plano. Não há reembolso disponível.</p>`;
+      : `<p style="color: #4b5563; font-size: 14px;">Não há reembolso disponível: o valor dos benefícios utilizados é igual ou superior ao valor pago, ou nenhum estorno foi solicitado.</p>`;
 
     const couponSection = couponCode
       ? `<div style="background-color: #dbeafe; border: 2px solid #3b82f6; border-radius: 8px; padding: 20px; margin: 20px 0; text-align: center;">
-           <p style="color: #1e40af; margin: 0 0 10px 0; font-weight: bold;">🎟️ Seu Cupom de Reembolso:</p>
+           <p style="color: #1e40af; margin: 0 0 10px 0; font-weight: bold;">Cupom:</p>
            <p style="color: #1f2937; font-size: 32px; font-weight: bold; letter-spacing: 4px; margin: 0; font-family: 'Courier New', monospace;">${couponCode}</p>
-           <p style="color: #1e40af; margin: 10px 0 0 0; font-size: 14px;">Use este código na página de agendamento para usar seu crédito!</p>
+           <p style="color: #1e40af; margin: 10px 0 0 0; font-size: 14px;">Use este código na página de agendamento, se aplicável.</p>
          </div>`
       : "";
 
@@ -513,13 +513,14 @@ export async function sendPlanCancellationEmail(
               <h2 style="color: #1f2937; margin-top: 0; font-size: 24px;">Seu plano foi cancelado</h2>
               <p style="color: #4b5563; font-size: 16px; line-height: 1.6;">
                 Olá, <strong>${userName}</strong>,<br><br>
-                Seu plano <strong>${planName}</strong> foi cancelado com sucesso.<br><br>
-                <strong>Serviços utilizados:</strong> ${servicesUsed} de ${servicesTotal}<br>
-                ${servicesUsed > 0 ? `<p style="color: #4b5563; font-size: 14px;">Os cupons dos serviços que você já utilizou permanecem válidos até seus respectivos prazos.</p>` : ""}
+                Seu plano <strong>${planName}</strong> foi cancelado com efeito imediato.<br><br>
+                <strong>Serviços/benefícios utilizados:</strong> ${servicesUsed} de ${servicesTotal}<br>
+                ${servicesUsed > 0 ? `<p style="color: #4b5563; font-size: 14px;">Os cupons dos benefícios que você já utilizou permanecem no histórico.</p>` : ""}
                 ${refundSection}
                 ${couponSection}
                 <p style="color: #4b5563; font-size: 16px; line-height: 1.6; margin-top: 20px;">
-                  Seus cupons de serviços não utilizados foram removidos.<br><br>
+                  Cupons de benefício não utilizados foram invalidados. Novas cobranças e novos ciclos não serão gerados.<br><br>
+                  Detalhes em Minha Conta e em /termos-contratos.<br><br>
                   Obrigado por ter escolhido a THouse Rec!
                 </p>
               </p>
@@ -1068,9 +1069,9 @@ export async function sendAppointmentRejectedEmail(
                 ${rejectionComment}<br><br>
                 <strong>Próximos passos:</strong><br>
                 Você pode escolher uma das seguintes opções:<br><br>
-                1️⃣ <strong>Solicitar reembolso integral</strong> do valor pago<br>
-                2️⃣ <strong>Solicitar um cupom de desconto</strong> no valor do serviço para remarcar em outro dia/horário<br><br>
-                Entre em contato conosco através do email <a href="mailto:thouse.rec.tremv@gmail.com">thouse.rec.tremv@gmail.com</a> para solicitar o reembolso ou o cupom.
+                1️⃣ <strong>Solicitar reembolso financeiro</strong> do valor elegível (via Asaas)<br>
+                2️⃣ <strong>Escolher um cupom de remarcação</strong> para reagendar<br><br>
+                Faça a escolha na <strong>Minha Conta</strong> no site. Se precisar de ajuda, escreva para <a href="mailto:thouse.rec.tremv@gmail.com">thouse.rec.tremv@gmail.com</a>.
               </p>
               ${couponSection}
             </td>
@@ -1313,9 +1314,9 @@ export async function sendAppointmentCancelledEmail(
                 ${cancellationComment}<br><br>
                 <strong>Próximos passos:</strong><br>
                 Você pode escolher uma das seguintes opções:<br><br>
-                1️⃣ <strong>Solicitar reembolso integral</strong> do valor pago<br>
-                2️⃣ <strong>Solicitar um cupom de desconto</strong> no valor do serviço para remarcar em outro dia/horário<br><br>
-                Entre em contato conosco através do email <a href="mailto:thouse.rec.tremv@gmail.com">thouse.rec.tremv@gmail.com</a> para solicitar o reembolso ou o cupom.
+                1️⃣ <strong>Solicitar reembolso financeiro</strong> do valor elegível (via Asaas)<br>
+                2️⃣ <strong>Escolher um cupom de remarcação</strong> para reagendar<br><br>
+                Faça a escolha na <strong>Minha Conta</strong> no site. Se precisar de ajuda, escreva para <a href="mailto:thouse.rec.tremv@gmail.com">thouse.rec.tremv@gmail.com</a>.
               </p>
               ${couponSection}
             </td>

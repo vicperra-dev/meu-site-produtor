@@ -1,7 +1,6 @@
 // src/app/api/webhooks/asaas/route.ts
 import { NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
-import { sendPlanRenewalEmail } from "@/app/lib/sendEmail";
 import { processAgendamentoPaymentEffects } from "@/app/lib/asaas-agendamento-payment-effects";
 import { processCarrinhoPaymentEffects } from "@/app/lib/asaas-carrinho-payment-effects";
 import {
@@ -408,6 +407,25 @@ export async function POST(req: Request) {
         console.error("[Asaas Webhook] ❌ Erro ao sincronizar PAYMENT_REFUNDED:", refundSyncError);
         console.error("[Asaas Webhook] Stack:", refundSyncError.stack);
       }
+    } else if (event === "PAYMENT_OVERDUE" || String(status || "").toUpperCase() === "OVERDUE") {
+      try {
+        const subId = payment.subscription ? String(payment.subscription) : null;
+        if (subId) {
+          const { markSubscriptionPaymentFailed } = await import(
+            "@/app/lib/subscription-lifecycle"
+          );
+          const updated = await markSubscriptionPaymentFailed(subId);
+          console.log("[Asaas Webhook] PAYMENT_OVERDUE → assinatura:", {
+            subscriptionId: subId,
+            status: updated?.status,
+            failureCount: updated?.failureCount,
+          });
+        } else {
+          console.log("[Asaas Webhook] PAYMENT_OVERDUE sem subscription vinculada", paymentId);
+        }
+      } catch (overdueErr) {
+        console.error("[Asaas Webhook] Erro OVERDUE:", overdueErr);
+      }
     } else {
       console.log("[Asaas Webhook] ⚠️ Evento não processado:", {
         event,
@@ -427,7 +445,8 @@ export async function POST(req: Request) {
 }
 
 /**
- * Processar pagamento de assinatura recorrente (renovação).
+ * Processar pagamento de assinatura recorrente (renovação comercial).
+ * GO-H10C — usa renewSubscriptionAfterPaidCharge (H10B para benefícios).
  */
 async function processSubscriptionPayment(
   subscriptionId: string,
@@ -436,84 +455,41 @@ async function processSubscriptionPayment(
   paymentId: string
 ) {
   try {
-    const subscription = await prisma.subscription.findUnique({
-      where: { asaasSubscriptionId: subscriptionId },
-      include: { userPlan: true },
+    const { renewSubscriptionAfterPaidCharge } = await import(
+      "@/app/lib/subscription-lifecycle"
+    );
+    const result = await renewSubscriptionAfterPaidCharge({
+      asaasSubscriptionId: subscriptionId,
+      paymentValue: value,
+      asaasPaymentId: paymentId,
     });
 
-    if (!subscription) {
-      console.warn(`[Asaas Webhook] Assinatura não encontrada: ${subscriptionId}`);
-      return;
-    }
-
-    const nextBillingDate = new Date(subscription.nextBillingDate);
-    if (subscription.userPlan.modo === "mensal") {
-      nextBillingDate.setMonth(nextBillingDate.getMonth() + 1);
-    } else {
-      nextBillingDate.setFullYear(nextBillingDate.getFullYear() + 1);
-    }
-
-    const newEndDate = new Date(subscription.userPlan.endDate || new Date());
-    if (subscription.userPlan.modo === "mensal") {
-      newEndDate.setMonth(newEndDate.getMonth() + 1);
-    } else {
-      newEndDate.setFullYear(newEndDate.getFullYear() + 1);
-    }
-
-    await prisma.userPlan.update({
-      where: { id: subscription.userPlanId },
-      data: {
-        endDate: newEndDate,
-        status: "active",
-      },
-    });
-
-    await prisma.subscription.update({
-      where: { id: subscription.id },
-      data: {
-        lastBillingDate: new Date(),
-        nextBillingDate,
-      },
-    });
-
-    console.log(`[Asaas Webhook] Pagamento de assinatura processado: ${subscriptionId}`);
-
-    let couponsCount = 0;
-    try {
-      const { generatePlanServiceCoupons } = await import("@/app/lib/plan-coupons");
-      const coupons = await generatePlanServiceCoupons({
-        userId,
-        userPlanId: subscription.userPlan.id,
-        planId: subscription.userPlan.planId,
-        planName: subscription.userPlan.planName,
-        modo: subscription.userPlan.modo,
-      });
-      couponsCount = coupons.length;
-      console.log(
-        `[Asaas Webhook] ${couponsCount} novos cupons gerados para renovação do plano ${subscription.userPlan.planId}`
-      );
-    } catch (couponError: any) {
-      console.error("[Asaas Webhook] Erro ao gerar cupons na renovação (não crítico):", couponError);
-    }
+    console.log(
+      `[Asaas Webhook] Renovação comercial OK sub=${subscriptionId} cupons=${result.renewal.generatedCoupons}`
+    );
 
     try {
+      const { sendPlanRenewalEmail } = await import("@/app/lib/sendEmail");
       const user = await prisma.user.findUnique({ where: { id: userId } });
-      if (user) {
+      const subscription = await prisma.subscription.findUnique({
+        where: { asaasSubscriptionId: subscriptionId },
+        include: { userPlan: true },
+      });
+      if (user && subscription) {
         await sendPlanRenewalEmail(
           user.email,
           user.nomeArtistico,
           subscription.userPlan.planName,
           subscription.userPlan.modo,
           value,
-          newEndDate,
-          couponsCount
+          result.newEndDate,
+          result.renewal.generatedCoupons
         );
-        console.log(`[Asaas Webhook] Email de renovação de plano enviado para ${user.email}`);
       }
-    } catch (emailError: any) {
-      console.error("[Asaas Webhook] Erro ao enviar email de renovação de plano (não crítico):", emailError);
+    } catch (emailError: unknown) {
+      console.error("[Asaas Webhook] Email renovação (non-fatal):", emailError);
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[Asaas Webhook] Erro ao processar pagamento de assinatura:", error);
     throw error;
   }

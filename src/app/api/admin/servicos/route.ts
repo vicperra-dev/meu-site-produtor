@@ -131,6 +131,10 @@ export async function GET(req: Request) {
       const rawCoupons = payment ? couponsByPayment.get(payment.id) || [] : [];
       return {
         ...s,
+        // GO-H11A: playback via proxy autenticado; storage path permanece no banco
+        deliveryAudioUrl: s.deliveryAudioUrl
+          ? `/api/entregas/${s.id}`
+          : s.deliveryAudioUrl,
         payment,
         coupons: rawCoupons.map((c) => ({
           id: c.id,

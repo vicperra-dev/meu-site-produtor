@@ -14,6 +14,16 @@ import {
 } from "../lib/agendamento-payment-rules";
 import { SchedulingCalendar } from "./components/SchedulingCalendar";
 import {
+  CatalogSelectionPanels,
+  STUDIO_ORDER,
+  BEATS_ORDER,
+  type CatalogQtyMap,
+} from "./components/CatalogSelectionPanels";
+import {
+  CHECKOUT_CATALOG,
+} from "@/app/lib/service-catalog";
+import { PLAN_DEFINITIONS, type PlanTierId } from "@/app/lib/plan-definitions";
+import {
   Button,
   EmptyState,
   Input,
@@ -38,80 +48,31 @@ type Plano = {
 };
 
 // ================== DADOS ==================
+// GO-H10A: preços/IDs vêm de CHECKOUT_CATALOG (mesma fonte da Homologação).
 
-const SERVICOS_ESTUDIO: Servico[] = [
-  { id: "sessao", nome: "Sessão", preco: 40 },
-  { id: "captacao", nome: "Captação", preco: 55 },
-  { id: "sonoplastia", nome: "Sonoplastia (a partir de)", preco: 350 },
-  { id: "mix", nome: "Mixagem", preco: 110 },
-  { id: "master", nome: "Masterização", preco: 80 },
-  { id: "mix_master", nome: "Mix + Master", preco: 170 },
-];
+const SERVICOS_ESTUDIO: Servico[] = STUDIO_ORDER.map((id) => ({
+  id,
+  nome: CHECKOUT_CATALOG[id].nome,
+  preco: CHECKOUT_CATALOG[id].preco,
+}));
 
-const BEATS_PACOTES: Servico[] = [
-  { id: "beat1", nome: "1 Beat", preco: 150 },
-  { id: "beat2", nome: "2 Beats", preco: 250 },
-  { id: "beat3", nome: "3 Beats", preco: 350 },
-  { id: "beat4", nome: "4 Beats", preco: 400 },
-  { id: "beat_mix_master", nome: "Beat + Mix + Master", preco: 320 },
-  {
-    id: "producao_completa",
-    nome: "Produção Completa (2h Sessão + 2h Captação + Beat + Mix + Master)",
-    preco: 450,
-  },
-];
+const BEATS_PACOTES: Servico[] = BEATS_ORDER.map((id) => ({
+  id,
+  nome: CHECKOUT_CATALOG[id].nome,
+  preco: CHECKOUT_CATALOG[id].preco,
+}));
 
-const PLANOS: Plano[] = [
-  {
-    id: "bronze",
-    nome: "Plano Bronze",
-    mensal: 249.99,
-    anual: 2499.90,
-    descricao: "Para quem está começando a gravar com frequência.",
-    beneficios: [
-      { label: "1 sessão por mês", included: true },
-      { label: "2h de captação por mês", included: true },
-      { label: "1 Mix por mês", included: true },
-      { label: "10% de desconto em serviços avulsos", included: true },
-      { label: "Sem Beats personalizados", included: false },
-      { label: "Sem acesso a descontos promocionais", included: false },
-      { label: "Não tem acompanhamento artístico", included: false },
-    ],
-  },
-  {
-    id: "prata",
-    nome: "Plano Prata",
-    mensal: 449.99,
-    anual: 4499.90,
-    descricao: "Para artistas que lançam com regularidade e já possuem músicas próprias.",
-    beneficios: [
-      { label: "1 sessão por mês", included: true },
-      { label: "2h de captação por mês", included: true },
-      { label: "1 Mix & Master por mês", included: true },
-      { label: "1 beat por mês", included: true },
-      { label: "Acesso a descontos promocionais do site", included: true },
-      { label: "Não tem desconto em Serviços ou Beats", included: false },
-      { label: "Não tem acompanhamento artístico", included: false },
-    ],
-  },
-  {
-    id: "ouro",
-    nome: "Plano Ouro",
-    mensal: 799.99,
-    anual: 7999.90,
-    descricao: "Acompanhamento artístico contínuo com o Tremv e 2 Produções completas por mês.",
-    beneficios: [
-      { label: "2 sessões por mês", included: true },
-      { label: "4h de captação por mês", included: true },
-      { label: "2 Mix & Master por mês", included: true },
-      { label: "2 Beats por mês", included: true },
-      { label: "Desconto de 10% em serviços avulsos", included: true },
-      { label: "Desconto de 10% em Beats", included: true },
-      { label: "Acesso a descontos promocionais do site", included: true },
-      { label: "Acompanhamento artístico", included: true },
-    ],
-  },
-];
+const PLANOS: Plano[] = (["bronze", "prata", "ouro"] as PlanTierId[]).map((id) => {
+  const p = PLAN_DEFINITIONS[id];
+  return {
+    id: p.id,
+    nome: p.nome,
+    mensal: p.mensal,
+    anual: p.anual,
+    descricao: p.descricao,
+    beneficios: p.marketingBenefits,
+  };
+});
 
 const HORARIOS_PADRAO = [
   "10:00","11:00","12:00","13:00","14:00","15:00",
@@ -783,158 +744,26 @@ function AgendamentoContent() {
 
       <div className="relative z-10">
       {/* =========================================================
-          SERVIÇOS DE ESTÚDIO (início da página — sem espaço vazio acima)
+          CATÁLOGO (GO-H10A — mesmo componente da Homologação)
       ========================================================== */}
-      <section className="mb-16 flex justify-center px-4 pt-2 sm:pt-4">
-        <div className="relative w-full max-w-4xl border border-red-500" style={{ borderWidth: "1px" }}>
-          <div
-            className="relative space-y-3 p-6 md:p-8"
-            style={{
-              background: "linear-gradient(to right, rgba(0,0,0,0) 0%, rgba(0,0,0,0.75) 8%, rgba(0,0,0,0.85) 20%, rgba(0,0,0,0.85) 80%, rgba(0,0,0,0.75) 92%, rgba(0,0,0,0) 100%)",
-              backdropFilter: "blur(16px)",
-              WebkitBackdropFilter: "blur(16px)",
-            }}
-          >
-            <h2 className="text-center text-3xl font-semibold text-red-400" style={{ textShadow: "0 2px 4px rgba(0, 0, 0, 0.5)" }}>
-              Serviços de Estúdio e Avulsos
-            </h2>
-
-            <p className="mt-5 mb-10 text-center text-sm leading-relaxed text-white md:text-base" style={{ textShadow: "0 2px 8px rgba(0, 0, 0, 0.8)" }}>
-            Selecione os serviços que você deseja para essa sessão. Você pode
-            combinar captação, mix, master, sonoplastia e outras opções para
-            montar um fluxo de trabalho completo ou apenas o que precisa no
-            momento.
-          </p>
-
-             {/* GRID FIXO — ORDEM CONTROLADA (preços vêm de SERVICOS_ESTUDIO) */}
-            <div className="grid gap-4 md:grid-cols-2">
-              {(["sessao", "captacao", "mix", "master", "mix_master", "sonoplastia"] as const).map((id) => {
-                const s = SERVICOS_ESTUDIO.find((x) => x.id === id);
-                if (!s) return null;
-                const isPorHora = id === "sessao" || id === "captacao";
-                const nome = id === "sonoplastia" ? "Sonoplastia" : s.nome;
-                const subtitulo = id === "sonoplastia" ? "(a partir de)" : undefined;
-                return (
-                  <ServicoItem
-                    key={s.id}
-                    id={s.id}
-                    nome={nome}
-                    preco={s.preco}
-                    subtitulo={subtitulo}
-                    porHora={isPorHora}
-                    quantidade={quantidadesServicos[s.id] || 0}
-                    onChange={(d) => handleQuantServico(s.id, d, "estudio")}
-                  />
-                );
-              })}
-            </div>
-          </div>
-          
-          {/* LINHA INFERIOR COM FADE */}
-          <div 
-            className="h-[1px]"
-            style={{
-              background: "linear-gradient(to right, transparent 0%, rgba(239, 68, 68, 0.3) 15%, rgba(239, 68, 68, 0.6) 50%, rgba(239, 68, 68, 0.3) 85%, transparent 100%)",
-              boxShadow: "0 1px 10px rgba(239, 68, 68, 0.4)"
-            }}
-          />
-        </div>
-      </section>
-
-      {/* =========================================================
-          BEATS E PACOTES
-      ========================================================== */}
-      <section className="mb-16 flex justify-center px-4 mt-16">
-        <div className="relative w-full max-w-4xl border border-red-500" style={{ borderWidth: "1px" }}>
-          <div
-            className="relative space-y-3 p-6 md:p-8"
-            style={{
-              background: "linear-gradient(to right, rgba(0,0,0,0) 0%, rgba(0,0,0,0.75) 8%, rgba(0,0,0,0.85) 20%, rgba(0,0,0,0.85) 80%, rgba(0,0,0,0.75) 92%, rgba(0,0,0,0) 100%)",
-              backdropFilter: "blur(16px)",
-              WebkitBackdropFilter: "blur(16px)",
-            }}
-          >
-            <h2 className="text-center text-3xl font-semibold text-red-400" style={{ textShadow: "0 2px 4px rgba(0, 0, 0, 0.5)" }}>
-              Beats e Pacotes Especiais
-            </h2>
-
-            <p className="mb-5 text-center text-sm leading-relaxed text-white md:text-base" style={{ textShadow: "0 2px 8px rgba(0, 0, 0, 0.8)" }}>
-              Se você já tem uma ideia de sonoridade ou quer um beat exclusivo,
-              pode selecionar aqui os pacotes de beats e produções completas.
-            </p>
-
-          <div className="grid gap-4 md:grid-cols-2">
-          {BEATS_PACOTES.map((s) => {
-            const qtd = quantidadesBeats[s.id] || 0;
-
-              // Quebra especial para Produção Completa no texto
-              const isProducaoCompleta = s.id === "producao_completa";
-
-              return (
-                <div
-                  key={s.id}
-                  className="flex items-center justify-between rounded-xl border border-red-700/40 bg-zinc-900 p-4 text-sm"
-                >
-                  <div className="flex flex-col md:flex-row md:flex-wrap md:items-baseline gap-1">
-                    {isProducaoCompleta ? (
-                      <>
-                        <p className="font-semibold text-zinc-100">
-                          Produção Completa
-                        </p>
-                        <p className="text-xs text-zinc-300">
-                          (2h Sessão + 2h Captação + Beat + Mix + Master)
-                        </p>
-                      </>
-                    ) : (
-                      <p className="font-semibold text-zinc-100">
-                        {s.nome}
-                      </p>
-                    )}
-                    <span className="text-xs text-red-300 mt-0.5">
-                      R$ {s.preco.toFixed(2).replace(".", ",")}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        handleQuantServico(s.id, -1, "beat")
-                      }
-                      className="flex h-7 w-7 items-center justify-center rounded-full border border-zinc-600 text-xs hover:border-red-500"
-                    >
-                      -
-                    </button>
-
-                    <span className="w-6 text-center text-sm">
-                      {qtd}
-                    </span>
-
-                    <button
-                      type="button"
-                      onClick={() =>
-                        handleQuantServico(s.id, 1, "beat")
-                      }
-                      className="flex h-7 w-7 items-center justify-center rounded-full border border-red-600 text-xs hover:bg-red-600 hover:text-white"
-                    >
-                      +
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-          </div>
-          
-          {/* LINHA INFERIOR COM FADE */}
-          <div 
-            className="h-[1px]"
-            style={{
-              background: "linear-gradient(to right, transparent 0%, rgba(239, 68, 68, 0.3) 15%, rgba(239, 68, 68, 0.6) 50%, rgba(239, 68, 68, 0.3) 85%, transparent 100%)",
-              boxShadow: "0 1px 10px rgba(239, 68, 68, 0.4)"
-            }}
-          />
-        </div>
-      </section>
+      <div className="mb-16 px-4 pt-2 sm:pt-4">
+        <CatalogSelectionPanels
+          qty={
+            {
+              ...quantidadesServicos,
+              ...quantidadesBeats,
+            } as CatalogQtyMap
+          }
+          onBump={(id, delta) => {
+            const tipo =
+              CHECKOUT_CATALOG[id]?.category === "beat" ? "beat" : "estudio";
+            handleQuantServico(id, delta, tipo);
+          }}
+          showStudio
+          showBeats
+          sectionStyle="marketing"
+        />
+      </div>
 
       {/* =========================================================
           COMENTÁRIOS ADICIONAIS
@@ -1055,7 +884,7 @@ function AgendamentoContent() {
             </h2>
 
             <p className="text-xs md:text-sm text-white text-justify md:text-center px-2 md:px-0" style={{ textShadow: "0 2px 8px rgba(0, 0, 0, 0.8)" }}>
-              Se você já sabe que quer manter uma rotina de lançamentos, os planos da THouse Rec garantem mais horas de estúdio, melhor custo-benefício e prioridade na agenda. Produzir com consistência muda completamente o ritmo da sua carreira.
+              Se você já sabe que quer manter uma rotina de lançamentos, os planos da THouse Rec oferecem benefícios mensais por ciclo e melhor previsibilidade de custo. Produzir com consistência muda completamente o ritmo da sua carreira.
             </p>
 
           <div className="flex justify-center">
@@ -1851,64 +1680,6 @@ function AgendamentoContent() {
       <DuvidasBox />
       </div>
     </main>
-  );
-}
-
-/* ===============================
-   COMPONENTE AUXILIAR
-================================ */
-
-type ServicoItemProps = {
-  id: string;
-  nome: string;
-  preco: number;
-  subtitulo?: string;
-  porHora?: boolean;
-  quantidade: number;
-  onChange: (delta: number) => void;
-};
-
-function ServicoItem({
-  nome,
-  preco,
-  subtitulo,
-  porHora = false,
-  quantidade,
-  onChange,
-}: ServicoItemProps) {
-  return (
-    <div className="flex items-center justify-between rounded-xl border border-red-700/40 bg-zinc-900 p-4 text-sm">
-      <div className="flex flex-wrap items-baseline gap-2">
-        <p className="font-semibold text-zinc-100">{nome}</p>
-        {subtitulo && (
-          <span className="text-xs text-zinc-400">{subtitulo}</span>
-        )}
-        <span className="text-xs text-red-300">
-          R$ {preco.toFixed(2).replace(".", ",")}
-          {porHora && " / hora"}
-        </span>
-      </div>
-
-      <div className="flex items-center gap-2">
-        <button
-          type="button"
-          onClick={() => onChange(-1)}
-          className="flex h-7 w-7 items-center justify-center rounded-full border border-zinc-600 text-xs hover:border-red-500"
-        >
-          -
-        </button>
-
-        <span className="w-6 text-center text-sm">{quantidade}</span>
-
-        <button
-          type="button"
-          onClick={() => onChange(1)}
-          className="flex h-7 w-7 items-center justify-center rounded-full border border-red-600 text-xs hover:bg-red-600 hover:text-white"
-        >
-          +
-        </button>
-      </div>
-    </div>
   );
 }
 
