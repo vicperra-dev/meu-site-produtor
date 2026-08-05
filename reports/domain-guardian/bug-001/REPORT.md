@@ -57,4 +57,10 @@ Todos os calendários (agendamento, cupom, admin controle, homologação, dispon
 
 ## Commit / Deploy
 
-Ver git log / Vercel após publicação.
+| Campo | Valor |
+|-------|--------|
+| Commit | `4f654b31e87e9f3e928d61af7fb77cc7558a3c25` |
+| Mensagem | `fix(calendar): unify calendar engine, timezone handling and occupancy rules` |
+| Push `origin/main` | PASS (`10c5191..4f654b3`) |
+| Deploy Vercel CLI | FALHOU neste host (`ECOMPROMISED` / CLI TypeError) — **acionar deploy via dashboard Git ou `vercel --prod` no ambiente do operador** |
+| Smoke pós-push | verificar se integração Git da Vercel já publicou `4f654b3` |
