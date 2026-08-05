@@ -68,5 +68,9 @@ Cenários cobertos no smoke: 28/29/30/31 dias, virada de ano, aceite, cancel/rec
 
 | Campo | Valor |
 |-------|--------|
+| Commit | `bcc463c` |
 | Mensagem | `fix(calendar): unify operational calendar engine, status legend and occupancy synchronization` |
-| Deploy | Ver status após push — CLI Vercel pode falhar neste host; usar dashboard se necessário |
+| Push `origin/main` | PASS |
+| Deploy | PASS — `dpl_7hxpXgGNJHB8fomg26rMvuLCBvVu` |
+| Alias produção | https://www.thouse-rec.com.br |
+| typecheck / build / smoke | PASS |
