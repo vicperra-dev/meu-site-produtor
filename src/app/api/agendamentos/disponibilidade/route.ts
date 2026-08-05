@@ -6,9 +6,11 @@ import {
   OPERATIONAL_HOURS,
   PRODUCTION_DELIVERY_HOUR,
   computeCalendarDayStates,
+  hoursCoveredByPresencial,
   isProductionDeliveryAppointment,
   normalizeHourLabel,
-  toIsoDateLocal,
+  toIsoDateStudio,
+  getHourStudio,
 } from "@/app/lib/calendar-day-state";
 import { phaseOccupiesCalendar, type ServiceOrderPhase } from "@/app/lib/service-orders/phases";
 import {
@@ -25,19 +27,9 @@ import {
 } from "@/app/lib/ui/status-palette";
 
 /**
- * API pública de disponibilidade + estado do calendário (GO-H4 / GO-H9).
- * GO-H9: hourOccupancy deriva da Ordem de Serviço (rótulo/categoria/tooltip).
+ * API pública de disponibilidade + estado do calendário (BUG-001 / GO-H4 / GO-H9).
+ * hourOccupancy deriva da Ordem de Serviço; dayStates da fonte única.
  */
-
-function hoursCoveredByPresencial(start: Date, duracaoMinutos: number): string[] {
-  const horaInicio = start.getHours();
-  const horasOcupadas = Math.max(1, Math.ceil(duracaoMinutos / 60));
-  const out: string[] = [];
-  for (let i = 0; i < horasOcupadas; i++) {
-    out.push(`${String(horaInicio + i).padStart(2, "0")}:00`);
-  }
-  return out;
-}
 
 function resolveOrigin(params: {
   paymentProvider?: string | null;
@@ -95,7 +87,7 @@ export async function GET() {
     }));
 
     const blockedSlots = blocked.map((s) => ({
-      data: s.data,
+      data: String(s.data || "").slice(0, 10),
       hora: s.hora,
     }));
 
@@ -104,7 +96,6 @@ export async function GET() {
       blockedSlots,
     });
 
-    // GO-H9 — detalhe por horário a partir da Ordem de Serviço
     const hourOccupancyByDate: Record<string, Record<string, HourOccupancyDetail>> = {};
 
     const ensureDay = (date: string) => {
@@ -126,7 +117,6 @@ export async function GET() {
       const occupying = sos.filter((so) =>
         phaseOccupiesCalendar(so.phase as ServiceOrderPhase)
       );
-      // Fallback legado: appointment sem SO ainda ocupa (tipo do appointment)
       const effective =
         occupying.length > 0
           ? occupying
@@ -141,10 +131,12 @@ export async function GET() {
               },
             ];
 
-      const date = toIsoDateLocal(apt.data);
+      const date = toIsoDateStudio(apt.data);
       const start = apt.data instanceof Date ? apt.data : new Date(apt.data);
       const clientName =
         apt.user?.nomeArtistico?.trim() || apt.user?.email || "Cliente";
+      const dayState = dayStates[date];
+      let productionHourCursor = 0;
 
       for (const so of effective) {
         const serviceType = so.serviceType || apt.tipo || "sessao";
@@ -168,13 +160,21 @@ export async function GET() {
           appointmentId: apt.id,
         };
 
-        const hours = isProductionDeliveryAppointment(serviceType)
-          ? [PRODUCTION_DELIVERY_HOUR]
-          : hoursCoveredByPresencial(start, apt.duracaoMinutos || 60);
+        let hours: string[];
+        if (isProductionDeliveryAppointment(serviceType)) {
+          const allocated = dayState?.productionHours || [];
+          const hour =
+            allocated[productionHourCursor] ||
+            getHourStudio(start) ||
+            PRODUCTION_DELIVERY_HOUR;
+          productionHourCursor += 1;
+          hours = [hour];
+        } else {
+          hours = hoursCoveredByPresencial(start, apt.duracaoMinutos || 60);
+        }
 
         const dayMap = ensureDay(date);
         for (const h of hours) {
-          // Não sobrescrever bloqueio admin
           if (dayMap[h]?.kind === "blocked") continue;
           dayMap[h] = detail;
         }
@@ -195,6 +195,7 @@ export async function GET() {
         producao: serviceOrderSlotClasses("producao"),
       },
       tooltipHelper: "use label/category/client/root/status/origin",
+      timezone: "America/Sao_Paulo",
     });
   } catch (err: unknown) {
     console.error("Erro ao buscar disponibilidade:", err);

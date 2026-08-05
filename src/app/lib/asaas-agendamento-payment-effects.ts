@@ -16,6 +16,10 @@ import {
 } from "@/app/lib/agendamento-payment-rules";
 import { sendPaymentConfirmationEmailToUser, sendPaymentNotificationToTHouse } from "@/app/lib/sendEmail";
 import { appointmentCalendarOccupancyFilter } from "@/app/lib/appointment-operational-filter";
+import {
+  parseStudioDateTime,
+  resolveNextProductionHourForDay,
+} from "@/app/lib/calendar-day-state";
 
 export type AgendamentoItemLine = { id?: string; nome?: string; quantidade?: number };
 
@@ -306,9 +310,36 @@ export async function processAgendamentoPaymentEffects(params: {
   const data = metadata.data as string | undefined;
   const horaRaw = metadata.hora as string | undefined;
   const needsHour = exigeAgendamentoHora(services, beats);
-  const hora =
+  let hora =
     horaRaw?.trim() ||
     (data && !needsHour ? PRODUCTION_SCHEDULE_DEFAULT_HOUR : undefined);
+
+  // BUG-001: produção ocupa o último horário livre do dia (não um fixo cego).
+  if (data && !needsHour) {
+    try {
+      const dayStart = parseStudioDateTime(data, "00:00");
+      const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
+      const existing = await prisma.appointment.findMany({
+        where: {
+          ...appointmentCalendarOccupancyFilter,
+          data: { gte: dayStart, lt: dayEnd },
+        },
+        select: { id: true, data: true, duracaoMinutos: true, tipo: true, status: true },
+      });
+      const blocked = await prisma.blockedTimeSlot.findMany({
+        where: { data, ativo: true },
+        select: { data: true, hora: true },
+      });
+      const next = resolveNextProductionHourForDay({
+        isoDate: data,
+        appointments: existing,
+        blockedSlots: blocked,
+      });
+      if (next) hora = next;
+    } catch (e) {
+      console.warn("[AgendamentoEffects] resolve produção hour falhou; usando default", e);
+    }
+  }
 
   if (!agendamentoFinalId && appointmentIdMeta) {
     const agendamento = await prisma.appointment.findUnique({
@@ -331,7 +362,7 @@ export async function processAgendamentoPaymentEffects(params: {
     hora &&
     isSingleScheduledAgendamentoPayment(metadata, services, beats)
   ) {
-    const dataHoraISO = new Date(`${data}T${hora}:00`);
+    const dataHoraISO = parseStudioDateTime(data, hora);
     // Conflito de estúdio só para presencial (Sessão/Captação).
     if (needsHour) {
       const conflito = await prisma.appointment.findFirst({

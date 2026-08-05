@@ -4,13 +4,17 @@
  * Calendário operacional compartilhado (agendamento comum + cupom).
  * Cores e ocupação vêm de dayStates calculados no backend (GO-H4).
  */
-import { useCallback, useMemo, useState, type CSSProperties } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   CALENDAR_LEGEND,
   type CalendarDayState,
-  type CalendarDayVisual,
   getCalendarDayState,
   OPERATIONAL_HOURS,
+  calendarDayCellStyle,
+  isIsoDatePastStudio,
+  isStudioDateTimePast,
+  isoDateFromParts,
+  formatStudioMonthYear,
 } from "@/app/lib/calendar-day-state";
 import {
   PRODUCTION_DELIVERY_DATE_MESSAGE,
@@ -18,55 +22,6 @@ import {
 } from "@/app/agendamento/scheduling-shared";
 import { useDomainRefresh } from "@/app/hooks/useDomainRefresh";
 import { useIntelligentRefresh } from "@/app/hooks/useIntelligentRefresh";
-
-function dayCellStyle(
-  visual: CalendarDayVisual,
-  selected: boolean,
-  past: boolean
-): { className: string; style?: CSSProperties } {
-  if (past) {
-    return {
-      className:
-        "border-red-600 bg-red-600/30 text-red-300 opacity-60 cursor-not-allowed",
-    };
-  }
-  if (selected) {
-    return { className: "border-white bg-white/10 text-white" };
-  }
-  switch (visual) {
-    case "ocupado":
-      return { className: "border-red-600 bg-red-600/30 text-red-300" };
-    case "parcial":
-      return { className: "border-yellow-500 bg-yellow-500/20 text-yellow-300" };
-    case "entrega":
-      return { className: "border-purple-500 bg-purple-600/30 text-purple-200" };
-    case "parcial_entrega":
-      return {
-        className: "border-yellow-500 text-white",
-        style: {
-          background:
-            "linear-gradient(135deg, rgba(234,179,8,0.4) 0%, rgba(234,179,8,0.4) 50%, rgba(147,51,234,0.45) 50%, rgba(147,51,234,0.45) 100%)",
-        },
-      };
-    default:
-      return { className: "border-green-600 bg-green-600/20 text-green-300" };
-  }
-}
-
-function isDataPassada(isoDate: string): boolean {
-  const hoje = new Date();
-  hoje.setHours(0, 0, 0, 0);
-  const dataComparar = new Date(isoDate + "T00:00:00");
-  dataComparar.setHours(0, 0, 0, 0);
-  return dataComparar < hoje;
-}
-
-function isHorarioPassado(isoDate: string, hora: string): boolean {
-  const [horas, minutos] = hora.split(":").map(Number);
-  const dataHora = new Date(isoDate + `T${hora}:00`);
-  dataHora.setHours(horas, minutos, 0, 0);
-  return dataHora < new Date();
-}
 
 export type SchedulingCalendarProps = {
   serviceType?: string | null;
@@ -194,16 +149,14 @@ export function SchedulingCalendar({
         >
           Escolha o dia e o horário da sua sessão.
           <br />
-          <span className="font-semibold text-green-400">Verde</span>: todos os
-          horários livres ·{" "}
-          <span className="font-semibold text-yellow-400">Amarelo</span>: alguns
-          horários ocupados ·{" "}
-          <span className="font-semibold text-red-400">Vermelho</span>: agenda
-          cheia ·{" "}
-          <span className="font-semibold text-purple-400">Roxo</span>: entrega de
-          produção ·{" "}
+          <span className="font-semibold text-green-400">Verde</span>: livres ·{" "}
+          <span className="font-semibold text-yellow-400">Amarelo</span>:
+          Sessão/Captação ·{" "}
+          <span className="font-semibold text-purple-400">Roxo</span>: produção ·{" "}
           <span className="font-semibold text-yellow-300">Amarelo/Roxo</span>:
-          presencial + entrega
+          ambos ·{" "}
+          <span className="font-semibold text-red-400">Vermelho</span>: sem
+          horários livres
         </p>
       )}
 
@@ -227,10 +180,10 @@ export function SchedulingCalendar({
               ◀
             </button>
             <span>
-              {dataBase.toLocaleDateString("pt-BR", {
-                month: "long",
-                year: "numeric",
-              })}
+              {formatStudioMonthYear(
+                dataBase.getFullYear(),
+                dataBase.getMonth() + 1
+              )}
             </span>
             <button
               type="button"
@@ -253,9 +206,11 @@ export function SchedulingCalendar({
             ))}
             {dias.map((dia, idx) => {
               if (!dia) return <div key={idx} />;
-              const isoDate = `${dataBase.getFullYear()}-${String(
-                dataBase.getMonth() + 1
-              ).padStart(2, "0")}-${String(dia).padStart(2, "0")}`;
+              const isoDate = isoDateFromParts(
+                dataBase.getFullYear(),
+                dataBase.getMonth() + 1,
+                dia
+              );
               const dataDia = new Date(
                 dataBase.getFullYear(),
                 dataBase.getMonth(),
@@ -264,9 +219,12 @@ export function SchedulingCalendar({
               if (dataDia < DATA_MINIMA) return <div key={idx} />;
 
               const state = getCalendarDayState(dayStates, isoDate);
-              const past = isDataPassada(isoDate);
+              const past = isIsoDatePastStudio(isoDate);
               const selected = dataSelecionada === isoDate;
-              const cell = dayCellStyle(state.visual, selected, past);
+              const cell = calendarDayCellStyle(state.visual, {
+                past,
+                selected,
+              });
 
               return (
                 <button
@@ -300,29 +258,32 @@ export function SchedulingCalendar({
           </div>
 
           <div className="mt-4 flex flex-wrap gap-3 text-[11px] text-zinc-400">
-            <span className="inline-flex items-center gap-1">
-              <span className="h-2.5 w-2.5 rounded-sm bg-green-500" /> Verde
-            </span>
-            <span className="inline-flex items-center gap-1">
-              <span className="h-2.5 w-2.5 rounded-sm bg-yellow-500" /> Amarelo
-            </span>
-            <span className="inline-flex items-center gap-1">
-              <span className="h-2.5 w-2.5 rounded-sm bg-red-500" /> Vermelho
-            </span>
-            <span className="inline-flex items-center gap-1">
-              <span className="h-2.5 w-2.5 rounded-sm bg-purple-500" /> Entrega de
-              Produção
-            </span>
-            <span className="inline-flex items-center gap-1">
-              <span
-                className="h-2.5 w-2.5 rounded-sm border border-yellow-500/50"
-                style={{
-                  background:
-                    "linear-gradient(135deg, rgba(234,179,8,0.9) 50%, rgba(147,51,234,0.9) 50%)",
-                }}
-              />{" "}
-              Presencial + Entrega
-            </span>
+            {CALENDAR_LEGEND.map((item) => (
+              <span key={item.visual} className="inline-flex items-center gap-1">
+                <span
+                  className={`h-2.5 w-2.5 rounded-sm border ${
+                    item.visual === "livre"
+                      ? "bg-green-500"
+                      : item.visual === "parcial"
+                        ? "bg-yellow-500"
+                        : item.visual === "entrega"
+                          ? "bg-purple-500"
+                          : item.visual === "ocupado"
+                            ? "bg-red-500"
+                            : "border-yellow-500/50"
+                  }`}
+                  style={
+                    item.visual === "parcial_entrega"
+                      ? {
+                          background:
+                            "linear-gradient(135deg, rgba(234,179,8,0.9) 50%, rgba(147,51,234,0.9) 50%)",
+                        }
+                      : undefined
+                  }
+                />{" "}
+                {item.color}
+              </span>
+            ))}
           </div>
         </div>
 
@@ -337,7 +298,7 @@ export function SchedulingCalendar({
               <div className="grid grid-cols-3 gap-2">
                 {operationalHours.map((h) => {
                   const ocupado = occupiedForSelected.has(h);
-                  const passado = isHorarioPassado(dataSelecionada, h);
+                  const passado = isStudioDateTimePast(dataSelecionada, h);
                   const selected = horaSelecionada === h;
                   const disabled = ocupado || passado;
                   return (

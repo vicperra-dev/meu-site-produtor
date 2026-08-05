@@ -40,6 +40,7 @@ import {
   PRODUCTION_SCHEDULE_DEFAULT_HOUR,
   exigeAgendamentoHora,
 } from "@/app/lib/agendamento-payment-rules";
+import { minScheduleDateIsoStudio } from "@/app/lib/calendar-day-state";
 import { IntegridadePanel } from "./IntegridadePanel";
 import {
   HomologationPlanButtons,
@@ -180,9 +181,7 @@ function qtyToLines(qty: QtyMap) {
 }
 
 function tomorrowIso(): string {
-  const d = new Date();
-  d.setDate(d.getDate() + 1);
-  return d.toISOString().slice(0, 10);
+  return minScheduleDateIsoStudio(1);
 }
 
 function parseSession(raw: string | null): SessionId {

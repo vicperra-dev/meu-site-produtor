@@ -38,9 +38,9 @@ for (const [label, s, b] of cases) {
 
 const states = computeCalendarDayStates({
   appointments: [
-    { data: "2026-08-10T14:00:00", duracaoMinutos: 60, tipo: "sessao" },
-    { data: "2026-08-10T22:00:00", duracaoMinutos: 60, tipo: "mix" },
-    { data: "2026-08-11T22:00:00", duracaoMinutos: 60, tipo: "beat1" },
+    { data: "2026-08-10T14:00:00-03:00", duracaoMinutos: 60, tipo: "sessao" },
+    { data: "2026-08-10T22:00:00-03:00", duracaoMinutos: 60, tipo: "mix" },
+    { data: "2026-08-11T22:00:00-03:00", duracaoMinutos: 60, tipo: "beat1" },
   ],
   blockedSlots: [],
 });

@@ -12,6 +12,7 @@ import {
   exigeAgendamentoNoCheckout,
   exigeAgendamentoHora,
 } from "@/app/lib/agendamento-payment-rules";
+import { minScheduleDateIsoStudio } from "@/app/lib/calendar-day-state";
 
 export type HomologationScenarioId =
   | "sessao"
@@ -55,9 +56,7 @@ export type HomologationScenarioDef = {
 };
 
 function tomorrowIsoDate(): string {
-  const d = new Date();
-  d.setDate(d.getDate() + 1);
-  return d.toISOString().slice(0, 10);
+  return minScheduleDateIsoStudio(1);
 }
 
 type Line = { id: string; nome: string; quantidade: number };

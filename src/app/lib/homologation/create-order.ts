@@ -19,6 +19,7 @@ import {
 } from "@/app/lib/agendamento-payment-rules";
 import { appointmentCalendarOccupancyFilter } from "@/app/lib/appointment-operational-filter";
 import { parsePaymentAppointmentIds } from "@/app/lib/symbolic-payment";
+import { parseStudioDateTime } from "@/app/lib/calendar-day-state";
 
 export const HOMOLOGATION_ORIGIN = "HOMOLOGATION" as const;
 
@@ -286,7 +287,7 @@ export async function createHomologationOrder(
   }
 
   if (requerHora && input.data?.trim() && horaEfetiva) {
-    const dataHoraISO = new Date(`${input.data}T${horaEfetiva}:00`);
+    const dataHoraISO = parseStudioDateTime(input.data, horaEfetiva);
     const conflito = await prisma.appointment.findFirst({
       where: {
         ...appointmentCalendarOccupancyFilter,

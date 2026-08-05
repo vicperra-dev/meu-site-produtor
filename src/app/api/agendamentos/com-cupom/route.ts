@@ -16,6 +16,7 @@ import { validateCouponAndGetTotal } from "@/app/lib/validate-coupon-checkout";
 import { canUseSymbolicSimulation } from "@/app/lib/symbolic-payment";
 import { goLiveBlockIfNeeded } from "@/app/lib/go-live-maintenance";
 import { appointmentCalendarOccupancyFilter } from "@/app/lib/appointment-operational-filter";
+import { parseStudioDateTime } from "@/app/lib/calendar-day-state";
 
 const agendamentoComCupomSchema = z.object({
   data: z.string(),
@@ -244,7 +245,7 @@ export async function POST(req: Request) {
     // Removido mapa frouxo sessao↔captacao — OP-02A: cupom não troca de serviço.
 
     // Criar data/hora do agendamento
-    const dataHoraISO = new Date(`${data}T${hora}:00`);
+    const dataHoraISO = parseStudioDateTime(data, hora);
     const duracao = duracaoMinutos || 60;
 
     let appointment!: {

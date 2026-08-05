@@ -8,6 +8,7 @@ import { getAsaasApiKey } from "@/app/lib/env";
 import { appointmentCalendarOccupancyFilter } from "@/app/lib/appointment-operational-filter";
 import { calculateServerCheckout } from "@/app/lib/checkout-calculation";
 import { goLiveBlockIfNeeded } from "@/app/lib/go-live-maintenance";
+import { parseStudioDateTime } from "@/app/lib/calendar-day-state";
 
 const ASAAS_API_KEY = getAsaasApiKey();
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
@@ -128,7 +129,7 @@ export async function POST(req: Request) {
 
     for (const item of items) {
       if (!item.data?.trim() || !item.hora?.trim() || item.somenteCupons) continue;
-      const dataHoraISO = new Date(`${item.data}T${item.hora}:00`);
+      const dataHoraISO = parseStudioDateTime(item.data, item.hora);
       const duracao = item.duracaoMinutos ?? 60;
       const conflito = await prisma.appointment.findFirst({
         where: {

@@ -16,6 +16,7 @@ import { appointmentCalendarOccupancyFilter } from "@/app/lib/appointment-operat
 import { getAsaasApiKey } from "@/app/lib/env";
 import { calculateServerCheckout } from "@/app/lib/checkout-calculation";
 import { goLiveBlockIfNeeded } from "@/app/lib/go-live-maintenance";
+import { parseStudioDateTime } from "@/app/lib/calendar-day-state";
 
 const ASAAS_API_KEY = getAsaasApiKey();
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
@@ -173,7 +174,7 @@ export async function POST(req: Request) {
       hora?.trim() || (somenteData && data?.trim() ? PRODUCTION_SCHEDULE_DEFAULT_HOUR : undefined);
 
     if (requerHora && data?.trim() && horaEfetiva) {
-      const dataHoraISO = new Date(`${data}T${horaEfetiva}:00`);
+      const dataHoraISO = parseStudioDateTime(data, horaEfetiva);
       const conflito = await prisma.appointment.findFirst({
         where: {
           ...appointmentCalendarOccupancyFilter,

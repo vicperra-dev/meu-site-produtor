@@ -5,6 +5,7 @@ import { isSchedulableServiceType } from "@/app/lib/service-catalog";
 import {
   OPERATIONAL_HOURS,
   PRODUCTION_DELIVERY_HOUR,
+  minScheduleDateIsoStudio,
 } from "@/app/lib/calendar-day-state";
 
 export const SCHEDULE_HORARIOS = OPERATIONAL_HOURS;
@@ -23,8 +24,5 @@ export function serviceNeedsStudioHours(
 }
 
 export function minScheduleDateIso(daysAhead = 0): string {
-  const d = new Date();
-  d.setHours(0, 0, 0, 0);
-  d.setDate(d.getDate() + daysAhead);
-  return d.toISOString().slice(0, 10);
+  return minScheduleDateIsoStudio(daysAhead);
 }

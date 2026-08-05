@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useState, useMemo, type ReactNode } from "react";
 import {
   useFeedback,
   LoadingBlock,
@@ -19,48 +19,21 @@ import {
 } from "@/app/lib/ui/service-order-visual";
 import {
   OPERATIONAL_HOURS,
+  CALENDAR_LEGEND,
   type CalendarDayState,
   type CalendarDayVisual,
   getCalendarDayState,
+  calendarDayCellStyle,
+  formatStudioDateLong,
+  formatStudioMonthYear,
+  isIsoDatePastStudio,
+  isStudioDateTimePast,
+  normalizeHourLabel,
+  isoDateFromParts,
 } from "@/app/lib/calendar-day-state";
 
 const HORARIOS_PADRAO = [...OPERATIONAL_HOURS];
 
-function visualDayStyle(
-  visual: CalendarDayVisual,
-  past: boolean
-): { className: string; style?: CSSProperties } {
-  if (past) {
-    return { className: "border-red-600 bg-red-600/30 text-red-300 opacity-60" };
-  }
-  switch (visual) {
-    case "ocupado":
-      // GO-H9: dia cheio presencial = amarelo (vermelho só para bloqueio admin)
-      return {
-        className: "border-yellow-500 bg-yellow-500/25 text-yellow-200 hover:bg-yellow-500/35",
-      };
-    case "parcial":
-      return {
-        className: "border-yellow-500 bg-yellow-500/20 text-yellow-300 hover:bg-yellow-500/30",
-      };
-    case "entrega":
-      return {
-        className: "border-purple-500 bg-purple-600/30 text-purple-200 hover:bg-purple-600/40",
-      };
-    case "parcial_entrega":
-      return {
-        className: "border-yellow-500 text-white hover:opacity-90",
-        style: {
-          background:
-            "linear-gradient(135deg, rgba(234,179,8,0.35) 50%, rgba(147,51,234,0.4) 50%)",
-        },
-      };
-    default:
-      return {
-        className: "border-green-600 bg-green-600/20 text-green-300 hover:bg-green-600/30",
-      };
-  }
-}
 
 interface BlockedSlot {
   id: string;
@@ -89,30 +62,13 @@ export default function AdminControleAgendamentoPage() {
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [confirmando, setConfirmando] = useState(false);
 
-  // Função helper para verificar se uma data já passou (comparando apenas dia/mês/ano)
-  const isDataPassada = (isoDate: string): boolean => {
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0); // Zerar horas para comparar apenas a data
-    
-    const dataComparar = new Date(isoDate + "T00:00:00");
-    dataComparar.setHours(0, 0, 0, 0);
-    
-    return dataComparar < hoje;
-  };
+  // Função helper para verificar se uma data já passou (fuso do estúdio)
+  const isDataPassada = (isoDate: string): boolean => isIsoDatePastStudio(isoDate);
 
-  // Função helper para verificar se um horário já passou (comparando data + hora com agora)
-  const isHorarioPassado = (isoDate: string, hora: string): boolean => {
-    const agora = new Date();
-    
-    // Converter hora "HH:MM" para horas e minutos
-    const [horas, minutos] = hora.split(":").map(Number);
-    
-    // Criar data/hora do agendamento
-    const dataHoraAgendamento = new Date(isoDate + `T${hora}:00`);
-    dataHoraAgendamento.setHours(horas, minutos, 0, 0);
-    
-    return dataHoraAgendamento < agora;
-  };
+  // Função helper para verificar se um horário já passou
+  const isHorarioPassado = (isoDate: string, hora: string): boolean =>
+    isStudioDateTimePast(isoDate, hora);
+
 
   useEffect(() => {
     carregarDados();
@@ -190,12 +146,7 @@ export default function AdminControleAgendamentoPage() {
 
   // Função para normalizar hora (garantir formato HH:00)
   function normalizarHora(hora: string): string {
-    if (!hora) return "00:00";
-    if (hora.includes(":")) {
-      const partes = hora.split(":");
-      return `${partes[0].padStart(2, "0")}:00`;
-    }
-    return `${hora.padStart(2, "0")}:00`;
+    return normalizeHourLabel(hora);
   }
 
   // Função para bloquear/desbloquear um horário
@@ -411,7 +362,7 @@ export default function AdminControleAgendamentoPage() {
 
   const selectedDayData = selectedDay
     ? {
-        date: new Date(selectedDay),
+        isoDate: selectedDay,
         ocupados: horariosOcupadosPorDia[selectedDay] || new Set<string>(),
         slotsBloqueados: blockedSlots.filter((s) => s.data === selectedDay),
       }
@@ -486,7 +437,7 @@ export default function AdminControleAgendamentoPage() {
           </Button>
 
           <span className="text-xl font-semibold text-zinc-100">
-            {dataBase.toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}
+            {formatStudioMonthYear(dataBase.getFullYear(), dataBase.getMonth() + 1)}
           </span>
 
           <Button variant="outline" onClick={handleProximoMes}>
@@ -504,7 +455,11 @@ export default function AdminControleAgendamentoPage() {
           {dias.map((dia, idx) => {
             if (!dia) return <div key={idx} />;
 
-            const isoDate = `${dataBase.getFullYear()}-${String(dataBase.getMonth() + 1).padStart(2, "0")}-${String(dia).padStart(2, "0")}`;
+            const isoDate = isoDateFromParts(
+              dataBase.getFullYear(),
+              dataBase.getMonth() + 1,
+              dia
+            );
             
             // Verificar se a data é válida (>= 1 de janeiro)
             const dataDia = new Date(dataBase.getFullYear(), dataBase.getMonth(), dia);
@@ -516,7 +471,7 @@ export default function AdminControleAgendamentoPage() {
             
             // Verificar se a data já passou
             const diaPassado = isDataPassada(isoDate);
-            const cell = visualDayStyle(visual, diaPassado);
+            const cell = calendarDayCellStyle(visual, { past: diaPassado });
 
             return (
               <button
@@ -544,10 +499,32 @@ export default function AdminControleAgendamentoPage() {
         </div>
 
         <div className="mt-6 flex flex-wrap gap-4 text-sm text-zinc-400">
-          {CALENDAR_OS_LEGEND.map((item) => (
-            <div key={item.key} className="flex items-center gap-2">
-              <div className={`w-4 h-4 rounded border ${item.swatch}`} />
-              <span>{item.label}</span>
+          {CALENDAR_LEGEND.map((item) => (
+            <div key={item.visual} className="flex items-center gap-2">
+              <div
+                className={`w-4 h-4 rounded border ${
+                  item.visual === "livre"
+                    ? "bg-green-600 border-green-500"
+                    : item.visual === "parcial"
+                      ? "bg-yellow-500 border-yellow-400"
+                      : item.visual === "entrega"
+                        ? "bg-purple-600 border-purple-500"
+                        : item.visual === "ocupado"
+                          ? "bg-red-600 border-red-500"
+                          : "border-yellow-500"
+                }`}
+                style={
+                  item.visual === "parcial_entrega"
+                    ? {
+                        background:
+                          "linear-gradient(135deg, rgba(234,179,8,0.9) 50%, rgba(147,51,234,0.9) 50%)",
+                      }
+                    : undefined
+                }
+              />
+              <span>
+                {item.color}: {item.label}
+              </span>
             </div>
           ))}
         </div>
@@ -559,12 +536,7 @@ export default function AdminControleAgendamentoPage() {
         onClose={() => setSelectedDay(null)}
         title={
           selectedDayData
-            ? `Horários - ${selectedDayData.date.toLocaleDateString("pt-BR", {
-                weekday: "long",
-                day: "numeric",
-                month: "long",
-                year: "numeric",
-              })}`
+            ? `Horários - ${formatStudioDateLong(selectedDayData.isoDate)}`
             : "Horários"
         }
         maxWidth="max-w-2xl"

@@ -4,6 +4,7 @@ import { requireAuth } from "@/app/lib/auth";
 import { agendamentoSchema } from "@/app/lib/validations";
 import { appointmentCalendarOccupancyFilter } from "@/app/lib/appointment-operational-filter";
 import { goLiveBlockIfNeeded } from "@/app/lib/go-live-maintenance";
+import { parseStudioDateTime } from "@/app/lib/calendar-day-state";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -33,7 +34,7 @@ export async function POST(req: Request) {
 
     const { data, hora, duracaoMinutos, tipo, observacoes } = validation.data;
 
-    const dataHoraISO = new Date(`${data}T${hora}:00`);
+    const dataHoraISO = parseStudioDateTime(data, hora);
     const dataFim = new Date(dataHoraISO.getTime() + (duracaoMinutos * 60000));
 
     // GO-H4.3: só conflita com reservas aceitas (pendente não ocupa)
