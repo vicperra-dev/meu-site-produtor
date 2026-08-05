@@ -1,5 +1,5 @@
 /**
- * GO-H9 — Identidade visual das Ordens de Serviço no calendário/admin.
+ * GO-H9 / BUG-001 — Identidade visual das Ordens de Serviço no calendário/admin.
  * Fonte: serviceType da ServiceOrder (não inferir por Payment/Cupom).
  */
 
@@ -39,11 +39,17 @@ export function serviceOrderLabel(serviceType?: string | null): string {
 }
 
 export function operationalCategoryLabel(cat: OperationalCategory): string {
-  return cat === "presencial" ? "Atendimento Presencial" : "Produção";
+  return cat === "presencial" ? "Serviço" : "Produção";
 }
 
-/** Classes Tailwind para slot ocupado por OS (amarelo / roxo). */
-export function serviceOrderSlotClasses(category: OperationalCategory): string {
+/** Classes Tailwind para slot ocupado por OS (amarelo / roxo / azul). */
+export function serviceOrderSlotClasses(
+  category: OperationalCategory,
+  opts?: { completed?: boolean }
+): string {
+  if (opts?.completed) {
+    return "bg-blue-600/40 text-blue-100 border-blue-500 cursor-not-allowed";
+  }
   if (category === "presencial") {
     return "bg-yellow-500/25 text-yellow-200 border-yellow-500 hover:bg-yellow-500/35";
   }
@@ -63,6 +69,8 @@ export type HourOccupancyDetail = {
   statusLabel?: string;
   origin?: string;
   appointmentId?: number;
+  /** true quando appointment/SO concluído — azul no Admin. */
+  completed?: boolean;
 };
 
 export function formatOccupancyTooltip(detail: HourOccupancyDetail): string {
@@ -81,17 +89,38 @@ export function formatOccupancyTooltip(detail: HourOccupancyDetail): string {
     .join("\n");
 }
 
+/** Legenda de horários — Admin. */
 export const CALENDAR_OS_LEGEND = [
-  { key: "disponivel", label: "Disponível", swatch: "bg-green-600/20 border-green-600" },
-  { key: "bloqueado", label: "Bloqueado", swatch: "bg-red-600 border-red-500" },
+  { key: "livre", label: "Livre", swatch: "bg-green-600 border-green-500" },
   {
-    key: "presencial",
-    label: "Atendimento Presencial (Sessão / Captação)",
-    swatch: "bg-yellow-500/30 border-yellow-500",
+    key: "servico",
+    label: "Serviço",
+    swatch: "bg-yellow-500 border-yellow-400",
   },
   {
     key: "producao",
-    label: "Produção (Beat / Mixagem / Masterização / Sonoplastia)",
-    swatch: "bg-purple-600/40 border-purple-500",
+    label: "Produção",
+    swatch: "bg-purple-600 border-purple-500",
+  },
+  {
+    key: "ocupado",
+    label: "Ocupado",
+    swatch: "bg-red-600 border-red-500",
+  },
+  {
+    key: "concluido",
+    label: "Concluído",
+    swatch: "bg-blue-600 border-blue-500",
+  },
+] as const;
+
+/** Legenda de horários — Usuário. */
+export const USER_HOUR_LEGEND = [
+  { key: "livre", label: "Livre", swatch: "bg-green-600 border-green-500" },
+  { key: "ocupado", label: "Ocupado", swatch: "bg-yellow-500 border-yellow-400" },
+  {
+    key: "indisponivel",
+    label: "Indisponível",
+    swatch: "bg-red-600 border-red-500",
   },
 ] as const;

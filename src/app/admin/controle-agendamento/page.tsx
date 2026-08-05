@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo, type ReactNode } from "react";
+import { useCallback, useEffect, useState, useMemo, type ReactNode } from "react";
 import {
   useFeedback,
   LoadingBlock,
@@ -19,7 +19,7 @@ import {
 } from "@/app/lib/ui/service-order-visual";
 import {
   OPERATIONAL_HOURS,
-  CALENDAR_LEGEND,
+  ADMIN_DAY_LEGEND,
   type CalendarDayState,
   type CalendarDayVisual,
   getCalendarDayState,
@@ -30,7 +30,9 @@ import {
   isStudioDateTimePast,
   normalizeHourLabel,
   isoDateFromParts,
+  daysInMonth,
 } from "@/app/lib/calendar-day-state";
+import { useDomainRefresh } from "@/app/hooks/useDomainRefresh";
 
 const HORARIOS_PADRAO = [...OPERATIONAL_HOURS];
 
@@ -69,17 +71,14 @@ export default function AdminControleAgendamentoPage() {
   const isHorarioPassado = (isoDate: string, hora: string): boolean =>
     isStudioDateTimePast(isoDate, hora);
 
-
-  useEffect(() => {
-    carregarDados();
-  }, [dataBase]);
-
-  async function carregarDados() {
+  const carregarDados = useCallback(async (opts?: { silent?: boolean }) => {
     try {
-      setLoading(true);
+      if (!opts?.silent) setLoading(true);
       const [resSlots, resCal] = await Promise.all([
         fetch("/api/admin/blocked-slots"),
-        fetch("/api/agendamentos/disponibilidade?" + Date.now()),
+        fetch("/api/agendamentos/disponibilidade?" + Date.now(), {
+          cache: "no-store",
+        }),
       ]);
 
       if (resSlots.ok) {
@@ -95,9 +94,17 @@ export default function AdminControleAgendamentoPage() {
     } catch (err) {
       console.error("Erro ao carregar dados", err);
     } finally {
-      setLoading(false);
+      if (!opts?.silent) setLoading(false);
     }
-  }
+  }, []);
+
+  useEffect(() => {
+    void carregarDados();
+  }, [dataBase, carregarDados]);
+
+  useDomainRefresh(["agenda", "admin-agendamentos"], () =>
+    carregarDados({ silent: true })
+  );
 
   const horariosOcupadosPorDia: Record<string, Set<string>> = useMemo(() => {
     const ocupados: Record<string, Set<string>> = {};
@@ -113,29 +120,21 @@ export default function AdminControleAgendamentoPage() {
     return ocupados;
   }, [dayStates, blockedSlots]);
 
-  const ultimoDiaDoMes = new Date(
-    dataBase.getFullYear(),
-    dataBase.getMonth() + 1,
-    0
-  ).getDate();
+  const calYear = dataBase.getFullYear();
+  const calMonth = dataBase.getMonth() + 1;
+  const ultimoDiaDoMes = daysInMonth(calYear, calMonth);
 
-  const primeiroDiaSemana = new Date(
-    dataBase.getFullYear(),
-    dataBase.getMonth(),
-    1
-  ).getDay();
+  const primeiroDiaSemana = new Date(calYear, calMonth - 1, 1).getDay();
 
   const dias: (number | null)[] = [];
   for (let i = 0; i < primeiroDiaSemana; i++) dias.push(null);
-  
-  // Adicionar apenas dias a partir de 1 de janeiro
+
   for (let d = 1; d <= ultimoDiaDoMes; d++) {
-    const dataDia = new Date(dataBase.getFullYear(), dataBase.getMonth(), d);
-    // Só adicionar se a data for >= 1 de janeiro
+    const dataDia = new Date(calYear, calMonth - 1, d);
     if (dataDia >= DATA_MINIMA) {
       dias.push(d);
     } else {
-      dias.push(null); // Preencher com null para manter o layout
+      dias.push(null);
     }
   }
 
@@ -471,7 +470,10 @@ export default function AdminControleAgendamentoPage() {
             
             // Verificar se a data já passou
             const diaPassado = isDataPassada(isoDate);
-            const cell = calendarDayCellStyle(visual, { past: diaPassado });
+            const cell = calendarDayCellStyle(visual, {
+              past: diaPassado,
+              audience: "admin",
+            });
 
             return (
               <button
@@ -499,20 +501,10 @@ export default function AdminControleAgendamentoPage() {
         </div>
 
         <div className="mt-6 flex flex-wrap gap-4 text-sm text-zinc-400">
-          {CALENDAR_LEGEND.map((item) => (
+          {ADMIN_DAY_LEGEND.map((item) => (
             <div key={item.visual} className="flex items-center gap-2">
               <div
-                className={`w-4 h-4 rounded border ${
-                  item.visual === "livre"
-                    ? "bg-green-600 border-green-500"
-                    : item.visual === "parcial"
-                      ? "bg-yellow-500 border-yellow-400"
-                      : item.visual === "entrega"
-                        ? "bg-purple-600 border-purple-500"
-                        : item.visual === "ocupado"
-                          ? "bg-red-600 border-red-500"
-                          : "border-yellow-500"
-                }`}
+                className={`w-4 h-4 rounded border ${item.swatch}`}
                 style={
                   item.visual === "parcial_entrega"
                     ? {
@@ -522,9 +514,7 @@ export default function AdminControleAgendamentoPage() {
                     : undefined
                 }
               />
-              <span>
-                {item.color}: {item.label}
-              </span>
+              <span>{item.label}</span>
             </div>
           ))}
         </div>
@@ -594,22 +584,27 @@ export default function AdminControleAgendamentoPage() {
                   const cat =
                     occupancy?.category ||
                     operationalCategoryFromServiceType(occupancy?.serviceType);
-                  slotClass = `${serviceOrderSlotClasses(cat)} cursor-not-allowed`;
-                  const detail: HourOccupancyDetail = occupancy?.kind === "service_order"
-                    ? occupancy
-                    : {
-                        kind: "service_order",
-                        label: serviceOrderLabel(occupancy?.serviceType),
-                        category: cat,
-                        categoryLabel:
-                          cat === "presencial" ? "Atendimento Presencial" : "Produção",
-                      };
+                  const completed = Boolean(occupancy?.completed);
+                  slotClass = `${serviceOrderSlotClasses(cat, {
+                    completed,
+                  })} cursor-not-allowed`;
+                  const detail: HourOccupancyDetail =
+                    occupancy?.kind === "service_order"
+                      ? occupancy
+                      : {
+                          kind: "service_order",
+                          label: serviceOrderLabel(occupancy?.serviceType),
+                          category: cat,
+                          categoryLabel:
+                            cat === "presencial" ? "Serviço" : "Produção",
+                          completed,
+                        };
                   title = formatOccupancyTooltip(detail);
                   body = (
                     <span className="flex flex-col items-center gap-0.5">
                       <span>{hora}</span>
                       <span className="text-[10px] font-semibold leading-tight text-center">
-                        {detail.label}
+                        {completed ? "Concluído" : detail.label}
                       </span>
                     </span>
                   );

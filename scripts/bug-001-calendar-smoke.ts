@@ -1,5 +1,5 @@
 /**
- * BUG-001 — Smoke: calendário civil, timezone estúdio, cores, produções sucessivas.
+ * BUG-001 — Smoke: calendário civil, timezone, legendas admin/user, concluído azul.
  */
 import assert from "node:assert/strict";
 import {
@@ -12,6 +12,7 @@ import {
   parseStudioDateTime,
   resolveCalendarDayVisual,
   toIsoDateStudio,
+  toUserDayVisual,
   getHourStudio,
   OPERATIONAL_HOURS,
 } from "../src/app/lib/calendar-day-state";
@@ -25,11 +26,14 @@ assert.equal(daysInMonth(2026, 2), 28);
 assert.equal(daysInMonth(2024, 2), 29);
 assert.equal(daysInMonth(2026, 4), 30);
 assert.equal(daysInMonth(2026, 1), 31);
+assert.equal(daysInMonth(2025, 12), 31);
 assert.equal(isLeapYear(2024), true);
 assert.equal(isLeapYear(2026), false);
 assert.equal(isValidIsoDate("2026-02-29"), false);
 assert.equal(isValidIsoDate("2024-02-29"), true);
-ok("civil calendar 28/29/30/31");
+assert.equal(isValidIsoDate("2025-12-31"), true);
+assert.equal(isValidIsoDate("2026-01-01"), true);
+ok("civil calendar 28/29/30/31 + virada ano");
 
 // No UTC shift on display of YYYY-MM-DD
 const long = formatStudioDateLong("2026-08-05");
@@ -47,31 +51,57 @@ ok("parseStudioDateTime roundtrip America/Sao_Paulo");
 {
   const states = computeCalendarDayStates({
     appointments: [
-      { data: parseStudioDateTime("2026-08-10", "14:00"), duracaoMinutos: 60, tipo: "sessao", id: 1 },
+      {
+        data: parseStudioDateTime("2026-08-10", "14:00"),
+        duracaoMinutos: 60,
+        tipo: "sessao",
+        status: "aceito",
+        id: 1,
+      },
     ],
   });
   assert.equal(states["2026-08-10"]?.visual, "parcial");
-  ok("parcial amarelo");
+  assert.equal(toUserDayVisual("parcial"), "parcial");
+  ok("parcial amarelo (admin Serviço / user Ocupado)");
 }
 
 // Produção sozinha = roxo; ocupa último livre (22:00)
 {
   const states = computeCalendarDayStates({
     appointments: [
-      { data: parseStudioDateTime("2026-08-11", "22:00"), duracaoMinutos: 60, tipo: "mix", id: 2 },
+      {
+        data: parseStudioDateTime("2026-08-11", "22:00"),
+        duracaoMinutos: 60,
+        tipo: "mix",
+        status: "aceito",
+        id: 2,
+      },
     ],
   });
   assert.equal(states["2026-08-11"]?.visual, "entrega");
   assert.deepEqual(states["2026-08-11"]?.productionHours, ["22:00"]);
-  ok("entrega roxo @ 22:00");
+  assert.equal(toUserDayVisual("entrega"), "parcial");
+  ok("entrega roxo @ 22:00 → user amarelo");
 }
 
 // Duas produções → 22:00 e 21:00
 {
   const states = computeCalendarDayStates({
     appointments: [
-      { data: parseStudioDateTime("2026-08-12", "22:00"), duracaoMinutos: 60, tipo: "mix", id: 3 },
-      { data: parseStudioDateTime("2026-08-12", "22:00"), duracaoMinutos: 60, tipo: "master", id: 4 },
+      {
+        data: parseStudioDateTime("2026-08-12", "22:00"),
+        duracaoMinutos: 60,
+        tipo: "mix",
+        status: "aceito",
+        id: 3,
+      },
+      {
+        data: parseStudioDateTime("2026-08-12", "22:00"),
+        duracaoMinutos: 60,
+        tipo: "master",
+        status: "aceito",
+        id: 4,
+      },
     ],
   });
   assert.deepEqual(states["2026-08-12"]?.productionHours, ["21:00", "22:00"]);
@@ -83,15 +113,27 @@ ok("parseStudioDateTime roundtrip America/Sao_Paulo");
 {
   const states = computeCalendarDayStates({
     appointments: [
-      { data: parseStudioDateTime("2026-08-13", "10:00"), duracaoMinutos: 60, tipo: "sessao", id: 5 },
-      { data: parseStudioDateTime("2026-08-13", "22:00"), duracaoMinutos: 60, tipo: "mix", id: 6 },
+      {
+        data: parseStudioDateTime("2026-08-13", "10:00"),
+        duracaoMinutos: 60,
+        tipo: "sessao",
+        status: "aceito",
+        id: 5,
+      },
+      {
+        data: parseStudioDateTime("2026-08-13", "22:00"),
+        duracaoMinutos: 60,
+        tipo: "mix",
+        status: "aceito",
+        id: 6,
+      },
     ],
   });
   assert.equal(states["2026-08-13"]?.visual, "parcial_entrega");
   ok("parcial_entrega");
 }
 
-// Dia cheio = vermelho (ocupado) — prioridade máxima
+// Dia cheio = vermelho (ocupado)
 {
   const blocked = OPERATIONAL_HOURS.map((hora) => ({
     data: "2026-08-14",
@@ -102,19 +144,96 @@ ok("parseStudioDateTime roundtrip America/Sao_Paulo");
     blockedSlots: blocked,
   });
   assert.equal(states["2026-08-14"]?.visual, "ocupado");
+  assert.equal(toUserDayVisual("ocupado"), "ocupado");
   ok("dia cheio vermelho");
 }
 
-// Visual helper: full occupied set
+// Dia totalmente concluído = azul (admin); user = amarelo
+{
+  const apts = OPERATIONAL_HOURS.map((hora, i) => ({
+    data: parseStudioDateTime("2026-08-15", hora),
+    duracaoMinutos: 60,
+    tipo: "sessao",
+    status: "concluido",
+    id: 100 + i,
+  }));
+  const states = computeCalendarDayStates({ appointments: apts });
+  assert.equal(states["2026-08-15"]?.visual, "concluido");
+  assert.equal(states["2026-08-15"]?.allCompleted, true);
+  assert.equal(toUserDayVisual("concluido"), "parcial");
+  assert.equal(toUserDayVisual("concluido", { past: true }), "ocupado");
+  ok("dia concluído azul admin / amarelo user / vermelho passado");
+}
+
+// Cancelamento/recusa não ocupam
+{
+  const states = computeCalendarDayStates({
+    appointments: [
+      {
+        data: parseStudioDateTime("2026-08-16", "14:00"),
+        duracaoMinutos: 60,
+        tipo: "sessao",
+        status: "cancelado",
+        id: 7,
+      },
+      {
+        data: parseStudioDateTime("2026-08-16", "15:00"),
+        duracaoMinutos: 60,
+        tipo: "sessao",
+        status: "recusado",
+        id: 8,
+      },
+      {
+        data: parseStudioDateTime("2026-08-16", "16:00"),
+        duracaoMinutos: 60,
+        tipo: "sessao",
+        status: "pendente",
+        id: 9,
+      },
+    ],
+  });
+  assert.equal(states["2026-08-16"], undefined);
+  ok("cancelado/recusado/pendente não ocupam");
+}
+
+// Aceite ocupa
+{
+  const states = computeCalendarDayStates({
+    appointments: [
+      {
+        data: parseStudioDateTime("2026-08-17", "14:00"),
+        duracaoMinutos: 60,
+        tipo: "sessao",
+        status: "aceito",
+        id: 10,
+      },
+    ],
+  });
+  assert.deepEqual(states["2026-08-17"]?.presencialHours, ["14:00"]);
+  ok("aceite ocupa horário");
+}
+
 assert.equal(
   resolveCalendarDayVisual({
-    presencialHours: [...OPERATIONAL_HOURS],
+    activePresencialHours: [...OPERATIONAL_HOURS],
+    activeProductionHours: [],
+    completedHours: [],
     blockedHours: [],
-    productionHours: [],
   }),
   "ocupado"
 );
 ok("resolveCalendarDayVisual ocupado");
+
+assert.equal(
+  resolveCalendarDayVisual({
+    activePresencialHours: [],
+    activeProductionHours: [],
+    completedHours: [...OPERATIONAL_HOURS],
+    blockedHours: [],
+  }),
+  "concluido"
+);
+ok("resolveCalendarDayVisual concluido");
 
 assert.equal(
   findLastFreeOperationalHour(new Set(OPERATIONAL_HOURS.slice(0, -1))),
@@ -122,4 +241,6 @@ assert.equal(
 );
 ok("findLastFreeOperationalHour");
 
-console.log(JSON.stringify({ reportId: "BUG-001-calendar-smoke", pass: true }, null, 2));
+console.log(
+  JSON.stringify({ reportId: "BUG-001-calendar-smoke", pass: true }, null, 2)
+);

@@ -2,11 +2,13 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { appointmentCalendarOccupancyFilter } from "@/app/lib/appointment-operational-filter";
 import {
-  CALENDAR_LEGEND,
+  ADMIN_DAY_LEGEND,
+  USER_DAY_LEGEND,
   OPERATIONAL_HOURS,
   PRODUCTION_DELIVERY_HOUR,
   computeCalendarDayStates,
   hoursCoveredByPresencial,
+  isCompletedCalendarStatus,
   isProductionDeliveryAppointment,
   normalizeHourLabel,
   toIsoDateStudio,
@@ -20,6 +22,7 @@ import {
   serviceOrderSlotClasses,
   type HourOccupancyDetail,
   CALENDAR_OS_LEGEND,
+  USER_HOUR_LEGEND,
 } from "@/app/lib/ui/service-order-visual";
 import {
   OFFICIAL_STATUS_META,
@@ -27,7 +30,7 @@ import {
 } from "@/app/lib/ui/status-palette";
 
 /**
- * API pública de disponibilidade + estado do calendário (BUG-001 / GO-H4 / GO-H9).
+ * API pública de disponibilidade + estado do calendário (BUG-001).
  * hourOccupancy deriva da Ordem de Serviço; dayStates da fonte única.
  */
 
@@ -136,6 +139,7 @@ export async function GET() {
       const clientName =
         apt.user?.nomeArtistico?.trim() || apt.user?.email || "Cliente";
       const dayState = dayStates[date];
+      const completed = isCompletedCalendarStatus(apt.status);
       let productionHourCursor = 0;
 
       for (const so of effective) {
@@ -158,11 +162,14 @@ export async function GET() {
             commercialSource: so.commercialSource,
           }),
           appointmentId: apt.id,
+          completed,
         };
 
         let hours: string[];
         if (isProductionDeliveryAppointment(serviceType)) {
-          const allocated = dayState?.productionHours || [];
+          const allocated = completed
+            ? dayState?.completedProductionHours || []
+            : dayState?.productionHours || [];
           const hour =
             allocated[productionHourCursor] ||
             getHourStudio(start) ||
@@ -176,6 +183,13 @@ export async function GET() {
         const dayMap = ensureDay(date);
         for (const h of hours) {
           if (dayMap[h]?.kind === "blocked") continue;
+          if (
+            dayMap[h]?.kind === "service_order" &&
+            !dayMap[h].completed &&
+            completed
+          ) {
+            continue;
+          }
           dayMap[h] = detail;
         }
       }
@@ -188,13 +202,17 @@ export async function GET() {
       hourOccupancyByDate,
       operationalHours: OPERATIONAL_HOURS,
       productionDeliveryHour: PRODUCTION_DELIVERY_HOUR,
-      legend: CALENDAR_LEGEND,
+      legend: ADMIN_DAY_LEGEND,
+      adminDayLegend: ADMIN_DAY_LEGEND,
+      userDayLegend: USER_DAY_LEGEND,
       osLegend: CALENDAR_OS_LEGEND,
+      userHourLegend: USER_HOUR_LEGEND,
       slotClassByCategory: {
         presencial: serviceOrderSlotClasses("presencial"),
         producao: serviceOrderSlotClasses("producao"),
+        concluido: serviceOrderSlotClasses("presencial", { completed: true }),
       },
-      tooltipHelper: "use label/category/client/root/status/origin",
+      tooltipHelper: "use label/category/client/root/status/origin/completed",
       timezone: "America/Sao_Paulo",
     });
   } catch (err: unknown) {

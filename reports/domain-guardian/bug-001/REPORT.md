@@ -1,4 +1,4 @@
-# BUG-001 — Unificação e Correção do Sistema de Calendários
+# BUG-001 — Consolidação do Motor de Calendário e Controle Operacional
 
 **Status:** CONCLUÍDO (código + regressão local)  
 **Data:** 2026-08-05  
@@ -9,37 +9,49 @@
 ## Causas raiz
 
 ### Deslocamento de datas
-1. `new Date("YYYY-MM-DD")` interpreta UTC midnight → título/modal no Controle Operacional mostrava o **dia anterior** em BRT.
-2. `new Date(\`${data}T${hora}:00\`)` sem offset usava o fuso do runtime (UTC na Vercel) ≠ parede do estúdio.
-3. `toISOString().slice(0,10)` e `getHours()` locais misturavam UTC e local.
+1. `new Date("YYYY-MM-DD")` = UTC midnight → modal/título no Controle Operacional mostrava o **dia anterior** em BRT.
+2. `new Date(\`${data}T${hora}:00\`)` sem offset usava o fuso do runtime (UTC na Vercel).
+3. Leitura via `toISOString().slice(0,10)` / `getHours()` misturava UTC e local.
 
-### Ocupação / cores incorretas
-1. Admin pintava dia cheio (`ocupado`) de **amarelo**; público de **vermelho** — divergência.
-2. Regra antiga: “todos presenciais ocupados = amarelo”; produção fixa em `22:00` sem cascata.
-3. Dia sem horários livres não tinha prioridade vermelha absoluta sobre amarelo/roxo.
+### Ocupação incorreta
+1. Admin e Usuário pintavam o mesmo estado de formas diferentes (dia cheio amarelo no admin / vermelho no público).
+2. Produção fixava `22:00` sem cascata sucessiva de últimos livres.
+3. `concluído` não tinha cor própria — misturava-se com ocupado/vermelho.
+4. Cancelamento/recusa/pendente às vezes ainda apareciam como ocupação se a UI recalculasse fora do SSOT.
+
+### Legenda incorreta
+1. UI do usuário reutilizava a legenda Admin e renderizava só o campo `color` (Verde/Amarelo/…) com swatches incompletos → **todas as bolinhas verdes** com rótulos errados.
+2. Usuário via rótulos de Serviço/Produção/Roxo/Azul — fora do contrato (Livre / Ocupado / Indisponível).
 
 ---
 
-## Correções
+## Correções desta consolidação
 
 | Área | Solução |
 |------|---------|
 | Fonte única | `calendar-time.ts` + `calendar-day-state.ts` |
-| Timezone | `America/Sao_Paulo` (−03:00) em parse/leitura/display |
-| Clique no dia | Modal usa `formatStudioDateLong(iso)` — sem `new Date(iso)` |
-| Cores | Verde / Amarelo / Roxo / Amarelo-Roxo / **Vermelho = sem livres** |
-| Produções | Último horário livre sucessivo (`21:00`, `22:00`, …) |
-| APIs create/checkout | `parseStudioDateTime` |
+| Admin dias | Verde / Amarelo (Serviço) / Roxo (Produção) / Meio-meio / Vermelho / **Azul = Concluído** |
+| User dias | Verde Livre / Amarelo Ocupado / Vermelho Indisponível (sem roxo/azul) |
+| Admin horários | Livre / Serviço / Produção / Ocupado / Concluído (azul) |
+| User horários | Livre clicável / Ocupado amarelo não-clicável / Indisponível vermelho |
+| Sync | Aceite ocupa; cancel/recusa liberam; concluído → azul admin; DomainSync refresh no Controle |
+| Produções | Último horário livre sucessivo |
+| API | `completed` em hourOccupancy; legendas admin/user |
 
-## Arquivos principais
+## Confirmação de unificação
 
-- `src/app/lib/calendar-time.ts` (novo)
+Todos os calendários (agendamento, cupom, admin Controle Operacional, homologação via mesmos helpers, API disponibilidade) consomem `computeCalendarDayStates` / `calendarDayCellStyle` / `toUserDayVisual`. Nenhuma tela recalcula ocupação independentemente.
+
+## Arquivos alterados
+
 - `src/app/lib/calendar-day-state.ts`
+- `src/app/lib/calendar-time.ts` (já na base)
+- `src/app/lib/ui/service-order-visual.ts`
 - `src/app/api/agendamentos/disponibilidade/route.ts`
 - `src/app/admin/controle-agendamento/page.tsx`
 - `src/app/agendamento/components/SchedulingCalendar.tsx`
-- `src/app/agendamento/scheduling-shared.ts`
-- rotas create/checkout + payment effects + homologação
+- `scripts/bug-001-calendar-smoke.ts`
+- `reports/domain-guardian/bug-001/REPORT.md`
 
 ## Testes
 
@@ -48,19 +60,13 @@
 | `scripts/bug-001-calendar-smoke.ts` | PASS |
 | `scripts/go-h4-rules-smoke.ts` | PASS |
 | `npm run typecheck` | PASS |
-| `npm run build` | _(em execução / ver CI local)_ |
-| Smoke prod | _(após deploy)_ |
+| `npm run build` | PASS |
 
-## Confirmação de unificação
-
-Todos os calendários (agendamento, cupom, admin controle, homologação, disponibilidade) consomem `dayStates` / helpers de `calendar-day-state` + `calendar-time`. Estilos de dia via `calendarDayCellStyle`.
+Cenários cobertos no smoke: 28/29/30/31 dias, virada de ano, aceite, cancel/recusa/pendente, produções múltiplas, dia cheio vermelho, dia concluído azul.
 
 ## Commit / Deploy
 
 | Campo | Valor |
 |-------|--------|
-| Commit | `4f654b31e87e9f3e928d61af7fb77cc7558a3c25` |
-| Mensagem | `fix(calendar): unify calendar engine, timezone handling and occupancy rules` |
-| Push `origin/main` | PASS (`10c5191..4f654b3`) |
-| Deploy Vercel CLI | FALHOU neste host (`ECOMPROMISED` / CLI TypeError) — **acionar deploy via dashboard Git ou `vercel --prod` no ambiente do operador** |
-| Smoke pós-push | verificar se integração Git da Vercel já publicou `4f654b3` |
+| Mensagem | `fix(calendar): unify operational calendar engine, status legend and occupancy synchronization` |
+| Deploy | Ver status após push — CLI Vercel pode falhar neste host; usar dashboard se necessário |

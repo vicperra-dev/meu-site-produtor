@@ -2,19 +2,22 @@
 
 /**
  * Calendário operacional compartilhado (agendamento comum + cupom).
- * Cores e ocupação vêm de dayStates calculados no backend (GO-H4).
+ * Usuário: Livre / Ocupado / Indisponível — sem roxo/azul (BUG-001).
  */
 import { useCallback, useMemo, useState } from "react";
 import {
-  CALENDAR_LEGEND,
+  USER_DAY_LEGEND,
   type CalendarDayState,
   getCalendarDayState,
   OPERATIONAL_HOURS,
   calendarDayCellStyle,
+  toUserDayVisual,
+  userHourSlotClass,
   isIsoDatePastStudio,
   isStudioDateTimePast,
   isoDateFromParts,
   formatStudioMonthYear,
+  daysInMonth,
 } from "@/app/lib/calendar-day-state";
 import {
   PRODUCTION_DELIVERY_DATE_MESSAGE,
@@ -90,26 +93,20 @@ export function SchedulingCalendar({
   useIntelligentRefresh(carregar, [dataBase]);
   useDomainRefresh("agenda", () => carregar());
 
-  const ultimoDiaDoMes = new Date(
-    dataBase.getFullYear(),
-    dataBase.getMonth() + 1,
-    0
-  ).getDate();
-  const primeiroDiaSemana = new Date(
-    dataBase.getFullYear(),
-    dataBase.getMonth(),
-    1
-  ).getDay();
+  const year = dataBase.getFullYear();
+  const month = dataBase.getMonth() + 1;
+  const ultimoDiaDoMes = daysInMonth(year, month);
+  const primeiroDiaSemana = new Date(year, month - 1, 1).getDay();
 
   const dias: (number | null)[] = [];
   for (let i = 0; i < primeiroDiaSemana; i++) dias.push(null);
   for (let d = 1; d <= ultimoDiaDoMes; d++) {
-    const dataDia = new Date(dataBase.getFullYear(), dataBase.getMonth(), d);
+    const dataDia = new Date(year, month - 1, d);
     dias.push(dataDia >= DATA_MINIMA ? d : null);
   }
 
   function podeIrMesAnterior() {
-    const prev = new Date(dataBase.getFullYear(), dataBase.getMonth() - 1, 1);
+    const prev = new Date(year, month - 2, 1);
     return prev >= new Date(DATA_MINIMA.getFullYear(), DATA_MINIMA.getMonth(), 1);
   }
 
@@ -149,14 +146,9 @@ export function SchedulingCalendar({
         >
           Escolha o dia e o horário da sua sessão.
           <br />
-          <span className="font-semibold text-green-400">Verde</span>: livres ·{" "}
-          <span className="font-semibold text-yellow-400">Amarelo</span>:
-          Sessão/Captação ·{" "}
-          <span className="font-semibold text-purple-400">Roxo</span>: produção ·{" "}
-          <span className="font-semibold text-yellow-300">Amarelo/Roxo</span>:
-          ambos ·{" "}
-          <span className="font-semibold text-red-400">Vermelho</span>: sem
-          horários livres
+          <span className="font-semibold text-green-400">Verde</span>: Livre ·{" "}
+          <span className="font-semibold text-yellow-400">Amarelo</span>: Ocupado ·{" "}
+          <span className="font-semibold text-red-400">Vermelho</span>: Indisponível
         </p>
       )}
 
@@ -179,12 +171,7 @@ export function SchedulingCalendar({
             >
               ◀
             </button>
-            <span>
-              {formatStudioMonthYear(
-                dataBase.getFullYear(),
-                dataBase.getMonth() + 1
-              )}
-            </span>
+            <span>{formatStudioMonthYear(year, month)}</span>
             <button
               type="button"
               onClick={() =>
@@ -206,33 +193,29 @@ export function SchedulingCalendar({
             ))}
             {dias.map((dia, idx) => {
               if (!dia) return <div key={idx} />;
-              const isoDate = isoDateFromParts(
-                dataBase.getFullYear(),
-                dataBase.getMonth() + 1,
-                dia
-              );
-              const dataDia = new Date(
-                dataBase.getFullYear(),
-                dataBase.getMonth(),
-                dia
-              );
+              const isoDate = isoDateFromParts(year, month, dia);
+              const dataDia = new Date(year, month - 1, dia);
               if (dataDia < DATA_MINIMA) return <div key={idx} />;
 
               const state = getCalendarDayState(dayStates, isoDate);
               const past = isIsoDatePastStudio(isoDate);
+              const userVisual = toUserDayVisual(state.visual, { past });
+              const indisponivel = userVisual === "ocupado";
               const selected = dataSelecionada === isoDate;
               const cell = calendarDayCellStyle(state.visual, {
                 past,
                 selected,
+                audience: "user",
               });
+              const disabled = past || indisponivel;
 
               return (
                 <button
                   key={isoDate}
                   type="button"
-                  disabled={past}
+                  disabled={disabled}
                   onClick={() => {
-                    if (past) return;
+                    if (disabled) return;
                     if (selected) {
                       onDataChange(null);
                       onHoraChange(null);
@@ -244,11 +227,11 @@ export function SchedulingCalendar({
                   style={cell.style}
                   className={[
                     "rounded-md border px-1 py-1 text-center text-xs transition",
+                    disabled ? "cursor-not-allowed" : "cursor-pointer",
                     cell.className,
                   ].join(" ")}
                   title={
-                    CALENDAR_LEGEND.find((l) => l.visual === state.visual)
-                      ?.label
+                    USER_DAY_LEGEND.find((l) => l.visual === userVisual)?.label
                   }
                 >
                   {dia}
@@ -258,30 +241,12 @@ export function SchedulingCalendar({
           </div>
 
           <div className="mt-4 flex flex-wrap gap-3 text-[11px] text-zinc-400">
-            {CALENDAR_LEGEND.map((item) => (
+            {USER_DAY_LEGEND.map((item) => (
               <span key={item.visual} className="inline-flex items-center gap-1">
                 <span
-                  className={`h-2.5 w-2.5 rounded-sm border ${
-                    item.visual === "livre"
-                      ? "bg-green-500"
-                      : item.visual === "parcial"
-                        ? "bg-yellow-500"
-                        : item.visual === "entrega"
-                          ? "bg-purple-500"
-                          : item.visual === "ocupado"
-                            ? "bg-red-500"
-                            : "border-yellow-500/50"
-                  }`}
-                  style={
-                    item.visual === "parcial_entrega"
-                      ? {
-                          background:
-                            "linear-gradient(135deg, rgba(234,179,8,0.9) 50%, rgba(147,51,234,0.9) 50%)",
-                        }
-                      : undefined
-                  }
+                  className={`h-2.5 w-2.5 rounded-sm border ${item.swatch}`}
                 />{" "}
-                {item.color}
+                {item.label}
               </span>
             ))}
           </div>
@@ -300,20 +265,21 @@ export function SchedulingCalendar({
                   const ocupado = occupiedForSelected.has(h);
                   const passado = isStudioDateTimePast(dataSelecionada, h);
                   const selected = horaSelecionada === h;
-                  const disabled = ocupado || passado;
+                  const slot = userHourSlotClass({
+                    past: passado,
+                    unavailable: passado,
+                    occupied: ocupado && !passado,
+                    selected,
+                  });
                   return (
                     <button
                       key={h}
                       type="button"
-                      disabled={disabled}
+                      disabled={slot.disabled}
                       onClick={() => onHoraChange(selected ? null : h)}
                       className={[
                         "rounded-md border px-2 py-2 text-sm transition",
-                        disabled
-                          ? "cursor-not-allowed border-zinc-800 bg-zinc-900/50 text-zinc-600"
-                          : selected
-                            ? "border-red-500 bg-red-600/30 text-white"
-                            : "border-zinc-700 bg-zinc-900/40 text-zinc-200 hover:border-red-500",
+                        slot.className,
                       ].join(" ")}
                     >
                       {h}

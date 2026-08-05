@@ -1,8 +1,8 @@
 /**
- * BUG-001 / GO-H4 — Estado operacional do calendário (fonte única de verdade).
+ * BUG-001 — Estado operacional do calendário (fonte única de verdade).
  *
- * Todos os módulos (agendamento, cupom, admin, homologação, disponibilidade)
- * devem consumir este módulo + `calendar-time.ts`. Sem regras locais duplicadas.
+ * Admin e Usuário consomem a mesma ocupação; a projeção visual divergente
+ * (legendas) é feita por `toUserDayVisual` / estilos de slot — nunca recalcular datas.
  */
 import { isSchedulableServiceType } from "@/app/lib/service-catalog";
 import { appointmentReservesCalendar } from "@/app/lib/domain/statuses";
@@ -32,10 +32,9 @@ export {
   normalizeHourLabel,
 } from "@/app/lib/calendar-time";
 
-/** @deprecated use toIsoDateStudio — alias de compatibilidade. */
+/** @deprecated use toIsoDateStudio */
 export const toIsoDateLocal = toIsoDateStudio;
 
-/** Horários operacionais presenciais do estúdio. */
 export const OPERATIONAL_HOURS = [
   "10:00",
   "11:00",
@@ -54,37 +53,41 @@ export const OPERATIONAL_HOURS = [
 
 export type OperationalHour = (typeof OPERATIONAL_HOURS)[number];
 
-/**
- * Preferência legada / fallback quando o dia ainda está livre:
- * último horário da grade (produções ocupam o último livre, tipicamente 22:00).
- */
 export const PRODUCTION_DELIVERY_HOUR: OperationalHour = "22:00";
 
 export type PresencialDayStatus = "livre" | "parcial" | "ocupado";
 
-/**
- * Estado visual composto do dia.
- * `ocupado` = dia sem nenhum horário livre → vermelho (prioridade máxima).
- * `parcial_entrega` = amarelo/roxo com horários ainda livres.
- */
+/** Visual canônico (Admin). */
 export type CalendarDayVisual =
   | "livre"
   | "parcial"
   | "ocupado"
   | "entrega"
-  | "parcial_entrega";
+  | "parcial_entrega"
+  | "concluido";
+
+/** Visual simplificado (Usuário). */
+export type UserCalendarDayVisual = "livre" | "parcial" | "ocupado";
 
 export type CalendarDayState = {
   date: string;
+  /** Visual Admin (fonte). */
   visual: CalendarDayVisual;
   presencialStatus: PresencialDayStatus;
   hasProductionDelivery: boolean;
-  /** Horas que bloqueiam seleção (presencial + bloqueios + produções alocadas). */
+  /** Todos os eventos do dia estão concluídos (sem reserva ativa). */
+  allCompleted: boolean;
+  /** Horas que bloqueiam nova reserva (ativo + concluído + bloqueio). */
   occupiedHours: string[];
+  /** Sessão/Captação ainda ativos. */
   presencialHours: string[];
   blockedHours: string[];
-  /** Horas atribuídas a produções (último livre sucessivo). */
+  /** Produções ativas (não concluídas). */
   productionHours: string[];
+  /** Produções concluídas (parte de completedHours). */
+  completedProductionHours: string[];
+  /** Horas de eventos concluídos (histórico azul no Admin). */
+  completedHours: string[];
 };
 
 export type CalendarAppointmentInput = {
@@ -107,6 +110,18 @@ export function isProductionDeliveryAppointment(
   return !isSchedulableServiceType(tipo);
 }
 
+export function isCompletedCalendarStatus(status?: string | null): boolean {
+  return String(status || "") === "concluido";
+}
+
+/** Reserva ativa (ainda não concluída) — amarelo/roxo. */
+export function isActiveCalendarStatus(status?: string | null): boolean {
+  const s = String(status || "");
+  return (
+    appointmentReservesCalendar(s) && !isCompletedCalendarStatus(s)
+  );
+}
+
 export function hoursCoveredByPresencial(
   start: Date,
   duracaoMinutos: number
@@ -122,7 +137,6 @@ export function hoursCoveredByPresencial(
   return out;
 }
 
-/** Último horário operacional ainda livre (do fim para o início). */
 export function findLastFreeOperationalHour(
   occupied: Set<string>
 ): OperationalHour | null {
@@ -133,9 +147,6 @@ export function findLastFreeOperationalHour(
   return null;
 }
 
-/**
- * Aloca N produções nos últimos horários livres sucessivos (sem substituir ocupados).
- */
 export function allocateProductionHours(
   baseOccupied: Set<string>,
   productionCount: number
@@ -163,142 +174,216 @@ export function resolvePresencialStatus(
 }
 
 /**
- * Regras de cor (BUG-001):
- * - Vermelho (`ocupado`): nenhum horário livre — prioridade máxima.
- * - Verde: nada ocupado.
- * - Amarelo: há Sessão/Captação (ou bloqueio parcial) e ainda há livres.
- * - Roxo: há produção e ainda há livres (sem presencial).
- * - Amarelo/Roxo: presencial + produção com livres restantes.
+ * Visual Admin do dia.
+ * Vermelho = sem livres e ainda há bloqueio/reserva ativa.
+ * Azul = sem livres e só histórico concluído (sem ativa/bloqueio).
  */
 export function resolveCalendarDayVisual(params: {
-  presencialHours: string[];
+  activePresencialHours: string[];
+  activeProductionHours: string[];
+  completedHours: string[];
   blockedHours: string[];
-  productionHours: string[];
 }): CalendarDayVisual {
-  const allOccupied = new Set<string>([
-    ...params.presencialHours,
+  const blocking = new Set<string>([
+    ...params.activePresencialHours,
+    ...params.activeProductionHours,
+    ...params.completedHours,
     ...params.blockedHours,
-    ...params.productionHours,
   ]);
-  const freeCount = OPERATIONAL_HOURS.filter((h) => !allOccupied.has(h)).length;
-  if (freeCount <= 0 && allOccupied.size > 0) return "ocupado";
-
-  const hasPresencial = params.presencialHours.length > 0;
+  const freeCount = OPERATIONAL_HOURS.filter((h) => !blocking.has(h)).length;
+  const hasActivePresencial = params.activePresencialHours.length > 0;
+  const hasActiveProduction = params.activeProductionHours.length > 0;
   const hasBlocked = params.blockedHours.length > 0;
-  const hasProduction = params.productionHours.length > 0;
-  const hasPresencialOrBlock = hasPresencial || hasBlocked;
+  const hasCompleted = params.completedHours.length > 0;
+  const hasActive = hasActivePresencial || hasActiveProduction;
 
-  if (hasPresencialOrBlock && hasProduction) return "parcial_entrega";
-  if (hasPresencialOrBlock) {
-    const pb = new Set([...params.presencialHours, ...params.blockedHours]);
-    return resolvePresencialStatus(pb) === "ocupado" ? "ocupado" : "parcial";
+  if (freeCount <= 0) {
+    if (hasActive || hasBlocked) return "ocupado";
+    if (hasCompleted) return "concluido";
+    return "ocupado";
   }
-  if (hasProduction) return "entrega";
+
+  if (hasActivePresencial && hasActiveProduction) return "parcial_entrega";
+  if (hasActivePresencial) return "parcial";
+  if (hasActiveProduction) return "entrega";
+  // Só concluídos com livres restantes → dia ainda reservável (verde)
   return "livre";
 }
 
-/**
- * Calcula o mapa de estados por dia.
- * Produções: cada uma ocupa o último horário livre restante (sucessivo).
- */
+/** Projeção Usuário: Livre / Ocupado (parcial) / Indisponível. Sem roxo/azul. */
+export function toUserDayVisual(
+  visual: CalendarDayVisual,
+  opts?: { past?: boolean }
+): UserCalendarDayVisual {
+  if (opts?.past) {
+    if (visual === "livre") return "livre";
+    return "ocupado";
+  }
+  switch (visual) {
+    case "livre":
+      return "livre";
+    case "ocupado":
+      return "ocupado";
+    case "concluido":
+      return "parcial"; // amarelo até a data passar
+    default:
+      return "parcial";
+  }
+}
+
 export function computeCalendarDayStates(params: {
   appointments: CalendarAppointmentInput[];
   blockedSlots?: CalendarBlockedSlotInput[];
 }): Record<string, CalendarDayState> {
-  const presencialByDay = new Map<string, Set<string>>();
-  const blockedByDay = new Map<string, Set<string>>();
-  const productionsByDay = new Map<string, CalendarAppointmentInput[]>();
+  type AptBucket = {
+    activePresencial: Set<string>;
+    completedPresencial: Set<string>;
+    activeProds: CalendarAppointmentInput[];
+    completedProds: CalendarAppointmentInput[];
+  };
 
-  const ensure = (map: Map<string, Set<string>>, date: string) => {
-    let set = map.get(date);
-    if (!set) {
-      set = new Set();
-      map.set(date, set);
+  const byDay = new Map<string, AptBucket>();
+  const blockedByDay = new Map<string, Set<string>>();
+
+  const ensureDay = (date: string): AptBucket => {
+    let b = byDay.get(date);
+    if (!b) {
+      b = {
+        activePresencial: new Set(),
+        completedPresencial: new Set(),
+        activeProds: [],
+        completedProds: [],
+      };
+      byDay.set(date, b);
     }
-    return set;
+    return b;
   };
 
   for (const slot of params.blockedSlots || []) {
     const date = String(slot.data || "").slice(0, 10);
     if (!date) continue;
-    ensure(blockedByDay, date).add(normalizeHourLabel(slot.hora));
+    let set = blockedByDay.get(date);
+    if (!set) {
+      set = new Set();
+      blockedByDay.set(date, set);
+    }
+    set.add(normalizeHourLabel(slot.hora));
   }
 
   for (const apt of params.appointments || []) {
-    if (apt.status != null && !appointmentReservesCalendar(apt.status)) {
-      continue;
-    }
+    const status = apt.status ?? null;
+    // cancelado/recusado/pendente não ocupam
+    if (status != null && !appointmentReservesCalendar(status)) continue;
+
     const date = toIsoDateStudio(apt.data);
     if (!date) continue;
+    const bucket = ensureDay(date);
+    const completed = isCompletedCalendarStatus(status);
 
     if (isProductionDeliveryAppointment(apt.tipo)) {
-      const list = productionsByDay.get(date) || [];
-      list.push(apt);
-      productionsByDay.set(date, list);
+      if (completed) bucket.completedProds.push(apt);
+      else bucket.activeProds.push(apt);
       continue;
     }
 
     const start =
       typeof apt.data === "string" ? new Date(apt.data) : new Date(apt.data);
     const hours = hoursCoveredByPresencial(start, apt.duracaoMinutos || 60);
-    const set = ensure(presencialByDay, date);
-    for (const h of hours) set.add(h);
+    const target = completed ? bucket.completedPresencial : bucket.activePresencial;
+    for (const h of hours) target.add(h);
   }
 
-  const allDates = new Set<string>([
-    ...presencialByDay.keys(),
-    ...blockedByDay.keys(),
-    ...productionsByDay.keys(),
-  ]);
-
+  const allDates = new Set<string>([...byDay.keys(), ...blockedByDay.keys()]);
   const result: Record<string, CalendarDayState> = {};
+
   for (const date of allDates) {
-    const presencialHours = Array.from(presencialByDay.get(date) || []).sort();
+    const bucket = byDay.get(date) || {
+      activePresencial: new Set<string>(),
+      completedPresencial: new Set<string>(),
+      activeProds: [] as CalendarAppointmentInput[],
+      completedProds: [] as CalendarAppointmentInput[],
+    };
     const blockedHours = Array.from(blockedByDay.get(date) || []).sort();
 
-    const base = new Set<string>([...presencialHours, ...blockedHours]);
-    const prods = productionsByDay.get(date) || [];
-    // Ordem estável: horário já persistido (se houver) → id
-    prods.sort((a, b) => {
-      const ha = getHourStudio(a.data);
-      const hb = getHourStudio(b.data);
-      if (ha !== hb) return ha.localeCompare(hb);
-      return String(a.id ?? "").localeCompare(String(b.id ?? ""));
-    });
+    const sortProds = (list: CalendarAppointmentInput[]) => {
+      list.sort((a, b) => {
+        const ha = getHourStudio(a.data);
+        const hb = getHourStudio(b.data);
+        if (ha !== hb) return ha.localeCompare(hb);
+        return String(a.id ?? "").localeCompare(String(b.id ?? ""));
+      });
+    };
+    sortProds(bucket.activeProds);
+    sortProds(bucket.completedProds);
 
-    // Preferir horário já gravado se ainda livre; senão alocar último livre.
-    const productionHours: string[] = [];
-    const occupied = new Set(base);
-    for (const prod of prods) {
-      const stored = getHourStudio(prod.data);
-      const storedOk =
-        (OPERATIONAL_HOURS as readonly string[]).includes(stored) &&
-        !occupied.has(stored);
-      const hour = storedOk
-        ? stored
-        : findLastFreeOperationalHour(occupied);
-      if (!hour) break;
-      occupied.add(hour);
-      productionHours.push(hour);
-    }
-    productionHours.sort();
+    // Base: presencial ativo + bloqueios + presencial concluído
+    const occupied = new Set<string>([
+      ...bucket.activePresencial,
+      ...bucket.completedPresencial,
+      ...blockedHours,
+    ]);
 
-    const presencialStatus = resolvePresencialStatus(base);
+    const assignProds = (list: CalendarAppointmentInput[]) => {
+      const hours: string[] = [];
+      for (const prod of list) {
+        const stored = getHourStudio(prod.data);
+        const storedOk =
+          (OPERATIONAL_HOURS as readonly string[]).includes(stored) &&
+          !occupied.has(stored);
+        const hour = storedOk
+          ? stored
+          : findLastFreeOperationalHour(occupied);
+        if (!hour) break;
+        occupied.add(hour);
+        hours.push(hour);
+      }
+      return hours.sort();
+    };
+
+    // Concluídas primeiro (histórico estável), depois ativas
+    const completedProductionHours = assignProds(bucket.completedProds);
+    const activeProductionHours = assignProds(bucket.activeProds);
+
+    const activePresencialHours = Array.from(bucket.activePresencial).sort();
+    const completedHours = Array.from(
+      new Set([
+        ...bucket.completedPresencial,
+        ...completedProductionHours,
+      ])
+    ).sort();
+
+    const hasActive =
+      activePresencialHours.length > 0 || activeProductionHours.length > 0;
+    const allCompleted =
+      !hasActive &&
+      completedHours.length > 0 &&
+      blockedHours.length === 0;
+
     const visual = resolveCalendarDayVisual({
-      presencialHours,
+      activePresencialHours,
+      activeProductionHours,
+      completedHours,
       blockedHours,
-      productionHours,
     });
+
+    const presencialOrBlocked = new Set([
+      ...activePresencialHours,
+      ...blockedHours,
+    ]);
 
     result[date] = {
       date,
       visual,
-      presencialStatus,
-      hasProductionDelivery: productionHours.length > 0,
+      presencialStatus: resolvePresencialStatus(presencialOrBlocked),
+      hasProductionDelivery:
+        activeProductionHours.length + completedProductionHours.length > 0,
+      allCompleted,
       occupiedHours: Array.from(occupied).sort(),
-      presencialHours,
+      presencialHours: activePresencialHours,
       blockedHours,
-      productionHours,
+      productionHours: activeProductionHours,
+      completedProductionHours,
+      completedHours,
     };
   }
 
@@ -315,18 +400,17 @@ export function getCalendarDayState(
       visual: "livre",
       presencialStatus: "livre",
       hasProductionDelivery: false,
+      allCompleted: false,
       occupiedHours: [],
       presencialHours: [],
       blockedHours: [],
       productionHours: [],
+      completedProductionHours: [],
+      completedHours: [],
     }
   );
 }
 
-/**
- * Resolve o próximo horário de produção para uma data (último livre).
- * Usar nas rotas de criação / checkout.
- */
 export function resolveNextProductionHourForDay(params: {
   isoDate: string;
   appointments: CalendarAppointmentInput[];
@@ -334,52 +418,75 @@ export function resolveNextProductionHourForDay(params: {
 }): OperationalHour | null {
   const states = computeCalendarDayStates(params);
   const state = getCalendarDayState(states, params.isoDate);
-  const occupied = new Set(state.occupiedHours);
-  return findLastFreeOperationalHour(occupied);
+  return findLastFreeOperationalHour(new Set(state.occupiedHours));
 }
 
-export const CALENDAR_LEGEND = [
-  { visual: "livre" as const, label: "Disponível", color: "Verde" },
-  {
-    visual: "parcial" as const,
-    label: "Sessão/Captação (ainda há livres)",
-    color: "Amarelo",
-  },
-  {
-    visual: "entrega" as const,
-    label: "Produção (ainda há livres)",
-    color: "Roxo",
-  },
+/** Legenda Admin — dias. */
+export const ADMIN_DAY_LEGEND = [
+  { visual: "livre" as const, label: "Livre", color: "Verde", swatch: "bg-green-600" },
+  { visual: "parcial" as const, label: "Serviço", color: "Amarelo", swatch: "bg-yellow-500" },
+  { visual: "entrega" as const, label: "Produção", color: "Roxo", swatch: "bg-purple-600" },
   {
     visual: "parcial_entrega" as const,
-    label: "Presencial + Produção (ainda há livres)",
+    label: "Serviço + Produção",
     color: "Amarelo/Roxo",
+    swatch: "bg-gradient-to-br from-yellow-500 to-purple-600",
   },
-  {
-    visual: "ocupado" as const,
-    label: "Sem horários livres",
-    color: "Vermelho",
-  },
-];
+  { visual: "ocupado" as const, label: "Ocupado", color: "Vermelho", swatch: "bg-red-600" },
+  { visual: "concluido" as const, label: "Concluído", color: "Azul", swatch: "bg-blue-600" },
+] as const;
 
-/** Estilos de célula compartilhados (admin + público). */
+/** Legenda Usuário — dias. */
+export const USER_DAY_LEGEND = [
+  { visual: "livre" as const, label: "Livre", color: "Verde", swatch: "bg-green-600" },
+  { visual: "parcial" as const, label: "Ocupado", color: "Amarelo", swatch: "bg-yellow-500" },
+  { visual: "ocupado" as const, label: "Indisponível", color: "Vermelho", swatch: "bg-red-600" },
+] as const;
+
+/** @deprecated use ADMIN_DAY_LEGEND */
+export const CALENDAR_LEGEND = ADMIN_DAY_LEGEND.map((l) => ({
+  visual: l.visual,
+  label: l.label,
+  color: l.color,
+}));
+
 export function calendarDayCellStyle(
   visual: CalendarDayVisual,
-  opts?: { past?: boolean; selected?: boolean }
+  opts?: { past?: boolean; selected?: boolean; audience?: "admin" | "user" }
 ): { className: string; style?: Record<string, string> } {
-  if (opts?.past) {
+  const audience = opts?.audience || "admin";
+  const shown: CalendarDayVisual | UserCalendarDayVisual =
+    audience === "user"
+      ? toUserDayVisual(visual, { past: opts?.past })
+      : opts?.past && visual !== "livre" && visual !== "concluido"
+        ? "ocupado"
+        : visual;
+
+  if (opts?.past && audience === "admin" && visual === "livre") {
     return {
-      className: "border-red-600 bg-red-600/30 text-red-300 opacity-60",
+      className: "border-zinc-700 bg-zinc-900/40 text-zinc-500 opacity-60",
+    };
+  }
+  if (opts?.past && audience === "user" && shown === "ocupado") {
+    return {
+      className:
+        "border-red-600 bg-red-600/30 text-red-300 opacity-60 cursor-not-allowed",
     };
   }
   if (opts?.selected) {
     return { className: "border-white bg-white/10 text-white" };
   }
-  switch (visual) {
+
+  switch (shown) {
     case "ocupado":
       return {
         className:
           "border-red-600 bg-red-600/30 text-red-300 hover:bg-red-600/40",
+      };
+    case "concluido":
+      return {
+        className:
+          "border-blue-500 bg-blue-600/30 text-blue-200 hover:bg-blue-600/40",
       };
     case "parcial":
       return {
@@ -405,4 +512,61 @@ export function calendarDayCellStyle(
           "border-green-600 bg-green-600/20 text-green-300 hover:bg-green-600/30",
       };
   }
+}
+
+/** Classe de slot horário — Admin. */
+export function adminHourSlotClass(kind: {
+  past?: boolean;
+  blocked?: boolean;
+  completed?: boolean;
+  presencial?: boolean;
+  production?: boolean;
+}): string {
+  if (kind.past || kind.blocked) {
+    return "bg-red-600 text-white border-red-500";
+  }
+  if (kind.completed) {
+    return "bg-blue-600/40 text-blue-100 border-blue-500";
+  }
+  if (kind.presencial) {
+    return "bg-yellow-500/25 text-yellow-200 border-yellow-500";
+  }
+  if (kind.production) {
+    return "bg-purple-600/35 text-purple-100 border-purple-500";
+  }
+  return "bg-green-600/20 text-green-300 border-green-600 hover:bg-green-600/30";
+}
+
+/** Classe de slot horário — Usuário. */
+export function userHourSlotClass(kind: {
+  past?: boolean;
+  unavailable?: boolean;
+  occupied?: boolean;
+  selected?: boolean;
+}): { className: string; disabled: boolean } {
+  if (kind.past || kind.unavailable) {
+    return {
+      className:
+        "cursor-not-allowed border-red-700 bg-red-900/50 text-red-300 opacity-70",
+      disabled: true,
+    };
+  }
+  if (kind.occupied) {
+    return {
+      className:
+        "cursor-not-allowed border-yellow-700 bg-yellow-900/40 text-yellow-300/80",
+      disabled: true,
+    };
+  }
+  if (kind.selected) {
+    return {
+      className: "border-red-500 bg-red-600/30 text-white",
+      disabled: false,
+    };
+  }
+  return {
+    className:
+      "border-green-700 bg-green-900/30 text-green-200 hover:border-green-500",
+    disabled: false,
+  };
 }
