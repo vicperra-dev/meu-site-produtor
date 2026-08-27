@@ -331,6 +331,7 @@ export function ServicosBoard({ variant, status }: { variant: BoardVariant; stat
                 onAceitar: (id) => void patchStatus(id, "aceito", "aceitar"),
                 onIniciar: (id) => void patchStatus(id, "em_andamento", "iniciar"),
                 onEntregar: (svc) => setEntregaService(svc),
+                onConcluir: (id) => void patchStatus(id, "concluido", "concluir"),
               }}
             />
           ))}

@@ -450,17 +450,20 @@ export async function processAgendamentoPaymentEffects(params: {
       const cupom = await prisma.coupon.findUnique({
         where: { code: cupomCode.toUpperCase() },
       });
-      if (cupom && !cupom.used) {
-        await prisma.coupon.updateMany({
-          where: { id: cupom.id, used: false },
-          data: {
-            used: true,
-            usedAt: new Date(),
-            usedBy: userId,
+      if (cupom) {
+        const { recordApprovedPaymentCouponUse, couponHasRemainingUses } = await import(
+          "@/app/lib/promotional-coupon"
+        );
+        if (couponHasRemainingUses(cupom)) {
+          const claimed = await recordApprovedPaymentCouponUse(prisma, {
+            couponId: cupom.id,
+            userId,
             appointmentId: agendamentoFinalId,
-          },
-        });
-        log(`Cupom de checkout vinculado ao agendamento ${agendamentoFinalId}`, cupomCode);
+          });
+          if (claimed.ok) {
+            log(`Cupom de checkout vinculado ao agendamento ${agendamentoFinalId}`, cupomCode);
+          }
+        }
       }
     } catch (cupomError: unknown) {
       console.error("[AgendamentoEffects] Erro ao processar cupom (não crítico):", cupomError);

@@ -1,10 +1,29 @@
 import { getAsaasApiKey } from "./env";
 
+function isSyntheticAsaasId(paymentId: string): boolean {
+  const id = String(paymentId || "");
+  return (
+    id.startsWith("sim_pay_") ||
+    id.startsWith("homo_pay_") ||
+    id.startsWith("sim_") ||
+    id.startsWith("homo_") ||
+    id.startsWith("test_")
+  );
+}
+
 /**
  * Faz reembolso direto de um pagamento no Asaas
  */
 export async function refundAsaasPayment(paymentId: string, value?: number, description?: string) {
   try {
+    if (isSyntheticAsaasId(paymentId)) {
+      const err = new Error(
+        "Este pagamento é de homologação/simulação e não possui cobrança real no Asaas. O cancelamento local está ok; o estorno financeiro só se aplica a pagamentos Asaas reais."
+      );
+      (err as Error & { code?: string }).code = "ASAAS_SYNTHETIC_PAYMENT";
+      throw err;
+    }
+
     const apiKey = getAsaasApiKey();
     if (!apiKey) {
       throw new Error("API key do Asaas não configurada");
@@ -15,8 +34,8 @@ export async function refundAsaasPayment(paymentId: string, value?: number, desc
       ? "https://www.asaas.com/api/v3"
       : "https://sandbox.asaas.com/api/v3";
 
-    const refundPayload: any = {
-      value: value, // Valor a reembolsar (opcional, se não informar reembolsa tudo)
+    const refundPayload: Record<string, unknown> = {
+      value,
       description: description || "Reembolso de cancelamento de plano",
     };
 
@@ -26,20 +45,34 @@ export async function refundAsaasPayment(paymentId: string, value?: number, desc
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "access_token": apiKey,
+        access_token: apiKey,
       },
       body: JSON.stringify(refundPayload),
     });
 
     const responseText = await response.text();
-    
+
     if (!response.ok) {
       console.error(`[Asaas Refund] Erro ao fazer reembolso:`, {
         status: response.status,
-        // não logar body completo (pode conter dados sensíveis)
         responseLength: responseText.length,
       });
-      throw new Error(`Erro ao fazer reembolso no Asaas: ${response.status} - ${responseText}`);
+      let friendly = `Erro ao fazer reembolso no Asaas: ${response.status}`;
+      try {
+        const parsed = JSON.parse(responseText) as {
+          errors?: Array<{ description?: string }>;
+          message?: string;
+        };
+        const desc =
+          parsed?.errors?.[0]?.description || parsed?.message || responseText.slice(0, 180);
+        if (desc) friendly = `Erro ao fazer reembolso no Asaas: ${desc}`;
+      } catch {
+        if (responseText) friendly += ` - ${responseText.slice(0, 180)}`;
+      }
+      const err = new Error(friendly);
+      (err as Error & { body?: string; status?: number }).body = responseText;
+      (err as Error & { status?: number }).status = response.status;
+      throw err;
     }
 
     let refundData;
@@ -57,7 +90,7 @@ export async function refundAsaasPayment(paymentId: string, value?: number, desc
     });
 
     return refundData;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[Asaas Refund] Erro:", error);
     throw error;
   }

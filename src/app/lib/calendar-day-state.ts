@@ -216,7 +216,6 @@ export function toUserDayVisual(
   opts?: { past?: boolean }
 ): UserCalendarDayVisual {
   if (opts?.past) {
-    if (visual === "livre") return "livre";
     return "ocupado";
   }
   switch (visual) {
@@ -455,6 +454,12 @@ export function calendarDayCellStyle(
   opts?: { past?: boolean; selected?: boolean; audience?: "admin" | "user" }
 ): { className: string; style?: Record<string, string> } {
   const audience = opts?.audience || "admin";
+  if (opts?.past && audience === "user") {
+    return {
+      className:
+        "border-red-600 bg-red-600/40 text-red-200 opacity-80 cursor-not-allowed",
+    };
+  }
   const shown: CalendarDayVisual | UserCalendarDayVisual =
     audience === "user"
       ? toUserDayVisual(visual, { past: opts?.past })
@@ -470,7 +475,7 @@ export function calendarDayCellStyle(
   if (opts?.past && audience === "user" && shown === "ocupado") {
     return {
       className:
-        "border-red-600 bg-red-600/30 text-red-300 opacity-60 cursor-not-allowed",
+        "border-red-600 bg-red-600/40 text-red-200 opacity-80 cursor-not-allowed",
     };
   }
   if (opts?.selected) {

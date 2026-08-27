@@ -81,12 +81,10 @@ export async function POST(req: Request) {
       );
     }
 
-    // GO-H8: cupom do plano (ou qualquer cupom) NÃO remove a opção Asaas.
-    // Ambos os caminhos (reembolso Asaas + cupom remarcação) ficam disponíveis.
+    // Preferir o cupom que efetivamente amparou este agendamento (appointmentId).
+    // Fallback: originAppointmentId (legado / remarcação já gerada).
     let cupomDoAgendamento = await prisma.coupon.findFirst({
-      where: {
-        OR: [{ appointmentId: id }, { originAppointmentId: id }],
-      },
+      where: { appointmentId: id },
       orderBy: { createdAt: "desc" },
       select: {
         id: true,
@@ -100,6 +98,23 @@ export async function POST(req: Request) {
         code: true,
       },
     });
+    if (!cupomDoAgendamento) {
+      cupomDoAgendamento = await prisma.coupon.findFirst({
+        where: { originAppointmentId: id },
+        orderBy: { createdAt: "asc" },
+        select: {
+          id: true,
+          serviceType: true,
+          discountType: true,
+          discountValue: true,
+          userPlanId: true,
+          paymentId: true,
+          rootPaymentId: true,
+          parentCouponId: true,
+          code: true,
+        },
+      });
+    }
     const cupomPlanoDoAgendamento = cupomDoAgendamento?.userPlanId
       ? cupomDoAgendamento
       : null;

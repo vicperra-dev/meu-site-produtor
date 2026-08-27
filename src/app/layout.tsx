@@ -6,6 +6,7 @@ import { AuthProvider } from "./context/AuthContext";
 import ConditionalHeader from "./components/ConditionalHeader";
 import ChatNotificationWrapper from "./components/ChatNotificationWrapper";
 import CartButton from "./components/CartButton";
+import PageViewTracker from "./components/PageViewTracker";
 import { DomainSyncProvider } from "./lib/synchronization/DomainSyncProvider";
 import { ToastProvider, ConfirmProvider } from "@/components/design-system";
 
@@ -60,6 +61,7 @@ export default function RootLayout({
             <ToastProvider>
               <ConfirmProvider>
                 <ConditionalHeader />
+                <PageViewTracker />
                 <CartButton />
                 <ChatNotificationWrapper />
                 {children}

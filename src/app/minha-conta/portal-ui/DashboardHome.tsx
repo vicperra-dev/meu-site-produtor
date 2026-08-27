@@ -1,9 +1,9 @@
 "use client";
 
 /**
- * Portal do Cliente — Visão geral (GO-H9).
- * Ordem: Próximos Agendamentos → Histórico Recente → Última Atividade.
- * Status via paleta oficial; rótulo via Ordem de Serviço quando disponível.
+ * Portal do Cliente — Visão geral (GO-H12).
+ * Ordem: Próximos (só Pendente) → Histórico (demais) → Notificações.
+ * Status via paleta oficial alinhada ao admin.
  */
 
 import { useMemo } from "react";
@@ -14,19 +14,17 @@ import {
   IconName,
   Section,
   StatusBadge,
-  Timeline,
   cx,
   formatDate,
   formatTime,
+  formatDateTime,
+  Button,
 } from "@/components/design-system";
-import type { Agendamento, PortalData } from "./types";
+import type { Agendamento, PortalData, PortalNotification } from "./types";
 import type { TabKey } from "./tabs";
 import { collectDownloads } from "./DownloadsSection";
-import { buildNotifications } from "./NotificationsSection";
 import { serviceOrderLabel } from "@/app/lib/ui/service-order-visual";
-import { statusFromServiceOrderPhase } from "@/app/lib/ui/status-palette";
-
-const PROXIMOS_STATUS = new Set(["pendente", "aceito", "confirmado"]);
+import { normalizeOfficialStatus } from "@/app/lib/ui/status-palette";
 
 function SummaryCard({
   icon,
@@ -69,9 +67,9 @@ function orderLabel(a: Agendamento): string {
   return serviceOrderLabel(a.serviceOrderType || a.tipo);
 }
 
+/** Fonte da verdade: status do Appointment no banco (confirmado → aceito na UI). */
 function displayStatus(a: Agendamento): string {
-  if (a.serviceOrderPhase) return statusFromServiceOrderPhase(a.serviceOrderPhase);
-  return a.status;
+  return normalizeOfficialStatus(a.status) || a.status;
 }
 
 function AppointmentRow({ a }: { a: Agendamento }) {
@@ -96,16 +94,62 @@ function AppointmentRow({ a }: { a: Agendamento }) {
   );
 }
 
+function NotificationPreview({
+  n,
+  onOpen,
+}: {
+  n: PortalNotification;
+  onOpen: (n: PortalNotification) => void;
+}) {
+  const unread = !n.readAt;
+  return (
+    <button
+      type="button"
+      onClick={() => onOpen(n)}
+      className={cx(
+        "w-full text-left rounded-lg border px-3 py-2.5 transition-colors",
+        unread
+          ? "border-red-500/40 bg-red-500/5 hover:bg-red-500/10"
+          : "border-zinc-800 bg-zinc-900/40 hover:bg-zinc-800/50"
+      )}
+    >
+      <div className="flex items-start gap-2">
+        {unread ? (
+          <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-red-400" aria-label="Nova" />
+        ) : (
+          <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-zinc-700" />
+        )}
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center justify-between gap-2">
+            <p className={cx("text-sm truncate", unread ? "font-semibold text-zinc-50" : "font-medium text-zinc-200")}>
+              {n.title}
+            </p>
+            {unread && (
+              <span className="shrink-0 rounded-full bg-red-600/90 px-1.5 py-0.5 text-[10px] font-bold uppercase text-white">
+                Nova
+              </span>
+            )}
+          </div>
+          <p className="mt-0.5 text-[11px] text-zinc-500 line-clamp-2 whitespace-pre-line">
+            {n.message}
+          </p>
+          <p className="mt-1 text-[10px] text-zinc-600">{formatDateTime(n.createdAt)}</p>
+        </div>
+      </div>
+    </button>
+  );
+}
+
 export function DashboardHome({
   data,
   goTo,
+  onOpenNotification,
 }: {
   nome: string;
   data: PortalData;
   goTo: (tab: TabKey) => void;
+  onOpenNotification?: (n: PortalNotification) => void;
 }) {
-  const agora = Date.now();
-
   const resumo = useMemo(() => {
     const ativos = new Set(["pendente", "aceito", "confirmado", "em_andamento"]);
     const servicosAtivos = data.agendamentos.filter((a) => ativos.has(a.status)).length;
@@ -115,41 +159,37 @@ export function DashboardHome({
     const pagamentosPendentes = (data.pagamentos ?? []).filter(
       (p) => p.status === "pending"
     ).length;
-    return { servicosAtivos, downloads, cuponsDisponiveis, planoAtual, pagamentosPendentes };
+    const notifUnread = (data.notifications ?? []).filter((n) => !n.readAt).length;
+    return {
+      servicosAtivos,
+      downloads,
+      cuponsDisponiveis,
+      planoAtual,
+      pagamentosPendentes,
+      notifUnread,
+    };
   }, [data]);
 
+  /** GO-H12: exclusivamente Pendente, mais próximo primeiro. */
   const proximos = useMemo(() => {
     return data.agendamentos
-      .filter((a) => {
-        const t = new Date(a.data).getTime();
-        if (t < agora) return false;
-        const st = displayStatus(a);
-        return PROXIMOS_STATUS.has(st) || PROXIMOS_STATUS.has(a.status);
-      })
+      .filter((a) => displayStatus(a) === "pendente")
       .sort((a, b) => new Date(a.data).getTime() - new Date(b.data).getTime())
-      .slice(0, 5);
-  }, [data.agendamentos, agora]);
+      .slice(0, 8);
+  }, [data.agendamentos]);
 
+  /** GO-H12: todos os demais status, mais recente primeiro. */
   const historicoRecente = useMemo(() => {
     return data.agendamentos
-      .filter((a) => {
-        const st = displayStatus(a);
-        if (st === "pendente" || a.status === "pendente") return false;
-        const t = new Date(a.data).getTime();
-        // Encerrados/processados: passado, em andamento, concluído, recusado, cancelado
-        if (["concluido", "recusado", "cancelado", "remarcado", "em_andamento"].includes(st)) {
-          return true;
-        }
-        if ((st === "aceito" || a.status === "aceito" || a.status === "confirmado") && t < agora) {
-          return true;
-        }
-        return false;
-      })
+      .filter((a) => displayStatus(a) !== "pendente")
       .sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime())
-      .slice(0, 5);
-  }, [data.agendamentos, agora]);
+      .slice(0, 8);
+  }, [data.agendamentos]);
 
-  const atividade = useMemo(() => buildNotifications(data).slice(0, 6), [data]);
+  const notificacoes = useMemo(
+    () => (data.notifications ?? []).slice(0, 6),
+    [data.notifications]
+  );
 
   return (
     <div className="space-y-6">
@@ -165,7 +205,7 @@ export function DashboardHome({
           icon="calendar"
           label="Próximos agendamentos"
           value={proximos.length}
-          hint="Agendamentos futuros pendentes ou aceitos"
+          hint="Somente agendamentos pendentes"
           onClick={() => goTo("agendamentos")}
         />
         <SummaryCard
@@ -193,19 +233,19 @@ export function DashboardHome({
           onClick={() => goTo("plano")}
         />
         <SummaryCard
-          icon="credit-card"
-          label="Pagamentos pendentes"
-          value={resumo.pagamentosPendentes}
-          hint="Pagamentos aguardando confirmação"
-          tone={resumo.pagamentosPendentes > 0 ? "text-orange-300" : "text-zinc-100"}
-          onClick={() => goTo("historico")}
+          icon="bell"
+          label="Notificações novas"
+          value={resumo.notifUnread}
+          hint="Notificações não lidas da conta"
+          tone={resumo.notifUnread > 0 ? "text-red-300" : "text-zinc-100"}
+          onClick={() => goTo("notificacoes")}
         />
       </Grid>
 
-      {/* GO-H9 ordem: Próximos → Histórico → Última atividade */}
       <Section
         title="Próximos agendamentos"
         icon="calendar"
+        description="Apenas solicitações pendentes de aprovação."
         actions={
           <button
             onClick={() => goTo("agendamentos")}
@@ -219,7 +259,7 @@ export function DashboardHome({
         {proximos.length === 0 ? (
           <Card className="text-sm text-zinc-500 flex items-center gap-2">
             <Icon name="calendar" className="w-4 h-4 text-zinc-600" />
-            Nenhum agendamento futuro. Que tal agendar uma sessão?
+            Nenhum agendamento pendente no momento.
           </Card>
         ) : (
           <div className="space-y-2">
@@ -231,8 +271,9 @@ export function DashboardHome({
       </Section>
 
       <Section
-        title="Histórico recente de agendamentos"
+        title="Histórico de agendamentos"
         icon="history"
+        description="Aceito, em andamento, concluído, cancelado e recusado."
         actions={
           <button
             onClick={() => goTo("agendamentos")}
@@ -246,7 +287,7 @@ export function DashboardHome({
         {historicoRecente.length === 0 ? (
           <Card className="text-sm text-zinc-500 flex items-center gap-2">
             <Icon name="history" className="w-4 h-4 text-zinc-600" />
-            Nenhum agendamento no histórico recente.
+            Nenhum agendamento no histórico.
           </Card>
         ) : (
           <div className="space-y-2">
@@ -258,8 +299,9 @@ export function DashboardHome({
       </Section>
 
       <Section
-        title="Última atividade"
+        title="Notificações"
         icon="bell"
+        description="Avisos importantes da sua conta."
         actions={
           <button
             onClick={() => goTo("notificacoes")}
@@ -270,15 +312,29 @@ export function DashboardHome({
           </button>
         }
       >
-        {atividade.length === 0 ? (
+        {notificacoes.length === 0 ? (
           <Card className="text-sm text-zinc-500 flex items-center gap-2">
             <Icon name="bell" className="w-4 h-4 text-zinc-600" />
-            Nenhuma atividade recente.
+            Nenhuma notificação por enquanto.
           </Card>
         ) : (
-          <Card>
-            <Timeline items={atividade} compact />
-          </Card>
+          <div className="space-y-2">
+            {notificacoes.map((n) => (
+              <NotificationPreview
+                key={n.id}
+                n={n}
+                onOpen={(item) => {
+                  if (onOpenNotification) onOpenNotification(item);
+                  else goTo("notificacoes");
+                }}
+              />
+            ))}
+            <div className="pt-1">
+              <Button variant="ghost" size="xs" onClick={() => goTo("notificacoes")}>
+                Abrir central de notificações
+              </Button>
+            </div>
+          </div>
         )}
       </Section>
     </div>

@@ -106,27 +106,34 @@ async function persistStatus(
     const data: Record<string, unknown> = { status: persisted };
     if (persisted === "aceito") data.acceptedAt = new Date();
     if (persisted === "concluido") {
-      const url = String(meta.deliveryAudioUrl || "").trim();
-      const fmt = meta.deliveryAudioFormat;
-      if (fmt !== "wav" && fmt !== "mp3" && fmt !== "zip") {
-        throw Object.assign(new Error("Formato de entrega obrigatório (wav|mp3|zip)"), {
-          httpStatus: 400,
-          code: "VALIDATION",
-        });
+      const skipDelivery = Boolean(meta.completeWithoutDelivery);
+      if (skipDelivery) {
+        // GO-H12: Sessão/Captação — conclusão operacional sem arquivo
+        data.deliveryAudioUrl = null;
+        data.deliveryAudioFormat = null;
+      } else {
+        const url = String(meta.deliveryAudioUrl || "").trim();
+        const fmt = meta.deliveryAudioFormat;
+        if (fmt !== "wav" && fmt !== "mp3" && fmt !== "zip") {
+          throw Object.assign(new Error("Formato de entrega obrigatório (wav|mp3|zip)"), {
+            httpStatus: 400,
+            code: "VALIDATION",
+          });
+        }
+        const probe =
+          process.env.DELIVERY_AUDIO_URL_PROBE === "1" ||
+          process.env.DELIVERY_AUDIO_URL_PROBE === "true" ||
+          Boolean(meta.probe);
+        const urlValidation = await validateDeliveryAudioUrl(url, { probe });
+        if (!urlValidation.ok) {
+          throw Object.assign(new Error(urlValidation.error || "URL de entrega inválida"), {
+            httpStatus: 400,
+            code: "VALIDATION",
+          });
+        }
+        data.deliveryAudioUrl = url;
+        data.deliveryAudioFormat = fmt;
       }
-      const probe =
-        process.env.DELIVERY_AUDIO_URL_PROBE === "1" ||
-        process.env.DELIVERY_AUDIO_URL_PROBE === "true" ||
-        Boolean(meta.probe);
-      const urlValidation = await validateDeliveryAudioUrl(url, { probe });
-      if (!urlValidation.ok) {
-        throw Object.assign(new Error(urlValidation.error || "URL de entrega inválida"), {
-          httpStatus: 400,
-          code: "VALIDATION",
-        });
-      }
-      data.deliveryAudioUrl = url;
-      data.deliveryAudioFormat = fmt;
     }
 
     const fromFilter =

@@ -1,15 +1,13 @@
 "use client";
 
 /**
- * Portal do Cliente (GO-03D) — shell principal de Minha Conta.
+ * Portal do Cliente (GO-03D / GO-H12A) — shell principal de Minha Conta.
  *
- * A lógica de carregamento é idêntica à página original:
  * GET /api/meus-dados + mark-read (FAQ, agendamentos, planos) +
- * useDomainRefresh. Apenas a camada visual foi reconstruída com o
- * Design System. Nenhuma API, regra ou sincronização foi alterada.
+ * useDomainRefresh. Sem polling periódico (evita flicker).
  */
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/app/context/AuthContext";
 import { useDomainRefresh } from "@/app/hooks/useDomainRefresh";
@@ -65,11 +63,156 @@ export function ClientPortal() {
     cupons: [],
     faqQuestions: [],
     pagamentos: [],
+    notifications: [],
   });
+  const markReadInflight = useRef(false);
 
   const tabParam = searchParams.get("tab");
   const tab: TabKey = isTabKey(tabParam) ? tabParam : "visao-geral";
   const aptFocus = searchParams.get("apt");
+
+  const carregarDados = useCallback(async () => {
+    try {
+      const timestamp = new Date().getTime();
+      const [res, notifRes] = await Promise.all([
+        fetch(`/api/meus-dados?t=${timestamp}`, {
+          cache: "no-store",
+          headers: {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            Pragma: "no-cache",
+          },
+        }),
+        fetch(`/api/notificacoes?t=${timestamp}`, {
+          cache: "no-store",
+          credentials: "include",
+          headers: {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            Pragma: "no-cache",
+          },
+        }),
+      ]);
+      if (res.ok) {
+        const payload = await res.json();
+        let notifications = [];
+        if (notifRes.ok) {
+          const nPayload = await notifRes.json();
+          notifications = nPayload.notifications || [];
+        }
+        setData({
+          agendamentos: payload.agendamentos || [],
+          planos: payload.planos || [],
+          cupons: payload.cupons || [],
+          faqQuestions: payload.faqQuestions || [],
+          pagamentos: payload.pagamentos || [],
+          notifications,
+        });
+
+        if (!markReadInflight.current) {
+          const perguntasRespondidasNaoLidas = (payload.faqQuestions || []).filter(
+            (p: { status: string; readAt?: string | null }) =>
+              p.status === "respondida" && !p.readAt
+          );
+          const agendamentosConfirmadosNaoLidos = (payload.agendamentos || []).filter(
+            (a: {
+              status: string;
+              pagamento?: { status?: string };
+              readAt?: string | null;
+            }) => {
+              const isConfirmed =
+                (a.status === "aceito" || a.status === "confirmado") &&
+                a.pagamento?.status === "approved";
+              return isConfirmed && !a.readAt;
+            }
+          );
+          const planosAtivosNaoLidos = (payload.planos || []).filter(
+            (p: { status: string; ativo?: boolean; readAt?: string | null }) => {
+              const isActive = p.status === "active" && p.ativo === true;
+              return isActive && !p.readAt;
+            }
+          );
+
+          const promises: Promise<unknown>[] = [];
+          if (perguntasRespondidasNaoLidas.length > 0) {
+            promises.push(
+              ...perguntasRespondidasNaoLidas.map((p: { id: string }) =>
+                fetch("/api/faq/mark-read", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  credentials: "include",
+                  body: JSON.stringify({ questionId: p.id }),
+                }).catch((err) => console.error("Erro ao marcar pergunta como lida:", err))
+              )
+            );
+          }
+          if (agendamentosConfirmadosNaoLidos.length > 0) {
+            promises.push(
+              ...agendamentosConfirmadosNaoLidos.map((a: { id: number }) =>
+                fetch("/api/appointments/mark-read", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  credentials: "include",
+                  body: JSON.stringify({ appointmentId: a.id }),
+                }).catch((err) => console.error("Erro ao marcar agendamento como lido:", err))
+              )
+            );
+          }
+          if (planosAtivosNaoLidos.length > 0) {
+            promises.push(
+              ...planosAtivosNaoLidos.map((p: { id: string }) =>
+                fetch("/api/plans/mark-read", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  credentials: "include",
+                  body: JSON.stringify({ planId: p.id }),
+                }).catch((err) => console.error("Erro ao marcar plano como lido:", err))
+              )
+            );
+          }
+          if (promises.length > 0) {
+            markReadInflight.current = true;
+            void Promise.all(promises)
+              .then(() => {
+                const nowIso = new Date().toISOString();
+                setData((prev) => ({
+                  ...prev,
+                  faqQuestions: prev.faqQuestions.map((q) =>
+                    perguntasRespondidasNaoLidas.some((p: { id: string }) => p.id === q.id)
+                      ? { ...q, readAt: q.readAt || nowIso }
+                      : q
+                  ),
+                  agendamentos: prev.agendamentos.map((a) =>
+                    agendamentosConfirmadosNaoLidos.some((x: { id: number }) => x.id === a.id)
+                      ? { ...a, readAt: a.readAt || nowIso }
+                      : a
+                  ),
+                  planos: prev.planos.map((p) =>
+                    planosAtivosNaoLidos.some((x: { id: string }) => x.id === p.id)
+                      ? { ...p, readAt: p.readAt || nowIso }
+                      : p
+                  ),
+                }));
+                window.dispatchEvent(new CustomEvent("faq-updated"));
+                window.dispatchEvent(new CustomEvent("appointment-updated"));
+                window.dispatchEvent(new CustomEvent("plan-updated"));
+              })
+              .finally(() => {
+                markReadInflight.current = false;
+              });
+          }
+        }
+      } else {
+        const errorText = await res.text();
+        console.error("[Minha Conta] Erro na resposta:", res.status, errorText);
+        if (res.status >= 500) {
+          setData((prev) => ({ ...prev, cupons: [] }));
+        }
+      }
+    } catch (err) {
+      console.error("Erro ao carregar dados:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   const { refresh: refreshConta } = useDomainRefresh(
     ["minha-conta", "cupons", "planos", "pagamentos"],
@@ -87,101 +230,45 @@ export function ClientPortal() {
     }
     void refreshConta();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, authLoading, refreshConta]);
+  }, [user, authLoading]);
 
-  async function carregarDados() {
-    try {
-      // Adicionar timestamp para evitar cache
-      const timestamp = new Date().getTime();
-      const res = await fetch(`/api/meus-dados?t=${timestamp}`, {
-        cache: "no-store",
-        headers: {
-          "Cache-Control": "no-cache, no-store, must-revalidate",
-          Pragma: "no-cache",
-        },
-      });
-      if (res.ok) {
-        const payload = await res.json();
-        setData({
-          agendamentos: payload.agendamentos || [],
-          planos: payload.planos || [],
-          cupons: payload.cupons || [],
-          faqQuestions: payload.faqQuestions || [],
-          pagamentos: payload.pagamentos || [],
-        });
-
-        // Marcar como lidas (mesma lógica original): FAQ respondidas,
-        // agendamentos confirmados e planos ativos não lidos.
-        const perguntasRespondidasNaoLidas = (payload.faqQuestions || []).filter(
-          (p: any) => p.status === "respondida" && !p.readAt
-        );
-        const agendamentosConfirmadosNaoLidos = (payload.agendamentos || []).filter((a: any) => {
-          const isConfirmed =
-            (a.status === "aceito" || a.status === "confirmado") &&
-            a.pagamento?.status === "approved";
-          return isConfirmed && !a.readAt;
-        });
-        const planosAtivosNaoLidos = (payload.planos || []).filter((p: any) => {
-          const isActive = p.status === "active" && p.ativo === true;
-          return isActive && !p.readAt;
-        });
-
-        const promises: Promise<any>[] = [];
-        if (perguntasRespondidasNaoLidas.length > 0) {
-          promises.push(
-            ...perguntasRespondidasNaoLidas.map((p: any) =>
-              fetch("/api/faq/mark-read", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                credentials: "include",
-                body: JSON.stringify({ questionId: p.id }),
-              }).catch((err) => console.error("Erro ao marcar pergunta como lida:", err))
-            )
-          );
-        }
-        if (agendamentosConfirmadosNaoLidos.length > 0) {
-          promises.push(
-            ...agendamentosConfirmadosNaoLidos.map((a: any) =>
-              fetch("/api/appointments/mark-read", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                credentials: "include",
-                body: JSON.stringify({ appointmentId: a.id }),
-              }).catch((err) => console.error("Erro ao marcar agendamento como lido:", err))
-            )
-          );
-        }
-        if (planosAtivosNaoLidos.length > 0) {
-          promises.push(
-            ...planosAtivosNaoLidos.map((p: any) =>
-              fetch("/api/plans/mark-read", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                credentials: "include",
-                body: JSON.stringify({ planId: p.id }),
-              }).catch((err) => console.error("Erro ao marcar plano como lido:", err))
-            )
-          );
-        }
-        if (promises.length > 0) {
-          Promise.all(promises).then(() => {
-            window.dispatchEvent(new CustomEvent("faq-updated"));
-            window.dispatchEvent(new CustomEvent("appointment-updated"));
-            window.dispatchEvent(new CustomEvent("plan-updated"));
-            setTimeout(() => carregarDados(), 500);
-          });
-        }
-      } else {
-        const errorText = await res.text();
-        console.error("[Minha Conta] Erro na resposta:", res.status, errorText);
-        if (res.status >= 500) {
-          setData((prev) => ({ ...prev, cupons: [] }));
-        }
+  // GO-H12A: sem polling periódico. Soft refresh ao voltar para a aba (DomainSync cobre eventos).
+  useEffect(() => {
+    if (!user) return;
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") {
+        void carregarDados();
       }
-    } catch (err) {
-      console.error("Erro ao carregar dados:", err);
-    } finally {
-      setLoading(false);
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => document.removeEventListener("visibilitychange", onVisibility);
+  }, [user?.id, carregarDados]);
+
+  async function markNotificationsRead(ids: string[] | "all") {
+    const body = ids === "all" ? { all: true } : { ids };
+    const res = await fetch("/api/notificacoes", {
+      method: "PATCH",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) return;
+    const now = new Date().toISOString();
+    setData((prev) => ({
+      ...prev,
+      notifications: (prev.notifications || []).map((n) => {
+        if (ids === "all") return n.readAt ? n : { ...n, readAt: now };
+        return ids.includes(n.id) ? { ...n, readAt: n.readAt || now } : n;
+      }),
+    }));
+  }
+
+  async function openNotificationFromHome(n: import("./types").PortalNotification) {
+    await markNotificationsRead([n.id]);
+    if (n.actionHref) {
+      router.push(n.actionHref);
+    } else {
+      goTo("notificacoes");
     }
   }
 
@@ -201,11 +288,8 @@ export function ClientPortal() {
     const respostas = data.faqQuestions.filter(
       (p) => p.status === "respondida" && !p.readAt
     ).length;
-    return { downloads, cupons, respostas } as Record<string, number> & {
-      downloads: number;
-      cupons: number;
-      respostas: number;
-    };
+    const notificacoes = (data.notifications || []).filter((n) => !n.readAt).length;
+    return { downloads, cupons, respostas, notificacoes };
   }, [data]);
 
   if (authLoading || !user || (user && loading)) {
@@ -223,7 +307,6 @@ export function ClientPortal() {
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 p-3 sm:p-4 md:p-6">
       <div className="max-w-6xl mx-auto space-y-4 sm:space-y-6">
-        {/* Cabeçalho de boas-vindas */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3 min-w-0">
             <Avatar name={user.nomeArtistico} size="lg" className="hidden sm:inline-flex" />
@@ -249,7 +332,6 @@ export function ClientPortal() {
           </Button>
         </div>
 
-        {/* Navegação por abas (mobile-first, scroll horizontal) */}
         <nav
           className="flex gap-1 overflow-x-auto rounded-xl border border-zinc-800 bg-zinc-900/60 p-1.5 -mx-1 px-1.5 sm:mx-0"
           aria-label="Seções da conta"
@@ -260,10 +342,12 @@ export function ClientPortal() {
               t.key === "downloads"
                 ? badges.downloads
                 : t.key === "cupons"
-                ? badges.cupons
-                : t.key === "ajuda" || t.key === "notificacoes"
-                ? badges.respostas
-                : 0;
+                  ? badges.cupons
+                  : t.key === "notificacoes"
+                    ? badges.notificacoes
+                    : t.key === "ajuda"
+                      ? badges.respostas
+                      : 0;
             return (
               <button
                 key={t.key}
@@ -292,10 +376,14 @@ export function ClientPortal() {
           })}
         </nav>
 
-        {/* Conteúdo da aba */}
         <div className="animate-[fadeIn_.2s_ease]">
           {tab === "visao-geral" && (
-            <DashboardHome nome={primeiroNome} data={data} goTo={goTo} />
+            <DashboardHome
+              nome={primeiroNome}
+              data={data}
+              goTo={goTo}
+              onOpenNotification={(n) => void openNotificationFromHome(n)}
+            />
           )}
           {tab === "agendamentos" && (
             <AgendaSection
@@ -306,16 +394,15 @@ export function ClientPortal() {
           )}
           {tab === "downloads" && <DownloadsSection agendamentos={data.agendamentos} />}
           {tab === "cupons" && (
-            <CouponsSection
-              cupons={data.cupons}
-              onChanged={carregarDados}
-            />
+            <CouponsSection cupons={data.cupons} onChanged={carregarDados} />
           )}
           {tab === "plano" && (
             <PlanSection planos={data.planos} cupons={data.cupons} onChanged={carregarDados} />
           )}
           {tab === "historico" && <HistorySection data={data} />}
-          {tab === "notificacoes" && <NotificationsSection data={data} />}
+          {tab === "notificacoes" && (
+            <NotificationsSection data={data} onMarkRead={markNotificationsRead} />
+          )}
           {tab === "perfil" && <ProfileSection />}
           {tab === "ajuda" && <HelpSection faqQuestions={data.faqQuestions} />}
         </div>

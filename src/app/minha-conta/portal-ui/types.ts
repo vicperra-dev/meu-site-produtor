@@ -40,6 +40,7 @@ export interface Agendamento {
   } | null;
   /** true quando o agendamento foi feito com cupom de plano (ao cancelar, só oferece cupom para remarcar) */
   foiComCupomPlano?: boolean;
+  readAt?: string | null;
 }
 
 export interface Plano {
@@ -58,6 +59,7 @@ export interface Plano {
   refundProcessedAt?: string | null;
   /** false para plano de teste ou sem pagamento Asaas: não mostra "Solicitar reembolso" */
   podeSolicitarReembolso?: boolean;
+  readAt?: string | null;
 }
 
 export interface Cupom {
@@ -82,6 +84,11 @@ export interface Cupom {
   userPlanId?: string | null;
   appointmentId?: number | null;
   refundAsaasStatus?: string | null;
+  maxUses?: number | null;
+  useCount?: number | null;
+  applicableServiceTypes?: string | null;
+  isActive?: boolean | null;
+  assignedUserId?: string | null;
   userPlan?: {
     id: string;
     planId: string;
@@ -118,10 +125,25 @@ export interface PagamentoUsuario {
   appointmentId?: number | null;
 }
 
+/** GO-H12 — Notificação persistida da conta. */
+export interface PortalNotification {
+  id: string;
+  type: string;
+  title: string;
+  message: string;
+  actionLabel: string | null;
+  actionHref: string | null;
+  appointmentId: number | null;
+  serviceId: string | null;
+  readAt: string | null;
+  createdAt: string;
+}
+
 export interface PortalData {
   agendamentos: Agendamento[];
   planos: Plano[];
   cupons: Cupom[];
   faqQuestions: FAQQuestion[];
   pagamentos: PagamentoUsuario[];
+  notifications: PortalNotification[];
 }

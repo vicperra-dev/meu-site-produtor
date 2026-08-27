@@ -87,7 +87,26 @@ export async function POST(req: Request) {
       return NextResponse.json(
         {
           error:
-            "Pagamento do plano não encontrado ou sem vínculo com o Asaas. Entre em contato com o suporte.",
+            "Pagamento do plano não encontrado ou sem vínculo com o Asaas. Em homologação/simulação isso é esperado; em produção, entre em contato com o suporte.",
+          code: "PLAN_REFUND_PAYMENT_MISSING",
+          preview,
+        },
+        { status: 400 }
+      );
+    }
+
+    if (
+      payment.asaasId.startsWith("sim_pay_") ||
+      payment.asaasId.startsWith("homo_pay_") ||
+      payment.asaasId.startsWith("sim_") ||
+      payment.asaasId.startsWith("homo_")
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Este plano foi pago em homologação/simulação e não possui cobrança real no Asaas. Não há estorno financeiro a processar.",
+          code: "ASAAS_SYNTHETIC_PAYMENT",
+          preview,
         },
         { status: 400 }
       );

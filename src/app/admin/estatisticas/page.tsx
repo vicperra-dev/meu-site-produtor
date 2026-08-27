@@ -12,6 +12,7 @@ import {
   Input,
   Callout,
 } from "@/components/design-system";
+import { VisitacaoSection } from "./VisitacaoSection";
 import {
   BarChart,
   Bar,
@@ -238,6 +239,8 @@ export default function AdminEstatisticasPage() {
         subtitle="Visão geral completa do uso da plataforma"
         icon="star"
       />
+
+      <VisitacaoSection />
 
       {isEmptyPlatform && (
         <Callout intent="info" title="Nenhum dado operacional ainda">

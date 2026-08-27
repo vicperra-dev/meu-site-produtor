@@ -15,6 +15,8 @@ import {
   toUserDayVisual,
   getHourStudio,
   OPERATIONAL_HOURS,
+  calendarDayCellStyle,
+  isIsoDatePastStudio,
 } from "../src/app/lib/calendar-day-state";
 
 function ok(label: string) {
@@ -240,6 +242,40 @@ assert.equal(
   "22:00"
 );
 ok("findLastFreeOperationalHour");
+
+{
+  const yesterday = "2026-08-25";
+  const now = new Date("2026-08-26T15:00:00.000-03:00");
+  assert.equal(isIsoDatePastStudio(yesterday, now), true);
+  assert.equal(isIsoDatePastStudio("2026-08-26", now), false);
+  assert.equal(isIsoDatePastStudio("2026-08-27", now), false);
+  const userPast = calendarDayCellStyle("livre", { past: true, audience: "user" });
+  assert.match(userPast.className, /red/);
+  assert.doesNotMatch(userPast.className, /green/);
+  const adminPastLivre = calendarDayCellStyle("livre", { past: true, audience: "admin" });
+  assert.match(adminPastLivre.className, /zinc/);
+  assert.doesNotMatch(adminPastLivre.className, /red/);
+  const userToday = calendarDayCellStyle("livre", { past: false, audience: "user" });
+  assert.match(userToday.className, /green/);
+  const userOccupiedFuture = calendarDayCellStyle("parcial", {
+    past: false,
+    audience: "user",
+  });
+  assert.match(userOccupiedFuture.className, /yellow/);
+  assert.equal(toUserDayVisual("livre", { past: true }), "ocupado");
+  ok("cliente: passado vermelho; hoje verde; admin passado livre não vermelho");
+}
+
+{
+  const almostMidnightUtc = new Date("2026-08-26T02:30:00.000Z");
+  assert.equal(toIsoDateStudio(almostMidnightUtc), "2026-08-25");
+  assert.equal(isIsoDatePastStudio("2026-08-25", almostMidnightUtc), false);
+  assert.equal(isIsoDatePastStudio("2026-08-24", almostMidnightUtc), true);
+  const afterMidnightSp = new Date("2026-08-26T03:30:00.000Z");
+  assert.equal(toIsoDateStudio(afterMidnightSp), "2026-08-26");
+  assert.equal(isIsoDatePastStudio("2026-08-25", afterMidnightSp), true);
+  ok("fuso America/Sao_Paulo: UTC não vira o dia civil");
+}
 
 console.log(
   JSON.stringify({ reportId: "BUG-001-calendar-smoke", pass: true }, null, 2)

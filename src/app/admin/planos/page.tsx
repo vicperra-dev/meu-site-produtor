@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { LoadingBlock, useFeedback } from "@/components/design-system";
+import { PartnershipCouponsPanel } from "./PartnershipCouponsPanel";
 import { useDomainRefresh } from "@/app/hooks/useDomainRefresh";
 import {
   couponCategoryLabel,
@@ -377,6 +378,7 @@ export default function AdminPlanosPage() {
       {/* Conteúdo da Aba Cupons */}
       {abaAtiva === "cupons" && (
         <>
+          <PartnershipCouponsPanel />
           {/* Input de Busca Cupons */}
           <div className="rounded-xl border border-zinc-700 bg-zinc-800/50 p-4 space-y-3">
             <input

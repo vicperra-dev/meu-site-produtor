@@ -16,9 +16,15 @@ import {
 } from "@/app/lib/domain/coupon-types";
 import { normalizeServiceTypeId } from "@/app/lib/service-catalog";
 import { agendamentoBloqueiaReusoCupom } from "@/app/lib/coupon-booking-rules";
+import {
+  computePartnershipDiscount,
+  couponHasRemainingUses,
+  isPromotionalPartnershipCoupon,
+  partnershipCheckoutError,
+} from "@/app/lib/promotional-coupon";
 
-type ServicoItem = { preco?: number; quantidade?: number };
-type BeatItem = { preco?: number; quantidade?: number };
+type ServicoItem = { id?: string; preco?: number; quantidade?: number };
+type BeatItem = { id?: string; preco?: number; quantidade?: number };
 
 type CartTotals = {
   total: number;
@@ -55,6 +61,12 @@ async function validateOwnership(
   coupon: Coupon,
   userId?: string
 ): Promise<{ ok: false; error: string } | null> {
+  if (isPromotionalPartnershipCoupon(coupon) && !userId) {
+    return {
+      ok: false,
+      error: "Este cupom de parceria exige login na conta do artista beneficiado.",
+    };
+  }
   if (!userId) return null;
   if (coupon.assignedUserId && coupon.assignedUserId !== userId) {
     return { ok: false, error: "Este cupom pertence a outro usuário." };
@@ -159,8 +171,15 @@ function validateSchedulingType(coupon: Coupon): { ok: false; error: string } | 
 }
 
 function validateUsed(coupon: Coupon): { ok: false; error: string } | null {
-  if (coupon.used) {
+  if (!couponHasRemainingUses(coupon)) {
     return { ok: false, error: "Este cupom já foi utilizado e não pode ser usado novamente." };
+  }
+  return null;
+}
+
+function validatePartnershipActive(coupon: Coupon): { ok: false; error: string } | null {
+  if (isPromotionalPartnershipCoupon(coupon) && coupon.isActive === false) {
+    return { ok: false, error: "Este cupom está inativo." };
   }
   return null;
 }
@@ -183,6 +202,7 @@ async function validatePlanBlock(coupon: Coupon): Promise<{ ok: false; error: st
 async function validateAppointmentBlock(
   coupon: Coupon
 ): Promise<{ ok: false; error: string } | null> {
+  if (isPromotionalPartnershipCoupon(coupon)) return null;
   if (!coupon.appointmentId) return null;
 
   const agendamentoAssociado = await prisma.appointment.findUnique({
@@ -274,13 +294,24 @@ function validateServiceBeatMix(
 
 function computeDiscountedTotal(
   coupon: Coupon,
-  totals: CartTotals
+  totals: CartTotals,
+  servicos: ServicoItem[],
+  beats: BeatItem[]
 ): number {
   const { total, totalServicos, totalBeats } = totals;
   let discount = 0;
   let finalTotal = total;
   let isServiceCoupon = false;
   const isRefundCoupon = resolveCanonicalCouponType(coupon) === "REFUND";
+
+  if (isPromotionalPartnershipCoupon(coupon)) {
+    return computePartnershipDiscount({
+      coupon,
+      services: servicos,
+      beats,
+      cartTotal: total,
+    }).finalTotal;
+  }
 
   if (coupon.discountType === "service") {
     isServiceCoupon = true;
@@ -351,6 +382,7 @@ export async function validateCouponAndGetTotal(
     coupon && (options.mode ?? "discount") === "discount"
       ? validateSchedulingType(coupon)
       : null,
+    coupon ? validatePartnershipActive(coupon) : null,
     coupon ? validateUsed(coupon) : null,
     coupon ? validateRefundLock(coupon) : null,
     coupon ? validatePlanBlock(coupon) : null,
@@ -372,9 +404,19 @@ export async function validateCouponAndGetTotal(
     return { ok: false, error: "Cupom inexistente. Verifique o código e tente novamente." };
   }
 
+  const partnershipError = partnershipCheckoutError(
+    coupon,
+    options.userId,
+    servicos,
+    beats
+  );
+  if (partnershipError) {
+    return { ok: false, error: partnershipError };
+  }
+
   return {
     ok: true,
-    finalTotal: computeDiscountedTotal(coupon, totals),
+    finalTotal: computeDiscountedTotal(coupon, totals, servicos, beats),
     couponId: coupon.id,
     couponType: resolveCanonicalCouponType(coupon),
   };

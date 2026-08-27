@@ -9,6 +9,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { deliveryDisplayName } from "@/app/lib/delivery-url-validation";
+import { isOperationalNoFileService } from "@/app/lib/service-catalog";
 import type { AdminService } from "./types";
 import { DeliveryBadge, PaymentBadge, StatusBadge } from "./Badges";
 import { Icons, formatDate, formatTime, serviceTypeLabel, timeAgo } from "./meta";
@@ -19,6 +20,8 @@ export interface ServiceCardActions {
   onAceitar?: (id: string) => void;
   onIniciar?: (id: string) => void;
   onEntregar?: (service: AdminService) => void;
+  /** GO-H12 — Sessão/Captação sem upload */
+  onConcluir?: (id: string) => void;
   onExcluir?: (id: string) => void;
   busyId?: string | null;
 }
@@ -27,6 +30,7 @@ export function ServiceCard({ service: s, actions }: { service: AdminService; ac
   const [open, setOpen] = useState(false);
   const busy = actions.busyId === s.id;
   const delivered = Boolean(s.deliveryAudioUrl);
+  const operationalNoFile = isOperationalNoFileService(s.tipo);
   const isAudio =
     delivered &&
     (s.deliveryAudioFormat === "wav" || s.deliveryAudioFormat === "mp3") &&
@@ -163,7 +167,21 @@ export function ServiceCard({ service: s, actions }: { service: AdminService; ac
           </button>
         )}
 
-        {s.status === "em_andamento" && actions.onEntregar && (
+        {(s.status === "aceito" || s.status === "em_andamento") &&
+          operationalNoFile &&
+          actions.onConcluir && (
+          <button
+            type="button"
+            onClick={() => actions.onConcluir?.(s.id)}
+            disabled={busy}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-sky-600 px-2.5 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-sky-500 disabled:opacity-50"
+          >
+            {busy ? <Spinner className="w-3 h-3" /> : <Icons.check className="w-3 h-3" />}
+            Concluir Serviço
+          </button>
+        )}
+
+        {s.status === "em_andamento" && !operationalNoFile && actions.onEntregar && (
           <button
             type="button"
             onClick={() => actions.onEntregar?.(s)}

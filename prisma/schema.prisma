@@ -47,12 +47,39 @@ model User {
   adminChats      ChatSession[]  @relation("AdminChat")
   faqQuestions    UserQuestion[]
   assignedCoupons Coupon[]       @relation("AssignedCoupons") // Cupons associados manualmente pelo admin à Minha Conta
+  notifications   UserNotification[]
+  createdPartnershipCoupons Coupon[] @relation("PartnershipCouponCreator")
 
   createdAt DateTime @default(now())
 
   @@index([email])
   @@index([role])
   @@index([blocked])
+}
+
+/// GO-H12 — Central de notificações da conta (persistente, lida/não lida).
+model UserNotification {
+  id            String    @id @default(cuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// appointment_accepted | service_started | service_completed | appointment_rejected | appointment_cancelled | files_available
+  type          String
+  title         String
+  message       String
+  actionLabel   String?
+  actionHref    String?
+  appointmentId Int?
+  serviceId     String?
+  /// Chave estável anti-duplicata (ex.: service_completed:apt:12:svc:uuid)
+  dedupeKey     String    @unique
+  readAt        DateTime?
+  createdAt     DateTime  @default(now())
+  metadata      String    @default("{}")
+
+  @@index([userId, createdAt])
+  @@index([userId, readAt])
+  @@index([appointmentId])
+  @@index([type])
 }
 
 // Registo apenas estatístico quando o utilizador apaga a própria conta (sem dados pessoais).
@@ -401,6 +428,17 @@ model Coupon {
   refundUserDisputedAt  DateTime?
   userRemovedAt         DateTime?
   createdAt             DateTime  @default(now())
+  /// Usos máximos. 1 = legado (um uso). null = ilimitado até expiresAt.
+  maxUses               Int?
+  useCount              Int       @default(0)
+  /// JSON array de IDs CHECKOUT_CATALOG. null ou [] = todos os SKUs STUDIO.
+  applicableServiceTypes String?
+  /// STUDIO | SHOPPING | EVENT | ALL — nesta versão apenas STUDIO é aplicado no checkout.
+  applicableDomain      String    @default("STUDIO")
+  createdByAdminId      String?
+  createdByAdmin        User?     @relation("PartnershipCouponCreator", fields: [createdByAdminId], references: [id], onDelete: SetNull)
+  adminNote             String?
+  isActive              Boolean   @default(true)
 
   @@index([code])
   @@index([used])
@@ -416,7 +454,28 @@ model Coupon {
   @@index([paymentId])
   @@index([assignedUserId])
   @@index([serviceId])
+  @@index([isActive])
+  @@index([createdByAdminId])
   serviceOrder ServiceOrder?
+}
+
+/// Analytics first-party de visitação (sem IP, fingerprint ou query string).
+model PageView {
+  id             String   @id @default(cuid())
+  visitorId      String
+  visitSessionId String
+  userId         String?
+  path           String
+  /// WEB | APP
+  source         String   @default("WEB")
+  createdAt      DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([visitorId, createdAt])
+  @@index([path, createdAt])
+  @@index([visitSessionId])
+  @@index([userId, createdAt])
+  @@index([source, createdAt])
 }
 
 /// GO-H5 — Ordem de Serviço (entidade operacional central).

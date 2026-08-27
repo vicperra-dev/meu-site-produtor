@@ -33,6 +33,7 @@ import {
   isProductionFamilyCoupon,
   isRefundFamilyCoupon,
   isServiceFamilyCoupon,
+  partnershipDiscountCopy,
 } from "./helpers";
 import { renunciarCupom } from "./actions";
 
@@ -71,10 +72,15 @@ export function CouponsSection({
   const servicoDisp = cupons.filter((c) => c.status === "disponivel" && isServiceFamilyCoupon(c));
   const producaoDisp = cupons.filter((c) => c.status === "disponivel" && isProductionFamilyCoupon(c));
   const reembolsoDisp = cupons.filter((c) => c.status === "disponivel" && isRefundFamilyCoupon(c));
-  const descontoDisp = cupons.filter((c) => c.status === "disponivel" && isDiscountFamilyCoupon(c));
+  const descontoDisp = cupons.filter(
+    (c) => c.status === "disponivel" && isDiscountFamilyCoupon(c) && c.isActive !== false
+  );
   const usados = cupons.filter((c) => c.status === "usado");
   const expirados = cupons.filter(
-    (c) => c.status === "expirado" || c.status === "substituido"
+    (c) =>
+      c.status === "expirado" ||
+      c.status === "substituido" ||
+      (c.isActive === false && c.status === "disponivel")
   );
 
   async function handleRenunciar(cupom: Cupom) {
@@ -261,12 +267,31 @@ export function CouponsSection({
                 Cupons de Desconto — disponíveis ({descontoDisp.length})
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {descontoDisp.map((cupom) => (
+                {descontoDisp.map((cupom) => {
+                  const partnership = partnershipDiscountCopy(cupom);
+                  return (
                   <Card key={cupom.id} className="!border-emerald-500/40 !bg-emerald-500/5 space-y-2">
                     <CouponCode code={cupom.code} tone="text-emerald-300" />
-                    <p className="text-sm text-zinc-300">
-                      <strong>Categoria:</strong> {couponCategoryDisplay(cupom)}
-                    </p>
+                    {partnership ? (
+                      <>
+                        <p className="text-sm text-zinc-200">{partnership.discount}</p>
+                        <p className="text-sm text-zinc-300">
+                          <strong>Válido para:</strong> {partnership.services.join(", ")}
+                        </p>
+                        {partnership.uses && (
+                          <p className="text-xs text-emerald-300">{partnership.uses}</p>
+                        )}
+                        {cupom.expiresAt && (
+                          <p className="text-xs text-zinc-400">
+                            Válido até: {formatDate(cupom.expiresAt)}
+                          </p>
+                        )}
+                      </>
+                    ) : (
+                      <p className="text-sm text-zinc-300">
+                        <strong>Categoria:</strong> {couponCategoryDisplay(cupom)}
+                      </p>
+                    )}
                     <Button
                       variant="secondary"
                       fullWidth
@@ -277,7 +302,8 @@ export function CouponsSection({
                       Usar agora
                     </Button>
                   </Card>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}

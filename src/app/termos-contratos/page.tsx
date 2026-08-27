@@ -1107,12 +1107,29 @@ export default function TermosContratosPage() {
                 </p>
 
                 <h3 className="mt-4 font-semibold">8. Cookies</h3>
-                <p>Utilizamos apenas cookies essenciais, para:</p>
+                <p>
+                  Utilizamos cookies first-party do próprio site, sem cookies de
+                  publicidade de terceiros e sem fingerprinting (canvas, WebGL ou
+                  identificadores de dispositivo para fins publicitários).
+                </p>
+                <p className="mt-2">Cookies essenciais, para:</p>
                 <ul className="mt-1 list-disc pl-5 space-y-1">
                   <li>manter você logado;</li>
                   <li>garantir segurança básica;</li>
                   <li>manter algumas preferências simples.</li>
                 </ul>
+                <p className="mt-2">
+                  8.1. <strong>Cookie analítico operacional:</strong> também
+                  utilizamos identificadores aleatórios (visitor_id e
+                  visit_session_id) apenas para estatística interna de
+                  visitação (páginas vistas, visitantes únicos e sessões no
+                  painel administrativo). Visitantes anônimos recebem só um
+                  código aleatório — não gravamos IP, e-mail ou nome nesse
+                  cookie. Se você estiver logado, a sessão da conta pode ser
+                  associada à visualização no servidor, para distinguir
+                  pageviews autenticadas das anônimas. Essa medição não é
+                  publicidade comportamental.
+                </p>
 
                 <h3 className="mt-4 font-semibold">
                   9. Menores de idade

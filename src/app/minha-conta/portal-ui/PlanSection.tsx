@@ -78,8 +78,8 @@ export function PlanSection({
   const [subscriptions, setSubscriptions] = useState<AssinaturaItem[]>([]);
   const [loadingSub, setLoadingSub] = useState(true);
 
-  const loadSubscriptions = useCallback(async () => {
-    setLoadingSub(true);
+  const loadSubscriptions = useCallback(async (opts?: { silent?: boolean }) => {
+    if (!opts?.silent) setLoadingSub(true);
     try {
       const res = await fetch("/api/assinatura", { cache: "no-store" });
       const data = await res.json();
@@ -93,7 +93,7 @@ export function PlanSection({
 
   useEffect(() => {
     void loadSubscriptions();
-  }, [loadSubscriptions, planos]);
+  }, [loadSubscriptions]);
 
   async function handleCancelar(userPlanId: string, withRefund: boolean) {
     const previewRes = await previewCancelamentoAssinatura(userPlanId);
@@ -135,7 +135,7 @@ export function PlanSection({
             : data.message || "Cancelamento concluído."
         );
         await onChanged();
-        await loadSubscriptions();
+        await loadSubscriptions({ silent: true });
       } else {
         notifyError("Erro ao cancelar", data.error || undefined);
       }
@@ -150,7 +150,7 @@ export function PlanSection({
     if (
       !(await ask(
         "Solicitar reembolso",
-        "O reembolso usa valores internos dos benefícios utilizados (não os preços públicos). Continuar?"
+        "O reembolso desconta apenas benefícios efetivamente usufruídos (valores internos do plano). Continuar?"
       ))
     )
       return;
@@ -163,7 +163,7 @@ export function PlanSection({
           `Valor: ${formatBRL(data.refundAmount ?? 0)}`
         );
         await onChanged();
-        await loadSubscriptions();
+        await loadSubscriptions({ silent: true });
       } else {
         notifyError("Erro ao solicitar reembolso", data.error || undefined);
       }
@@ -188,7 +188,7 @@ export function PlanSection({
       const { ok, data } = await excluirPlano(plano.id);
       if (ok) {
         await onChanged();
-        await loadSubscriptions();
+        await loadSubscriptions({ silent: true });
       } else {
         notifyError("Erro ao excluir", data.error || undefined);
       }

@@ -112,21 +112,15 @@ export async function processCarrinhoPaymentEffects(params: {
       },
     });
     if (item.couponId) {
-      const claimed = await prisma.coupon.updateMany({
-        where: {
-          id: item.couponId,
-          used: false,
-          appointmentId: null,
-          OR: [{ assignedUserId: null }, { assignedUserId: userId }],
-        },
-        data: {
-          used: true,
-          usedAt: new Date(),
-          usedBy: userId,
-          appointmentId: novoAgendamento.id,
-        },
+      const { recordApprovedPaymentCouponUse } = await import(
+        "@/app/lib/promotional-coupon"
+      );
+      const claimed = await recordApprovedPaymentCouponUse(prisma, {
+        couponId: item.couponId,
+        userId,
+        appointmentId: novoAgendamento.id,
       });
-      if (claimed.count !== 1) {
+      if (!claimed.ok) {
         await prisma.appointment.delete({ where: { id: novoAgendamento.id } });
         throw new Error(`COUPON_CLAIM_CONFLICT:${item.couponId}`);
       }

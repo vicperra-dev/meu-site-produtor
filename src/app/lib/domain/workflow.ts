@@ -102,6 +102,18 @@ export async function approveAppointment(
   }
   const agendamento = await loadAppointment(appointmentId);
   if (!agendamento) return fail("Agendamento não encontrado após aceite", 500);
+  try {
+    const { notifyAppointmentStatusChange } = await import(
+      "@/app/lib/account-notifications"
+    );
+    await notifyAppointmentStatusChange({
+      appointmentId,
+      toStatus: statusLabel === "confirmado" ? "confirmado" : "aceito",
+      alreadyProcessed: result.alreadyProcessed,
+    });
+  } catch (e) {
+    console.error("[workflow] notify approve (non-fatal):", e);
+  }
   return ok({ agendamento }, result.alreadyProcessed);
 }
 
@@ -135,6 +147,18 @@ export async function rejectAppointment(
   }
   const agendamento = await loadAppointment(appointmentId);
   if (!agendamento) return fail("Agendamento não encontrado após recusa", 500);
+  try {
+    const { notifyAppointmentStatusChange } = await import(
+      "@/app/lib/account-notifications"
+    );
+    await notifyAppointmentStatusChange({
+      appointmentId,
+      toStatus: "recusado",
+      alreadyProcessed: result.alreadyProcessed,
+    });
+  } catch (e) {
+    console.error("[workflow] notify reject (non-fatal):", e);
+  }
   return ok({ agendamento }, result.alreadyProcessed);
 }
 
@@ -156,6 +180,18 @@ export async function startServiceWork(
   if (!result.ok) return fail(result.error, result.httpStatus, result.code);
   const agendamento = await loadAppointment(appointmentId);
   if (!agendamento) return fail("Agendamento não encontrado após início", 500);
+  try {
+    const { notifyAppointmentStatusChange } = await import(
+      "@/app/lib/account-notifications"
+    );
+    await notifyAppointmentStatusChange({
+      appointmentId,
+      toStatus: "em_andamento",
+      alreadyProcessed: result.alreadyProcessed,
+    });
+  } catch (e) {
+    console.error("[workflow] notify start (non-fatal):", e);
+  }
   return ok({ agendamento }, result.alreadyProcessed);
 }
 
@@ -221,6 +257,19 @@ export async function cancelAppointment(params: {
     appointmentId,
     appointmentStatus: "cancelado",
   });
+
+  try {
+    const { notifyAppointmentStatusChange } = await import(
+      "@/app/lib/account-notifications"
+    );
+    await notifyAppointmentStatusChange({
+      appointmentId,
+      toStatus: "cancelado",
+      alreadyProcessed: result.alreadyProcessed,
+    });
+  } catch (e) {
+    console.error("[workflow] notify cancel (non-fatal):", e);
+  }
 
   return ok(
     { agendamento: { id: appointmentId, status: "cancelado" }, releasedCoupons: 0 },
@@ -395,10 +444,97 @@ export async function completeService(params: {
   if (!result.ok) return fail(result.error, result.httpStatus, result.code);
   const servico = await loadService(params.serviceId);
   if (!servico) return fail("Serviço não encontrado após conclusão", 500);
+  try {
+    const { notifyServiceCompleted } = await import("@/app/lib/account-notifications");
+    await notifyServiceCompleted({
+      serviceId: params.serviceId,
+      alreadyProcessed: result.alreadyProcessed,
+    });
+  } catch (e) {
+    console.error("[workflow] notify completeService (non-fatal):", e);
+  }
   return ok({ servico }, result.alreadyProcessed);
 }
 
 export const deliverService = completeService;
+
+/**
+ * GO-H12 — Conclusão operacional de Sessão/Captação sem upload de arquivos.
+ */
+export async function completeOperationalService(params: {
+  serviceId: string;
+  actor?: TransitionActor;
+}): Promise<
+  WorkflowResult<{
+    servico: NonNullable<Awaited<ReturnType<typeof loadService>>>;
+  }>
+> {
+  const { isOperationalNoFileService } = await import("@/app/lib/service-catalog");
+  const current = await prisma.service.findUnique({
+    where: { id: params.serviceId },
+    select: { id: true, tipo: true, status: true },
+  });
+  if (!current) return fail("Serviço não encontrado", 404);
+  if (!isOperationalNoFileService(current.tipo)) {
+    return fail(
+      "Conclusão sem arquivo é permitida apenas para Sessão e Captação. Use o fluxo de Entrega para serviços de produção.",
+      400,
+      "VALIDATION"
+    );
+  }
+
+  const actor = params.actor || { type: "admin" as const };
+  if (current.status === "pendente") {
+    const accept = await transition({
+      entity: "service",
+      id: params.serviceId,
+      to: "aceito",
+      actor,
+      reason: "completeOperationalService:promoteAccept",
+    });
+    if (!accept.ok) return fail(accept.error, accept.httpStatus, accept.code);
+  }
+  const mid = await prisma.service.findUnique({
+    where: { id: params.serviceId },
+    select: { status: true },
+  });
+  if (mid?.status === "aceito") {
+    const start = await transition({
+      entity: "service",
+      id: params.serviceId,
+      to: "em_andamento",
+      actor,
+      reason: "completeOperationalService:promoteStart",
+    });
+    if (!start.ok) return fail(start.error, start.httpStatus, start.code);
+  }
+
+  const result = await transition({
+    entity: "service",
+    id: params.serviceId,
+    to: "concluido",
+    actor,
+    reason: "completeOperationalService",
+    metadata: {
+      completeWithoutDelivery: true,
+      actorId: actor.id || null,
+      completedAt: new Date().toISOString(),
+    },
+  });
+  if (!result.ok) return fail(result.error, result.httpStatus, result.code);
+  const servico = await loadService(params.serviceId);
+  if (!servico) return fail("Serviço não encontrado após conclusão", 500);
+  try {
+    const { notifyServiceCompleted } = await import("@/app/lib/account-notifications");
+    await notifyServiceCompleted({
+      serviceId: params.serviceId,
+      alreadyProcessed: result.alreadyProcessed,
+    });
+  } catch (e) {
+    console.error("[workflow] notify completeOperationalService (non-fatal):", e);
+  }
+  return ok({ servico }, result.alreadyProcessed);
+}
 
 export async function updateServiceFields(params: {
   serviceId: string;
@@ -414,9 +550,18 @@ export async function updateServiceFields(params: {
 
   if (status === "em_andamento") return startService(serviceId);
   if (status === "concluido" || status === "entrega") {
+    const { isOperationalNoFileService } = await import("@/app/lib/service-catalog");
+    const current = await prisma.service.findUnique({
+      where: { id: serviceId },
+      select: { tipo: true },
+    });
+    const url = String(deliveryAudioUrl || "").trim();
+    if (current && isOperationalNoFileService(current.tipo) && !url) {
+      return completeOperationalService({ serviceId });
+    }
     return completeService({
       serviceId,
-      deliveryAudioUrl: deliveryAudioUrl || "",
+      deliveryAudioUrl: url,
       deliveryAudioFormat: (deliveryAudioFormat as "wav" | "mp3" | "zip") || "wav",
       probe:
         process.env.DELIVERY_AUDIO_URL_PROBE === "1" ||
@@ -448,6 +593,14 @@ export async function updateServiceFields(params: {
           : {}),
       },
     });
+    if (deliveryAudioUrl) {
+      try {
+        const { notifyFilesAvailable } = await import("@/app/lib/account-notifications");
+        await notifyFilesAvailable({ serviceId });
+      } catch (e) {
+        console.error("[workflow] notify filesAvailable (non-fatal):", e);
+      }
+    }
   }
 
   const servico = await loadService(serviceId);

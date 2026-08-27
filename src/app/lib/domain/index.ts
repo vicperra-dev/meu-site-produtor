@@ -17,6 +17,7 @@ export {
   startService,
   completeService,
   deliverService,
+  completeOperationalService,
   updateServiceFields,
   confirmPayment,
   refundPaymentStatus,

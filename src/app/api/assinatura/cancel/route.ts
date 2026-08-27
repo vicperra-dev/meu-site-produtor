@@ -4,7 +4,7 @@ import { prisma } from "@/app/lib/prisma";
 import { buildSubscriptionRefundPreview } from "@/app/lib/subscription-refund";
 import { cancelLocalSubscription } from "@/app/lib/subscription-lifecycle";
 import { refundAsaasPayment } from "@/app/lib/asaas-refund";
-import { PLAN_CYCLE_SUBSTITUTED_REASON } from "@/app/lib/plan-definitions";
+import { invalidatePlanCouponsOnCancel } from "@/app/lib/plan-cancel-coupons";
 import { logFinancialFailure, logFinancialInfo } from "@/app/lib/financial-ops-log";
 import { sendPlanCancellationEmail } from "@/app/lib/sendEmail";
 
@@ -61,19 +61,10 @@ export async function POST(req: Request) {
       });
     }
 
-    // Invalidar cupons não usados (histórico preservado)
+    // Invalidar cupons de plano não usados + derivados (remarcação) ainda disponíveis.
+    // O preview já usa consumo efetivo: derivado unused não desconta e será invalidado.
+    const couponInvalidation = await invalidatePlanCouponsOnCancel(userPlanId);
     const now = new Date();
-    await prisma.coupon.updateMany({
-      where: {
-        userPlanId,
-        used: false,
-        OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
-      },
-      data: {
-        expiresAt: now,
-        cancelReason: PLAN_CYCLE_SUBSTITUTED_REASON,
-      },
-    });
 
     let refundResult: {
       requested: boolean;
@@ -105,6 +96,18 @@ export async function POST(req: Request) {
           amount: preview.refundAmount,
           message:
             "Cancelamento OK, mas não há pagamento Asaas vinculado para estorno automático. Contate o suporte.",
+        };
+      } else if (
+        payment.asaasId.startsWith("sim_pay_") ||
+        payment.asaasId.startsWith("homo_pay_") ||
+        payment.asaasId.startsWith("sim_") ||
+        payment.asaasId.startsWith("homo_")
+      ) {
+        refundResult = {
+          requested: false,
+          amount: preview.refundAmount,
+          message:
+            "Cancelamento OK. Este pagamento é de homologação/simulação — não há estorno real no Asaas.",
         };
       } else {
         const reserved = await prisma.userPlan.updateMany({
@@ -158,7 +161,10 @@ export async function POST(req: Request) {
             refundResult = {
               requested: false,
               amount: preview.refundAmount,
-              message: err instanceof Error ? err.message : "Falha ao solicitar estorno no Asaas",
+              message:
+                err instanceof Error
+                  ? err.message
+                  : "Falha ao solicitar estorno no Asaas. Contate o suporte.",
             };
           }
         }
@@ -170,7 +176,11 @@ export async function POST(req: Request) {
       await emitPlanCancelled({
         userPlanId,
         userId: user.id,
-        metadata: { planName: userPlan.planName, requestRefund },
+        metadata: {
+          planName: userPlan.planName,
+          requestRefund,
+          couponInvalidation,
+        },
       });
     } catch {
       /* non-fatal */
@@ -193,6 +203,7 @@ export async function POST(req: Request) {
     return NextResponse.json({
       message: "Assinatura cancelada com sucesso",
       preview,
+      couponInvalidation,
       refund: refundResult,
     });
   } catch (err: unknown) {

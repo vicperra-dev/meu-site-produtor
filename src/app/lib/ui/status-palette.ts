@@ -4,10 +4,10 @@
  *
  * Pendente → Cinza
  * Aceito → Verde
- * Em andamento → Laranja
+ * Em andamento → Amarelo
  * Concluído → Azul
  * Recusado → Vermelho
- * Cancelado → Cinza escuro
+ * Cancelado → Vermelho
  */
 
 export type OfficialStatus =
@@ -59,7 +59,7 @@ export const OFFICIAL_STATUS_META: Record<
   },
   cancelado: {
     label: "Cancelado",
-    intent: "cancelled",
+    intent: "error",
     description: "Fluxo encerrado.",
   },
 };

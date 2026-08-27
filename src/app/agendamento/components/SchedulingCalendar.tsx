@@ -7,6 +7,7 @@
 import { useCallback, useMemo, useState } from "react";
 import {
   USER_DAY_LEGEND,
+  ADMIN_DAY_LEGEND,
   type CalendarDayState,
   getCalendarDayState,
   OPERATIONAL_HOURS,
@@ -38,6 +39,8 @@ export type SchedulingCalendarProps = {
   /** Título opcional acima do bloco */
   title?: string;
   className?: string;
+  /** Admin (homologação) mantém paleta operacional; cliente usa vermelho para datas passadas. */
+  audience?: "user" | "admin";
 };
 
 export function SchedulingCalendar({
@@ -50,6 +53,7 @@ export function SchedulingCalendar({
   onHoraChange,
   title = "Agendamento virtual",
   className = "",
+  audience = "user",
 }: SchedulingCalendarProps) {
   const precisaHora =
     showHours ?? serviceNeedsStudioHours(serviceType, serviceName);
@@ -205,15 +209,20 @@ export function SchedulingCalendar({
               const cell = calendarDayCellStyle(state.visual, {
                 past,
                 selected,
-                audience: "user",
+                audience,
               });
               const disabled = past || indisponivel;
+              const dayTitle = past
+                ? "Data passada"
+                : USER_DAY_LEGEND.find((l) => l.visual === userVisual)?.label;
 
               return (
                 <button
                   key={isoDate}
                   type="button"
                   disabled={disabled}
+                  aria-disabled={disabled}
+                  aria-label={dayTitle ? `${dia}, ${dayTitle}` : String(dia)}
                   onClick={() => {
                     if (disabled) return;
                     if (selected) {
@@ -224,15 +233,18 @@ export function SchedulingCalendar({
                       onHoraChange(null);
                     }
                   }}
+                  onKeyDown={(e) => {
+                    if (disabled && (e.key === "Enter" || e.key === " ")) {
+                      e.preventDefault();
+                    }
+                  }}
                   style={cell.style}
                   className={[
                     "rounded-md border px-1 py-1 text-center text-xs transition",
                     disabled ? "cursor-not-allowed" : "cursor-pointer",
                     cell.className,
                   ].join(" ")}
-                  title={
-                    USER_DAY_LEGEND.find((l) => l.visual === userVisual)?.label
-                  }
+                  title={dayTitle}
                 >
                   {dia}
                 </button>
@@ -241,7 +253,7 @@ export function SchedulingCalendar({
           </div>
 
           <div className="mt-4 flex flex-wrap gap-3 text-[11px] text-zinc-400">
-            {USER_DAY_LEGEND.map((item) => (
+            {(audience === "admin" ? ADMIN_DAY_LEGEND : USER_DAY_LEGEND).map((item) => (
               <span key={item.visual} className="inline-flex items-center gap-1">
                 <span
                   className={`h-2.5 w-2.5 rounded-sm border ${item.swatch}`}

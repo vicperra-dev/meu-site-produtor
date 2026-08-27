@@ -135,6 +135,12 @@ export function isSchedulableServiceType(rawId?: string | null, rawName?: string
   return SCHEDULABLE_SERVICE_IDS.has(id);
 }
 
+/** GO-H12 — Sessão/Captação: conclusão operacional sem arquivo de entrega. */
+export function isOperationalNoFileService(rawId?: string | null, rawName?: string | null): boolean {
+  const id = normalizeServiceTypeId(String(rawId || rawName || ""));
+  return id === "sessao" || id === "captacao";
+}
+
 const PRODUCT_LABEL_ALIASES: Record<string, string> = {
   "1_beat": "beat1",
   "2_beats": "beat2",

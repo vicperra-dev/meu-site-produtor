@@ -20,12 +20,9 @@ import {
 import type { Agendamento } from "./types";
 import { AppointmentCard } from "./AppointmentCard";
 
-const STATUS_ATIVOS = new Set(["pendente", "aceito", "confirmado", "em_andamento"]);
-
 function proximos(agendamentos: Agendamento[]): Agendamento[] {
-  const agora = Date.now();
   return agendamentos
-    .filter((a) => STATUS_ATIVOS.has(a.status) && new Date(a.data).getTime() >= agora)
+    .filter((a) => a.status === "pendente")
     .sort((a, b) => new Date(a.data).getTime() - new Date(b.data).getTime());
 }
 
@@ -125,15 +122,15 @@ export function AgendaSection({
         icon="calendar"
         description={
           futuros.length > 0
-            ? `${futuros.length} agendamento${futuros.length > 1 ? "s" : ""} à frente`
-            : undefined
+            ? `${futuros.length} pendente${futuros.length > 1 ? "s" : ""} de aprovação`
+            : "Somente agendamentos com status Pendente"
         }
       >
         {futuros.length === 0 ? (
           <EmptyState
             icon="calendar"
-            title="Nenhum agendamento futuro"
-            description="Agende uma sessão, mixagem ou masterização quando quiser."
+            title="Nenhum agendamento pendente"
+            description="Quando houver solicitações aguardando aprovação, elas aparecerão aqui."
             action={
               <a
                 href="/agendamento"

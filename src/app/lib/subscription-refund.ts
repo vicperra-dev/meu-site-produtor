@@ -1,6 +1,9 @@
 /**
- * GO-H10C — Cálculo de reembolso com valores internos (PLAN_DEFINITIONS).
- * refund = max(0, valorPago − Σ benefícios utilizados).
+ * GO-H10C / GO-H12A — Cálculo de reembolso com valores internos (PLAN_DEFINITIONS).
+ * refund = max(0, valorPago − Σ benefícios efetivamente usufruídos).
+ *
+ * Benefício usufruído ≠ used=true bruto:
+ * remarcações/reembolsos derivados ainda disponíveis revertem o consumo.
  */
 import { prisma } from "@/app/lib/prisma";
 import {
@@ -8,6 +11,7 @@ import {
   getPlanDefinition,
   PLAN_CYCLE_SUBSTITUTED_REASON,
 } from "@/app/lib/plan-definitions";
+import { isPlanBenefitEffectivelyConsumed } from "@/app/lib/plan-cancel-coupons";
 
 export type RefundBenefitLine = {
   couponId: string;
@@ -15,6 +19,8 @@ export type RefundBenefitLine = {
   serviceType: string;
   label: string;
   used: boolean;
+  /** true quando used=true no banco mas o benefício foi revertido (não desconta). */
+  reverted?: boolean;
   internalValue: number;
 };
 
@@ -71,19 +77,28 @@ export async function buildSubscriptionRefundPreview(
   const unused: RefundBenefitLine[] = [];
 
   for (const c of userPlan.coupons) {
-    // Cupons já substituídos por ciclo não entram no cálculo comercial atual
     if (c.cancelReason === PLAN_CYCLE_SUBSTITUTED_REASON) continue;
     const serviceType = couponServiceKey(c);
     const internalValue = getInternalRefundUnit(userPlan.planId, serviceType);
+    const effectivelyUsed = await isPlanBenefitEffectivelyConsumed({
+      id: c.id,
+      used: Boolean(c.used),
+      appointmentId: c.appointmentId,
+      originAppointmentId: c.originAppointmentId,
+      cancelReason: c.cancelReason,
+    });
+
     const line: RefundBenefitLine = {
       couponId: c.id,
       code: c.code,
       serviceType,
       label: couponLabel(serviceType),
-      used: Boolean(c.used),
+      used: effectivelyUsed,
+      reverted: Boolean(c.used) && !effectivelyUsed,
       internalValue,
     };
-    if (c.used) used.push(line);
+
+    if (effectivelyUsed) used.push(line);
     else unused.push(line);
   }
 
@@ -106,7 +121,7 @@ export async function buildSubscriptionRefundPreview(
     refundAmount,
     refundAvailable,
     message: refundAvailable
-      ? "O valor do reembolso será calculado descontando apenas os benefícios efetivamente utilizados."
-      : "Não há reembolso disponível: o valor dos benefícios utilizados é igual ou superior ao valor pago.",
+      ? "O reembolso desconta apenas benefícios efetivamente usufruídos. Remarcações/reembolsos de agendamento ainda disponíveis não contam como uso e serão invalidados com o cancelamento do plano."
+      : "Não há reembolso disponível: o valor dos benefícios efetivamente usufruídos é igual ou superior ao valor pago.",
   };
 }

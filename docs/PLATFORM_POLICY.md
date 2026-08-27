@@ -117,7 +117,10 @@ Renovação financeira: cobrança recorrente via Asaas quando houver assinatura 
 - O cliente pode cancelar a qualquer momento pela Minha Conta.
 - O cancelamento é **imediato** no sistema (`cancelled`).
 - Impede novas cobranças e a emissão de novos ciclos de benefícios.
-- Cupons de benefício **não usados** são invalidados/expirados; cupons **já usados** permanecem no histórico.
+- Cupons de benefício **não usados** são invalidados/expirados.
+- Cupons de remarcação/reembolso **derivados** de um benefício do plano e ainda **não utilizados** também são invalidados (não permanecem créditos órfãos após o cancelamento).
+- Se o cupom derivado **já tiver sido utilizado** antes do cancelamento, o benefício conta como usufruído (ver reembolso).
+- Cupons já usados permanecem no histórico.
 - **Não** há “manutenção de acesso ao plano até o fim do ciclo” após cancelar.
 
 ### Reembolso de plano
@@ -125,13 +128,19 @@ Renovação financeira: cobrança recorrente via Asaas quando houver assinatura 
 Fórmula oficial:
 
 ```
-reembolso = max(0, valorPago − Σ valores_internos dos benefícios com used=true)
+reembolso = max(0, valorPago − Σ valores_internos dos benefícios efetivamente usufruídos)
 ```
 
-- “Benefício utilizado” = cupom do plano com `used === true`.
+- “Benefício efetivamente usufruído” **não** é `used=true` bruto.
+  - Benefícios **concluídos** ou com uso ainda válido → descontam.
+  - Benefícios **cancelados/revertidos** (agendamento cancelado/recusado, com ou sem cupom derivado ainda disponível) → **não** descontam; o valor volta no estorno do plano.
+  - Benefícios **nunca utilizados** → não descontam.
+  - Se existir cupom derivado **já utilizado** (sem crédito aberto na cadeia) → desconta normalmente.
+- Rastreabilidade: cupom do plano → agendamento → cupom derivado via `parentCouponId`.
 - Valores internos são **critério comercial** (não são os preços públicos de vitrine).
 - Estorno solicitado via **Asaas** (quando elegível e `reembolso > 0`).
 - Sem reembolso automático em cupom de “crédito de plano” como substituto padrão do estorno Asaas.
+- Implementação canônica: `subscription-refund.ts` + `plan-cancel-coupons.ts`.
 
 ### Valores internos (interno — não publicar na FAQ)
 
@@ -158,10 +167,11 @@ reembolso = max(0, valorPago − Σ valores_internos dos benefícios com used=tr
 Categorias: `servico`, `producao`, `plano`, `reembolso`, `desconto`.
 
 - **Plano:** concedem serviço/desconto do ciclo (podem zerar o valor do serviço elegível).
-- **Reembolso / remarcação:** crédito após cancel/recusa de agendamento; sobra não usada se perde no uso parcial.
+- **Reembolso / remarcação:** crédito após cancel/recusa de agendamento; sobra não usada se perde no uso parcial. Quando originados de benefício de plano, devem registrar `parentCouponId` apontando ao cupom usado no agendamento.
 - **Desconto:** percentual/fixo promocional conforme regras do cupom.
 - Validade: `expiresAt` do cupom; cupons de ciclo seguem o fim do ciclo mensal.
 - Cupons de plano cancelado/inativo não são utilizáveis no checkout comum.
+- Ao cancelar o plano: derivados ainda disponíveis são invalidados; derivados já usados permanecem e contam no reembolso.
 
 ---
 

@@ -1341,6 +1341,7 @@ function HomologacaoAdminContent() {
                 {opensSchedule && (
                   <div className="mt-4">
                     <SchedulingCalendar
+                      audience="admin"
                       serviceType={primaryType}
                       serviceName={CHECKOUT_CATALOG[primaryType as CanonicalServiceId]?.nome}
                       showHours={needsHour}

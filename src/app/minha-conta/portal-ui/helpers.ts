@@ -10,6 +10,11 @@ import {
   type CouponCategory,
 } from "@/app/lib/domain/coupon-category";
 import type { Cupom } from "./types";
+import {
+  applicableServiceLabels,
+  isPromotionalPartnershipCoupon,
+  remainingUseCount,
+} from "@/app/lib/promotional-coupon";
 
 export function couponCategoryOf(c: Cupom): CouponCategory {
   return resolveCouponCategoryFromRow({
@@ -41,6 +46,30 @@ export function isProductionFamilyCoupon(c: Cupom): boolean {
 
 export function isDiscountFamilyCoupon(c: Cupom): boolean {
   return couponCategoryOf(c) === "desconto";
+}
+
+export function partnershipDiscountCopy(c: Cupom): {
+  discount: string;
+  services: string[];
+  uses: string | null;
+} | null {
+  if (!isPromotionalPartnershipCoupon(c)) return null;
+  const discount =
+    c.discountType === "percent"
+      ? `${c.discountValue}% de desconto`
+      : `R$ ${Number(c.discountValue).toFixed(2)} de desconto`;
+  const remaining = remainingUseCount(c);
+  const uses =
+    c.maxUses == null
+      ? "Uso ilimitado até a validade"
+      : remaining == null
+        ? null
+        : `${remaining} de ${c.maxUses} usos restantes`;
+  return {
+    discount,
+    services: applicableServiceLabels(c.applicableServiceTypes),
+    uses,
+  };
 }
 
 export function couponCategoryDisplay(c: Cupom): string {
