@@ -78,45 +78,80 @@ export default function Home() {
         ========================================================== */}
         <section
           id="inicio"
-          className="flex min-h-[calc(100vh-var(--header-h,60px))] flex-col items-center justify-center text-center pt-[var(--header-h,60px)] px-3 sm:px-4"
+          className="relative min-h-screen overflow-x-clip pt-[var(--header-h,60px)]"
         >
-          <div className="w-full max-w-4xl px-3 sm:px-6 flex flex-col items-center max-md:min-w-0">
-            {/* TÍTULO — exatamente no meio; T vermelho, House Rec branco; desktop: maior (globals .hero-title) */}
-            <h1
-              className="hero-title font-extrabold tracking-tight text-white text-center w-full max-w-full px-1 sm:px-0 md:whitespace-nowrap"
-              style={{
-                fontSize: "clamp(3rem, 9.5vw, 6.25rem)",
-                letterSpacing: "-0.02em",
-                textShadow: `${HERO_SERVICES_TEXT_SHADOW}, 0 4px 20px rgba(0, 0, 0, 0.8), 0 2px 10px rgba(239, 68, 68, 0.25)`,
-              }}
+          <div className="pointer-events-none absolute inset-x-0 top-[var(--header-h,60px)] bottom-0">
+            <div
+              className="absolute left-1/2 w-[min(100%,56rem)] px-3 sm:px-6 text-center max-md:top-[42%] md:top-[43%] lg:top-[44%]"
+              style={{ transform: "translate(-50%, -50%)" }}
             >
-              <span className="text-red-500" style={{ fontSize: "1.12em", fontWeight: 800 }}>T</span>House Rec
-            </h1>
+              <div className="relative mx-auto inline-block max-w-full px-1 sm:px-0">
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute z-0"
+                  style={{
+                    top: "-8%",
+                    right: "-3%",
+                    bottom: "-8%",
+                    left: "-3%",
+                    borderRadius: "9999px",
+                    background:
+                      "linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.18) 18%, rgba(0,0,0,0.18) 82%, transparent 100%)",
+                    backdropFilter: "blur(8px)",
+                    WebkitBackdropFilter: "blur(8px)",
+                    WebkitMaskImage:
+                      "linear-gradient(90deg, transparent 0%, #000 12%, #000 88%, transparent 100%), linear-gradient(180deg, transparent 0%, #000 28%, #000 72%, transparent 100%)",
+                    WebkitMaskComposite: "source-in",
+                    maskImage:
+                      "linear-gradient(90deg, transparent 0%, #000 12%, #000 88%, transparent 100%), linear-gradient(180deg, transparent 0%, #000 28%, #000 72%, transparent 100%)",
+                    maskComposite: "intersect",
+                  }}
+                />
+                <h1
+                  className="hero-title pointer-events-auto relative z-10 font-extrabold tracking-tight text-white text-center w-full max-w-full md:whitespace-nowrap"
+                  style={{
+                    fontSize: "clamp(2.75rem, 8.5vw, 6.25rem)",
+                    letterSpacing: "-0.02em",
+                    textShadow: `${HERO_SERVICES_TEXT_SHADOW}, 0 4px 18px rgba(0, 0, 0, 0.55)`,
+                  }}
+                >
+                  <span className="text-red-500" style={{ fontSize: "1.12em", fontWeight: 800 }}>T</span>House Rec
+                </h1>
+              </div>
 
-            {/* SERVIÇOS (texto vermelho) — desktop: centralizado com o título (bloco limitado); pode quebrar em 2 linhas no PC */}
-            <div className="mt-5 w-full flex justify-center px-1 md:px-4">
-              <p
-                className="hero-services uppercase font-bold text-red-500 tracking-[0.1em] md:tracking-[0.14em] text-center max-w-full md:max-w-4xl md:mx-auto md:leading-snug max-md:text-[clamp(0.7rem,3.2vw,0.85rem)]"
-                style={{
-                  fontSize: "clamp(0.9rem, 2.6vw, 1.2rem)",
-                  textShadow: HERO_SERVICES_TEXT_SHADOW,
-                }}
-              >
-                ESTÚDIO • PRODUÇÃO • MIX &amp; MASTER • SONOPLASTIA • BEATMAKING
-              </p>
-            </div>
-
-            {/* TAGLINE — mobile: maior e dentro das margens; desktop: sem corte */}
-            <div className="mt-6 w-full max-w-full flex justify-center px-1 overflow-visible">
-              <p
-                className="hero-tagline m-0 max-w-full text-white leading-relaxed text-center whitespace-normal text-[0.95rem] sm:text-base md:text-lg max-md:font-medium"
-                style={{
-                  fontSize: "min(1.25rem, 2.2vw)",
-                  textShadow: "1px 0 0 #000, -1px 0 0 #000, 0 1px 0 #000, 0 -1px 0 #000, 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 0 2px 10px rgba(0, 0, 0, 0.9)",
-                }}
-              >
-                Crie sua música com identidade e qualidade profissional em um estúdio pensado para artistas independentes.
-              </p>
+              <div className="relative mx-auto mt-10 w-full max-w-[min(100%,40rem)] sm:mt-12 md:mt-14">
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute z-0"
+                  style={{
+                    top: "-12%",
+                    right: "-2%",
+                    bottom: "-12%",
+                    left: "-2%",
+                    borderRadius: "9999px",
+                    background:
+                      "linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.14) 18%, rgba(0,0,0,0.14) 82%, transparent 100%)",
+                    backdropFilter: "blur(5px)",
+                    WebkitBackdropFilter: "blur(5px)",
+                    WebkitMaskImage:
+                      "linear-gradient(90deg, transparent 0%, #000 12%, #000 88%, transparent 100%), linear-gradient(180deg, transparent 0%, #000 20%, #000 80%, transparent 100%)",
+                    WebkitMaskComposite: "source-in",
+                    maskImage:
+                      "linear-gradient(90deg, transparent 0%, #000 12%, #000 88%, transparent 100%), linear-gradient(180deg, transparent 0%, #000 20%, #000 80%, transparent 100%)",
+                    maskComposite: "intersect",
+                  }}
+                />
+                <p
+                  className="hero-services pointer-events-auto relative z-10 uppercase font-bold text-red-500 tracking-[0.12em] md:tracking-[0.16em] text-center max-w-full leading-snug"
+                  style={{
+                    fontSize: "clamp(0.72rem, 2.2vw, 1.15rem)",
+                    textShadow: HERO_SERVICES_TEXT_SHADOW,
+                  }}
+                >
+                  <span className="block">ESTÚDIO • PRODUÇÃO • MIX &amp; MASTER •</span>
+                  <span className="block">SONOPLASTIA • BEATMAKING</span>
+                </p>
+              </div>
             </div>
           </div>
         </section>

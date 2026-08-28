@@ -43,7 +43,7 @@ export function PartnershipCouponsPanel() {
   const [code, setCode] = useState("");
   const [discountValue, setDiscountValue] = useState("50");
   const [allServices, setAllServices] = useState(false);
-  const [selectedSkus, setSelectedSkus] = useState<string[]>(["mix", "master"]);
+  const [selectedSkus, setSelectedSkus] = useState<string[]>([]);
   const [expiresAt, setExpiresAt] = useState("");
   const [expiryHint, setExpiryHint] = useState<string | null>(null);
   const [amountHint, setAmountHint] = useState<string | null>(null);

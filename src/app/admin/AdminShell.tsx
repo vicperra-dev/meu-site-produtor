@@ -24,7 +24,6 @@ const MENU = [
   { label: "Planos e Cupons", href: "/admin/planos" },
   { label: "Assinaturas", href: "/admin/assinaturas" },
   { label: "FAQ", href: "/admin/faq" },
-  { label: "Serviços Selecionados", href: "/admin/servicos-selecionados" },
   { label: "Serviços Gerais", href: "/admin/servicos" },
   { label: "Pagamentos", href: "/admin/pagamentos" },
   { label: "Estatísticas", href: "/admin/estatisticas" },

@@ -15,6 +15,7 @@ import { DeliveryBadge, PaymentBadge, StatusBadge } from "./Badges";
 import { Icons, formatDate, formatTime, serviceTypeLabel, timeAgo } from "./meta";
 import { ServiceTimeline } from "./ServiceTimeline";
 import { Spinner } from "./States";
+import { FinancialSummaryCompact, FinancialSummaryDetails } from "./FinancialSummary";
 
 export interface ServiceCardActions {
   onAceitar?: (id: string) => void;
@@ -55,12 +56,20 @@ export function ServiceCard({ service: s, actions }: { service: AdminService; ac
 
       {/* Badges: pagamento + entrega */}
       <div className="flex flex-wrap gap-1.5 px-4 pb-3">
-        <PaymentBadge status={s.payment?.status} amount={s.payment?.amount} />
+        <PaymentBadge
+          status={s.payment?.status || (s.financial?.hasCoupon ? "approved" : undefined)}
+          amount={s.financial?.finalAmount ?? s.payment?.amount}
+        />
         <DeliveryBadge delivered={delivered} />
       </div>
 
+      <div className="border-t border-zinc-800 px-4 py-2.5">
+        <p className="mb-1 text-[10px] uppercase tracking-wide text-zinc-500">Financeiro</p>
+        <FinancialSummaryCompact financial={s.financial} />
+      </div>
+
       {/* Agendamento */}
-      <div className="grid grid-cols-3 gap-2 border-t border-zinc-800 px-4 py-3 text-xs">
+      <div className="grid grid-cols-2 gap-2 border-t border-zinc-800 px-4 py-3 text-xs sm:grid-cols-4">
         <div>
           <p className="text-[10px] uppercase tracking-wide text-zinc-500">Agendamento</p>
           {s.appointment ? (
@@ -88,6 +97,12 @@ export function ServiceCard({ service: s, actions }: { service: AdminService; ac
             {formatTime(s.appointment?.data || s.createdAt)}
           </p>
         </div>
+        <div>
+          <p className="text-[10px] uppercase tracking-wide text-zinc-500">Duração</p>
+          <p className="text-zinc-300">
+            {s.appointment?.duracaoMinutos != null ? `${s.appointment.duracaoMinutos} min` : "—"}
+          </p>
+        </div>
       </div>
 
       {/* Entrega (quando existir) */}
@@ -111,6 +126,10 @@ export function ServiceCard({ service: s, actions }: { service: AdminService; ac
         <div className="border-t border-zinc-800 px-4 py-3">
           <p className="mb-2 text-[10px] uppercase tracking-wide text-zinc-500">Timeline</p>
           <ServiceTimeline service={s} />
+          <div className="mt-3">
+            <p className="mb-1 text-[10px] uppercase tracking-wide text-zinc-500">Financeiro</p>
+            <FinancialSummaryDetails financial={s.financial} />
+          </div>
           {(s.observacoes || s.description) && (
             <div className="mt-3">
               <p className="text-[10px] uppercase tracking-wide text-zinc-500">Observações</p>

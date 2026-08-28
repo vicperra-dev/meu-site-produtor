@@ -1,12 +1,6 @@
-import { Suspense } from "react";
-import { ServicosBoard } from "@/app/admin/servicos-ui/ServicosBoard";
-import { BoardSkeleton } from "@/app/admin/servicos-ui/States";
+import { redirect } from "next/navigation";
 
-/** GO-03A — Serviços Selecionados (visão "Todos"). */
-export default function AdminServicosSelecionadosPage() {
-  return (
-    <Suspense fallback={<BoardSkeleton />}>
-      <ServicosBoard variant="selecionados" status="todos" />
-    </Suspense>
-  );
+/** Rota legada: Serviços Selecionados consolidado em Serviços Gerais. */
+export default function AdminServicosSelecionadosLegacyRedirect() {
+  redirect("/admin/servicos/todos");
 }

@@ -9,6 +9,7 @@ import {
   getPlanCouponUsageBlockMessage,
   isCouponRefundLocked,
   isCupomPermitidoNoAgendamentoComum,
+  resolveCouponCheckoutMode,
 } from "@/app/lib/checkout-coupon-gates";
 import {
   resolveCanonicalCouponType,
@@ -113,10 +114,14 @@ function validateCanonicalUsage(
   options: CouponCheckoutOptions
 ): { ok: false; error: string } | null {
   const type = resolveCanonicalCouponType(coupon);
-  const mode = options.mode ?? "discount";
+  const mode = options.mode ?? resolveCouponCheckoutMode(coupon);
 
   if (type === "TEST" && !options.allowTest) {
     return { ok: false, error: "Cupom de teste indisponível neste ambiente." };
+  }
+
+  if (isPromotionalPartnershipCoupon(coupon)) {
+    return null;
   }
 
   const serviceLike =
@@ -360,7 +365,7 @@ export async function validateCouponAndGetTotal(
   beats: BeatItem[] = [],
   options: CouponCheckoutOptions = {}
 ): Promise<
-  | { ok: true; finalTotal: number; couponId: string; couponType: CanonicalCouponType }
+  | { ok: true; finalTotal: number; couponId: string; couponType: CanonicalCouponType; subtotal: number; discount: number }
   | { ok: false; error: string }
 > {
   const totals = computeCartTotals(servicos, beats);
@@ -414,10 +419,13 @@ export async function validateCouponAndGetTotal(
     return { ok: false, error: partnershipError };
   }
 
+  const finalTotal = computeDiscountedTotal(coupon, totals, servicos, beats);
   return {
     ok: true,
-    finalTotal: computeDiscountedTotal(coupon, totals, servicos, beats),
+    finalTotal,
     couponId: coupon.id,
     couponType: resolveCanonicalCouponType(coupon),
+    subtotal: Math.round(totals.total * 100) / 100,
+    discount: Math.round((totals.total - finalTotal) * 100) / 100,
   };
 }

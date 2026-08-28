@@ -16,6 +16,7 @@ import {
 } from "@/app/lib/agendamento-payment-rules";
 import { sendPaymentConfirmationEmailToUser, sendPaymentNotificationToTHouse } from "@/app/lib/sendEmail";
 import { appointmentCalendarOccupancyFilter } from "@/app/lib/appointment-operational-filter";
+import { decidePaymentSlotAction, shouldSendFulfillmentEmails } from "@/app/lib/payment-appointment-idempotency";
 import {
   parseStudioDateTime,
   resolveNextProductionHourForDay,
@@ -192,6 +193,7 @@ export async function processAgendamentoPaymentEffects(params: {
     where: { id: paymentDbId },
     select: { id: true, userId: true, appointmentId: true },
   });
+  let createdAppointmentThisRun = false;
   if (!pay) {
     return {
       agendamentoFinalId: null,
@@ -363,11 +365,20 @@ export async function processAgendamentoPaymentEffects(params: {
     isSingleScheduledAgendamentoPayment(metadata, services, beats)
   ) {
     const dataHoraISO = parseStudioDateTime(data, hora);
-    // Conflito de estúdio só para presencial (Sessão/Captação).
     if (needsHour) {
-      const conflito = await prisma.appointment.findFirst({
+      const ownReusable = await prisma.appointment.findFirst({
+        where: {
+          userId,
+          data: dataHoraISO,
+          adminArchivedAt: null,
+          status: { notIn: ["cancelado", "recusado", "remarcado"] },
+        },
+        select: { id: true },
+      });
+      const foreignReserving = await prisma.appointment.findFirst({
         where: {
           ...appointmentCalendarOccupancyFilter,
+          userId: { not: userId },
           AND: [
             { data: { lt: new Date(dataHoraISO.getTime() + duracaoMinutos * 60000) } },
             { data: { gte: new Date(dataHoraISO.getTime() - duracaoMinutos * 60000) } },
@@ -375,7 +386,11 @@ export async function processAgendamentoPaymentEffects(params: {
         },
         select: { id: true },
       });
-      if (conflito) {
+      const slot = decidePaymentSlotAction({
+        ownReusableId: ownReusable?.id ?? null,
+        foreignReservingId: foreignReserving?.id ?? null,
+      });
+      if (slot.action === "skip_foreign") {
         const msg = "Conflito de horário: agendamento não criado";
         console.warn("[AgendamentoEffects]", msg);
         return {
@@ -387,8 +402,12 @@ export async function processAgendamentoPaymentEffects(params: {
           skippedReason: msg,
         };
       }
+      if (slot.action === "reuse") {
+        agendamentoFinalId = slot.appointmentId;
+        log("Reutilizando agendamento do pagador no mesmo slot (idempotência)", agendamentoFinalId);
+      }
     }
-    {
+    if (!agendamentoFinalId) {
       const novoAgendamento = await prisma.appointment.create({
         data: {
           userId,
@@ -400,24 +419,8 @@ export async function processAgendamentoPaymentEffects(params: {
         },
       });
       agendamentoFinalId = novoAgendamento.id;
+      createdAppointmentThisRun = true;
       log("Agendamento criado", agendamentoFinalId);
-      try {
-        const { createServiceOrderForImmediateAppointment } = await import(
-          "@/app/lib/service-orders/persist"
-        );
-        const { expandPurchaseToServiceOrders } = await import("@/app/lib/service-orders");
-        const primary = expandPurchaseToServiceOrders(services, beats)[0];
-        await createServiceOrderForImmediateAppointment({
-          userId,
-          paymentId: paymentDbId,
-          appointmentId: novoAgendamento.id,
-          serviceType: primary?.serviceType || String(tipoAgendamento),
-          commercialSource: primary?.commercialSource || String(tipoAgendamento),
-          appointmentStatus: "pendente",
-        });
-      } catch (e) {
-        console.error("[AgendamentoEffects] ServiceOrder imediata falhou (non-fatal):", e);
-      }
       try {
         const { emitAppointmentReserved } = await import("@/app/lib/synchronization/lifecycle");
         await emitAppointmentReserved({
@@ -444,6 +447,24 @@ export async function processAgendamentoPaymentEffects(params: {
     };
   }
 
+  try {
+    const { createServiceOrderForImmediateAppointment } = await import(
+      "@/app/lib/service-orders/persist"
+    );
+    const { expandPurchaseToServiceOrders } = await import("@/app/lib/service-orders");
+    const primary = expandPurchaseToServiceOrders(services, beats)[0];
+    await createServiceOrderForImmediateAppointment({
+      userId,
+      paymentId: paymentDbId,
+      appointmentId: agendamentoFinalId,
+      serviceType: primary?.serviceType || String(tipoAgendamento),
+      commercialSource: primary?.commercialSource || String(tipoAgendamento),
+      appointmentStatus: "pendente",
+    });
+  } catch (e) {
+    console.error("[AgendamentoEffects] ServiceOrder imediata falhou (non-fatal):", e);
+  }
+
   const cupomCode = metadata.cupomCode as string | undefined;
   if (cupomCode) {
     try {
@@ -451,18 +472,16 @@ export async function processAgendamentoPaymentEffects(params: {
         where: { code: cupomCode.toUpperCase() },
       });
       if (cupom) {
-        const { recordApprovedPaymentCouponUse, couponHasRemainingUses } = await import(
+        const { recordApprovedPaymentCouponUse } = await import(
           "@/app/lib/promotional-coupon"
         );
-        if (couponHasRemainingUses(cupom)) {
-          const claimed = await recordApprovedPaymentCouponUse(prisma, {
-            couponId: cupom.id,
-            userId,
-            appointmentId: agendamentoFinalId,
-          });
-          if (claimed.ok) {
-            log(`Cupom de checkout vinculado ao agendamento ${agendamentoFinalId}`, cupomCode);
-          }
+        const claimed = await recordApprovedPaymentCouponUse(prisma, {
+          couponId: cupom.id,
+          userId,
+          appointmentId: agendamentoFinalId,
+        });
+        if (claimed.ok) {
+          log(`Cupom de checkout vinculado ao agendamento ${agendamentoFinalId}`, cupomCode);
         }
       }
     } catch (cupomError: unknown) {
@@ -503,7 +522,38 @@ export async function processAgendamentoPaymentEffects(params: {
       logPrefix: "[AgendamentoEffects]",
     });
 
-    if (sendEmails) {
+    if (cupomCode) {
+      try {
+        const firstSvc = await prisma.service.findFirst({
+          where: { appointmentId: agendamentoFinalId },
+          select: { id: true },
+          orderBy: { createdAt: "asc" },
+        });
+        const cupom = await prisma.coupon.findUnique({
+          where: { code: cupomCode.toUpperCase() },
+        });
+        if (cupom) {
+          const { recordApprovedPaymentCouponUse } = await import(
+            "@/app/lib/promotional-coupon"
+          );
+          await recordApprovedPaymentCouponUse(prisma, {
+            couponId: cupom.id,
+            userId,
+            appointmentId: agendamentoFinalId,
+            serviceId: firstSvc?.id ?? null,
+          });
+        }
+      } catch (cupomError: unknown) {
+        console.error("[AgendamentoEffects] Erro ao vincular cupom ao serviço:", cupomError);
+      }
+    }
+
+    if (
+      shouldSendFulfillmentEmails({
+        sendEmailsRequested: sendEmails,
+        createdAppointmentThisRun,
+      })
+    ) {
       try {
         await sendPaymentConfirmationEmailToUser(
           appointment.user.email,

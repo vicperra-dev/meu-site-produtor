@@ -14,6 +14,7 @@ export type ServerCheckoutCalculation = {
   services: PricedCheckoutItem[];
   beats: PricedCheckoutItem[];
   subtotal: number;
+  discount: number;
   total: number;
   couponId?: string;
   couponType?: string;
@@ -34,7 +35,7 @@ export async function calculateServerCheckout(params: {
 
   const subtotal = totalPricedCheckoutItems([...services, ...beats]);
   if (!params.couponCode?.trim()) {
-    return { services, beats, subtotal, total: subtotal };
+    return { services, beats, subtotal, discount: 0, total: subtotal };
   }
 
   const coupon = await validateCouponAndGetTotal(
@@ -55,6 +56,7 @@ export async function calculateServerCheckout(params: {
     services,
     beats,
     subtotal,
+    discount: Math.round((subtotal - coupon.finalTotal) * 100) / 100,
     total: coupon.finalTotal,
     couponId: coupon.couponId,
     couponType: coupon.couponType,

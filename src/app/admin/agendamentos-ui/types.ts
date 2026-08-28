@@ -9,6 +9,7 @@ export interface PagamentoConfirmado {
   status: string;
   paymentMethod: string | null;
   asaasId: string | null;
+  provider?: string | null;
   createdAt: string;
 }
 
@@ -20,6 +21,19 @@ export interface CupomAssociado {
   used: boolean;
   couponType?: string;
   paymentId?: string | null;
+}
+
+export interface AdminFinancialSummaryView {
+  originalAmount: number | null;
+  discountAmount: number;
+  finalAmount: number | null;
+  amountsKnown: boolean;
+  paymentChannel: string;
+  paymentLabel: string;
+  couponCode: string | null;
+  couponKind: string;
+  couponKindLabel: string;
+  hasCoupon: boolean;
 }
 
 export interface AdminAgendamento {
@@ -45,6 +59,7 @@ export interface AdminAgendamento {
   };
   createdAt: string;
   pagamentoConfirmado: PagamentoConfirmado | null;
+  financial?: AdminFinancialSummaryView | null;
   cupomAssociado: CupomAssociado | null;
   cuponsAssociados?: CupomAssociado[];
 }

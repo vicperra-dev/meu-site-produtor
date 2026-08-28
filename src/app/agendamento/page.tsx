@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useEffect, useCallback, Suspense } from "react";
+import React, { useState, useMemo, useEffect, useCallback, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "../context/AuthContext";
 import DuvidasBox from "../components/DuvidasBox";
@@ -83,6 +83,10 @@ const AGENDAMENTO_DRAFT_KEY = "agendamento_draft";
 const AGENDAMENTO_CHECKOUT_KEY = "agendamento_checkout";
 const CARRINHO_KEY = "agendamento_carrinho";
 
+function formatBrl(n: number) {
+  return n.toFixed(2).replace(".", ",");
+}
+
 // ================== PAGE ==================
 
 function AgendamentoContent() {
@@ -114,7 +118,13 @@ function AgendamentoContent() {
   const [agendamentos, setAgendamentos] = useState<any[]>([]);
   const [loadingHorarios, setLoadingHorarios] = useState(true);
   const [cupomCode, setCupomCode] = useState("");
-  const [cupomAplicado, setCupomAplicado] = useState<{ code: string; discount: number; couponType: string } | null>(null);
+  const [cupomAplicado, setCupomAplicado] = useState<{
+    code: string;
+    discount: number;
+    subtotal: number;
+    finalTotal: number;
+    couponType: string;
+  } | null>(null);
   const [validandoCupom, setValidandoCupom] = useState(false);
   const [adicionadoAoCart, setAdicionadoAoCart] = useState(false);
 
@@ -444,8 +454,22 @@ function AgendamentoContent() {
   }, [cupomAplicado]);
 
   const totalComDesconto = useMemo(() => {
+    if (cupomAplicado && typeof cupomAplicado.finalTotal === "number") {
+      return Math.max(0, cupomAplicado.finalTotal);
+    }
     return Math.max(0, totalGeral - descontoCupom);
-  }, [totalGeral, descontoCupom]);
+  }, [cupomAplicado, totalGeral, descontoCupom]);
+
+  const prevCatalogTotal = useRef(totalGeral);
+  useEffect(() => {
+    if (prevCatalogTotal.current !== totalGeral) {
+      prevCatalogTotal.current = totalGeral;
+      if (cupomAplicado) {
+        setCupomAplicado(null);
+        setCupomCode("");
+      }
+    }
+  }, [totalGeral, cupomAplicado]);
 
   const dataFormatada = useMemo(() => {
     if (!dataSelecionada) return null;
@@ -580,6 +604,8 @@ function AgendamentoContent() {
       servicos,
       beats,
       total: totalComDesconto,
+      subtotal: cupomAplicado?.subtotal ?? totalGeral,
+      discount: cupomAplicado?.discount ?? 0,
       observacoes: comentarios,
       cupomCode: cupomAplicado?.code || undefined,
       cupomAplicado: cupomAplicado || undefined,
@@ -673,6 +699,8 @@ function AgendamentoContent() {
       servicos,
       beats,
       total: totalComDesconto,
+      subtotal: cupomAplicado?.subtotal ?? totalGeral,
+      discount: cupomAplicado?.discount ?? 0,
       observacoes: comentarios,
       cupomCode: cupomAplicado?.code || undefined,
       cupomAplicado: cupomAplicado || undefined,
@@ -1119,7 +1147,9 @@ function AgendamentoContent() {
                       if (data.valid) {
                         setCupomAplicado({
                           code: cupomCode,
-                          discount: data.discount,
+                          discount: Number(data.discount) || 0,
+                          subtotal: Number(data.subtotal) || totalGeral,
+                          finalTotal: Number(data.finalTotal),
                           couponType: data.couponType,
                         });
                       } else {
@@ -1152,7 +1182,7 @@ function AgendamentoContent() {
             </div>
             {cupomAplicado && (
               <p className="mt-2 text-center text-sm text-green-400">
-                ✓ Cupom {cupomAplicado.couponType === "reembolso" ? "de reembolso" : "de plano"} aplicado com sucesso! Desconto de R$ {cupomAplicado.discount.toFixed(2).replace(".", ",")}
+                ✓ Cupom aplicado. Desconto de R$ {formatBrl(cupomAplicado.discount)}
               </p>
             )}
           </div>
@@ -1231,18 +1261,23 @@ function AgendamentoContent() {
             </p>
 
             <div className="mt-2 space-y-1">
-              <p className="text-2xl md:text-3xl font-extrabold text-yellow-300 whitespace-nowrap">
-                Total estimado: R$ {totalGeral.toFixed(2).replace(".", ",")}
+              <p className="text-base md:text-xl font-extrabold text-zinc-200 whitespace-nowrap">
+                Valor do serviço: R$ {formatBrl(cupomAplicado?.subtotal ?? totalGeral)}
               </p>
-              {cupomAplicado && descontoCupom > 0 && (
+              {cupomAplicado && (
                 <>
                   <p className="text-sm text-green-400 whitespace-nowrap">
-                    Cupom {cupomAplicado.code}: -R$ {descontoCupom.toFixed(2).replace(".", ",")}
+                    Desconto: -R$ {formatBrl(descontoCupom)}
                   </p>
-                  <p className="text-xl md:text-2xl font-extrabold text-yellow-200 whitespace-nowrap">
-                    Total com desconto: R$ {totalComDesconto.toFixed(2).replace(".", ",")}
+                  <p className="text-2xl md:text-3xl font-extrabold text-yellow-300 whitespace-nowrap">
+                    Total final: R$ {formatBrl(totalComDesconto)}
                   </p>
                 </>
+              )}
+              {!cupomAplicado && (
+                <p className="text-2xl md:text-3xl font-extrabold text-yellow-300 whitespace-nowrap">
+                  Total final: R$ {formatBrl(totalGeral)}
+                </p>
               )}
             </div>
           </div>
@@ -1486,7 +1521,9 @@ function AgendamentoContent() {
                             if (data.valid) {
                               setCupomAplicado({
                                 code: cupomCode,
-                                discount: data.discount,
+                                discount: Number(data.discount) || 0,
+                                subtotal: Number(data.subtotal) || totalGeral,
+                                finalTotal: Number(data.finalTotal),
                                 couponType: data.couponType,
                               });
                             } else {
@@ -1518,7 +1555,7 @@ function AgendamentoContent() {
                   </div>
                   {cupomAplicado && (
                     <p className="mt-2 text-xs text-green-400">
-                      ✓ Cupom {cupomAplicado.couponType === "reembolso" ? "de reembolso" : "de plano"} aplicado com sucesso!
+                      ✓ Cupom aplicado. Desconto de R$ {formatBrl(cupomAplicado.discount)}
                     </p>
                   )}
                 </div>

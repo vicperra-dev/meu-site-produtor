@@ -9,6 +9,7 @@ import { appointmentCalendarOccupancyFilter } from "@/app/lib/appointment-operat
 import { calculateServerCheckout } from "@/app/lib/checkout-calculation";
 import { goLiveBlockIfNeeded } from "@/app/lib/go-live-maintenance";
 import { parseStudioDateTime } from "@/app/lib/calendar-day-state";
+import type { PricedCheckoutItem } from "@/app/lib/service-catalog";
 
 const ASAAS_API_KEY = getAsaasApiKey();
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
@@ -43,13 +44,6 @@ export async function POST(req: Request) {
     const goLiveBlocked = goLiveBlockIfNeeded(user.role);
     if (goLiveBlocked) return goLiveBlocked;
 
-    if (!ASAAS_API_KEY) {
-      return NextResponse.json(
-        { error: "Configuração de pagamento ausente no servidor. Configure ASAAS_API_KEY no .env" },
-        { status: 500 }
-      );
-    }
-
     const body = await req.json();
     const validation = carrinhoCheckoutSchema.safeParse(body);
     if (!validation.success) {
@@ -62,18 +56,6 @@ export async function POST(req: Request) {
     const { items, paymentMethod } = validation.data;
     const userEmail = user.email || "";
     const userName = (user.nomeArtistico || user.nomeCompleto || "Cliente") as string;
-
-    const userWithCpf = await prisma.user.findUnique({
-      where: { id: user.id },
-      select: { cpf: true },
-    });
-    const cpfLimpo = userWithCpf?.cpf?.replace(/\D/g, "");
-    if (!cpfLimpo || cpfLimpo.length !== 11) {
-      return NextResponse.json(
-        { error: "CPF é obrigatório para pagamentos. Preencha seu CPF na página de pagamentos antes de continuar." },
-        { status: 400 }
-      );
-    }
 
     const couponCodes = items
       .map((item) => item.cupomCode?.toUpperCase())
@@ -118,11 +100,76 @@ export async function POST(req: Request) {
         cupomCode: item.cupomCode?.toUpperCase(),
         couponId: calculation.couponId,
         couponType: calculation.couponType,
+        discount: calculation.discount,
       });
     }
     if (total <= 0) {
+      const appointmentIds: number[] = [];
+      for (const item of safeItems) {
+        const code = String(item.cupomCode || "");
+        if (!code) {
+          return NextResponse.json(
+            { error: "Carrinho com total zero exige cupom válido em cada item." },
+            { status: 400 }
+          );
+        }
+        if (!item.data || !item.hora) {
+          return NextResponse.json(
+            { error: "Selecione data e horário para concluir o agendamento sem cobrança." },
+            { status: 400 }
+          );
+        }
+        const coupon = await prisma.coupon.findUnique({ where: { code } });
+        if (!coupon) {
+          return NextResponse.json({ error: "Cupom inexistente." }, { status: 404 });
+        }
+        const { fulfillZeroTotalCouponAppointment } = await import(
+          "@/app/lib/coupon-zero-checkout"
+        );
+        const result = await fulfillZeroTotalCouponAppointment({
+          user: {
+            id: user.id,
+            email: user.email,
+            nomeArtistico: user.nomeArtistico,
+            telefone: user.telefone,
+          },
+          data: String(item.data),
+          hora: String(item.hora),
+          duracaoMinutos: Number(item.duracaoMinutos || 60),
+          tipo: item.tipo ? String(item.tipo) : undefined,
+          observacoes: item.observacoes ? String(item.observacoes) : null,
+          services: (item.servicos || []) as PricedCheckoutItem[],
+          beats: (item.beats || []) as PricedCheckoutItem[],
+          coupon,
+        });
+        if (!result.ok) {
+          return NextResponse.json({ error: result.error }, { status: result.status });
+        }
+        appointmentIds.push(result.appointment.id);
+      }
+      return NextResponse.json({
+        success: true,
+        zeroTotal: true,
+        appointmentIds,
+        message: "Agendamento criado sem cobrança. Aguarde a confirmação do admin.",
+      });
+    }
+
+    if (!ASAAS_API_KEY) {
       return NextResponse.json(
-        { error: "Compras com valor zero devem ser concluídas pelo fluxo de resgate do cupom." },
+        { error: "Configuração de pagamento ausente no servidor. Configure ASAAS_API_KEY no .env" },
+        { status: 500 }
+      );
+    }
+
+    const userWithCpf = await prisma.user.findUnique({
+      where: { id: user.id },
+      select: { cpf: true },
+    });
+    const cpfLimpo = userWithCpf?.cpf?.replace(/\D/g, "");
+    if (!cpfLimpo || cpfLimpo.length !== 11) {
+      return NextResponse.json(
+        { error: "CPF é obrigatório para pagamentos. Preencha seu CPF na página de pagamentos antes de continuar." },
         { status: 400 }
       );
     }

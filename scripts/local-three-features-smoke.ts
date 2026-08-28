@@ -15,9 +15,11 @@ import {
   computePartnershipDiscount,
   couponHasRemainingUses,
   isPromotionalPartnershipCoupon,
+  partnershipAppliesToAllStudioServices,
   parseApplicableServiceTypes,
   parsePartnershipFixedAmount,
   partnershipExpiryError,
+  serializeApplicableServiceTypes,
   userMatchesPartnershipQuery,
 } from "../src/app/lib/promotional-coupon";
 
@@ -98,6 +100,8 @@ assert.equal(
 ok("parceria isolada de plano; usos 3 e ilimitado");
 
 assert.deepEqual(parseApplicableServiceTypes('["mix","master"]'), ["mix", "master"]);
+assert.equal(partnershipAppliesToAllStudioServices(JSON.stringify(["*"])), true);
+assert.equal(serializeApplicableServiceTypes(null), JSON.stringify(["*"]));
 const services = [
   { id: "sessao", preco: 40, quantidade: 1 },
   { id: "mix", preco: 110, quantidade: 1 },

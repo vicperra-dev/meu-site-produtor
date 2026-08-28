@@ -1128,10 +1128,10 @@ function HomologacaoAdminContent() {
                       Ordens / Serviços
                     </Link>
                     <Link
-                      href="/admin/servicos-selecionados"
+                      href="/admin/servicos"
                       className="text-red-400 hover:underline"
                     >
-                      Serviços Selecionados
+                      Serviços Gerais
                     </Link>
                     <Link href="/admin" className="text-red-400 hover:underline">
                       Dashboard
@@ -1231,10 +1231,10 @@ function HomologacaoAdminContent() {
                   Serviços
                 </Link>
                 <Link
-                  href="/admin/servicos-selecionados"
+                  href="/admin/servicos"
                   className="text-emerald-400 hover:underline"
                 >
-                  Serviços Selecionados
+                  Serviços Gerais
                 </Link>
                 <Link href="/admin" className="text-emerald-400 hover:underline">
                   Dashboard

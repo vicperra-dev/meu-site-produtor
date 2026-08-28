@@ -26,13 +26,17 @@ export function aptStatusKey(status: string): string {
 /* ------------------------------- Filtro: tipo ------------------------------- */
 
 export const APT_TYPE_FILTERS: { value: string; label: string; match: (a: AdminAgendamento) => boolean }[] = [
-  { value: "sessao", label: "Sessão", match: (a) => norm(a.tipo) === "sessao" || norm(a.tipo) === "captacao" },
-  { value: "beat", label: "Beat", match: (a) => norm(a.tipo).startsWith("beat") && norm(a.tipo) !== "beat_mix_master" },
+  { value: "sessao", label: "Sessão", match: (a) => norm(a.tipo) === "sessao" },
+  { value: "captacao", label: "Captação", match: (a) => norm(a.tipo) === "captacao" },
+  { value: "beat", label: "Beat", match: (a) => norm(a.tipo).startsWith("beat") && !norm(a.tipo).includes("mix") },
   { value: "mix", label: "Mixagem", match: (a) => norm(a.tipo) === "mix" || norm(a.tipo) === "mixagem" },
   { value: "master", label: "Masterização", match: (a) => norm(a.tipo) === "master" || norm(a.tipo) === "masterizacao" },
-  { value: "mix_master", label: "Mix + Master", match: (a) => norm(a.tipo) === "mix_master" },
-  { value: "producao_completa", label: "Produção Completa", match: (a) => norm(a.tipo) === "producao_completa" },
-  { value: "sonoplastia", label: "Sonoplastia", match: (a) => norm(a.tipo) === "sonoplastia" },
+  {
+    value: "producao",
+    label: "Produção",
+    match: (a) =>
+      ["sonoplastia", "mix_master", "beat_mix_master", "producao_completa"].includes(norm(a.tipo)),
+  },
   {
     value: "plano",
     label: "Plano",
@@ -106,6 +110,9 @@ export function matchesAptSearch(a: AdminAgendamento, q: string): boolean {
     aptStatusKey(a.status),
     formatDate(a.data),
     a.observacoes || "",
+    a.financial?.couponCode || "",
+    a.financial?.paymentLabel || "",
+    a.financial?.couponKindLabel || "",
     cupons.map((c) => `${c.code} ${c.couponType || ""} ${c.serviceType || ""}`).join(" "),
   ]
     .join(" ")

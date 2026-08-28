@@ -3,6 +3,8 @@ import { prisma } from "@/app/lib/prisma";
 import { requireAdmin } from "@/app/lib/auth";
 import { repairOrphanAppointmentServices } from "@/app/lib/ensure-appointment-services";
 import { updateServiceFields } from "@/app/lib/domain/workflow";
+import { pickPrimaryCouponForDisplay } from "@/app/lib/coupon-selection";
+import { resolveServiceFinancialSummary } from "@/app/lib/admin-financial-summary";
 import { z } from "zod";
 
 const updateSchema = z.object({
@@ -47,6 +49,7 @@ export async function GET(req: Request) {
             status: true,
             tipo: true,
             observacoes: true,
+            duracaoMinutos: true,
           },
         },
       },
@@ -73,6 +76,8 @@ export async function GET(req: Request) {
               amount: true,
               status: true,
               paymentMethod: true,
+              provider: true,
+              asaasId: true,
               appointmentId: true,
               appointmentIds: true,
             },
@@ -103,45 +108,121 @@ export async function GET(req: Request) {
     }
 
     const paymentIds = [...new Set([...paymentByApt.values()].map((p) => p.id))];
+    const serviceIds = servicos.map((s) => s.id);
+    const couponOr: Array<Record<string, unknown>> = [];
+    if (paymentIds.length > 0) couponOr.push({ paymentId: { in: paymentIds } });
+    if (aptIds.length > 0) couponOr.push({ appointmentId: { in: aptIds } });
+    if (serviceIds.length > 0) couponOr.push({ serviceId: { in: serviceIds } });
     const coupons =
-      paymentIds.length > 0
+      couponOr.length > 0
         ? await prisma.coupon.findMany({
-            where: { paymentId: { in: paymentIds } },
+            where: { OR: couponOr },
             select: {
               id: true,
               code: true,
               couponType: true,
+              couponCategory: true,
+              discountType: true,
+              discountValue: true,
+              maxDiscount: true,
               serviceType: true,
               used: true,
               paymentId: true,
+              appointmentId: true,
+              serviceId: true,
+              userPlanId: true,
+              parentCouponId: true,
+              originAppointmentId: true,
+              assignedUserId: true,
+              applicableServiceTypes: true,
+              applicableDomain: true,
+              isActive: true,
+              usedAt: true,
+              createdAt: true,
             },
           })
         : [];
+
     const couponsByPayment = new Map<string, typeof coupons>();
+    const couponsByAppointment = new Map<number, typeof coupons>();
+    const couponsByService = new Map<string, typeof coupons>();
     for (const c of coupons) {
-      if (!c.paymentId) continue;
-      const list = couponsByPayment.get(c.paymentId) || [];
-      list.push(c);
-      couponsByPayment.set(c.paymentId, list);
+      if (c.paymentId) {
+        const list = couponsByPayment.get(c.paymentId) || [];
+        list.push(c);
+        couponsByPayment.set(c.paymentId, list);
+      }
+      if (c.appointmentId != null) {
+        const list = couponsByAppointment.get(c.appointmentId) || [];
+        list.push(c);
+        couponsByAppointment.set(c.appointmentId, list);
+      }
+      if (c.serviceId) {
+        const list = couponsByService.get(c.serviceId) || [];
+        list.push(c);
+        couponsByService.set(c.serviceId, list);
+      }
     }
+
+    const siblingsByApt = new Map<number, string[]>();
+    for (const s of servicos) {
+      if (s.appointmentId == null) continue;
+      const list = siblingsByApt.get(s.appointmentId) || [];
+      list.push(s.tipo);
+      siblingsByApt.set(s.appointmentId, list);
+    }
+
+    const mergeCoupons = (
+      ...lists: Array<typeof coupons | undefined>
+    ): typeof coupons => {
+      const map = new Map<string, (typeof coupons)[number]>();
+      for (const list of lists) {
+        for (const c of list || []) map.set(c.id, c);
+      }
+      return [...map.values()];
+    };
 
     const enriched = servicos.map((s) => {
       const payment =
         s.appointmentId != null ? paymentByApt.get(s.appointmentId) || null : null;
-      const rawCoupons = payment ? couponsByPayment.get(payment.id) || [] : [];
+      const rawCoupons = mergeCoupons(
+        s.appointmentId != null ? couponsByAppointment.get(s.appointmentId) : undefined,
+        payment ? couponsByPayment.get(payment.id) : undefined,
+        couponsByService.get(s.id)
+      );
+      const siblingTipos =
+        s.appointmentId != null ? siblingsByApt.get(s.appointmentId) || [s.tipo] : [s.tipo];
+      const financial = resolveServiceFinancialSummary({
+        tipo: s.tipo,
+        payment,
+        coupons: rawCoupons,
+        siblingTipos,
+      });
+      const primary = pickPrimaryCouponForDisplay(
+        rawCoupons.map((c) => ({
+          ...c,
+          paymentId: c.paymentId ?? null,
+          userPlanId: c.userPlanId ?? null,
+        }))
+      );
       return {
         ...s,
-        // GO-H11A: playback via proxy autenticado; storage path permanece no banco
         deliveryAudioUrl: s.deliveryAudioUrl
           ? `/api/entregas/${s.id}`
           : s.deliveryAudioUrl,
         payment,
+        financial,
         coupons: rawCoupons.map((c) => ({
           id: c.id,
           code: c.code,
           type: c.serviceType || c.couponType,
           status: c.used ? "utilizado" : "criado",
+          couponType: c.couponType,
+          couponCategory: c.couponCategory,
         })),
+        cupomPrincipal: primary
+          ? { id: primary.id, code: primary.code, couponType: primary.couponType }
+          : null,
         observacoes: s.appointment?.observacoes || s.description || null,
       };
     });

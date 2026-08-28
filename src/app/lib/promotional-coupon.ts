@@ -11,9 +11,9 @@ import {
 } from "@/app/lib/domain/coupon-domain";
 import { resolveCanonicalCouponType } from "@/app/lib/domain/coupon-types";
 import {
-  CANONICAL_SERVICE_IDS,
   CHECKOUT_CATALOG,
-  normalizeServiceTypeId,
+  isCanonicalServiceId,
+  resolveCanonicalServiceId,
   type CanonicalServiceId,
 } from "@/app/lib/service-catalog";
 import {
@@ -24,6 +24,9 @@ import {
 } from "@/app/lib/calendar-time";
 
 export const PARTNERSHIP_MIN_YEAR = 2026;
+
+/** Sentinel persistido: cupom válido para todo o catálogo de estúdio. */
+export const PARTNERSHIP_ALL_SERVICES = "*";
 
 export const PARTNERSHIP_APPLICABLE_DOMAINS = [
   "STUDIO",
@@ -88,6 +91,12 @@ export function isPromotionalPartnershipCoupon(coupon: CouponUseFields): boolean
   return dt === "percent" || dt === "fixed";
 }
 
+export function partnershipAppliesToAllStudioServices(
+  raw: string | null | undefined
+): boolean {
+  return parseApplicableServiceTypes(raw) === null;
+}
+
 export function parseApplicableServiceTypes(
   raw: string | null | undefined
 ): CanonicalServiceId[] | null {
@@ -95,10 +104,13 @@ export function parseApplicableServiceTypes(
   try {
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed) || parsed.length === 0) return null;
+    if (parsed.some((item) => String(item).trim() === PARTNERSHIP_ALL_SERVICES)) {
+      return null;
+    }
     const ids: CanonicalServiceId[] = [];
     for (const item of parsed) {
-      const id = normalizeServiceTypeId(String(item)) as CanonicalServiceId;
-      if (!(CANONICAL_SERVICE_IDS as readonly string[]).includes(id)) continue;
+      const id = resolveCanonicalServiceId(String(item));
+      if (!id || !isCanonicalServiceId(id)) continue;
       if (!ids.includes(id)) ids.push(id);
     }
     return ids.length ? ids : null;
@@ -110,11 +122,15 @@ export function parseApplicableServiceTypes(
 export function serializeApplicableServiceTypes(
   ids: string[] | null | undefined
 ): string | null {
-  if (!ids || ids.length === 0) return null;
+  if (ids == null) return JSON.stringify([PARTNERSHIP_ALL_SERVICES]);
+  if (ids.length === 0) return null;
+  if (ids.some((item) => String(item).trim() === PARTNERSHIP_ALL_SERVICES)) {
+    return JSON.stringify([PARTNERSHIP_ALL_SERVICES]);
+  }
   const unique: CanonicalServiceId[] = [];
   for (const raw of ids) {
-    const id = normalizeServiceTypeId(raw) as CanonicalServiceId;
-    if (!(CANONICAL_SERVICE_IDS as readonly string[]).includes(id)) continue;
+    const id = resolveCanonicalServiceId(raw);
+    if (!id) continue;
     if (!unique.includes(id)) unique.push(id);
   }
   return unique.length ? JSON.stringify(unique) : null;
@@ -126,9 +142,8 @@ export function applicableServiceLabels(raw: string | null | undefined): string[
   return ids.map((id) => CHECKOUT_CATALOG[id]?.nome || id);
 }
 
-export function lineId(item: CartLine): string | null {
-  if (!item.id) return null;
-  return normalizeServiceTypeId(item.id);
+export function lineId(item: CartLine): CanonicalServiceId | null {
+  return resolveCanonicalServiceId(item.id);
 }
 
 export function sumCartLines(items: CartLine[]): number {
@@ -152,7 +167,7 @@ export function applicableSubtotal(
   const set = new Set(allowed);
   return sumCartLines(all.filter((item) => {
     const id = lineId(item);
-    return id != null && set.has(id as CanonicalServiceId);
+    return id != null && set.has(id);
   }));
 }
 
@@ -376,26 +391,45 @@ export async function recordApprovedPaymentCouponUse(
     couponId: string;
     userId: string;
     appointmentId?: number | null;
+    serviceId?: string | null;
   }
 ): Promise<{ ok: boolean; exhausted: boolean }> {
   const coupon = await db.coupon.findUnique({ where: { id: params.couponId } });
   if (!coupon) return { ok: false, exhausted: false };
 
   if (isPromotionalPartnershipCoupon(coupon)) {
-    if (!couponHasRemainingUses(coupon)) return { ok: false, exhausted: coupon.used };
     if (coupon.assignedUserId !== params.userId) return { ok: false, exhausted: false };
-    const next = Number(coupon.useCount || 0) + 1;
-    const exhausted = coupon.maxUses != null && next >= coupon.maxUses;
-    await db.coupon.update({
-      where: { id: coupon.id },
+    const maxUses = coupon.maxUses;
+    const claimed = await db.coupon.updateMany({
+      where: {
+        id: coupon.id,
+        isActive: true,
+        used: false,
+        assignedUserId: params.userId,
+        ...(maxUses == null ? {} : { useCount: { lt: maxUses } }),
+      },
       data: {
-        useCount: next,
-        used: exhausted,
+        useCount: { increment: 1 },
         usedAt: new Date(),
         usedBy: params.userId,
+        ...(params.appointmentId != null ? { appointmentId: params.appointmentId } : {}),
+        ...(params.serviceId ? { serviceId: params.serviceId } : {}),
       },
     });
-    return { ok: true, exhausted };
+    if (claimed.count === 1) {
+      const updated = await db.coupon.findUnique({ where: { id: coupon.id } });
+      const next = Number(updated?.useCount || 0);
+      const exhausted = maxUses != null && next >= maxUses;
+      if (exhausted && updated && !updated.used) {
+        await db.coupon.update({
+          where: { id: coupon.id },
+          data: { used: true },
+        });
+      }
+      return { ok: true, exhausted };
+    }
+
+    return bindConsumedCouponFulfillment(db, params);
   }
 
   const claimed = await db.coupon.updateMany({
@@ -411,9 +445,63 @@ export async function recordApprovedPaymentCouponUse(
       usedBy: params.userId,
       useCount: { increment: 1 },
       ...(params.appointmentId != null ? { appointmentId: params.appointmentId } : {}),
+      ...(params.serviceId ? { serviceId: params.serviceId } : {}),
     },
   });
-  return { ok: claimed.count === 1, exhausted: true };
+  if (claimed.count === 1) return { ok: true, exhausted: true };
+  return bindConsumedCouponFulfillment(db, params);
+}
+
+/** Liga FKs de um cupom já consumido, sem incrementar useCount. */
+async function bindConsumedCouponFulfillment(
+  db: CouponDbClient,
+  params: {
+    couponId: string;
+    userId: string;
+    appointmentId?: number | null;
+    serviceId?: string | null;
+  }
+): Promise<{ ok: boolean; exhausted: boolean }> {
+  const current = await db.coupon.findUnique({ where: { id: params.couponId } });
+  if (!current) return { ok: false, exhausted: false };
+  const consumed = Boolean(current.used) || Number(current.useCount || 0) > 0;
+  if (!consumed) return { ok: false, exhausted: false };
+  if (current.usedBy && current.usedBy !== params.userId) {
+    return { ok: false, exhausted: true };
+  }
+  if (
+    current.assignedUserId &&
+    current.assignedUserId !== params.userId &&
+    current.usedBy !== params.userId
+  ) {
+    return { ok: false, exhausted: true };
+  }
+  if (
+    params.appointmentId != null &&
+    current.appointmentId != null &&
+    current.appointmentId !== params.appointmentId
+  ) {
+    return { ok: true, exhausted: true };
+  }
+
+  const bindData: { appointmentId?: number; serviceId?: string } = {};
+  if (params.appointmentId != null && current.appointmentId == null) {
+    bindData.appointmentId = params.appointmentId;
+  }
+  if (params.serviceId && current.serviceId == null) {
+    bindData.serviceId = params.serviceId;
+  }
+  if (Object.keys(bindData).length > 0) {
+    await db.coupon.updateMany({
+      where: {
+        id: current.id,
+        ...(bindData.appointmentId != null ? { appointmentId: null } : {}),
+        ...(bindData.serviceId ? { serviceId: null } : {}),
+      },
+      data: bindData,
+    });
+  }
+  return { ok: true, exhausted: true };
 }
 
 export type PartnershipCouponDb = Prisma.CouponGetPayload<{

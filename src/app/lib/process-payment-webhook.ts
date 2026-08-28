@@ -4,7 +4,6 @@ import { prisma } from "@/app/lib/prisma";
 import { processAgendamentoPaymentEffects } from "@/app/lib/asaas-agendamento-payment-effects";
 import {
   assertWebhookAmountMatchesMetadata,
-  reconcileAgendamentoPaymentArtifacts,
   resolvePaymentOperationIdentity,
   resolvePaymentMetadataForWebhook,
 } from "@/app/lib/asaas-agendamento-reconcile";
@@ -42,7 +41,12 @@ async function publishPaymentEffectsReady(
   });
 }
 
-export async function processPaymentWebhook(body: { event: string; payment: any }) {
+// Payload Asaas: superfície variável; callers de teste/simulação passam o mesmo shape.
+export async function processPaymentWebhook(body: {
+  event: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  payment: any;
+}) {
   try {
     const { event, payment } = body;
 
@@ -105,7 +109,6 @@ export async function processPaymentWebhook(body: { event: string; payment: any 
     });
     assertWebhookAmountMatchesMetadata(metadata, value);
 
-    const wasDuplicate = !!existingPayment;
     let paymentRecord: { id: string; userId: string; type: string };
 
     if (existingPayment) {
@@ -156,7 +159,7 @@ export async function processPaymentWebhook(body: { event: string; payment: any 
         paymentMetadata: payment.metadata,
         description: payment.description,
       }).catch(() => ({}) as Record<string, unknown>);
-      if (String((metaPeek as any)?.tipo || "") === "carrinho" && created.type === "outro") {
+      if (String((metaPeek as Record<string, unknown>)?.tipo || "") === "carrinho" && created.type === "outro") {
         await prisma.payment.update({
           where: { id: created.id },
           data: { type: "agendamento" },
@@ -197,21 +200,6 @@ export async function processPaymentWebhook(body: { event: string; payment: any 
 
     console.log("[Process Payment Webhook] 📦 Metadata processado:", JSON.stringify(metadata, null, 2));
     console.log("[Process Payment Webhook] 📋 Tipo detectado:", tipo);
-
-    if (
-      wasDuplicate &&
-      (tipo === "agendamento" || tipo === "carrinho" || isAgendamentoDesc)
-    ) {
-      try {
-        await reconcileAgendamentoPaymentArtifacts({
-          paymentDbId: paymentRecord.id,
-          userId,
-          asaasPaymentId: paymentId,
-        });
-      } catch (reconcileErr: unknown) {
-        console.error("[Process Payment Webhook] Reconcile pós-duplicata falhou:", reconcileErr);
-      }
-    }
 
     if (tipo === "plano" || isPlanoDesc) {
       if (payment.subscription) {

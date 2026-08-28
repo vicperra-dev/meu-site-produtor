@@ -38,7 +38,7 @@ const VARIANT_CONFIG: Record<
 > = {
   gerais: {
     title: "Serviços Gerais",
-    subtitle: "Visão completa de todos os serviços: status, pagamento, agendamento e entrega.",
+    subtitle: "Visão completa de todos os serviços: status, pagamento, agendamento, entrega e financeiro.",
     basePath: "/admin/servicos",
     surface: "servicos-gerais",
   },
@@ -79,6 +79,9 @@ function matchesSearch(s: AdminService, q: string): boolean {
     s.status,
     s.payment?.status || "",
     s.payment?.paymentMethod || "",
+    s.financial?.couponCode || "",
+    s.financial?.paymentLabel || "",
+    s.financial?.couponKindLabel || "",
     s.payment ? s.payment.amount.toFixed(2) : "",
     formatDate(s.appointment?.data || s.createdAt),
     s.description || "",

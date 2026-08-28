@@ -1,8 +1,10 @@
 /**
  * BUG-001 — Estado operacional do calendário (fonte única de verdade).
  *
- * Admin e Usuário consomem a mesma ocupação; a projeção visual divergente
- * (legendas) é feita por `toUserDayVisual` / estilos de slot — nunca recalcular datas.
+ * Admin e Usuário consomem a mesma ocupação (`computeCalendarDayStates`).
+ * A paleta Admin continua em `resolveCalendarDayVisual` / `toUserDayVisual`.
+ * O calendário público NÃO projeta a paleta Admin: usa
+ * `resolvePublicHourKind` / `resolvePublicDayVisual` (contagem de slots elegíveis).
  */
 import { isSchedulableServiceType } from "@/app/lib/service-catalog";
 import { appointmentReservesCalendar } from "@/app/lib/domain/statuses";
@@ -174,9 +176,18 @@ export function resolvePresencialStatus(
 }
 
 /**
- * Visual Admin do dia.
- * Vermelho = sem livres e ainda há bloqueio/reserva ativa.
- * Azul = sem livres e só histórico concluído (sem ativa/bloqueio).
+ * Visual Admin do dia (fonte canônica da paleta Controle de Agendamento).
+ *
+ * Prioridade de estados finais (inalterada):
+ * - Sem horários livres + reserva ativa ou bloqueio → ocupado (vermelho)
+ * - Sem horários livres + só histórico concluído → concluido (azul)
+ *
+ * Com horários livres restantes, a cor descreve o TIPO de atividade:
+ * - Amarelo (`parcial`) = Sessão/Captação e/ou bloqueio administrativo
+ *   (indisponibilidade de estúdio conta como categoria "Serviço" na paleta)
+ * - Roxo (`entrega`) = só Produção
+ * - Amarelo+Roxo (`parcial_entrega`) = Produção + categoria amarela
+ * - Verde (`livre`) = nenhuma atividade/bloqueio
  */
 export function resolveCalendarDayVisual(params: {
   activePresencialHours: string[];
@@ -196,6 +207,7 @@ export function resolveCalendarDayVisual(params: {
   const hasBlocked = params.blockedHours.length > 0;
   const hasCompleted = params.completedHours.length > 0;
   const hasActive = hasActivePresencial || hasActiveProduction;
+  const hasYellowCategory = hasActivePresencial || hasBlocked;
 
   if (freeCount <= 0) {
     if (hasActive || hasBlocked) return "ocupado";
@@ -203,14 +215,14 @@ export function resolveCalendarDayVisual(params: {
     return "ocupado";
   }
 
-  if (hasActivePresencial && hasActiveProduction) return "parcial_entrega";
-  if (hasActivePresencial) return "parcial";
+  if (hasYellowCategory && hasActiveProduction) return "parcial_entrega";
+  if (hasYellowCategory) return "parcial";
   if (hasActiveProduction) return "entrega";
   // Só concluídos com livres restantes → dia ainda reservável (verde)
   return "livre";
 }
 
-/** Projeção Usuário: Livre / Ocupado (parcial) / Indisponível. Sem roxo/azul. */
+/** Projeção Usuário a partir da paleta Admin (legado / homologação). */
 export function toUserDayVisual(
   visual: CalendarDayVisual,
   opts?: { past?: boolean }
@@ -228,6 +240,107 @@ export function toUserDayVisual(
     default:
       return "parcial";
   }
+}
+
+/** Horário no calendário público: disponível / ocupado por reserva / bloqueado pelo estúdio. */
+export type PublicHourKind = "available" | "occupied" | "blocked";
+
+export function eligibleHoursForPublicCalendar(
+  hours?: readonly string[] | null
+): string[] {
+  const src = hours && hours.length > 0 ? hours : OPERATIONAL_HOURS;
+  return [...new Set(src.map((h) => normalizeHourLabel(h)))];
+}
+
+/**
+ * Fonte canônica do horário público.
+ * Bloqueio administrativo tem prioridade sobre reserva (nunca amarelo).
+ */
+export function resolvePublicHourKind(
+  hour: string,
+  state: Pick<CalendarDayState, "occupiedHours" | "blockedHours">
+): PublicHourKind {
+  const h = normalizeHourLabel(hour);
+  const blocked = new Set((state.blockedHours || []).map(normalizeHourLabel));
+  if (blocked.has(h)) return "blocked";
+  const occupied = new Set((state.occupiedHours || []).map(normalizeHourLabel));
+  if (occupied.has(h)) return "occupied";
+  return "available";
+}
+
+export function countPublicDaySlots(
+  state: Pick<CalendarDayState, "occupiedHours" | "blockedHours">,
+  eligibleHours?: readonly string[] | null
+): {
+  availableCount: number;
+  occupiedCount: number;
+  blockedCount: number;
+  totalEligibleSlots: number;
+} {
+  const hours = eligibleHoursForPublicCalendar(eligibleHours);
+  let availableCount = 0;
+  let occupiedCount = 0;
+  let blockedCount = 0;
+  for (const h of hours) {
+    const kind = resolvePublicHourKind(h, state);
+    if (kind === "available") availableCount += 1;
+    else if (kind === "occupied") occupiedCount += 1;
+    else blockedCount += 1;
+  }
+  return {
+    availableCount,
+    occupiedCount,
+    blockedCount,
+    totalEligibleSlots: hours.length,
+  };
+}
+
+/**
+ * Fonte canônica do dia no calendário público (verde / amarelo / vermelho).
+ * Depende dos horários elegíveis do serviço, não da paleta Admin.
+ */
+export function resolvePublicDayVisual(
+  state: Pick<CalendarDayState, "occupiedHours" | "blockedHours">,
+  opts?: { past?: boolean; eligibleHours?: readonly string[] | null }
+): UserCalendarDayVisual {
+  if (opts?.past) return "ocupado";
+  const { availableCount, totalEligibleSlots } = countPublicDaySlots(
+    state,
+    opts?.eligibleHours
+  );
+  if (totalEligibleSlots <= 0) return "ocupado";
+  if (availableCount === totalEligibleSlots) return "livre";
+  if (availableCount > 0) return "parcial";
+  return "ocupado";
+}
+
+export function isPublicDaySelectable(
+  visual: UserCalendarDayVisual,
+  past?: boolean
+): boolean {
+  if (past) return false;
+  return visual !== "ocupado";
+}
+
+export function isPublicHourSelectable(
+  kind: PublicHourKind,
+  past?: boolean
+): boolean {
+  if (past) return false;
+  return kind === "available";
+}
+
+/** Estilo/interação do horário público a partir do kind de domínio. */
+export function publicHourSlotPresentation(
+  kind: PublicHourKind,
+  opts?: { past?: boolean; selected?: boolean }
+): { className: string; disabled: boolean } {
+  return userHourSlotClass({
+    past: Boolean(opts?.past),
+    unavailable: Boolean(opts?.past) || kind === "blocked",
+    occupied: kind === "occupied" && !opts?.past,
+    selected: opts?.selected,
+  });
 }
 
 export function computeCalendarDayStates(params: {
@@ -423,7 +536,12 @@ export function resolveNextProductionHourForDay(params: {
 /** Legenda Admin — dias. */
 export const ADMIN_DAY_LEGEND = [
   { visual: "livre" as const, label: "Livre", color: "Verde", swatch: "bg-green-600" },
-  { visual: "parcial" as const, label: "Serviço", color: "Amarelo", swatch: "bg-yellow-500" },
+  {
+    visual: "parcial" as const,
+    label: "Serviço",
+    color: "Amarelo",
+    swatch: "bg-yellow-500",
+  }, // Sessão, Captação e/ou bloqueio administrativo
   { visual: "entrega" as const, label: "Produção", color: "Roxo", swatch: "bg-purple-600" },
   {
     visual: "parcial_entrega" as const,
@@ -451,7 +569,13 @@ export const CALENDAR_LEGEND = ADMIN_DAY_LEGEND.map((l) => ({
 
 export function calendarDayCellStyle(
   visual: CalendarDayVisual,
-  opts?: { past?: boolean; selected?: boolean; audience?: "admin" | "user" }
+  opts?: {
+    past?: boolean;
+    selected?: boolean;
+    audience?: "admin" | "user";
+    dayState?: CalendarDayState;
+    eligibleHours?: readonly string[];
+  }
 ): { className: string; style?: Record<string, string> } {
   const audience = opts?.audience || "admin";
   if (opts?.past && audience === "user") {
@@ -462,7 +586,12 @@ export function calendarDayCellStyle(
   }
   const shown: CalendarDayVisual | UserCalendarDayVisual =
     audience === "user"
-      ? toUserDayVisual(visual, { past: opts?.past })
+      ? opts?.dayState
+        ? resolvePublicDayVisual(opts.dayState, {
+            past: opts?.past,
+            eligibleHours: opts?.eligibleHours,
+          })
+        : toUserDayVisual(visual, { past: opts?.past })
       : opts?.past && visual !== "livre" && visual !== "concluido"
         ? "ocupado"
         : visual;

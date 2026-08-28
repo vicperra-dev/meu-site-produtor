@@ -158,18 +158,27 @@ export async function PATCH(req: Request) {
     await requireAdmin();
 
     const body = await req.json();
-    const { action } = body;
+    const { action, unpublishIds } = body;
 
     if (action === "confirmar") {
-      // Marcar todos os slots bloqueados como ativos
+      const ids = Array.isArray(unpublishIds)
+        ? unpublishIds.filter((id: unknown) => typeof id === "string")
+        : [];
+
+      if (ids.length) {
+        await prisma.blockedTimeSlot.deleteMany({
+          where: { id: { in: ids } },
+        });
+      }
+
       await prisma.blockedTimeSlot.updateMany({
         where: { ativo: false },
         data: { ativo: true },
       });
 
-      return NextResponse.json({ 
+      return NextResponse.json({
         success: true,
-        message: "Mudanças confirmadas e publicadas com sucesso!" 
+        message: "Mudanças confirmadas e publicadas com sucesso!",
       });
     }
 

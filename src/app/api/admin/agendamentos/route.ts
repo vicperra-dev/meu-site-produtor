@@ -4,6 +4,7 @@ import { requireAdmin } from "@/app/lib/auth";
 import { z } from "zod";
 import { sendAppointmentAcceptedEmail, sendAppointmentRejectedEmail } from "@/app/lib/sendEmail";
 import { pickPrimaryCouponForDisplay } from "@/app/lib/coupon-selection";
+import { resolveAppointmentFinancialSummary } from "@/app/lib/admin-financial-summary";
 import {
   approveAppointment,
   rejectAppointment,
@@ -101,6 +102,21 @@ export async function GET() {
         });
       }
 
+      const servicosDosApts =
+        aptIds.length > 0
+          ? await prisma.service.findMany({
+              where: { appointmentId: { in: aptIds } },
+              select: { appointmentId: true, tipo: true },
+            })
+          : [];
+      const tiposPorApt = new Map<number, string[]>();
+      for (const s of servicosDosApts) {
+        if (s.appointmentId == null) continue;
+        const list = tiposPorApt.get(s.appointmentId) || [];
+        list.push(s.tipo);
+        tiposPorApt.set(s.appointmentId, list);
+      }
+
       const listaCuponsPorAgendamento = (aptId: number): typeof todosCuponsRelacionados => {
         const map = new Map<string, (typeof todosCuponsRelacionados)[0]>();
         for (const c of todosCuponsRelacionados) {
@@ -129,6 +145,12 @@ export async function GET() {
         }
         const lista = listaCuponsPorAgendamento(agendamento.id);
         const cupom = pickPrimaryCouponForDisplay(lista);
+        const financial = resolveAppointmentFinancialSummary({
+          tipo: agendamento.tipo,
+          serviceTipos: tiposPorApt.get(agendamento.id) || [agendamento.tipo],
+          payment: pagamento,
+          coupons: lista,
+        });
         return {
           ...agendamento,
           user: agendamento.user ?? { nomeArtistico: "Cliente", email: "" },
@@ -139,9 +161,11 @@ export async function GET() {
                 status: pagamento.status,
                 paymentMethod: pagamento.paymentMethod,
                 asaasId: pagamento.asaasId,
+                provider: pagamento.provider,
                 createdAt: pagamento.createdAt,
               }
             : null,
+          financial,
           cupomAssociado: cupom
             ? {
                 id: cupom.id,
@@ -177,6 +201,7 @@ export async function GET() {
           ...a,
           user: a.user ?? { nomeArtistico: "Cliente", email: "" },
           pagamentoConfirmado: null,
+          financial: null,
           cupomAssociado: null,
           cuponsAssociados: [],
         })),

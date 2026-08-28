@@ -7,6 +7,7 @@ import {
 } from "@/app/lib/service-catalog";
 import { normalizeStaleCouponAppointmentLink } from "@/app/lib/coupon-stale-appointment";
 import { resolveCanonicalCouponType } from "@/app/lib/domain/coupon-types";
+import { resolveCouponCheckoutMode } from "@/app/lib/checkout-coupon-gates";
 import { validateCouponAndGetTotal } from "@/app/lib/validate-coupon-checkout";
 import { canUseSymbolicSimulation } from "@/app/lib/symbolic-payment";
 
@@ -48,11 +49,7 @@ export async function POST(req: Request) {
     }
 
     const canonicalType = resolveCanonicalCouponType(currentCoupon);
-    const serviceLike =
-      canonicalType === "SERVICE" ||
-      canonicalType === "REBOOK" ||
-      (canonicalType === "REFUND" && currentCoupon.discountType === "service") ||
-      (canonicalType === "TEST" && currentCoupon.discountType === "service");
+    const mode = resolveCouponCheckoutMode(currentCoupon);
     const subtotal = totalPricedCheckoutItems([...services, ...beats]);
     const result = await validateCouponAndGetTotal(
       code,
@@ -61,7 +58,7 @@ export async function POST(req: Request) {
       beats,
       {
         userId: user.id,
-        mode: serviceLike ? "service-redemption" : "discount",
+        mode,
         selectedServiceIds: [...services, ...beats].flatMap((item) =>
           Array.from({ length: item.quantidade }, () => item.id)
         ),
@@ -72,13 +69,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: result.error }, { status: 400 });
     }
 
-    const discount = Math.round((subtotal - result.finalTotal) * 100) / 100;
     return NextResponse.json({
       valid: true,
-      subtotal,
-      discount,
+      subtotal: result.subtotal,
+      discount: result.discount,
       finalTotal: result.finalTotal,
-      isServiceCoupon: serviceLike,
+      isServiceCoupon: mode === "service-redemption",
       couponType: canonicalType,
       coupon: {
         code: currentCoupon.code,

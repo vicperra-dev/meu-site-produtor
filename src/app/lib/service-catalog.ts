@@ -25,6 +25,10 @@ export const CANONICAL_SERVICE_IDS = [
 
 export type CanonicalServiceId = (typeof CANONICAL_SERVICE_IDS)[number];
 
+export function isCanonicalServiceId(value: string): value is CanonicalServiceId {
+  return (CANONICAL_SERVICE_IDS as readonly string[]).includes(value);
+}
+
 export type CheckoutCatalogItem = {
   id: CanonicalServiceId;
   nome: string;
@@ -89,8 +93,8 @@ export function priceCheckoutItems(
 ): PricedCheckoutItem[] {
   if (!Array.isArray(items)) return [];
   return items.map((item) => {
-    const id = normalizeServiceTypeId(item.id) as CanonicalServiceId;
-    const catalogItem = CHECKOUT_CATALOG[id];
+    const id = resolveCanonicalServiceId(item.id);
+    const catalogItem = id ? CHECKOUT_CATALOG[id] : undefined;
     if (!catalogItem || (expectedCategory && catalogItem.category !== expectedCategory)) {
       throw new Error(`ITEM_CATALOGO_INVALIDO:${item.id}`);
     }
@@ -124,10 +128,22 @@ export function normalizeServiceTypeId(raw: string): string {
     mix_e_master: "mix_master",
     "mix+master": "mix_master",
     sessão: "sessao",
+    sessao: "sessao",
     captacao: "captacao",
     captação: "captacao",
   };
   return aliases[s] || s;
+}
+
+/**
+ * Identidade canônica de SKU do catálogo.
+ * Não usa rótulo visual; vazio não cai em "sessao".
+ */
+export function resolveCanonicalServiceId(raw: string | null | undefined): CanonicalServiceId | null {
+  const trimmed = String(raw || "").trim();
+  if (!trimmed) return null;
+  const normalized = normalizeServiceTypeId(trimmed);
+  return isCanonicalServiceId(normalized) ? normalized : null;
 }
 
 export function isSchedulableServiceType(rawId?: string | null, rawName?: string | null): boolean {

@@ -313,17 +313,16 @@ export function serviceTypeLabel(tipo: string): string {
 
 /** Grupos do filtro rápido de tipo (PARTE 4). */
 export const TYPE_FILTERS: { value: string; label: string; match: (tipo: string) => boolean }[] = [
-  { value: "sessao", label: "Sessão", match: (t) => norm(t) === "sessao" || norm(t) === "captacao" },
-  { value: "beat", label: "Beat", match: (t) => norm(t).startsWith("beat") && norm(t) !== "beat_mix_master" },
+  { value: "sessao", label: "Sessão", match: (t) => norm(t) === "sessao" },
+  { value: "captacao", label: "Captação", match: (t) => norm(t) === "captacao" },
+  { value: "beat", label: "Beat", match: (t) => norm(t).startsWith("beat") && !norm(t).includes("mix") },
   { value: "mix", label: "Mixagem", match: (t) => norm(t) === "mix" || norm(t) === "mixagem" },
-  { value: "master", label: "Master", match: (t) => norm(t) === "master" || norm(t) === "masterizacao" },
-  { value: "mix_master", label: "Mix + Master", match: (t) => norm(t) === "mix_master" },
-  { value: "producao_completa", label: "Produção Completa", match: (t) => norm(t) === "producao_completa" },
-  { value: "sonoplastia", label: "Sonoplastia", match: (t) => norm(t) === "sonoplastia" },
+  { value: "master", label: "Masterização", match: (t) => norm(t) === "master" || norm(t) === "masterizacao" },
   {
-    value: "pacotes",
-    label: "Pacotes",
-    match: (t) => ["beat_mix_master", "producao_completa", "mix_master", "beat2", "beat3", "beat4"].includes(norm(t)),
+    value: "producao",
+    label: "Produção",
+    match: (t) =>
+      ["sonoplastia", "mix_master", "beat_mix_master", "producao_completa"].includes(norm(t)),
   },
 ];
 

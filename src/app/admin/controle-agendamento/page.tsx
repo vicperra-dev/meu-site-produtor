@@ -32,26 +32,39 @@ import {
   isoDateFromParts,
   daysInMonth,
 } from "@/app/lib/calendar-day-state";
+import {
+  type AdminBlockedSlot,
+  slotKey,
+  toggleIsoInList,
+  isAppointmentOccupiedHour,
+  resolveAdminDayVisualWithDraft,
+} from "@/app/lib/admin-calendar-mutations";
 import { useDomainRefresh } from "@/app/hooks/useDomainRefresh";
 
 const HORARIOS_PADRAO = [...OPERATIONAL_HOURS];
+const PENDING_UNPUBLISH_KEY = "thouserec.admin.pendingUnpublishSlotIds";
 
-
-interface BlockedSlot {
-  id: string;
-  data: string;
-  hora: string;
+function loadPendingUnpublishIds(): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const parsed = JSON.parse(localStorage.getItem(PENDING_UNPUBLISH_KEY) || "[]");
+    return Array.isArray(parsed)
+      ? parsed.filter((id): id is string => typeof id === "string")
+      : [];
+  } catch {
+    return [];
+  }
 }
+
+type BlockedSlot = AdminBlockedSlot;
 
 export default function AdminControleAgendamentoPage() {
   const { notifySuccess, notifyError, ask } = useFeedback();
-  // Data mínima: 1 de janeiro do ano atual
-  const DATA_MINIMA = new Date(new Date().getFullYear(), 0, 1); // 1 de janeiro do ano atual
+  const DATA_MINIMA = new Date(new Date().getFullYear(), 0, 1);
 
   const [dataBase, setDataBase] = useState(() => {
     const hoje = new Date();
     const primeiroDia = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
-    // Se o primeiro dia do mês atual for antes de 1 de janeiro, usar 1 de janeiro
     return primeiroDia < DATA_MINIMA ? DATA_MINIMA : primeiroDia;
   });
 
@@ -63,11 +76,15 @@ export default function AdminControleAgendamentoPage() {
   const [loading, setLoading] = useState(true);
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [confirmando, setConfirmando] = useState(false);
+  const [dayBatchMode, setDayBatchMode] = useState<null | "block" | "unblock">(null);
+  const [selectedDates, setSelectedDates] = useState<string[]>([]);
+  const [hourBatchMode, setHourBatchMode] = useState<null | "block" | "unblock">(null);
+  const [selectedHours, setSelectedHours] = useState<string[]>([]);
+  const [pendingUnpublishIds, setPendingUnpublishIds] = useState<string[]>([]);
+  const [pendingUnpublishReady, setPendingUnpublishReady] = useState(false);
+  const [batchBusy, setBatchBusy] = useState(false);
 
-  // Função helper para verificar se uma data já passou (fuso do estúdio)
   const isDataPassada = (isoDate: string): boolean => isIsoDatePastStudio(isoDate);
-
-  // Função helper para verificar se um horário já passou
   const isHorarioPassado = (isoDate: string, hora: string): boolean =>
     isStudioDateTimePast(isoDate, hora);
 
@@ -99,6 +116,20 @@ export default function AdminControleAgendamentoPage() {
   }, []);
 
   useEffect(() => {
+    setPendingUnpublishIds(loadPendingUnpublishIds());
+    setPendingUnpublishReady(true);
+  }, []);
+
+  useEffect(() => {
+    if (!pendingUnpublishReady) return;
+    try {
+      localStorage.setItem(PENDING_UNPUBLISH_KEY, JSON.stringify(pendingUnpublishIds));
+    } catch {
+      /* ignore quota */
+    }
+  }, [pendingUnpublishIds, pendingUnpublishReady]);
+
+  useEffect(() => {
     void carregarDados();
   }, [dataBase, carregarDados]);
 
@@ -111,244 +142,118 @@ export default function AdminControleAgendamentoPage() {
     for (const [date, state] of Object.entries(dayStates)) {
       ocupados[date] = new Set(state.occupiedHours || []);
     }
-    if (Object.keys(ocupados).length === 0) {
-      blockedSlots.forEach((slot) => {
-        if (!ocupados[slot.data]) ocupados[slot.data] = new Set();
-        ocupados[slot.data].add(slot.hora);
-      });
-    }
     return ocupados;
-  }, [dayStates, blockedSlots]);
+  }, [dayStates]);
 
   const calYear = dataBase.getFullYear();
   const calMonth = dataBase.getMonth() + 1;
   const ultimoDiaDoMes = daysInMonth(calYear, calMonth);
-
   const primeiroDiaSemana = new Date(calYear, calMonth - 1, 1).getDay();
-
   const dias: (number | null)[] = [];
   for (let i = 0; i < primeiroDiaSemana; i++) dias.push(null);
-
   for (let d = 1; d <= ultimoDiaDoMes; d++) {
     const dataDia = new Date(calYear, calMonth - 1, d);
-    if (dataDia >= DATA_MINIMA) {
-      dias.push(d);
-    } else {
-      dias.push(null);
+    dias.push(dataDia >= DATA_MINIMA ? d : null);
+  }
+
+  const pendingUnpublishKeys = useMemo(() => {
+    const keys = new Set<string>();
+    const idSet = new Set(pendingUnpublishIds);
+    for (const slot of blockedSlots) {
+      if (idSet.has(slot.id)) keys.add(slotKey(slot.data, slot.hora));
     }
-  }
+    return keys;
+  }, [blockedSlots, pendingUnpublishIds]);
 
-  // Estado visual do dia — calculado no backend (GO-H4)
+  const draftBlockCount = blockedSlots.filter((s) => s.ativo === false).length;
+  const pendingReleaseCount = pendingUnpublishIds.length;
+
   function getDiaVisual(data: string): CalendarDayVisual {
-    return getCalendarDayState(dayStates, data).visual;
+    return resolveAdminDayVisualWithDraft({
+      state: getCalendarDayState(dayStates, data),
+      date: data,
+      blockedSlots,
+      pendingUnpublishKeys,
+    });
   }
 
-  // Função para normalizar hora (garantir formato HH:00)
   function normalizarHora(hora: string): string {
     return normalizeHourLabel(hora);
   }
 
-  // Função para bloquear/desbloquear um horário
-  async function toggleSlot(data: string, hora: string) {
-    const horaNormalizada = normalizarHora(hora);
-    console.log("[DEBUG] toggleSlot:", { data, hora, horaNormalizada, blockedSlots });
-    
-    // Verificar se existe (comparando com hora normalizada)
-    const existe = blockedSlots.some((s) => {
-      const sHoraNormalizada = normalizarHora(s.hora);
-      return s.data === data && sHoraNormalizada === horaNormalizada;
-    });
-
-    console.log("[DEBUG] Slot existe?", existe);
-
+  async function applyAdminBatch(body: Record<string, unknown>) {
+    setBatchBusy(true);
     try {
-      if (existe) {
-        // Remover bloqueio
-        const slot = blockedSlots.find((s) => {
-          const sHoraNormalizada = normalizarHora(s.hora);
-          return s.data === data && sHoraNormalizada === horaNormalizada;
-        });
-        
-        console.log("[DEBUG] Slot encontrado para remover:", slot);
-        
-        if (slot) {
-          const res = await fetch(`/api/admin/blocked-slots?id=${slot.id}`, {
-            method: "DELETE",
-          });
-          
-          console.log("[DEBUG] Resposta DELETE:", res.status, res.ok);
-          
-          if (res.ok) {
-            setBlockedSlots((prev) => prev.filter((s) => s.id !== slot.id));
-            await carregarDados();
-            console.log("[DEBUG] Slot removido com sucesso");
-          } else {
-            const error = await res.json().catch(() => ({}));
-            console.error("Erro ao remover slot:", error);
-            notifyError(`Erro ao remover bloqueio: ${error.error || "Erro desconhecido"}`);
-          }
-        } else {
-          console.warn("[DEBUG] Slot não encontrado para remover");
-        }
-      } else {
-        // Adicionar bloqueio
-        console.log("[DEBUG] Criando novo slot bloqueado...");
-        const res = await fetch("/api/admin/blocked-slots", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ data, hora: horaNormalizada }),
-        });
-        
-        console.log("[DEBUG] Resposta POST:", res.status, res.ok);
-        
-        if (res.ok) {
-          const novoSlot = await res.json();
-          console.log("[DEBUG] Novo slot criado:", novoSlot);
-          setBlockedSlots((prev) => [...prev, novoSlot.slot]);
-          await carregarDados();
-          console.log("[DEBUG] Slot adicionado com sucesso");
-        } else {
-          const errorText = await res.text().catch(() => "Erro desconhecido");
-          let error;
-          try {
-            error = JSON.parse(errorText);
-          } catch {
-            error = { error: errorText, message: errorText };
-          }
-          console.error("Erro ao criar slot - Status:", res.status);
-          console.error("Erro ao criar slot - Resposta:", error);
-          notifyError(`Erro ao bloquear horário (${res.status}): ${error.error || error.message || "Erro desconhecido"}`);
-        }
+      const res = await fetch("/api/admin/blocked-slots/batch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        notifyError(data.error || "Erro ao aplicar alteração administrativa.");
+        return false;
       }
+      if (Array.isArray(data.pendingUnpublishIds) && data.pendingUnpublishIds.length) {
+        setPendingUnpublishIds((prev) => [
+          ...new Set([...prev, ...data.pendingUnpublishIds]),
+        ]);
+      }
+      if (data.notice) notifySuccess(data.notice);
+      await carregarDados({ silent: true });
+      return true;
     } catch (err) {
-      console.error("Erro ao alternar slot", err);
-      notifyError(`Erro ao alterar horário: ${err instanceof Error ? err.message : "Erro desconhecido"}`);
+      notifyError(
+        `Erro ao alterar horários: ${err instanceof Error ? err.message : "Erro desconhecido"}`
+      );
+      return false;
+    } finally {
+      setBatchBusy(false);
     }
   }
 
-  // Função para bloquear/desbloquear dia inteiro
-  async function toggleDia(data: string) {
-    const ocupados = horariosOcupadosPorDia[data] || new Set<string>();
-    const slotsDoDia = blockedSlots.filter((s) => s.data === data);
-    const horariosBloqueados = new Set(
-      slotsDoDia.map((s) => normalizarHora(s.hora))
+  async function toggleSlot(data: string, hora: string) {
+    const horaNormalizada = normalizarHora(hora);
+    const existe = blockedSlots.some(
+      (s) => s.data === data && normalizarHora(s.hora) === horaNormalizada
     );
-    
-    // Verificar se todos os horários estão bloqueados (comparando com horas normalizadas)
-    const todosBloqueados = HORARIOS_PADRAO.every((h) => {
-      const hNormalizada = normalizarHora(h);
-      return horariosBloqueados.has(hNormalizada);
+    await applyAdminBatch({
+      action: existe ? "unblock" : "block",
+      slots: [{ data, hora: horaNormalizada }],
     });
-    
-    try {
-      if (todosBloqueados) {
-        // Desbloquear todos os horários do dia
-        const promises = slotsDoDia.map((slot) =>
-          fetch(`/api/admin/blocked-slots?id=${slot.id}`, {
-            method: "DELETE",
-          })
-        );
-        const results = await Promise.allSettled(promises);
-        const errors = results.filter(r => r.status === "rejected");
-        const failed = results.filter(r => 
-          r.status === "fulfilled" && !r.value.ok
-        );
-        
-        if (errors.length > 0 || failed.length > 0) {
-          console.error("Alguns horários não puderam ser desbloqueados:", { errors, failed });
-          const totalErrors = errors.length + failed.length;
-          if (totalErrors < slotsDoDia.length) {
-            notifyError(`${slotsDoDia.length - totalErrors} horário(s) desbloqueado(s) com sucesso. ${totalErrors} falharam.`);
-          } else {
-            notifyError("Erro ao desbloquear horários. Verifique o console para mais detalhes.");
-          }
-        } else {
-          notifySuccess(`${slotsDoDia.length} horário(s) desbloqueado(s) com sucesso!`);
-        }
-        await carregarDados();
-      } else {
-        // Bloquear todos os horários do dia que não estão ocupados por agendamentos
-        const horariosParaBloquear = HORARIOS_PADRAO.filter((h) => {
-          const hNormalizada = normalizarHora(h);
-          return !ocupados.has(h) && !horariosBloqueados.has(hNormalizada);
-        });
-        
-        const promises = horariosParaBloquear.map(async (hora) => {
-          try {
-            const res = await fetch("/api/admin/blocked-slots", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ data, hora: normalizarHora(hora) }),
-            });
-            
-            // Se for 409 (já existe), considerar como sucesso
-            if (res.status === 409) {
-              return { ok: true, status: 409, message: "Já existe" };
-            }
-            
-            return res;
-          } catch (err) {
-            throw err;
-          }
-        });
-        
-        const results = await Promise.allSettled(promises);
-        const errors = results.filter(r => r.status === "rejected");
-        const failed = results.filter(r => 
-          r.status === "fulfilled" && 
-          r.value &&
-          !r.value.ok && 
-          r.value.status !== 409 // Ignorar 409 (já existe)
-        );
-        
-        const sucessos = results.filter(r => 
-          r.status === "fulfilled" && 
-          r.value &&
-          (r.value.ok || r.value.status === 409)
-        );
-        
-        if (errors.length > 0 || failed.length > 0) {
-          console.error("Alguns horários não puderam ser bloqueados:", { errors, failed });
-          const totalErrors = errors.length + failed.length;
-          if (sucessos.length > 0) {
-            notifyError(`${sucessos.length} horário(s) bloqueado(s) com sucesso. ${totalErrors} falharam.`);
-          } else {
-            notifyError("Erro ao bloquear horários. Verifique o console para mais detalhes.");
-          }
-        } else {
-          notifySuccess(`${horariosParaBloquear.length} horário(s) bloqueado(s) com sucesso!`);
-        }
-        await carregarDados();
-      }
-    } catch (err) {
-      console.error("Erro ao alternar dia", err);
-      notifyError(`Erro ao alterar dia: ${err instanceof Error ? err.message : "Erro desconhecido"}`);
-    }
+  }
+
+  async function toggleDia(data: string) {
+    const slotsDoDia = blockedSlots.filter((s) => s.data === data);
+    const horariosBloqueados = new Set(slotsDoDia.map((s) => normalizarHora(s.hora)));
+    const todosBloqueados = HORARIOS_PADRAO.every((h) =>
+      horariosBloqueados.has(normalizarHora(h))
+    );
+    await applyAdminBatch(
+      todosBloqueados
+        ? { action: "unblock", dates: [data] }
+        : { action: "block", dates: [data], eligibleHours: HORARIOS_PADRAO }
+    );
   }
 
   function isSlotBlocked(data: string, hora: string): boolean {
     const horaNormalizada = normalizarHora(hora);
-    return blockedSlots.some((s) => {
-      const sHoraNormalizada = normalizarHora(s.hora);
-      return s.data === data && sHoraNormalizada === horaNormalizada;
-    });
-  }
-
-  function isSlotOccupied(data: string, hora: string): boolean {
-    const ocupados = horariosOcupadosPorDia[data] || new Set<string>();
-    return ocupados.has(hora);
+    if (pendingUnpublishKeys.has(slotKey(data, horaNormalizada))) return false;
+    return blockedSlots.some(
+      (s) => s.data === data && normalizarHora(s.hora) === horaNormalizada
+    );
   }
 
   const handleMesAnterior = () => {
     setDataBase((prev) => {
       const novoMes = new Date(prev.getFullYear(), prev.getMonth() - 1, 1);
-      // Não permitir ir antes de 1 de janeiro
       return novoMes < DATA_MINIMA ? DATA_MINIMA : novoMes;
     });
     setSelectedDay(null);
+    setHourBatchMode(null);
+    setSelectedHours([]);
   };
 
-  // Verificar se pode ir para o mês anterior
   const podeIrMesAnterior = () => {
     const mesAnterior = new Date(dataBase.getFullYear(), dataBase.getMonth() - 1, 1);
     return mesAnterior >= DATA_MINIMA;
@@ -357,22 +262,64 @@ export default function AdminControleAgendamentoPage() {
   const handleProximoMes = () => {
     setDataBase((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
     setSelectedDay(null);
+    setHourBatchMode(null);
+    setSelectedHours([]);
   };
+
+  function toggleDateSelection(isoDate: string) {
+    setSelectedDates((prev) => toggleIsoInList(prev, isoDate));
+  }
+
+  function cancelDayBatchMode() {
+    setDayBatchMode(null);
+    setSelectedDates([]);
+  }
+
+  async function applySelectedDays() {
+    if (!dayBatchMode || selectedDates.length === 0) return;
+    const ok = await applyAdminBatch(
+      dayBatchMode === "block"
+        ? { action: "block", dates: selectedDates, eligibleHours: HORARIOS_PADRAO }
+        : { action: "unblock", dates: selectedDates }
+    );
+    if (ok) cancelDayBatchMode();
+  }
+
+  function cancelHourBatchMode() {
+    setHourBatchMode(null);
+    setSelectedHours([]);
+  }
+
+  function toggleHourSelection(hora: string) {
+    const h = normalizarHora(hora);
+    setSelectedHours((prev) =>
+      prev.includes(h) ? prev.filter((x) => x !== h) : [...prev, h]
+    );
+  }
+
+  async function applySelectedHours() {
+    if (!hourBatchMode || !selectedDay || selectedHours.length === 0) return;
+    const ok = await applyAdminBatch({
+      action: hourBatchMode,
+      slots: selectedHours.map((hora) => ({ data: selectedDay, hora })),
+    });
+    if (ok) cancelHourBatchMode();
+  }
 
   const selectedDayData = selectedDay
     ? {
         isoDate: selectedDay,
         ocupados: horariosOcupadosPorDia[selectedDay] || new Set<string>(),
         slotsBloqueados: blockedSlots.filter((s) => s.data === selectedDay),
+        dayState: getCalendarDayState(dayStates, selectedDay),
       }
     : null;
 
-  // Função para confirmar e publicar mudanças
   async function confirmarMudancas() {
     if (
       !(await ask(
         "Tem certeza que deseja confirmar e publicar todas as mudanças?",
-        "Isso tornará os horários bloqueados visíveis na página pública de agendamento."
+        "Isso aplica bloqueios em rascunho e liberações pendentes no calendário público."
       ))
     ) {
       return;
@@ -383,13 +330,17 @@ export default function AdminControleAgendamentoPage() {
       const res = await fetch("/api/admin/blocked-slots", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "confirmar" }),
+        body: JSON.stringify({
+          action: "confirmar",
+          unpublishIds: pendingUnpublishIds,
+        }),
       });
 
       if (res.ok) {
         const data = await res.json();
         notifySuccess(data.message || "Mudanças confirmadas e publicadas com sucesso!");
-        await carregarDados(); // Recarregar dados
+        setPendingUnpublishIds([]);
+        await carregarDados();
       } else {
         const error = await res.json();
         notifyError(error.error || "Erro ao confirmar mudanças. Tente novamente.");
@@ -406,11 +357,29 @@ export default function AdminControleAgendamentoPage() {
     return <LoadingBlock label="Carregando calendário..." />;
   }
 
+  const dayActionLabel =
+    selectedDates.length === 1
+      ? dayBatchMode === "block"
+        ? "Bloquear dia"
+        : "Liberar dia"
+      : dayBatchMode === "block"
+        ? "Bloquear dias"
+        : "Liberar dias";
+
+  const hourActionLabel =
+    selectedHours.length === 1
+      ? hourBatchMode === "block"
+        ? "Bloquear horário"
+        : "Liberar horário"
+      : hourBatchMode === "block"
+        ? "Bloquear horários"
+        : "Liberar horários";
+
   return (
     <div className="space-y-6">
       <PageHeader
         title="Controle de Agendamento"
-        subtitle="Clique em um dia para gerenciar seus horários."
+        subtitle="Clique em um dia para gerenciar seus horários, ou use o lote para vários dias."
         icon="calendar"
         actions={
           <Button
@@ -425,7 +394,87 @@ export default function AdminControleAgendamentoPage() {
         }
       />
 
+      {(draftBlockCount > 0 || pendingReleaseCount > 0) && (
+        <div
+          className="rounded-lg border border-amber-500/50 bg-amber-500/10 px-4 py-3 text-sm text-amber-100"
+          role="status"
+        >
+          Alterações pendentes de publicação: {draftBlockCount} bloqueio(s) em
+          rascunho
+          {pendingReleaseCount
+            ? `; ${pendingReleaseCount} liberação(ões) aguardando confirmar`
+            : ""}
+          . O calendário público só muda após Confirmar e Publicar Mudanças.
+        </div>
+      )}
+
       <Card className="!p-6">
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              variant={dayBatchMode === "block" ? "danger" : "outline"}
+              size="sm"
+              aria-pressed={dayBatchMode === "block"}
+              onClick={() => {
+                setSelectedDay(null);
+                setDayBatchMode((m) => (m === "block" ? null : "block"));
+                setSelectedDates([]);
+              }}
+            >
+              Bloquear dias
+            </Button>
+            <Button
+              variant={dayBatchMode === "unblock" ? "success" : "outline"}
+              size="sm"
+              aria-pressed={dayBatchMode === "unblock"}
+              onClick={() => {
+                setSelectedDay(null);
+                setDayBatchMode((m) => (m === "unblock" ? null : "unblock"));
+                setSelectedDates([]);
+              }}
+            >
+              Liberar dias
+            </Button>
+            {dayBatchMode && (
+              <Button variant="ghost" size="sm" onClick={cancelDayBatchMode}>
+                Cancelar
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {dayBatchMode && (
+          <div
+            className={`mb-4 rounded-lg border px-3 py-2 text-sm ${
+              dayBatchMode === "block"
+                ? "border-red-500/60 bg-red-950/40 text-red-100"
+                : "border-emerald-500/60 bg-emerald-950/40 text-emerald-100"
+            }`}
+            role="status"
+          >
+            Modo {dayBatchMode === "block" ? "bloquear" : "liberar"} dias. Clique
+            nas datas (YYYY-MM-DD) em qualquer mês. Selecionados:{" "}
+            <strong>{selectedDates.length}</strong>
+            {selectedDates.length > 0 && (
+              <span className="ml-2 text-xs opacity-80">
+                {selectedDates.slice().sort().join(", ")}
+              </span>
+            )}
+          </div>
+        )}
+
+        {dayBatchMode && selectedDates.length > 0 && (
+          <div className="mb-4">
+            <Button
+              variant={dayBatchMode === "block" ? "danger" : "success"}
+              loading={batchBusy}
+              onClick={() => void applySelectedDays()}
+            >
+              {dayActionLabel}
+            </Button>
+          </div>
+        )}
+
         <div className="mb-4 flex items-center justify-between">
           <Button
             variant="outline"
@@ -459,41 +508,53 @@ export default function AdminControleAgendamentoPage() {
               dataBase.getMonth() + 1,
               dia
             );
-            
-            // Verificar se a data é válida (>= 1 de janeiro)
             const dataDia = new Date(dataBase.getFullYear(), dataBase.getMonth(), dia);
-            if (dataDia < DATA_MINIMA) {
-              return <div key={idx} />;
-            }
-            
+            if (dataDia < DATA_MINIMA) return <div key={idx} />;
+
             const visual = getDiaVisual(isoDate);
-            
-            // Verificar se a data já passou
             const diaPassado = isDataPassada(isoDate);
             const cell = calendarDayCellStyle(visual, {
               past: diaPassado,
               audience: "admin",
             });
+            const isPicked = selectedDates.includes(isoDate);
+            const isOpen = selectedDay === isoDate && !dayBatchMode;
 
             return (
               <button
                 key={isoDate}
+                type="button"
                 onClick={() => {
-                  // Não permitir selecionar dias passados
-                  if (!diaPassado) {
-                    setSelectedDay(isoDate);
+                  if (diaPassado) return;
+                  if (dayBatchMode) {
+                    toggleDateSelection(isoDate);
+                    return;
                   }
+                  setSelectedDay(isoDate);
+                  cancelHourBatchMode();
                 }}
                 disabled={diaPassado}
+                aria-pressed={dayBatchMode ? isPicked : isOpen}
+                aria-label={`${isoDate}${isPicked ? ", selecionado" : ""}`}
                 style={cell.style}
-                className={`rounded-md border p-2 text-center text-sm transition ${
-                  diaPassado 
-                    ? "cursor-not-allowed opacity-60" 
-                    : "cursor-pointer"
+                className={`relative rounded-md border p-2 text-center text-sm transition ${
+                  diaPassado ? "cursor-not-allowed opacity-60" : "cursor-pointer"
                 } ${cell.className} ${
-                  selectedDay === isoDate ? "ring-2 ring-red-500 ring-offset-2 ring-offset-zinc-800" : ""
+                  isOpen ? "ring-2 ring-red-500 ring-offset-2 ring-offset-zinc-800" : ""
+                } ${
+                  isPicked
+                    ? "outline outline-2 outline-offset-2 outline-white ring-2 ring-white/90"
+                    : ""
                 }`}
               >
+                {isPicked && (
+                  <span
+                    className="absolute right-1 top-0.5 text-[10px] font-bold text-white drop-shadow"
+                    aria-hidden
+                  >
+                    ✓
+                  </span>
+                )}
                 {dia}
               </button>
             );
@@ -520,10 +581,12 @@ export default function AdminControleAgendamentoPage() {
         </div>
       </Card>
 
-      {/* MODAL DE HORÁRIOS DO DIA SELECIONADO */}
       <Modal
-        open={!!(selectedDay && selectedDayData)}
-        onClose={() => setSelectedDay(null)}
+        open={!!(selectedDay && selectedDayData && !dayBatchMode)}
+        onClose={() => {
+          setSelectedDay(null);
+          cancelHourBatchMode();
+        }}
         title={
           selectedDayData
             ? `Horários - ${formatStudioDateLong(selectedDayData.isoDate)}`
@@ -534,8 +597,59 @@ export default function AdminControleAgendamentoPage() {
         {selectedDay && selectedDayData && (
           <div className="space-y-6">
             <p className="text-sm text-zinc-400">
-              {selectedDayData.ocupados.size} de {HORARIOS_PADRAO.length} horários ocupados
+              {selectedDayData.ocupados.size} de {HORARIOS_PADRAO.length} horários
+              ocupados
             </p>
+
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant={hourBatchMode === "block" ? "danger" : "outline"}
+                size="sm"
+                aria-pressed={hourBatchMode === "block"}
+                onClick={() => {
+                  setHourBatchMode((m) => (m === "block" ? null : "block"));
+                  setSelectedHours([]);
+                }}
+              >
+                Bloquear horários
+              </Button>
+              <Button
+                variant={hourBatchMode === "unblock" ? "success" : "outline"}
+                size="sm"
+                aria-pressed={hourBatchMode === "unblock"}
+                onClick={() => {
+                  setHourBatchMode((m) => (m === "unblock" ? null : "unblock"));
+                  setSelectedHours([]);
+                }}
+              >
+                Liberar horários
+              </Button>
+              {hourBatchMode && (
+                <Button variant="ghost" size="sm" onClick={cancelHourBatchMode}>
+                  Cancelar
+                </Button>
+              )}
+            </div>
+
+            {hourBatchMode && (
+              <div
+                className="rounded-lg border border-zinc-600 bg-zinc-900/80 px-3 py-2 text-sm text-zinc-200"
+                role="status"
+              >
+                Modo {hourBatchMode === "block" ? "bloquear" : "liberar"} horários.
+                Selecionados: <strong>{selectedHours.length}</strong>
+              </div>
+            )}
+
+            {hourBatchMode && selectedHours.length > 0 && (
+              <Button
+                variant={hourBatchMode === "block" ? "danger" : "success"}
+                loading={batchBusy}
+                onClick={() => void applySelectedHours()}
+              >
+                {hourActionLabel}
+              </Button>
+            )}
 
             <Button
               fullWidth
@@ -545,6 +659,8 @@ export default function AdminControleAgendamentoPage() {
                   ? "success"
                   : "danger"
               }
+              loading={batchBusy}
+              disabled={!!hourBatchMode}
               onClick={() => toggleDia(selectedDay)}
             >
               {selectedDayData.slotsBloqueados.length === HORARIOS_PADRAO.length
@@ -556,24 +672,40 @@ export default function AdminControleAgendamentoPage() {
               {HORARIOS_PADRAO.map((hora) => {
                 const bloqueado = isSlotBlocked(selectedDay, hora);
                 const occupancy = hourOccupancyByDate[selectedDay || ""]?.[hora];
+                const occupiedByAppointment = isAppointmentOccupiedHour(
+                  selectedDayData.dayState,
+                  hora
+                );
+                const occupancyBlocked =
+                  occupancy?.kind === "blocked" &&
+                  !pendingUnpublishKeys.has(slotKey(selectedDay, hora));
                 const ocupadoPorOs =
-                  occupancy?.kind === "service_order" ||
-                  (selectedDayData.ocupados.has(hora) && !bloqueado && occupancy?.kind !== "blocked");
-                const podeBloquear = !ocupadoPorOs;
-                const horarioPassado = selectedDay ? isHorarioPassado(selectedDay, hora) : false;
+                  occupancy?.kind === "service_order" || occupiedByAppointment;
+                const horarioPassado = isHorarioPassado(selectedDay, hora);
+                const hourPicked = selectedHours.includes(normalizarHora(hora));
+                const selectableInBatch =
+                  hourBatchMode === "block"
+                    ? !horarioPassado && !ocupadoPorOs
+                    : hourBatchMode === "unblock"
+                      ? !horarioPassado && bloqueado
+                      : !horarioPassado && !ocupadoPorOs;
 
                 let slotClass =
                   "bg-green-600/20 text-green-300 border-green-600 hover:bg-green-600/30";
-                let title = "Clique para bloquear";
+                let title = hourBatchMode
+                  ? "Clique para selecionar"
+                  : "Clique para bloquear";
                 let body: ReactNode = hora;
 
                 if (horarioPassado) {
                   slotClass =
                     "bg-red-900/60 text-red-200 border-red-700 cursor-not-allowed opacity-60";
                   title = "Horário já passou";
-                } else if (bloqueado || occupancy?.kind === "blocked") {
+                } else if (bloqueado || occupancyBlocked) {
                   slotClass = "bg-red-600 text-white border-red-500 hover:bg-red-500";
-                  title = "Clique para desbloquear";
+                  title = hourBatchMode
+                    ? "Clique para selecionar"
+                    : "Clique para desbloquear";
                   body = (
                     <span className="flex flex-col items-center gap-0.5">
                       <span>{hora}</span>
@@ -613,15 +745,35 @@ export default function AdminControleAgendamentoPage() {
                 return (
                   <button
                     key={hora}
+                    type="button"
+                    aria-pressed={hourBatchMode ? hourPicked : undefined}
                     onClick={() => {
-                      if (!horarioPassado && podeBloquear) {
-                        toggleSlot(selectedDay, hora);
+                      if (hourBatchMode) {
+                        if (!selectableInBatch) return;
+                        toggleHourSelection(hora);
+                        return;
+                      }
+                      if (!horarioPassado && !ocupadoPorOs) {
+                        void toggleSlot(selectedDay, hora);
                       }
                     }}
-                    disabled={ocupadoPorOs || horarioPassado}
-                    className={`rounded-lg border px-3 py-3 text-sm font-medium transition whitespace-pre-line ${slotClass}`}
+                    disabled={
+                      hourBatchMode
+                        ? !selectableInBatch
+                        : ocupadoPorOs || horarioPassado
+                    }
+                    className={`relative rounded-lg border px-3 py-3 text-sm font-medium transition whitespace-pre-line ${slotClass} ${
+                      hourPicked
+                        ? "outline outline-2 outline-offset-2 outline-white"
+                        : ""
+                    }`}
                     title={title}
                   >
+                    {hourPicked && (
+                      <span className="absolute right-1 top-0.5 text-[10px] font-bold" aria-hidden>
+                        ✓
+                      </span>
+                    )}
                     {body}
                   </button>
                 );

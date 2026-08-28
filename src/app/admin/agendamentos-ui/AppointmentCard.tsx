@@ -11,6 +11,7 @@ import { Icons, formatDate, formatTime, serviceTypeLabel, timeAgo } from "@/app/
 import { Spinner } from "@/app/admin/servicos-ui/States";
 import type { AdminAgendamento } from "./types";
 import { aptPaymentSummary, aptStatusKey, formatDuracao } from "./meta";
+import { FinancialSummaryCompact } from "@/app/admin/servicos-ui/FinancialSummary";
 
 export interface AppointmentCardActions {
   onAbrir?: (a: AdminAgendamento) => void;
@@ -76,7 +77,7 @@ export function AppointmentCard({
 
       {/* Badges: pagamento */}
       <div className="flex flex-wrap gap-1.5 px-4 pb-3">
-        <PaymentBadge status={pay.status} amount={pay.amount} />
+        <PaymentBadge status={pay.status} amount={a.financial?.finalAmount ?? pay.amount} />
         {pay.viaCupom && (
           <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-300">
             <Icons.check className="w-3 h-3" />
@@ -89,6 +90,11 @@ export function AppointmentCard({
             Bloqueado
           </span>
         )}
+      </div>
+
+      <div className="border-t border-zinc-800 px-4 py-2.5">
+        <p className="mb-1 text-[10px] uppercase tracking-wide text-zinc-500">Financeiro</p>
+        <FinancialSummaryCompact financial={a.financial} />
       </div>
 
       {/* Agendamento: data, horário, tempo reservado, serviços */}

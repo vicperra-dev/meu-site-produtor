@@ -16,13 +16,13 @@ import {
   formatDateTime,
   formatDate,
   formatTime,
-  formatCurrency,
   serviceTypeLabel,
 } from "@/app/admin/servicos-ui/meta";
 import { Spinner } from "@/app/admin/servicos-ui/States";
 import type { AdminAgendamento, RelatedService } from "./types";
 import { AppointmentTimeline } from "./AppointmentTimeline";
 import { aptPaymentSummary, aptStatusKey, formatDuracao } from "./meta";
+import { FinancialSummaryDetails } from "@/app/admin/servicos-ui/FinancialSummary";
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -148,9 +148,9 @@ export function AppointmentDrawer({
           </Section>
 
           <Section title="Pagamento">
+            <FinancialSummaryDetails financial={a.financial} />
             {a.pagamentoConfirmado ? (
               <>
-                <Row label="Valor" value={formatCurrency(a.pagamentoConfirmado.amount)} />
                 <Row label="Status" value={a.pagamentoConfirmado.status} />
                 <Row label="Método" value={a.pagamentoConfirmado.paymentMethod || "—"} />
                 <Row label="ID" value={<span className="font-mono">{a.pagamentoConfirmado.id}</span>} />
@@ -160,9 +160,9 @@ export function AppointmentDrawer({
                 <Row label="Confirmado em" value={formatDateTime(a.pagamentoConfirmado.createdAt)} />
               </>
             ) : pay.viaCupom ? (
-              <p className="text-xs text-emerald-300">Pago com cupom.</p>
+              <p className="mt-2 text-xs text-emerald-300">Sem cobrança no gateway (total zero / cupom).</p>
             ) : (
-              <p className="text-xs text-zinc-500">Pagamento não confirmado.</p>
+              <p className="mt-2 text-xs text-zinc-500">Pagamento não confirmado.</p>
             )}
           </Section>
 
@@ -214,11 +214,11 @@ export function AppointmentDrawer({
               </ul>
             )}
             <Link
-              href="/admin/servicos-selecionados/todos"
+              href="/admin/servicos/todos"
               className="mt-2 inline-flex items-center gap-1 text-xs text-red-400 underline-offset-2 hover:underline"
             >
               <Icons.external className="w-3 h-3" />
-              Abrir Serviços Selecionados
+              Abrir Serviços Gerais
             </Link>
           </Section>
 

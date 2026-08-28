@@ -5,7 +5,6 @@ import { processAgendamentoPaymentEffects } from "@/app/lib/asaas-agendamento-pa
 import { processCarrinhoPaymentEffects } from "@/app/lib/asaas-carrinho-payment-effects";
 import {
   assertWebhookAmountMatchesMetadata,
-  reconcileAgendamentoPaymentArtifacts,
   resolvePaymentOperationIdentity,
   resolvePaymentMetadataForWebhook,
 } from "@/app/lib/asaas-agendamento-reconcile";
@@ -245,21 +244,29 @@ export async function POST(req: Request) {
               { status: 200 }
             );
           }
-          let reconciliationReady = true;
+          let reconciliationReady = false;
           try {
-            await reconcileAgendamentoPaymentArtifacts({
+            const { processApprovedPayment } = await import(
+              "@/app/lib/process-approved-payment"
+            );
+            const fx = await processApprovedPayment({
               paymentDbId: existingPayment.id,
-              userId,
+              value,
               asaasPaymentId: paymentId,
+              description: payment.description,
+              options: { sendEmails: false, source: "webhook" },
             });
-          } catch (reconcileErr: any) {
-            reconciliationReady = false;
+            reconciliationReady = fx.paymentLinked;
+            if (!fx.paymentLinked) {
+              console.error("[Asaas Webhook] Replay idempotente incompleto:", fx.skippedReason);
+            }
+          } catch (reconcileErr: unknown) {
             console.error("[Asaas Webhook] Reconcile pós-duplicata falhou:", {
               paymentDbId: existingPayment.id,
               asaasPaymentId: paymentId,
               userId,
-              message: reconcileErr?.message,
-              stack: reconcileErr?.stack,
+              message: reconcileErr instanceof Error ? reconcileErr.message : String(reconcileErr),
+              stack: reconcileErr instanceof Error ? reconcileErr.stack : undefined,
             });
           }
           if (!reconciliationReady) {

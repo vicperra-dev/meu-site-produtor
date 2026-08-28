@@ -13,7 +13,11 @@ import {
   OPERATIONAL_HOURS,
   calendarDayCellStyle,
   toUserDayVisual,
-  userHourSlotClass,
+  resolvePublicDayVisual,
+  resolvePublicHourKind,
+  isPublicDaySelectable,
+  isPublicHourSelectable,
+  publicHourSlotPresentation,
   isIsoDatePastStudio,
   isStudioDateTimePast,
   isoDateFromParts,
@@ -114,10 +118,9 @@ export function SchedulingCalendar({
     return prev >= new Date(DATA_MINIMA.getFullYear(), DATA_MINIMA.getMonth(), 1);
   }
 
-  const occupiedForSelected = useMemo(() => {
-    if (!dataSelecionada) return new Set<string>();
-    return new Set(getCalendarDayState(dayStates, dataSelecionada).occupiedHours);
-  }, [dayStates, dataSelecionada]);
+  const selectedDayState = dataSelecionada
+    ? getCalendarDayState(dayStates, dataSelecionada)
+    : null;
 
   return (
     <div
@@ -203,15 +206,26 @@ export function SchedulingCalendar({
 
               const state = getCalendarDayState(dayStates, isoDate);
               const past = isIsoDatePastStudio(isoDate);
-              const userVisual = toUserDayVisual(state.visual, { past });
-              const indisponivel = userVisual === "ocupado";
+              const userVisual =
+                audience === "user"
+                  ? resolvePublicDayVisual(state, {
+                      past,
+                      eligibleHours: operationalHours,
+                    })
+                  : toUserDayVisual(state.visual, { past });
+              const daySelectable =
+                audience === "user"
+                  ? isPublicDaySelectable(userVisual, past)
+                  : !(past || userVisual === "ocupado");
               const selected = dataSelecionada === isoDate;
               const cell = calendarDayCellStyle(state.visual, {
                 past,
                 selected,
                 audience,
+                dayState: audience === "user" ? state : undefined,
+                eligibleHours: operationalHours,
               });
-              const disabled = past || indisponivel;
+              const disabled = !daySelectable;
               const dayTitle = past
                 ? "Data passada"
                 : USER_DAY_LEGEND.find((l) => l.visual === userVisual)?.label;
@@ -274,21 +288,26 @@ export function SchedulingCalendar({
             {dataSelecionada && (
               <div className="grid grid-cols-3 gap-2">
                 {operationalHours.map((h) => {
-                  const ocupado = occupiedForSelected.has(h);
+                  const kind = selectedDayState
+                    ? resolvePublicHourKind(h, selectedDayState)
+                    : "available";
                   const passado = isStudioDateTimePast(dataSelecionada, h);
                   const selected = horaSelecionada === h;
-                  const slot = userHourSlotClass({
+                  const hourSelectable = isPublicHourSelectable(kind, passado);
+                  const slot = publicHourSlotPresentation(kind, {
                     past: passado,
-                    unavailable: passado,
-                    occupied: ocupado && !passado,
                     selected,
                   });
                   return (
                     <button
                       key={h}
                       type="button"
-                      disabled={slot.disabled}
-                      onClick={() => onHoraChange(selected ? null : h)}
+                      disabled={!hourSelectable}
+                      aria-disabled={!hourSelectable}
+                      onClick={() => {
+                        if (!hourSelectable) return;
+                        onHoraChange(selected ? null : h);
+                      }}
                       className={[
                         "rounded-md border px-2 py-2 text-sm transition",
                         slot.className,

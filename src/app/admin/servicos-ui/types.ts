@@ -9,6 +9,7 @@ export interface AdminAppointment {
   status: string;
   tipo: string;
   observacoes?: string | null;
+  duracaoMinutos?: number | null;
 }
 
 export interface AdminPaymentInfo {
@@ -16,6 +17,8 @@ export interface AdminPaymentInfo {
   amount: number;
   status: string;
   paymentMethod: string | null;
+  provider?: string | null;
+  asaasId?: string | null;
 }
 
 export interface AdminCouponInfo {
@@ -23,6 +26,21 @@ export interface AdminCouponInfo {
   code: string;
   type: string;
   status: string;
+  couponType?: string | null;
+  couponCategory?: string | null;
+}
+
+export interface AdminFinancialSummaryView {
+  originalAmount: number | null;
+  discountAmount: number;
+  finalAmount: number | null;
+  amountsKnown: boolean;
+  paymentChannel: string;
+  paymentLabel: string;
+  couponCode: string | null;
+  couponKind: string;
+  couponKindLabel: string;
+  hasCoupon: boolean;
 }
 
 export interface AdminService {
@@ -37,6 +55,7 @@ export interface AdminService {
   deliveryAudioUrl?: string | null;
   deliveryAudioFormat?: string | null;
   payment?: AdminPaymentInfo | null;
+  financial?: AdminFinancialSummaryView | null;
   coupons?: AdminCouponInfo[];
   user: {
     nomeArtistico: string;

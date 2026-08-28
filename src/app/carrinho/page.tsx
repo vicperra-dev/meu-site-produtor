@@ -27,10 +27,16 @@ type CartItem = {
   servicos: Array<{ id: string; nome: string; quantidade: number; preco: number }>;
   beats: Array<{ id: string; nome: string; quantidade: number; preco: number }>;
   total: number;
+  subtotal?: number;
+  discount?: number;
   observacoes?: string;
   cupomCode?: string;
   cupomAplicado?: unknown;
 };
+
+function formatBrl(n: number) {
+  return n.toFixed(2).replace(".", ",");
+}
 
 export default function CarrinhoPage() {
   const { user, loading: authLoading } = useAuth();
@@ -143,12 +149,14 @@ export default function CarrinhoPage() {
     const novos: Record<string, string> = {};
     if (!formData.nome || formData.nome.length < 2) novos.nome = "Nome deve ter no mínimo 2 caracteres";
     if (!formData.dataNascimento) novos.dataNascimento = "Data de nascimento é obrigatória";
-    if (!formData.cpf || !/^\d{11}$/.test(formData.cpf.replace(/\D/g, ""))) novos.cpf = "CPF deve conter 11 dígitos";
-    if (!formData.pais) novos.pais = "País é obrigatório";
-    if (!formData.cidade) novos.cidade = "Cidade é obrigatória";
-    if (!formData.bairro) novos.bairro = "Bairro é obrigatório";
-    if (!formData.cep || !/^\d{8}$/.test(formData.cep.replace(/\D/g, ""))) novos.cep = "CEP deve conter 8 dígitos";
-    if (!formData.formaPagamento) novos.formaPagamento = "Selecione a forma de pagamento";
+    if (totalGeral > 0) {
+      if (!formData.cpf || !/^\d{11}$/.test(formData.cpf.replace(/\D/g, ""))) novos.cpf = "CPF deve conter 11 dígitos";
+      if (!formData.pais) novos.pais = "País é obrigatório";
+      if (!formData.cidade) novos.cidade = "Cidade é obrigatória";
+      if (!formData.bairro) novos.bairro = "Bairro é obrigatório";
+      if (!formData.cep || !/^\d{8}$/.test(formData.cep.replace(/\D/g, ""))) novos.cep = "CEP deve conter 8 dígitos";
+      if (!formData.formaPagamento) novos.formaPagamento = "Selecione a forma de pagamento";
+    }
     if (!formData.aceiteTermos) novos.aceiteTermos = "É necessário aceitar os termos de contrato";
     setErros(novos);
     if (Object.keys(novos).length > 0) {
@@ -171,28 +179,30 @@ export default function CarrinhoPage() {
 
     setCarregando(true);
     try {
-      const cpfFormatado = formatarCPF(formData.cpf);
-      const cepFormatado = formatarCEP(formData.cep);
+      if (totalGeral > 0) {
+        const cpfFormatado = formatarCPF(formData.cpf);
+        const cepFormatado = formatarCEP(formData.cep);
 
-      const updateRes = await fetch("/api/conta/update", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          nomeArtistico: formData.nome,
-          dataNascimento: formData.dataNascimento,
-          cpf: cpfFormatado,
-          pais: formData.pais,
-          cidade: formData.cidade,
-          bairro: formData.bairro,
-          cep: cepFormatado,
-        }),
-      });
-      if (!updateRes.ok) {
-        const d = await updateRes.json();
-        notifyError(d.error || "Erro ao salvar dados. Verifique os campos.");
-        setCarregando(false);
-        return;
+        const updateRes = await fetch("/api/conta/update", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            nomeArtistico: formData.nome,
+            dataNascimento: formData.dataNascimento,
+            cpf: cpfFormatado,
+            pais: formData.pais,
+            cidade: formData.cidade,
+            bairro: formData.bairro,
+            cep: cepFormatado,
+          }),
+        });
+        if (!updateRes.ok) {
+          const d = await updateRes.json();
+          notifyError(d.error || "Erro ao salvar dados. Verifique os campos.");
+          setCarregando(false);
+          return;
+        }
       }
 
       const items = cart.map(({ cartId, ...rest }) => rest);
@@ -225,6 +235,14 @@ export default function CarrinhoPage() {
       }
 
       const url = (data.initPoint || data.invoiceUrl || data.bankSlipUrl || data.url) as string | undefined;
+      if (data.zeroTotal) {
+        sessionStorage.removeItem(CARRINHO_KEY);
+        localStorage.removeItem(CARRINHO_KEY);
+        setCart([]);
+        notify("Agendamento criado sem cobrança. Acompanhe em Minha Conta.");
+        router.push("/conta");
+        return;
+      }
       if (url) {
         window.location.href = url;
       } else {
@@ -310,13 +328,27 @@ export default function CarrinhoPage() {
                             <ul className="text-sm text-zinc-400 mt-1">
                               {itens.map((s, i) => (
                                 <li key={i}>
-                                  {(s.quantidade ?? 1)}x {s.nome} — R$ {((s.quantidade ?? 1) * (s.preco ?? 0)).toFixed(2).replace(".", ",")}
+                                  {(s.quantidade ?? 1)}x {s.nome} — R$ {formatBrl(((s.quantidade ?? 1) * (s.preco ?? 0)))}
                                 </li>
                               ))}
                             </ul>
-                            <p className="text-sm text-yellow-300 mt-1 font-semibold">
-                              Total deste agendamento: R$ {(Number(item.total) || 0).toFixed(2).replace(".", ",")}
-                            </p>
+                            {item.cupomCode || (item.discount || 0) > 0 ? (
+                              <div className="text-sm mt-1 space-y-0.5">
+                                <p className="text-zinc-300">
+                                  Valor do serviço: R$ {formatBrl(Number(item.subtotal) || itens.reduce((a, s) => a + (s.quantidade ?? 1) * (s.preco ?? 0), 0))}
+                                </p>
+                                <p className="text-green-400">
+                                  Desconto: -R$ {formatBrl(Number(item.discount) || 0)}
+                                </p>
+                                <p className="text-yellow-300 font-semibold">
+                                  Total final: R$ {formatBrl(Number(item.total) || 0)}
+                                </p>
+                              </div>
+                            ) : (
+                              <p className="text-sm text-yellow-300 mt-1 font-semibold">
+                                Total deste agendamento: R$ {formatBrl(Number(item.total) || 0)}
+                              </p>
+                            )}
                           </div>
                           <Button
                             type="button"
@@ -333,7 +365,7 @@ export default function CarrinhoPage() {
 
                   <div className="pt-4 border-t border-zinc-600 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <p className="text-2xl font-bold text-yellow-300">
-                      Total geral: R$ {totalGeral.toFixed(2).replace(".", ",")}
+                      Total geral: R$ {formatBrl(totalGeral)}
                     </p>
                     <Link
                       href="/agendamento"
@@ -428,6 +460,7 @@ export default function CarrinhoPage() {
                     maxLength={8}
                   />
                 </Field>
+                {totalGeral > 0 && (
                 <Field label="Forma de pagamento *" hint={erros.formaPagamento}>
                   <Select
                     name="formaPagamento"
@@ -443,6 +476,7 @@ export default function CarrinhoPage() {
                     ]}
                   />
                 </Field>
+                )}
               </div>
 
               <div className="flex items-start gap-3 pt-4 border-t border-zinc-700 flex-wrap">
@@ -472,7 +506,7 @@ export default function CarrinhoPage() {
                 loading={carregando}
                 style={{ textShadow: "0 2px 4px rgba(0, 0, 0, 0.5)" }}
               >
-                Pagar com Asaas (Pix, cartão, boleto)
+                {totalGeral > 0 ? "Pagar com Asaas (Pix, cartão, boleto)" : "Confirmar agendamento sem cobrança"}
               </Button>
             </section>
           </>

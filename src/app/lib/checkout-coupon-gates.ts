@@ -29,11 +29,18 @@ type CheckoutCouponLike = {
 };
 
 /** Cupom de resgate exclusivo (agenda serviço; não digita no checkout comum). */
-function isCupomResgateAgendamento(coupon: CheckoutCouponLike): boolean {
+export function isCupomResgateAgendamento(coupon: CheckoutCouponLike): boolean {
   if (couponUsesExclusiveSchedulingPage(coupon)) return true;
   if (isServiceCoupon(coupon) && coupon.serviceType) return true;
   if (isRefundCoupon(coupon) && coupon.discountType === "service") return true;
   return false;
+}
+
+export type CouponCheckoutMode = "discount" | "service-redemption";
+
+/** Parceria/desconto usa checkout comum; resgate de serviço usa a página exclusiva. */
+export function resolveCouponCheckoutMode(coupon: CheckoutCouponLike): CouponCheckoutMode {
+  return isCupomResgateAgendamento(coupon) ? "service-redemption" : "discount";
 }
 
 /** Cupom que pode ser digitado no agendamento comum (promocional / percentual de plano / reembolso em valor). */
