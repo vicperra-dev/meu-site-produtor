@@ -23,6 +23,7 @@ import type { AdminAgendamento, RelatedService } from "./types";
 import { AppointmentTimeline } from "./AppointmentTimeline";
 import { aptPaymentSummary, aptStatusKey, formatDuracao } from "./meta";
 import { FinancialSummaryDetails } from "@/app/admin/servicos-ui/FinancialSummary";
+import { ServiceTimingInfo } from "@/app/admin/servicos-ui/ServiceTimingInfo";
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -204,6 +205,7 @@ export function AppointmentDrawer({
                     <div className="min-w-0">
                       <p className="truncate text-xs font-medium text-zinc-200">{serviceTypeLabel(s.tipo)}</p>
                       <p className="truncate text-[11px] text-zinc-500">{s.id}</p>
+                      <ServiceTimingInfo service={s} compact />
                     </div>
                     <div className="flex shrink-0 items-center gap-1.5">
                       <StatusBadge status={s.status} />

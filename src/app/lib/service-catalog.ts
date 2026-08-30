@@ -4,9 +4,19 @@ import {
   COMMERCIAL_PRODUCT_COMPOSITION,
   COMMERCIAL_PRODUCT_LABELS,
 } from "@/app/lib/service-orders/composition";
+import {
+  OPERATIONAL_TIMER_SERVICE_ID_LIST,
+} from "@/app/lib/service-types";
+
+export {
+  OPERATIONAL_CONTRACTED_DURATION_SECONDS,
+  OPERATIONAL_TIMER_SERVICE_IDS,
+  OPERATIONAL_TIMER_SERVICE_ID_LIST,
+  isOperationalTimerServiceId,
+} from "@/app/lib/service-types";
 
 /** IDs que exigem data/hora de estúdio (agenda presencial). */
-export const SCHEDULABLE_SERVICE_IDS = new Set<string>(["sessao", "captacao"]);
+export const SCHEDULABLE_SERVICE_IDS = new Set<string>([...OPERATIONAL_TIMER_SERVICE_ID_LIST]);
 
 export const CANONICAL_SERVICE_IDS = [
   "sessao",

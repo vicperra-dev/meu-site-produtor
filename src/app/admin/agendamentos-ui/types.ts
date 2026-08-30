@@ -73,4 +73,10 @@ export interface RelatedService {
   deliveryAudioUrl?: string | null;
   deliveryAudioFormat?: string | null;
   createdAt: string;
+  startedAt?: string | null;
+  completedAt?: string | null;
+  actualDurationSeconds?: number | null;
+  contractedDurationSeconds?: number | null;
+  overtimeBasePriceCents?: number | null;
+  suggestedOvertimeAmountCents?: number | null;
 }

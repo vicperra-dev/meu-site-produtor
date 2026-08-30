@@ -91,8 +91,10 @@ export async function planTransitionEffects(event: DomainEvent): Promise<EffectP
 
   if (event.name === "AppointmentStarted") {
     const appointmentId = parseInt(event.entityId, 10);
+    // Só cascateia aceito → em_andamento (pendente não é transição válida).
+    // Sessão/Captação pendentes são aceitas e iniciadas por startServiceWork.
     const services = await prisma.service.findMany({
-      where: { appointmentId, status: { in: ["aceito", "pendente"] } },
+      where: { appointmentId, status: "aceito" },
       select: { id: true },
     });
     for (const s of services) {

@@ -3,12 +3,15 @@
  * Não altera regras de negócio; apenas acelera cenários via workflow oficial.
  */
 import { prisma } from "@/app/lib/prisma";
+import { parseStudioDateTime } from "@/app/lib/calendar-time";
+import { hasOperationalTimer } from "@/app/lib/service-timing";
 import {
   approveAppointment,
   rejectAppointment,
   startServiceWork,
   startService,
   completeService,
+  completeOperationalService,
 } from "@/app/lib/domain/workflow";
 import { SimulationProvider } from "@/app/lib/payment-provider/simulation-provider";
 import { paymentByProviderIdWhere } from "@/app/lib/payment-provider/identity";
@@ -194,8 +197,10 @@ export async function runLabAction(
           };
         }
         const hora = input.hora || "14:00";
-        const data = new Date(`${input.data}T${hora}:00`);
-        if (Number.isNaN(data.getTime())) {
+        let data: Date;
+        try {
+          data = parseStudioDateTime(input.data, hora);
+        } catch {
           return { ok: false, action: input.action, error: "Data/hora inválida." };
         }
         const updated = await prisma.appointment.update({
@@ -303,14 +308,20 @@ export async function runLabAction(
             error: "Serviço não é de Homologação/Simulation.",
           };
         }
-        const url = `homologation/lab-delivery/${input.serviceId}.wav`;
-        const r = await completeService({
-          serviceId: input.serviceId,
-          deliveryAudioUrl: url,
-          deliveryAudioFormat: "wav",
-          probe: true,
-          actor,
+        const current = await prisma.service.findUnique({
+          where: { id: input.serviceId },
+          select: { tipo: true },
         });
+        const url = `homologation/lab-delivery/${input.serviceId}.wav`;
+        const r = hasOperationalTimer(current?.tipo)
+          ? await completeOperationalService({ serviceId: input.serviceId, actor })
+          : await completeService({
+              serviceId: input.serviceId,
+              deliveryAudioUrl: url,
+              deliveryAudioFormat: "wav",
+              probe: true,
+              actor,
+            });
         if (!r.ok) return { ok: false, action: input.action, error: r.error };
         return {
           ok: true,

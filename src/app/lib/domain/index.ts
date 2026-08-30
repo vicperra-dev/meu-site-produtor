@@ -11,6 +11,7 @@ export {
   approveAppointment,
   rejectAppointment,
   startServiceWork,
+  ensureOperationalTimerServicesStartedForAppointment,
   cancelAppointment,
   revertAppointmentCancellation,
   rebookAppointment,

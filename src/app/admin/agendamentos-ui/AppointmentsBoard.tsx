@@ -429,6 +429,7 @@ export function AppointmentsBoard({ status }: { status: StatusKey }) {
               key={a.id}
               agendamento={a}
               servicesCount={services ? (servicesByAppointment.get(a.id) || []).length : undefined}
+              relatedServices={servicesByAppointment.get(a.id)}
               highlighted={highlightId === a.id}
               actions={{
                 busyId,

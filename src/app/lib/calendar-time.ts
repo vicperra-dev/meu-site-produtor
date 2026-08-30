@@ -179,3 +179,25 @@ export function minScheduleDateIsoStudio(daysAhead = 0, now: Date = new Date()):
   const d = new Date(utc).getUTCDate();
   return isoDateFromParts(y, m, d);
 }
+
+/** Data civil pt-BR no fuso do estúdio (não usa TZ do browser/servidor). */
+export function formatStudioDatePtBR(value: string | Date | null | undefined): string {
+  if (value == null || value === "") return "—";
+  const iso = toIsoDateStudio(value);
+  const p = parseIsoDateParts(iso);
+  if (!p) return "—";
+  return `${pad2(p.day)}/${pad2(p.month)}/${p.year}`;
+}
+
+/** Hora HH:mm no fuso do estúdio. */
+export function formatStudioTimePtBR(value: string | Date | null | undefined): string {
+  if (value == null || value === "") return "—";
+  const d = typeof value === "string" ? new Date(value) : value;
+  if (Number.isNaN(d.getTime())) return "—";
+  return new Intl.DateTimeFormat("pt-BR", {
+    timeZone: PLATFORM_TIMEZONE,
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(d);
+}

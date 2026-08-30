@@ -9,9 +9,11 @@ import { canDeleteClosedAppointment } from "@/app/lib/appointment-delete-gate";
 import { StatusBadge, PaymentBadge } from "@/app/admin/servicos-ui/Badges";
 import { Icons, formatDate, formatTime, serviceTypeLabel, timeAgo } from "@/app/admin/servicos-ui/meta";
 import { Spinner } from "@/app/admin/servicos-ui/States";
-import type { AdminAgendamento } from "./types";
-import { aptPaymentSummary, aptStatusKey, formatDuracao } from "./meta";
 import { FinancialSummaryCompact } from "@/app/admin/servicos-ui/FinancialSummary";
+import { ServiceTimingInfo } from "@/app/admin/servicos-ui/ServiceTimingInfo";
+import { hasOperationalTimer } from "@/app/lib/service-timing";
+import type { AdminAgendamento, RelatedService } from "./types";
+import { aptPaymentSummary, aptStatusKey, formatDuracao } from "./meta";
 
 export interface AppointmentCardActions {
   onAbrir?: (a: AdminAgendamento) => void;
@@ -27,12 +29,14 @@ export interface AppointmentCardActions {
 export function AppointmentCard({
   agendamento: a,
   servicesCount,
+  relatedServices,
   actions,
   highlighted = false,
 }: {
   agendamento: AdminAgendamento;
   /** Quantidade de serviços vinculados (dados já existentes). */
   servicesCount?: number;
+  relatedServices?: RelatedService[];
   actions: AppointmentCardActions;
   highlighted?: boolean;
 }) {
@@ -46,6 +50,7 @@ export function AppointmentCard({
         ? [a.cupomAssociado]
         : [];
   const plano = cupons.find((c) => String(c.couponType || "").toLowerCase().includes("plano"));
+  const timerServices = (relatedServices || []).filter((s) => hasOperationalTimer(s.tipo));
   const podeExcluir = canDeleteClosedAppointment(a).allowed;
 
   return (
@@ -96,6 +101,14 @@ export function AppointmentCard({
         <p className="mb-1 text-[10px] uppercase tracking-wide text-zinc-500">Financeiro</p>
         <FinancialSummaryCompact financial={a.financial} />
       </div>
+
+      {timerServices.length > 0 && (
+        <div className="border-t border-zinc-800 px-4 py-2">
+          {timerServices.map((s) => (
+            <ServiceTimingInfo key={s.id} service={s} compact />
+          ))}
+        </div>
+      )}
 
       {/* Agendamento: data, horário, tempo reservado, serviços */}
       <div className="grid grid-cols-2 gap-2 border-t border-zinc-800 px-4 py-3 text-xs sm:grid-cols-4">

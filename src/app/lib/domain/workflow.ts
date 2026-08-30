@@ -9,6 +9,7 @@ import { transition } from "@/app/lib/domain/state-machine/transition";
 import type { TransitionActor } from "@/app/lib/domain/state-machine/types";
 import { appointmentCalendarOccupancyFilter } from "@/app/lib/appointment-operational-filter";
 import { isSchedulableServiceType } from "@/app/lib/service-catalog";
+import { hasOperationalTimer } from "@/app/lib/service-timing";
 
 export type WorkflowOk<T> = { ok: true; alreadyProcessed?: boolean; data: T };
 export type WorkflowFail = { ok: false; error: string; httpStatus: number; code?: string };
@@ -37,6 +38,75 @@ async function loadAppointment(id: number) {
 
 async function loadService(id: string) {
   return prisma.service.findUnique({ where: { id }, include: serviceInclude });
+}
+
+/** Idempotente: preenche Service.startedAt se o status já é em_andamento. */
+async function persistOperationalStartedAtIfMissing(serviceId: string): Promise<void> {
+  const { resolveOperationalStartWrite } = await import("@/app/lib/service-timing");
+  const row = await prisma.service.findUnique({
+    where: { id: serviceId },
+    select: { tipo: true, status: true, startedAt: true },
+  });
+  if (!row || row.status !== "em_andamento") return;
+  const startAt = resolveOperationalStartWrite({
+    tipo: row.tipo,
+    existingStartedAt: row.startedAt,
+    now: new Date(),
+  });
+  if (!startAt) return;
+  try {
+    await prisma.service.updateMany({
+      where: { id: serviceId, startedAt: null },
+      data: { startedAt: startAt },
+    });
+  } catch (e) {
+    console.error("[workflow] persist startedAt operacional falhou:", e);
+  }
+}
+
+/**
+ * Garante que Sessão/Captação ligadas ao Appointment usem o mesmo startService
+ * do painel Serviços Gerais (idempotente). Cobre retry quando o Appointment
+ * já está em_andamento mas a cascata anterior não atualizou o Service.
+ */
+export async function ensureOperationalTimerServicesStartedForAppointment(
+  appointmentId: number,
+  actor?: TransitionActor
+): Promise<void> {
+  const services = await prisma.service.findMany({
+    where: { appointmentId },
+    select: { id: true, tipo: true, status: true },
+  });
+  const actorFinal = actor || { type: "admin" as const };
+  for (const s of services) {
+    if (!hasOperationalTimer(s.tipo)) continue;
+    if (s.status === "concluido" || s.status === "cancelado" || s.status === "recusado") {
+      continue;
+    }
+    if (s.status === "pendente") {
+      const accept = await transition({
+        entity: "service",
+        id: s.id,
+        to: "aceito",
+        actor: actorFinal,
+        reason: "ensureOperationalTimer:accept",
+        skipEffects: true,
+      });
+      if (!accept.ok) {
+        console.warn(
+          `[workflow] ensureOperationalTimer accept falhou ${s.id}: ${accept.error}`
+        );
+        continue;
+      }
+    }
+    const started = await startService(s.id, actorFinal);
+    if (!started.ok) {
+      console.warn(
+        `[workflow] ensureOperationalTimer start falhou ${s.id}: ${started.error}`
+      );
+    }
+    await persistOperationalStartedAtIfMissing(s.id);
+  }
 }
 
 export async function approveAppointment(
@@ -178,6 +248,10 @@ export async function startServiceWork(
     reason: "startServiceWork",
   });
   if (!result.ok) return fail(result.error, result.httpStatus, result.code);
+  await ensureOperationalTimerServicesStartedForAppointment(
+    appointmentId,
+    actor || { type: "admin" }
+  );
   const agendamento = await loadAppointment(appointmentId);
   if (!agendamento) return fail("Agendamento não encontrado após início", 500);
   try {
@@ -380,6 +454,7 @@ export async function startService(
     reason: "startService",
   });
   if (!result.ok) return fail(result.error, result.httpStatus, result.code);
+  await persistOperationalStartedAtIfMissing(serviceId);
   const servico = await loadService(serviceId);
   if (!servico) return fail("Serviço não encontrado após atualização", 500);
   return ok({ servico }, result.alreadyProcessed);

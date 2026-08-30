@@ -13,6 +13,8 @@ import {
   Callout,
 } from "@/components/design-system";
 import { VisitacaoSection } from "./VisitacaoSection";
+import { OperationalTimingStatsPanel } from "./OperationalTimingStatsPanel";
+import type { OperationalTimingStats } from "@/app/lib/service-timing";
 import {
   BarChart,
   Bar,
@@ -66,6 +68,11 @@ interface Estatisticas {
     data: string;
     usuarios: number;
   }[];
+  overtimeOperacional?: {
+    sessao: OperationalTimingStats;
+    captacao: OperationalTimingStats;
+    todos: OperationalTimingStats;
+  };
 }
 
 type Periodo = "diario" | "semanal" | "mensal" | "anual";
@@ -77,6 +84,18 @@ function formatMesAtual() {
 function formatDataHoje() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function emptyOvertimeUi(): OperationalTimingStats {
+  return {
+    withTiming: 0,
+    exceededCount: 0,
+    exceededPercent: 0,
+    avgDurationSeconds: null,
+    totalExcessSeconds: 0,
+    suggestedOvertimeTotalCents: 0,
+    suggestedOvertimeAvgCents: null,
+  };
 }
 
 export default function AdminEstatisticasPage() {
@@ -216,6 +235,11 @@ export default function AdminEstatisticasPage() {
       recusados: 0,
     },
     usoDiario: [] as { data: string; usuarios: number }[],
+    overtimeOperacional: {
+      sessao: emptyOvertimeUi(),
+      captacao: emptyOvertimeUi(),
+      todos: emptyOvertimeUi(),
+    },
   };
 
   const isEmptyPlatform =
@@ -829,6 +853,8 @@ export default function AdminEstatisticasPage() {
           </div>
         )}
       </Card>
+
+      <OperationalTimingStatsPanel overtime={safeStats.overtimeOperacional} />
     </div>
   );
 }

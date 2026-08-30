@@ -4,6 +4,7 @@
  * Não altera domínio: apenas apresentação.
  */
 import type { AdminService } from "./types";
+import { formatStudioDatePtBR, formatStudioTimePtBR } from "@/app/lib/calendar-time";
 
 /* ---------------------------------- Ícones --------------------------------- */
 
@@ -393,29 +394,18 @@ export function sortServices(list: AdminService[], sort: string): AdminService[]
 
 export function formatDateTime(value: string | null | undefined): string {
   if (!value) return "—";
-  const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleDateString("pt-BR", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  const date = formatStudioDatePtBR(value);
+  const time = formatStudioTimePtBR(value);
+  if (date === "—" || time === "—") return "—";
+  return `${date} ${time}`;
 }
 
 export function formatDate(value: string | null | undefined): string {
-  if (!value) return "—";
-  const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
+  return formatStudioDatePtBR(value);
 }
 
 export function formatTime(value: string | null | undefined): string {
-  if (!value) return "—";
-  const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  return formatStudioTimePtBR(value);
 }
 
 export function formatBytes(bytes: number): string {

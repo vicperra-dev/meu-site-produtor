@@ -1,6 +1,22 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { requireAdmin } from "@/app/lib/auth";
+import {
+  aggregateOperationalTimingStats,
+  OPERATIONAL_TIMER_SERVICE_IDS,
+} from "@/app/lib/service-timing";
+import { formatStudioDatePtBR, formatStudioTimePtBR } from "@/app/lib/calendar-time";
+import {
+  attachAppointmentCivilLabels,
+  mapTimingHistoryItem,
+  matchesTimingTipo,
+  parseTimingPeriod,
+  parseTimingSort,
+  parseTimingTipo,
+  sortTimingHistory,
+  summarizeTimingHistory,
+  timingPeriodRange,
+} from "@/app/lib/admin-stats-timing";
 
 function defaultStats() {
   return {
@@ -28,17 +44,129 @@ function defaultStats() {
       recusados: 0,
     },
     usoDiario: [] as { data: string; usuarios: number }[],
+    overtimeOperacional: {
+      sessao: emptyOvertimeBucket(),
+      captacao: emptyOvertimeBucket(),
+      todos: emptyOvertimeBucket(),
+    },
   };
 }
 
-export async function GET() {
+function emptyClientePayload() {
+  return {
+    user: null as { id: string; nomeArtistico: string; email: string } | null,
+    summary: {
+      sessaoCount: 0,
+      captacaoCount: 0,
+      avgSessaoSeconds: null as number | null,
+      avgCaptacaoSeconds: null as number | null,
+      withTiming: 0,
+      exceededCount: 0,
+      totalExcessSeconds: 0,
+      suggestedOvertimeTotalCents: 0,
+    },
+    items: [] as ReturnType<typeof mapTimingHistoryItem>[],
+  };
+}
+
+function emptyOvertimeBucket() {
+  return {
+    withTiming: 0,
+    exceededCount: 0,
+    exceededPercent: 0,
+    avgDurationSeconds: null as number | null,
+    totalExcessSeconds: 0,
+    suggestedOvertimeTotalCents: 0,
+    suggestedOvertimeAvgCents: null as number | null,
+  };
+}
+
+async function loadOvertimeCliente(params: {
+  userId: string;
+  tipo: ReturnType<typeof parseTimingTipo>;
+  period: ReturnType<typeof parseTimingPeriod>;
+  sort: ReturnType<typeof parseTimingSort>;
+}) {
+  const user = await prisma.user.findUnique({
+    where: { id: params.userId },
+    select: { id: true, nomeArtistico: true, email: true },
+  });
+  if (!user) {
+    return { user: null, summary: emptyClientePayload().summary, items: [] };
+  }
+
+  const range = timingPeriodRange(params.period);
+  const timerIds = Array.from(OPERATIONAL_TIMER_SERVICE_IDS);
+  const rows = await prisma.service.findMany({
+    where: {
+      userId: params.userId,
+      tipo: { in: timerIds },
+      status: "concluido",
+      actualDurationSeconds: { not: null },
+      ...(range
+        ? { appointment: { data: { gte: range.start, lt: range.end } } }
+        : {}),
+    },
+    select: {
+      id: true,
+      tipo: true,
+      status: true,
+      actualDurationSeconds: true,
+      contractedDurationSeconds: true,
+      suggestedOvertimeAmountCents: true,
+      user: { select: { nomeArtistico: true, email: true } },
+      appointment: { select: { id: true, data: true } },
+    },
+    take: 400,
+  });
+
+  const mapped = rows
+    .filter((row) => matchesTimingTipo(row.tipo, params.tipo))
+    .map((row) => mapTimingHistoryItem(row))
+    .filter((item): item is NonNullable<typeof item> => item != null)
+    .map((item) =>
+      attachAppointmentCivilLabels(item, formatStudioDatePtBR, formatStudioTimePtBR)
+    );
+
+  const items = sortTimingHistory(mapped, params.sort);
+  return {
+    user,
+    summary: summarizeTimingHistory(items),
+    items,
+  };
+}
+
+export async function GET(req: Request) {
   try {
     await requireAdmin();
-  } catch (err: any) {
-    if (err.message === "Acesso negado" || err.message === "Não autenticado") {
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    if (message === "Acesso negado" || message === "Não autenticado") {
       return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
     }
     throw err;
+  }
+
+  const url = new URL(req.url);
+  const timingUserId = String(url.searchParams.get("timingUserId") || "").trim();
+  const timingClienteOnly = url.searchParams.get("timingCliente") === "1";
+
+  if (timingUserId && timingClienteOnly) {
+    const overtimeCliente = await loadOvertimeCliente({
+      userId: timingUserId,
+      tipo: parseTimingTipo(url.searchParams.get("timingTipo")),
+      period: parseTimingPeriod(url.searchParams.get("timingPeriod")),
+      sort: parseTimingSort(url.searchParams.get("timingSort")),
+    });
+    return NextResponse.json(
+      { overtimeCliente },
+      {
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate",
+          Pragma: "no-cache",
+        },
+      }
+    );
   }
 
   const stats = defaultStats();
@@ -169,6 +297,28 @@ export async function GET() {
       .sort((a, b) => a.data.localeCompare(b.data));
   } catch (e) {
     console.warn("[Admin Stats] Uso diário (LoginLog):", e);
+  }
+
+  try {
+    const timed = await prisma.service.findMany({
+      where: {
+        tipo: { in: Array.from(OPERATIONAL_TIMER_SERVICE_IDS) },
+        status: "concluido",
+        actualDurationSeconds: { not: null },
+      },
+      select: {
+        tipo: true,
+        actualDurationSeconds: true,
+        suggestedOvertimeAmountCents: true,
+      },
+    });
+    stats.overtimeOperacional = {
+      sessao: aggregateOperationalTimingStats(timed, "sessao"),
+      captacao: aggregateOperationalTimingStats(timed, "captacao"),
+      todos: aggregateOperationalTimingStats(timed, "todos"),
+    };
+  } catch (e) {
+    console.warn("[Admin Stats] Overtime operacional:", e);
   }
 
   // Sem cache: estatísticas sempre refletem o estado atual do banco (exclusões, cancelamentos)

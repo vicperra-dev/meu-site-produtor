@@ -12,9 +12,13 @@ import { PLAN_DEFINITIONS, type PlanTierId } from "@/app/lib/plan-definitions";
 // e use apenas a parte após "v=" (antes do primeiro & se houver)
 const YOUTUBE_VIDEO_ID = "UPY_DfdiGK4"; // ID do vídeo (apenas a parte após v=)
 
-/** text-shadow: apenas borda preta no texto de serviços do hero */
-const HERO_SERVICES_TEXT_SHADOW =
-  "2px 0 0 #000, -2px 0 0 #000, 0 2px 0 #000, 0 -2px 0 #000, 1.5px 1.5px 0 #000, -1.5px -1.5px 0 #000, 1.5px -1.5px 0 #000, -1.5px 1.5px 0 #000, 2px 1px 0 #000, 2px -1px 0 #000, -2px 1px 0 #000, -2px -1px 0 #000, 1px 2px 0 #000, 1px -2px 0 #000, -1px 2px 0 #000, -1px -2px 0 #000";
+/** Contorno no glifo + halo externo visível, ainda seguindo o desenho da letra */
+const HERO_GLYPH_READABILITY = {
+  WebkitTextStroke: "2px #000",
+  paintOrder: "stroke fill" as const,
+  filter:
+    "drop-shadow(0 0 5px #000) drop-shadow(0 0 10px rgba(0,0,0,0.92)) drop-shadow(0 1px 15px rgba(0,0,0,0.72))",
+};
 
 /* Texto da bibliografia — edite só aqui; vale para mobile e desktop */
 const strong = (s: string) => <strong className="text-red-400">{s}</strong>;
@@ -86,33 +90,12 @@ export default function Home() {
               style={{ transform: "translate(-50%, -50%)" }}
             >
               <div className="relative mx-auto inline-block max-w-full px-1 sm:px-0">
-                <span
-                  aria-hidden
-                  className="pointer-events-none absolute z-0"
-                  style={{
-                    top: "-8%",
-                    right: "-3%",
-                    bottom: "-8%",
-                    left: "-3%",
-                    borderRadius: "9999px",
-                    background:
-                      "linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.18) 18%, rgba(0,0,0,0.18) 82%, transparent 100%)",
-                    backdropFilter: "blur(8px)",
-                    WebkitBackdropFilter: "blur(8px)",
-                    WebkitMaskImage:
-                      "linear-gradient(90deg, transparent 0%, #000 12%, #000 88%, transparent 100%), linear-gradient(180deg, transparent 0%, #000 28%, #000 72%, transparent 100%)",
-                    WebkitMaskComposite: "source-in",
-                    maskImage:
-                      "linear-gradient(90deg, transparent 0%, #000 12%, #000 88%, transparent 100%), linear-gradient(180deg, transparent 0%, #000 28%, #000 72%, transparent 100%)",
-                    maskComposite: "intersect",
-                  }}
-                />
                 <h1
                   className="hero-title pointer-events-auto relative z-10 font-extrabold tracking-tight text-white text-center w-full max-w-full md:whitespace-nowrap"
                   style={{
                     fontSize: "clamp(2.75rem, 8.5vw, 6.25rem)",
-                    letterSpacing: "-0.02em",
-                    textShadow: `${HERO_SERVICES_TEXT_SHADOW}, 0 4px 18px rgba(0, 0, 0, 0.55)`,
+                    letterSpacing: "0.01em",
+                    ...HERO_GLYPH_READABILITY,
                   }}
                 >
                   <span className="text-red-500" style={{ fontSize: "1.12em", fontWeight: 800 }}>T</span>House Rec
@@ -120,32 +103,14 @@ export default function Home() {
               </div>
 
               <div className="relative mx-auto mt-10 w-full max-w-[min(100%,40rem)] sm:mt-12 md:mt-14">
-                <span
-                  aria-hidden
-                  className="pointer-events-none absolute z-0"
-                  style={{
-                    top: "-12%",
-                    right: "-2%",
-                    bottom: "-12%",
-                    left: "-2%",
-                    borderRadius: "9999px",
-                    background:
-                      "linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.14) 18%, rgba(0,0,0,0.14) 82%, transparent 100%)",
-                    backdropFilter: "blur(5px)",
-                    WebkitBackdropFilter: "blur(5px)",
-                    WebkitMaskImage:
-                      "linear-gradient(90deg, transparent 0%, #000 12%, #000 88%, transparent 100%), linear-gradient(180deg, transparent 0%, #000 20%, #000 80%, transparent 100%)",
-                    WebkitMaskComposite: "source-in",
-                    maskImage:
-                      "linear-gradient(90deg, transparent 0%, #000 12%, #000 88%, transparent 100%), linear-gradient(180deg, transparent 0%, #000 20%, #000 80%, transparent 100%)",
-                    maskComposite: "intersect",
-                  }}
-                />
                 <p
                   className="hero-services pointer-events-auto relative z-10 uppercase font-bold text-red-500 tracking-[0.12em] md:tracking-[0.16em] text-center max-w-full leading-snug"
                   style={{
                     fontSize: "clamp(0.72rem, 2.2vw, 1.15rem)",
-                    textShadow: HERO_SERVICES_TEXT_SHADOW,
+                    ...HERO_GLYPH_READABILITY,
+                    WebkitTextStroke: "1.5px #000",
+                    filter:
+                      "drop-shadow(0 0 4px #000) drop-shadow(0 0 7px rgba(0,0,0,0.9)) drop-shadow(0 1px 10px rgba(0,0,0,0.62))",
                   }}
                 >
                   <span className="block">ESTÚDIO • PRODUÇÃO • MIX &amp; MASTER •</span>

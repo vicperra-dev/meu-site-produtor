@@ -3,6 +3,7 @@
  * Única porta de alteração de status de domínio: transition().
  */
 
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/app/lib/prisma";
 import { validateDeliveryAudioUrl } from "@/app/lib/delivery-url-validation";
 import { ensureServicesForAppointment } from "@/app/lib/ensure-appointment-services";
@@ -66,7 +67,7 @@ async function persistStatus(
 
   if (input.entity === "appointment") {
     const idNum = typeof input.id === "number" ? input.id : parseInt(String(input.id), 10);
-    const data: Record<string, unknown> = { status: persisted };
+    const data: Prisma.AppointmentUpdateManyMutationInput = { status: persisted };
     if (persisted === "recusado" || persisted === "cancelado" || persisted === "remarcado") {
       if (input.reason) data.cancelReason = input.reason;
       data.cancelledAt = new Date();
@@ -80,7 +81,7 @@ async function persistStatus(
     }
 
     // confirmado é alias legado de aceite admin
-    const fromWhere =
+    const fromWhere: string | { in: string[] } =
       fromPersisted === "confirmado" && persisted === "aceito"
         ? { in: ["confirmado", "aceito"] }
         : fromPersisted === "aceito" && persisted === "em_andamento"
@@ -90,9 +91,9 @@ async function persistStatus(
     const cnt = await prisma.appointment.updateMany({
       where: {
         id: idNum,
-        status: fromWhere as any,
+        status: fromWhere,
       },
-      data: data as any,
+      data,
     });
     if (cnt.count > 0) return { applied: true, conflictAlreadyAtTarget: false };
     const cur = await prisma.appointment.findUnique({ where: { id: idNum } });
@@ -103,8 +104,48 @@ async function persistStatus(
   }
 
   if (input.entity === "service") {
-    const data: Record<string, unknown> = { status: persisted };
+    const { resolveOperationalStartWrite, resolveOperationalCompletionWrite } = await import(
+      "@/app/lib/service-timing"
+    );
+    const current = await prisma.service.findUnique({
+      where: { id: String(input.id) },
+      select: {
+        tipo: true,
+        startedAt: true,
+        completedAt: true,
+        actualDurationSeconds: true,
+      },
+    });
+    const data: Prisma.ServiceUpdateManyMutationInput = { status: persisted };
     if (persisted === "aceito") data.acceptedAt = new Date();
+    const now = new Date();
+    const timingData: Prisma.ServiceUpdateManyMutationInput = {};
+    if (current) {
+      const startAt = resolveOperationalStartWrite({
+        tipo: current.tipo,
+        existingStartedAt: current.startedAt,
+        now,
+      });
+      if (persisted === "em_andamento" && startAt) {
+        timingData.startedAt = startAt;
+      }
+      if (persisted === "concluido") {
+        const snapshot = resolveOperationalCompletionWrite({
+          tipo: current.tipo,
+          startedAt: current.startedAt,
+          existingCompletedAt: current.completedAt,
+          existingActualDurationSeconds: current.actualDurationSeconds,
+          now,
+        });
+        if (snapshot) {
+          timingData.completedAt = snapshot.completedAt;
+          timingData.actualDurationSeconds = snapshot.actualDurationSeconds;
+          timingData.contractedDurationSeconds = snapshot.contractedDurationSeconds;
+          timingData.overtimeBasePriceCents = snapshot.overtimeBasePriceCents;
+          timingData.suggestedOvertimeAmountCents = snapshot.suggestedOvertimeAmountCents;
+        }
+      }
+    }
     if (persisted === "concluido") {
       const skipDelivery = Boolean(meta.completeWithoutDelivery);
       if (skipDelivery) {
@@ -136,7 +177,7 @@ async function persistStatus(
       }
     }
 
-    const fromFilter =
+    const fromFilter: string | { in: string[] } =
       toNormalized === "em_andamento"
         ? { in: ["pendente", "aceito"] }
         : toNormalized === "entrega"
@@ -146,11 +187,44 @@ async function persistStatus(
             : fromPersisted;
 
     const cnt = await prisma.service.updateMany({
-      where: { id: String(input.id), status: fromFilter as any },
-      data: data as any,
+      where: { id: String(input.id), status: fromFilter },
+      data,
     });
-    if (cnt.count > 0) return { applied: true, conflictAlreadyAtTarget: false };
+    if (cnt.count > 0) {
+      if (Object.keys(timingData).length > 0) {
+        try {
+          await prisma.service.updateMany({
+            where: { id: String(input.id) },
+            data: timingData,
+          });
+        } catch (timingErr) {
+          console.error(
+            "[persistStatus] Falha ao gravar timing operacional (status já aplicado):",
+            timingErr
+          );
+        }
+      }
+      return { applied: true, conflictAlreadyAtTarget: false };
+    }
     const cur = await prisma.service.findUnique({ where: { id: String(input.id) } });
+    if (
+      cur?.status === persisted &&
+      persisted === "em_andamento" &&
+      current &&
+      Object.keys(timingData).length > 0
+    ) {
+      try {
+        await prisma.service.updateMany({
+          where: { id: String(input.id) },
+          data: timingData,
+        });
+      } catch (timingErr) {
+        console.error(
+          "[persistStatus] Falha ao gravar timing operacional (já em_andamento):",
+          timingErr
+        );
+      }
+    }
     return {
       applied: false,
       conflictAlreadyAtTarget: cur?.status === persisted,
@@ -158,14 +232,14 @@ async function persistStatus(
   }
 
   if (input.entity === "payment") {
-    const fromFilter =
+    const fromFilter: string | { in: string[] } =
       fromNorm === "pendente"
         ? { in: ["pending", "pendente"] }
         : fromNorm === "confirmado"
           ? { in: ["approved", "confirmado", "recebido"] }
           : fromPersisted;
     const cnt = await prisma.payment.updateMany({
-      where: { id: String(input.id), status: fromFilter as any },
+      where: { id: String(input.id), status: fromFilter },
       data: { status: persisted },
     });
     if (cnt.count > 0) return { applied: true, conflictAlreadyAtTarget: false };
@@ -243,8 +317,9 @@ export async function transition(input: TransitionInput): Promise<TransitionResu
 
   try {
     assertTransitionAllowed(input.entity, from, to);
-  } catch (e: any) {
-    return fail(e.message || `Transição inválida: ${from} → ${to}`, 409, "INVALID_TRANSITION");
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : `Transição inválida: ${from} → ${to}`;
+    return fail(message, 409, "INVALID_TRANSITION");
   }
 
   if (!isTransitionAllowed(input.entity, from, to)) {
@@ -258,8 +333,9 @@ export async function transition(input: TransitionInput): Promise<TransitionResu
   let persistResult: { applied: boolean; conflictAlreadyAtTarget: boolean };
   try {
     persistResult = await persistStatus(input, loaded.status, to);
-  } catch (e: any) {
-    return fail(e.message || "Falha ao persistir", e.httpStatus || 500, e.code || "ERROR");
+  } catch (e: unknown) {
+    const err = e as { message?: string; httpStatus?: number; code?: string };
+    return fail(err.message || "Falha ao persistir", err.httpStatus || 500, err.code || "ERROR");
   }
 
   if (!persistResult.applied) {
@@ -291,7 +367,13 @@ export async function transition(input: TransitionInput): Promise<TransitionResu
   if (!input.skipEffects) {
     const plan = await planTransitionEffects(event);
     for (const cascade of plan.cascades) {
-      await transition(cascade);
+      const cr = await transition(cascade);
+      if (!cr.ok) {
+        console.error(
+          `[transition] cascade ${cascade.reason || cascade.to} falhou:`,
+          cr.error
+        );
+      }
     }
     if (plan.after) await plan.after();
   }

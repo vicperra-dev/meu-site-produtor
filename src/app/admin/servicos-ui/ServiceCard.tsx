@@ -16,6 +16,7 @@ import { Icons, formatDate, formatTime, serviceTypeLabel, timeAgo } from "./meta
 import { ServiceTimeline } from "./ServiceTimeline";
 import { Spinner } from "./States";
 import { FinancialSummaryCompact, FinancialSummaryDetails } from "./FinancialSummary";
+import { ServiceTimingInfo } from "./ServiceTimingInfo";
 
 export interface ServiceCardActions {
   onAceitar?: (id: string) => void;
@@ -68,6 +69,8 @@ export function ServiceCard({ service: s, actions }: { service: AdminService; ac
         <FinancialSummaryCompact financial={s.financial} />
       </div>
 
+      <ServiceTimingInfo service={s} />
+
       {/* Agendamento */}
       <div className="grid grid-cols-2 gap-2 border-t border-zinc-800 px-4 py-3 text-xs sm:grid-cols-4">
         <div>
@@ -87,14 +90,14 @@ export function ServiceCard({ service: s, actions }: { service: AdminService; ac
           <p className="text-[10px] uppercase tracking-wide text-zinc-500">Data</p>
           <p className="flex items-center gap-1 text-zinc-300">
             <Icons.calendar className="w-3 h-3 text-zinc-500" />
-            {formatDate(s.appointment?.data || s.createdAt)}
+            {s.appointment?.data ? formatDate(s.appointment.data) : "—"}
           </p>
         </div>
         <div>
           <p className="text-[10px] uppercase tracking-wide text-zinc-500">Horário</p>
           <p className="flex items-center gap-1 text-zinc-300">
             <Icons.clock className="w-3 h-3 text-zinc-500" />
-            {formatTime(s.appointment?.data || s.createdAt)}
+            {s.appointment?.data ? formatTime(s.appointment.data) : "—"}
           </p>
         </div>
         <div>

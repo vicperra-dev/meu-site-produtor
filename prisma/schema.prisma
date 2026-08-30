@@ -311,6 +311,12 @@ model Service {
   description         String?
   status              String       @default("pendente") // pendente | aceito | em_andamento | recusado | cancelado | concluido
   acceptedAt          DateTime?
+  startedAt           DateTime? // cronômetro operacional (somente sessao/captacao)
+  completedAt         DateTime? // congelamento do cronômetro na conclusão
+  actualDurationSeconds Int? // duração real congelada (completedAt - startedAt)
+  contractedDurationSeconds Int? // snapshot da duração contratada na conclusão
+  overtimeBasePriceCents Int? // snapshot do preço/hora do catálogo na conclusão
+  suggestedOvertimeAmountCents Int? // adicional sugerido congelado (não é cobrança)
   deliveryAudioUrl    String? // Path/URL canônica do arquivo entregue (upload; não colar URL externa)
   deliveryAudioFormat String? // "wav" | "mp3" | "zip"
   createdAt           DateTime     @default(now())
@@ -321,6 +327,8 @@ model Service {
   @@index([status])
   @@index([tipo])
   @@index([appointmentId])
+  @@index([startedAt])
+  @@index([completedAt])
 }
 
 model ChatSession {

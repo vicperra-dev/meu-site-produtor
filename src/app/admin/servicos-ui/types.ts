@@ -50,6 +50,12 @@ export interface AdminService {
   observacoes?: string | null;
   status: string;
   acceptedAt?: string | null;
+  startedAt?: string | null;
+  completedAt?: string | null;
+  actualDurationSeconds?: number | null;
+  contractedDurationSeconds?: number | null;
+  overtimeBasePriceCents?: number | null;
+  suggestedOvertimeAmountCents?: number | null;
   appointmentId: number | null;
   appointment: AdminAppointment | null;
   deliveryAudioUrl?: string | null;
