@@ -1,0 +1,453 @@
+{
+  "reportId": "RC-03-security-certification",
+  "mode": "CERTIFICATION",
+  "generatedAt": "2026-07-15T18:10:56.805Z",
+  "startedAt": "2026-07-15T17:55:40.483Z",
+  "durationMs": 916322,
+  "durationHuman": "916s",
+  "language": "pt-BR",
+  "projectName": "THouse",
+  "architecture": "FROZEN_AFTER_EC_01",
+  "pipeline": "Execution Core → Workflow → SM → Sync → Simulation/Test Engine",
+  "verdict": {
+    "security": "CERTIFICADA",
+    "allSectionsPass": true,
+    "commitAllowed": true,
+    "confidencePercent": 91
+  },
+  "summary": {
+    "attemptsExecuted": 40,
+    "attemptsPassed": 40,
+    "attemptsFailed": 0,
+    "flowsExecuted": 27,
+    "flowsPassed": 27,
+    "flowsFailed": 0,
+    "gatesTotal": 13,
+    "gatesPass": 13,
+    "gatesFail": 0,
+    "sectionsTotal": 10,
+    "sectionsPass": 10,
+    "sectionsPassWithReservation": 0,
+    "sectionsFail": 0,
+    "scenariosAdded": 10
+  },
+  "sections": [
+    {
+      "section": 1,
+      "title": "Permissões (USER, ADMIN, rotas, feature flags, simulation)",
+      "status": "PASS",
+      "scenarios": [
+        "RC03-001",
+        "RC01-006",
+        "RC02-001",
+        "RC02-005"
+      ],
+      "passed": 4,
+      "failed": 0,
+      "errors": 0,
+      "reservations": [],
+      "evidence": [
+        "RC03-001: PASS",
+        "RC01-006: PASS",
+        "RC02-001: PASS",
+        "RC02-005: PASS"
+      ]
+    },
+    {
+      "section": 2,
+      "title": "Concorrência (dois usuários, pagamentos, agendamentos, cupons, remarcações)",
+      "status": "PASS",
+      "scenarios": [
+        "RC03-002",
+        "RC03-003",
+        "RC03-004",
+        "RC03-009",
+        "SIM-003"
+      ],
+      "passed": 5,
+      "failed": 0,
+      "errors": 0,
+      "reservations": [],
+      "evidence": [
+        "RC03-002: PASS",
+        "RC03-003: PASS",
+        "RC03-004: PASS",
+        "RC03-009: PASS",
+        "SIM-003: PASS"
+      ]
+    },
+    {
+      "section": 3,
+      "title": "Cupons adversos (duplo uso, expirado, owner, tipo)",
+      "status": "PASS",
+      "scenarios": [
+        "RC03-005",
+        "RC03-006",
+        "RC02-005",
+        "CPN-003",
+        "SIM-006",
+        "SIM-007"
+      ],
+      "passed": 6,
+      "failed": 0,
+      "errors": 0,
+      "reservations": [],
+      "evidence": [
+        "RC03-005: PASS",
+        "RC03-006: PASS",
+        "RC02-005: PASS",
+        "CPN-003: PASS",
+        "SIM-006: PASS",
+        "SIM-007: PASS"
+      ]
+    },
+    {
+      "section": 4,
+      "title": "Pagamentos adversos (duplicidade, recusado, inexistente, metadata)",
+      "status": "PASS",
+      "scenarios": [
+        "RC03-004",
+        "RC03-008",
+        "SIM-002",
+        "SIM-003",
+        "SIM-008"
+      ],
+      "passed": 5,
+      "failed": 0,
+      "errors": 0,
+      "reservations": [],
+      "evidence": [
+        "RC03-004: PASS",
+        "RC03-008: PASS",
+        "SIM-002: PASS",
+        "SIM-003: PASS",
+        "SIM-008: PASS"
+      ]
+    },
+    {
+      "section": 5,
+      "title": "Agenda (dois usuários mesmo horário)",
+      "status": "PASS",
+      "scenarios": [
+        "RC03-003",
+        "RC01-005",
+        "SIM-010"
+      ],
+      "passed": 3,
+      "failed": 0,
+      "errors": 0,
+      "reservations": [],
+      "evidence": [
+        "RC03-003: PASS",
+        "RC01-005: PASS",
+        "SIM-010: PASS"
+      ]
+    },
+    {
+      "section": 6,
+      "title": "Serviços / State Machine (transições inválidas)",
+      "status": "PASS",
+      "scenarios": [
+        "RC03-007",
+        "APT-001",
+        "APT-002"
+      ],
+      "passed": 3,
+      "failed": 0,
+      "errors": 0,
+      "reservations": [],
+      "evidence": [
+        "RC03-007: PASS",
+        "APT-001: PASS",
+        "APT-002: PASS"
+      ]
+    },
+    {
+      "section": 7,
+      "title": "Segurança (IDs inválidos, acesso cruzado, injeção)",
+      "status": "PASS",
+      "scenarios": [
+        "RC03-010",
+        "RC03-001",
+        "RC01-006"
+      ],
+      "passed": 3,
+      "failed": 0,
+      "errors": 0,
+      "reservations": [],
+      "evidence": [
+        "RC03-010: PASS",
+        "RC03-001: PASS",
+        "RC01-006: PASS"
+      ]
+    },
+    {
+      "section": 8,
+      "title": "Simulation Engine (regressão adversa)",
+      "status": "PASS",
+      "scenarios": [
+        "SIM-001",
+        "SIM-002",
+        "SIM-003",
+        "SIM-008",
+        "SIM-009",
+        "SIM-010"
+      ],
+      "passed": 6,
+      "failed": 0,
+      "errors": 0,
+      "reservations": [],
+      "evidence": [
+        "SIM-001: PASS",
+        "SIM-002: PASS",
+        "SIM-003: PASS",
+        "SIM-008: PASS",
+        "SIM-009: PASS",
+        "SIM-010: PASS"
+      ]
+    },
+    {
+      "section": 9,
+      "title": "Test Engine RC-03 (cenários permanentes)",
+      "status": "PASS",
+      "scenarios": [
+        "RC03-001",
+        "RC03-002",
+        "RC03-003",
+        "RC03-004",
+        "RC03-005",
+        "RC03-006",
+        "RC03-007",
+        "RC03-008",
+        "RC03-009",
+        "RC03-010"
+      ],
+      "passed": 10,
+      "failed": 0,
+      "errors": 0,
+      "reservations": [],
+      "evidence": [
+        "RC03-001: PASS",
+        "RC03-002: PASS",
+        "RC03-003: PASS",
+        "RC03-004: PASS",
+        "RC03-005: PASS",
+        "RC03-006: PASS",
+        "RC03-007: PASS",
+        "RC03-008: PASS",
+        "RC03-009: PASS",
+        "RC03-010: PASS"
+      ]
+    },
+    {
+      "section": 10,
+      "title": "Auditorias + RC-01 + RC-02 baselines",
+      "status": "PASS",
+      "scenarios": [
+        "typescript",
+        "prisma-validate",
+        "build",
+        "domain-audit",
+        "workflow-audit",
+        "sync-audit",
+        "exec-audit",
+        "sim-audit",
+        "graph-audit",
+        "discovery-audit",
+        "regression-audit",
+        "rc01-baseline",
+        "rc02-baseline"
+      ],
+      "passed": 13,
+      "failed": 0,
+      "errors": 0,
+      "reservations": [],
+      "evidence": [
+        "typescript: PASS",
+        "prisma-validate: PASS",
+        "build: PASS",
+        "domain-audit: PASS",
+        "workflow-audit: PASS",
+        "sync-audit: PASS",
+        "exec-audit: PASS",
+        "sim-audit: PASS",
+        "graph-audit: PASS",
+        "discovery-audit: PASS",
+        "regression-audit: PASS",
+        "rc01-baseline: PASS",
+        "rc02-baseline: PASS"
+      ]
+    }
+  ],
+  "gates": [
+    {
+      "name": "typescript",
+      "ok": true
+    },
+    {
+      "name": "prisma-validate",
+      "ok": true
+    },
+    {
+      "name": "build",
+      "ok": true
+    },
+    {
+      "name": "domain-audit",
+      "ok": true
+    },
+    {
+      "name": "workflow-audit",
+      "ok": true
+    },
+    {
+      "name": "sync-audit",
+      "ok": true
+    },
+    {
+      "name": "exec-audit",
+      "ok": true
+    },
+    {
+      "name": "sim-audit",
+      "ok": true
+    },
+    {
+      "name": "graph-audit",
+      "ok": true
+    },
+    {
+      "name": "discovery-audit",
+      "ok": true
+    },
+    {
+      "name": "regression-audit",
+      "ok": true
+    },
+    {
+      "name": "rc01-baseline",
+      "ok": true,
+      "detail": "CERTIFICADA"
+    },
+    {
+      "name": "rc02-baseline",
+      "ok": true,
+      "detail": "CERTIFICADA"
+    }
+  ],
+  "vulnerabilitiesFound": [
+    {
+      "id": "RC03-RACE-01",
+      "description": "Dois PAYMENT_RECEIVED em paralelo no mesmo slot podem criar 2 Appointments (TOCTOU). Bloqueio sequencial (RC03-003 / RC01-005) funciona. Domínio congelado — mitigação deferida.",
+      "status": "documented"
+    }
+  ],
+  "vulnerabilitiesCorrected": [
+    {
+      "id": "RC03-WIRE",
+      "description": "Suite rc03 registrada em discovery, types, te-run e certify script."
+    },
+    {
+      "id": "RC03-TSC",
+      "description": "Correção NODE_ENV read-only e tipagem actor em RC03-001."
+    }
+  ],
+  "scenariosAdded": [
+    {
+      "id": "RC03-001",
+      "purpose": "regressão permanente RC-03"
+    },
+    {
+      "id": "RC03-002",
+      "purpose": "regressão permanente RC-03"
+    },
+    {
+      "id": "RC03-003",
+      "purpose": "regressão permanente RC-03"
+    },
+    {
+      "id": "RC03-004",
+      "purpose": "regressão permanente RC-03"
+    },
+    {
+      "id": "RC03-005",
+      "purpose": "regressão permanente RC-03"
+    },
+    {
+      "id": "RC03-006",
+      "purpose": "regressão permanente RC-03"
+    },
+    {
+      "id": "RC03-007",
+      "purpose": "regressão permanente RC-03"
+    },
+    {
+      "id": "RC03-008",
+      "purpose": "regressão permanente RC-03"
+    },
+    {
+      "id": "RC03-009",
+      "purpose": "regressão permanente RC-03"
+    },
+    {
+      "id": "RC03-010",
+      "purpose": "regressão permanente RC-03"
+    }
+  ],
+  "scenarioResults": {
+    "te": {
+      "total": 17,
+      "passed": 17,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "stubs": 0,
+      "avgDurationMs": 2117
+    },
+    "sim01": {
+      "total": 10,
+      "passed": 10,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "avgDurationMs": 2422
+    },
+    "sim02": {
+      "total": 10,
+      "passed": 10,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "avgDurationMs": 2289
+    }
+  },
+  "risks": [
+    {
+      "id": "RC03-HTTP-01",
+      "severity": "scope",
+      "description": "Rotas HTTP /admin e cookies HttpOnly não exercitados E2E — validado via gates engine + cancel cross-user."
+    },
+    {
+      "id": "RC03-RACE-01",
+      "severity": "P2",
+      "description": "Concorrência real multi-processo (duas instâncias Node) não simulada; cobertura via Promise.all no mesmo processo."
+    },
+    {
+      "id": "RC03-UPLOAD-01",
+      "severity": "scope",
+      "description": "Upload/delivery file ACL não exercitado nesta certificação (RC-04 smoke)."
+    }
+  ],
+  "coverage": {
+    "permissions": "RC03-001, RC01-006, RC02-001",
+    "concurrency": "RC03-002…004, RC03-009, SIM-003",
+    "coupons": "RC03-005, RC03-006, RC02-005",
+    "payments": "RC03-008, SIM-002/003/008",
+    "agenda": "RC03-003, RC01-005",
+    "stateMachine": "RC03-007",
+    "security": "RC03-010",
+    "simulation": "SIM-01 + SIM-02",
+    "testEngine": "RC03-001…010",
+    "baselines": "RC-01 + RC-02 reports"
+  }
+}

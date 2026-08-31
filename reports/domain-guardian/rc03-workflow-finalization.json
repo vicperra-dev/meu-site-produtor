@@ -1,0 +1,60 @@
+{
+  "reportId": "RC-03-workflow-finalization",
+  "mode": "EXECUCAO_CONTROLADA",
+  "generatedAt": "2026-07-11T04:15:00.000Z",
+  "language": "pt-BR",
+  "projectName": "THouse Rec",
+  "branch": "pr03-clean",
+  "headBefore": "9379167",
+  "basedOn": ["RC-02-ci-update", "PV-01a-guardian-diagnosis"],
+  "restricoes": {
+    "escopoAlteracao": [".github/workflows/"],
+    "naoAlterado": ["codigo aplicacao", "prisma", "apis", "regras de negocio"]
+  },
+  "inspecaoWorkflow": {
+    "arquivo": ".github/workflows/domain-guardian.yml",
+    "scriptsObrigatoriosExistentes": [
+      "scripts/domain-guardian-runner.ts",
+      "scripts/domain-guardian-advisor.ts",
+      "scripts/domain-change-analyzer.ts",
+      "scripts/domain-review-engine.ts",
+      "scripts/domain-decision-engine.ts"
+    ],
+    "scriptsInexistentesReferenciados": [
+      {
+        "script": "scripts/domain-architecture-planner.ts",
+        "stepAnterior": 5,
+        "linhaAnterior": 55,
+        "agente": "StudioOS Fase 7 — Domain Architecture Planner"
+      }
+    ]
+  },
+  "alteracao": {
+    "step": "5. Domain Architecture Planner (StudioOS — opcional)",
+    "linhas": "55-63",
+    "estrategia": "executar apenas se o arquivo existir; caso contrário skip com mensagem explicativa",
+    "comentario": "StudioOS: agente ainda não commitado neste repositório",
+    "scriptsObrigatoriosPreservados": {
+      "step1": "runner + advisor (gate de banco mascarado com || true — inalterado)",
+      "step2": "change-analyzer (|| true — inalterado)",
+      "step3": "review-engine (|| true — inalterado)",
+      "step4": "decision-engine — gate obrigatório sem || true"
+    }
+  },
+  "validacaoLocal": {
+    "metodo": "Simulação dos passos 4-5 no repo principal; worktree limpo para passos 2-4",
+    "step5": { "resultado": "skip", "exit": 0 },
+    "step4": { "decisao": "APPROVED", "risco": "LOW", "exit": 0 },
+    "workflowCompleto": "PASS"
+  },
+  "respostas": {
+    "workflowCompleto": "PASS",
+    "novosScriptsCriados": false,
+    "buildAplicacaoAfetado": false
+  },
+  "commit": {
+    "mensagem": "ci: make optional StudioOS-only workflow steps",
+    "arquivos": [".github/workflows/domain-guardian.yml"]
+  },
+  "veredito": "APROVADO"
+}

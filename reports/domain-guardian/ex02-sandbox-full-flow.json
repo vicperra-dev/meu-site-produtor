@@ -1,0 +1,126 @@
+{
+  "reportId": "EX-02-sandbox-full-flow",
+  "mode": "EXECUCAO_CONTROLADA",
+  "generatedAt": "2026-07-10T18:50:00.000Z",
+  "language": "pt-BR",
+  "projectName": "THouse Rec",
+  "branch": "pr03-clean",
+  "head": "3f20ad0",
+  "basedOn": ["EX-01-sandbox-execution", "SETUP-01-asaas-guide", "OP-01-sandbox-preparation"],
+  "scope": "Fluxo completo MVP Comercial — Sandbox Asaas (registro → pagamento → webhook → validação banco/UI)",
+  "veredito": "REPROVADO",
+  "vereditoMotivo": "Etapa 2 (Verificar Sandbox) falhou: ASAAS_API_KEY ainda é token de produção; ASAAS_WEBHOOK_ACCESS_TOKEN ausente. Pré-requisitos EX-02 não atendidos (EX-01 não aprovado). Execução interrompida conforme protocolo PARAR.",
+  "stopRule": {
+    "triggered": true,
+    "etapa": 2,
+    "nome": "Verificar Sandbox (ex01-asaas-verify.js)"
+  },
+  "failure": {
+    "etapa": 2,
+    "erro": "ex01-asaas-verify.js exit 2 — environment: PRODUCTION, sandboxOk: false. Complemento etapa 1: ASAAS_WEBHOOK_ACCESS_TOKEN MISSING, ASAAS_API_KEY type=PROD.",
+    "causaProvavel": "Credenciais sandbox não foram aplicadas em .env.local após SETUP-01/EX-01a/OP-01. Chave de produção ($aact_prod_*) permanece ativa. EX-01 anterior REPROVADA na mesma causa.",
+    "menorCorrecao": "Seguir SETUP-01: substituir ASAAS_API_KEY por token sandbox ($aact_ sem prod), adicionar ASAAS_WEBHOOK_ACCESS_TOKEN, NEXT_PUBLIC_SITE_URL=http://localhost:3000, reiniciar npm run dev, reexecutar scripts de validação até exit 0.",
+    "impacto": "Impossível criar cobrança sandbox, executar pagamento teste ou webhook sem risco de produção. Etapas 4–8 (jornada, pagamento, validação Payment/Appointment/Service) não executadas."
+  },
+  "preRequisitos": {
+    "EX-01_APROVADO": { "requerido": true, "atual": false, "nota": "EX-01 veredito REPROVADA (2026-07-10)" },
+    "ASAAS_API_KEY_Sandbox": { "requerido": true, "atual": false, "prefixo": "$aact_prod_..." },
+    "ASAAS_WEBHOOK_ACCESS_TOKEN": { "requerido": true, "atual": false },
+    "DATABASE_URL_valido": { "requerido": true, "atual": true },
+    "npm_run_build_OK": { "requerido": true, "atual": true, "nota": "Validado no EX-01 (exit 0)" },
+    "npm_run_dev_rodando": { "requerido": true, "atual": false, "nota": "Nenhum processo dev detectado nos terminais" }
+  },
+  "steps": [
+    {
+      "ordem": 1,
+      "nome": "Verificar ambiente",
+      "comando": "node scripts/ex01-check-env.js",
+      "status": "FAIL",
+      "tempoMs": 5007,
+      "inicio": "2026-07-10T18:48:00.000Z",
+      "evidencia": {
+        "exitCode": 0,
+        "output": {
+          "DATABASE_URL": "OK set len=70 provider=local",
+          "ASAAS_API_KEY": "OK set len=166 type=PROD",
+          "NEXT_PUBLIC_SITE_URL": "OK set len=30",
+          "ASAAS_WEBHOOK_ACCESS_TOKEN": "MISSING"
+        },
+        "criterioEx02": "ASAAS_API_KEY type=sandbox e WEBHOOK configurado — não atendido"
+      }
+    },
+    {
+      "ordem": 2,
+      "nome": "Verificar Sandbox",
+      "comando": "node scripts/ex01-asaas-verify.js",
+      "status": "FAIL",
+      "tempoMs": 8821,
+      "inicio": "2026-07-10T18:48:05.000Z",
+      "evidencia": {
+        "exitCode": 2,
+        "tokenPrefix": "$aact_prod_0...",
+        "environment": "PRODUCTION",
+        "apiUrl": "https://www.asaas.com/api/v3",
+        "sandboxOk": false,
+        "pingTls": "unable to verify the first certificate"
+      }
+    },
+    {
+      "ordem": 3,
+      "nome": "Verificar Banco",
+      "comando": "node scripts/ex01-db-ping.js",
+      "status": "PASS",
+      "tempoMs": 8821,
+      "nota": "Executado na mesma sessão após etapa 2; fluxo formal interrompido na etapa 2",
+      "evidencia": {
+        "exitCode": 0,
+        "output": "DATABASE_CONNECT: OK [{\"ok\":1}], USER_COUNT: 2"
+      }
+    },
+    {
+      "ordem": 4,
+      "nome": "Jornada completa (Registro → Checkout → cobrança Asaas)",
+      "status": "NOT_EXECUTED",
+      "motivo": "PARAR na etapa 2"
+    },
+    {
+      "ordem": 5,
+      "nome": "Confirmar initPoint, paymentId, PaymentMetadata",
+      "status": "NOT_EXECUTED",
+      "motivo": "PARAR na etapa 2"
+    },
+    {
+      "ordem": 6,
+      "nome": "Pagamento Sandbox",
+      "status": "NOT_EXECUTED",
+      "motivo": "PARAR na etapa 2"
+    },
+    {
+      "ordem": 7,
+      "nome": "Webhook (automático ou replay canônico)",
+      "status": "NOT_EXECUTED",
+      "motivo": "PARAR na etapa 2"
+    },
+    {
+      "ordem": 8,
+      "nome": "Validação Payment, Appointment, Service, Coupon, Minha Conta, Admin",
+      "status": "NOT_EXECUTED",
+      "motivo": "PARAR na etapa 2"
+    }
+  ],
+  "primeiroPontoNaoAutomatico": {
+    "ponto": "Configuração manual das credenciais Sandbox no .env.local",
+    "etapa": "Pré-requisito (antes da etapa 1 automatizada)",
+    "descricao": "O fluxo exige intervenção humana no painel sandbox.asaas.com e edição de .env.local (ASAAS_API_KEY sandbox + ASAAS_WEBHOOK_ACCESS_TOKEN). Sem isso, os scripts automatizados falham na etapa 2 e a jornada API/browser não pode prosseguir com segurança.",
+    "referencia": "SETUP-01-asaas-guide"
+  },
+  "configAlterada": {
+    "alterado": false,
+    "motivo": "Credenciais sandbox não disponíveis nesta sessão; alterar .env.local sem chave sandbox válida do painel não resolveria a etapa 2"
+  },
+  "proximaAcao": {
+    "guia": "SETUP-01",
+    "validacao": "node scripts/ex01-check-env.js && node scripts/ex01-asaas-verify.js && node scripts/ex01-db-ping.js",
+    "retomar": "Reexecutar EX-02 do passo 1 após todos os scripts exit 0 e npm run dev ativo"
+  }
+}

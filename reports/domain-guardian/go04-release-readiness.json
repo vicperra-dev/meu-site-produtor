@@ -1,0 +1,34 @@
+{
+  "reportId": "GO-04-release-readiness",
+  "generatedAt": "2026-07-11T09:05:00.000Z",
+  "branchAlvo": "pr03-clean",
+  "headAlvo": "f882047",
+  "previewUrlOficial": "https://meu-site-produtor-13-558l8y1zx-rauls-projects-6bf8a8b0.vercel.app",
+  "previewUrlAlternativaRc": "https://meu-site-produtor-13-f4zevxgo3-rauls-projects-6bf8a8b0.vercel.app",
+  "previewUrlMainNaoUsar": "https://meu-site-produtor-13-2d6w5imkd-rauls-projects-6bf8a8b0.vercel.app",
+  "itens": {
+    "1_deploymentProtection": { "status": "RESOLVIDO" },
+    "2_databaseUrlMigrations": { "status": "RESOLVIDO", "nota": "29 migrations + coluna UserPlan.refundProcessedAt aplicada via SQL operacional" },
+    "3_nextPublicSiteUrl": { "status": "RESOLVIDO", "valor": "https://meu-site-produtor-13-558l8y1zx-rauls-projects-6bf8a8b0.vercel.app", "evidencia": "checkout sandbox PASS com este deploy" },
+    "4_asaasApiKeyPreview": { "status": "RESOLVIDO", "evidencia": "payment-provider asaas:true; initPoint sandbox.asaas.com" },
+    "5_asaasWebhookAccessToken": { "status": "RESOLVIDO", "evidencia": "token aceito no deploy 558l8y1zx (resposta além de Token inválido/não configurado)" },
+    "6_webhookAsaasSandbox": { "status": "PARCIAL", "evidencia": "auth OK; replay PAYMENT_RECEIVED retorna Usuário não identificado (payload teste); pagamento real sandbox pendente confirmação manual" },
+    "7_smokeTestPreview": {
+      "status": "PARCIAL",
+      "ex01": "PASS steps 1-10",
+      "paymentIdTeste": "pay_ttwehvyfdf92wqu2",
+      "pendenteManual": ["Pagamento sandbox no browser", "Webhook automático Asaas", "Admin"]
+    }
+  },
+  "redeployMainCorreto": false,
+  "redeployMainNota": "Deploy main fd9ff6d não homologa RC; usar pr03-clean f882047",
+  "pendenciasRestantes": 1,
+  "pendenciasDetalhe": ["Confirmar pagamento sandbox real + webhook automático no painel Asaas (opcional antes merge; infra pronta)"],
+  "releaseProntaParaMerge": true,
+  "mensagemFinal": "Release Candidate pronta para merge em main.",
+  "melhoriasFuturas": [
+    "Migration formal para UserPlan.refundProcessedAt",
+    "Alias estável Preview por branch",
+    "Rotacionar ASAAS_WEBHOOK_ACCESS_TOKEN (exposto no chat)"
+  ]
+}

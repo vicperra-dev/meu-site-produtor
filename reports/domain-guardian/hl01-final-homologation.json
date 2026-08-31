@@ -1,0 +1,434 @@
+{
+  "reportId": "HL-01-final-homologation",
+  "mode": "READ_ONLY",
+  "generatedAt": "2026-07-10T07:00:00.000Z",
+  "language": "pt-BR",
+  "projectName": "THouse Rec",
+  "branch": "pr03-clean",
+  "head": "3f20ad0",
+  "scope": "MVP comercial — agendamento avulso via Asaas",
+  "basedOn": [
+    "LS-01-launch-plan",
+    "OPS-01-runbook",
+    "GL-02-operational-checklist",
+    "E2E-01-customer-journey",
+    "PRD-01-production-readiness",
+    "QE-03-go-live-gate"
+  ],
+  "journeyPath": "Home → Registro → Agendamento → Carrinho → POST /api/asaas/checkout-carrinho → Asaas → POST /api/webhooks/asaas → processCarrinhoPaymentEffects → Appointment + Service → Minha Conta / Admin",
+  "phases": [
+    {
+      "id": "F1",
+      "nome": "Sandbox",
+      "ambiente": "localhost ou dev + ASAAS_API_KEY sandbox + banco staging/dev",
+      "objetivo": "Validar lógica de aplicação e integração Asaas sem dinheiro real nem exposição pública",
+      "preRequisitos": [
+        "Commit 3f20ad0 (GL-01 B1)",
+        "DATABASE_URL apontando para banco não-produção",
+        "ASAAS_API_KEY sandbox ($aact_ não prod)",
+        "NODE_ENV !== production (IS_TEST=true)",
+        "npm run dev ou build local funcional",
+        "Webhook alcançável: ngrok/cloudflared OU processar-manual com ressalvas (NOTE OPS-01)"
+      ],
+      "passos": [
+        "1. Subir app local (npm run dev)",
+        "2. Configurar .env.local: DATABASE_URL, ASAAS_API_KEY sandbox, NEXT_PUBLIC_SITE_URL=http://localhost:3000",
+        "3. Opcional: túnel público + webhook sandbox → ngrok/api/webhooks/asaas",
+        "4. Executar roteiro de jornada HL (14 etapas) com conta teste nova",
+        "5. Preencher agendamento → sessionStorage carrinho → /carrinho",
+        "6. Checkout sandbox — completar pagamento teste Asaas",
+        "7. Se webhook local inacessível: replay curl com asaas-access-token OU aguardar redirect + verificar",
+        "8. Validar banco: User, Session, Payment, PaymentMetadata, Appointment, Service",
+        "9. Validar UI cliente e admin",
+        "10. Executar logout e re-login"
+      ],
+      "resultadoEsperado": "Fluxo completo sem erro 5xx; Payment approved; ≥1 Appointment pendente; Service criado; visível em Minha Conta e Admin",
+      "comoValidar": [
+        "UI: /minha-conta lista agendamento com pagamento",
+        "API: GET /api/meus-dados (cookie sessão) retorna agendamentos",
+        "API: GET /api/pagamentos/verificar?paymentId={asaasId}",
+        "Banco: Payment.status=approved, Appointment.status=pendente, Service vinculado appointmentId",
+        "Logs: [CarrinhoEffects:webhook] sem skippedReason crítico",
+        "Admin: /admin/agendamentos pagamentoConfirmado preenchido",
+        "Admin: /admin/servicos lista serviço pendente/aceito"
+      ],
+      "comoDesfazer": [
+        "DELETE Payment simbólico via admin se valor teste (canAdminDeletePayment)",
+        "Cancelar Appointment via admin se necessário",
+        "Descartar banco dev ou reset seed — NUNCA em produção",
+        "Revogar túnel ngrok"
+      ],
+      "criterioAprovacao": "14/14 etapas PASS na matriz de homologação; zero bloqueador P0; documentar skippedReason se houver"
+    },
+    {
+      "id": "F2",
+      "nome": "Preview",
+      "ambiente": "Vercel Preview + ASAAS sandbox + DATABASE_URL staging + NEXT_PUBLIC_SITE_URL=URL preview",
+      "objetivo": "Validar deploy real (build, envs Vercel, HTTPS, webhook público) antes de produção",
+      "preRequisitos": [
+        "Fase 1 Sandbox aprovada",
+        "Branch pr03-clean deployada em Preview",
+        "Envs Preview configuradas no Vercel",
+        "npx prisma migrate deploy no banco staging",
+        "Webhook Asaas sandbox → https://{preview}.vercel.app/api/webhooks/asaas",
+        "ASAAS_WEBHOOK_ACCESS_TOKEN preview = token painel sandbox"
+      ],
+      "passos": [
+        "1. Deploy Preview (push branch)",
+        "2. Confirmar build Vercel verde",
+        "3. Registrar URL preview estável para sessão de teste",
+        "4. Atualizar webhook Asaas sandbox com URL preview",
+        "5. Disparar evento teste webhook no painel Asaas",
+        "6. Executar roteiro HL completo (14 etapas) em browser real (mobile + desktop recomendado)",
+        "7. Pagamento sandbox via checkout hospedado Asaas",
+        "8. Aguardar webhook (até 3 min) — verificar logs Vercel",
+        "9. Validar banco staging e UIs",
+        "10. Testar logout + login com mesma conta"
+      ],
+      "resultadoEsperado": "Mesmo resultado F1 em ambiente deployado HTTPS; webhook recebido nos logs Vercel; backUrls checkout corretos",
+      "comoValidar": [
+        "Vercel Logs: [Asaas Webhook] Evento recebido + PAYMENT_RECEIVED processado",
+        "Vercel Logs: sem 5xx em checkout-carrinho",
+        "Matriz 14 etapas PASS",
+        "NEXT_PUBLIC_SITE_URL preview usado nos redirects pós-pagamento",
+        "Cookie session_id secure em HTTPS"
+      ],
+      "comoDesfazer": [
+        "Remover/atualizar webhook sandbox no painel Asaas",
+        "Excluir pagamento teste via admin (se simbólico)",
+        "Redeploy preview anterior se regressão",
+        "Não promover preview defeituoso"
+      ],
+      "criterioAprovacao": "Matriz 14/14 PASS; webhook entregue pelo Asaas (não só replay manual); teste mobile sem bloqueio crítico"
+    },
+    {
+      "id": "F3",
+      "nome": "Produção",
+      "ambiente": "Vercel Production + ASAAS produção ($aact_prod_*) + DATABASE_URL produção",
+      "objetivo": "Homologação final com dinheiro real mínimo antes do primeiro cliente pagante externo",
+      "preRequisitos": [
+        "Fase 2 Preview aprovada",
+        "Snapshot Neon produção (OPS P10)",
+        "npx prisma migrate deploy produção",
+        "Envs Production: DATABASE_URL, ASAAS_API_KEY prod, ASAAS_WEBHOOK_ACCESS_TOKEN, NEXT_PUBLIC_SITE_URL https domínio final",
+        "Domínio aprovado painel Asaas",
+        "Webhook prod registrado",
+        "Runbook OPS-01 acessível; plantão definido"
+      ],
+      "passos": [
+        "1. Backup Neon imediato pré-teste",
+        "2. Deploy Production commit 3f20ad0",
+        "3. Smoke técnico: /, /login, /registro (sem compra)",
+        "4. Criar conta homologação com email controlado (@thouse ou pessoal proprietário)",
+        "5. Executar roteiro HL 14 etapas com pagamento REAL valor mínimo",
+        "6. Confirmar RECEIVED/CONFIRMED no painel Asaas produção",
+        "7. Logs Vercel produção — webhook sem token inválido",
+        "8. Validar banco produção: Payment + Appointment + Service",
+        "9. Admin: aceitar agendamento (validar fluxo operacional pós-compra)",
+        "10. Logout; login; confirmar persistência sessão",
+        "11. Documentar asaasId, paymentId, appointmentId da homologação",
+        "12. Go/No-Go formal — Proprietário assina Aprovação Final"
+      ],
+      "resultadoEsperado": "Cadeia real money validada; dados persistidos em produção; admin operacional; pronto para 1º cliente externo",
+      "comoValidar": [
+        "Painel Asaas prod: cobrança RECEIVED/CONFIRMED",
+        "Banco prod: registros idempotentes corretos",
+        "Matriz 14/14 PASS em produção",
+        "Replay documentado testado (curl + asaas-access-token) — não executar em duplicata",
+        "Cliente teste vê agendamento em /minha-conta em < 5 min"
+      ],
+      "comoDesfazer": [
+        "NÃO deletar pagamento real com asaasId (admin bloqueia)",
+        "Reembolso via Asaas se teste deve ser estornado",
+        "Rollback deploy Vercel se bug código (OPS P02)",
+        "Restore Neon apenas se corrupção (OPS P11) — extremo"
+      ],
+      "criterioAprovacao": "Matriz 14/14 PASS; pagamento real reconciliado; Proprietário Go assinado; plantão 24h ativo"
+    }
+  ],
+  "homologationMatrix": [
+    {
+      "id": "H01",
+      "etapa": "Registro",
+      "rota": "/registro → POST /api/registro",
+      "resultadoEsperado": "User criado; Session + cookie session_id; redirect /conta; header logado",
+      "validacao": "GET /api/me retorna user; cookie httpOnly presente",
+      "f1": "Obrigatório",
+      "f2": "Obrigatório",
+      "f3": "Obrigatório",
+      "intervencaoHumana": true,
+      "studioOSFuturo": true
+    },
+    {
+      "id": "H02",
+      "etapa": "Login",
+      "rota": "/login → POST /api/login",
+      "resultadoEsperado": "Sessão criada; acesso área logada",
+      "validacao": "Após logout/login manual: /api/me OK",
+      "f1": "Obrigatório",
+      "f2": "Obrigatório",
+      "f3": "Obrigatório",
+      "intervencaoHumana": true,
+      "studioOSFuturo": true
+    },
+    {
+      "id": "H03",
+      "etapa": "Minha Conta (pré-compra)",
+      "rota": "/minha-conta",
+      "resultadoEsperado": "Página carrega; lista vazia ou histórico; sem bounce login",
+      "validacao": "GET /api/meus-dados 200",
+      "f1": "Obrigatório",
+      "f2": "Obrigatório",
+      "f3": "Obrigatório",
+      "intervencaoHumana": true,
+      "studioOSFuturo": true
+    },
+    {
+      "id": "H04",
+      "etapa": "Agendamento",
+      "rota": "/agendamento → sessionStorage",
+      "resultadoEsperado": "Data/hora/serviços selecionados; carrinho populado; termos aceitos",
+      "validacao": "sessionStorage carrinho com itens; redirect /carrinho",
+      "f1": "Obrigatório",
+      "f2": "Obrigatório",
+      "f3": "Obrigatório",
+      "intervencaoHumana": true,
+      "studioOSFuturo": "Parcial — E2E browser"
+    },
+    {
+      "id": "H05",
+      "etapa": "Carrinho",
+      "rota": "/carrinho",
+      "resultadoEsperado": "Itens exibidos; formulário CPF/endereço; aceite termos",
+      "validacao": "Campos validados; botão checkout habilitado",
+      "f1": "Obrigatório",
+      "f2": "Obrigatório",
+      "f3": "Obrigatório",
+      "intervencaoHumana": true,
+      "studioOSFuturo": "Parcial"
+    },
+    {
+      "id": "H06",
+      "etapa": "Checkout",
+      "rota": "POST /api/asaas/checkout-carrinho",
+      "resultadoEsperado": "URL checkout Asaas retornada; PaymentMetadata gravado",
+      "validacao": "Redirect Asaas; logs sem ASAAS_API_KEY ausente",
+      "f1": "Obrigatório",
+      "f2": "Obrigatório",
+      "f3": "Obrigatório",
+      "intervencaoHumana": true,
+      "studioOSFuturo": true
+    },
+    {
+      "id": "H07",
+      "etapa": "Pagamento",
+      "rota": "Asaas hosted checkout",
+      "resultadoEsperado": "Status RECEIVED ou CONFIRMED no Asaas",
+      "validacao": "Painel Asaas + /api/pagamentos/verificar",
+      "f1": "Obrigatório",
+      "f2": "Obrigatório",
+      "f3": "Obrigatório",
+      "intervencaoHumana": true,
+      "studioOSFuturo": false
+    },
+    {
+      "id": "H08",
+      "etapa": "Webhook",
+      "rota": "POST /api/webhooks/asaas",
+      "resultadoEsperado": "PAYMENT_RECEIVED processado; efeitos carrinho executados",
+      "validacao": "Logs [Asaas Webhook] + [CarrinhoEffects:webhook]; HTTP 200",
+      "f1": "Obrigatório",
+      "f2": "Obrigatório",
+      "f3": "Obrigatório",
+      "intervencaoHumana": "F1 parcial (túnel); F2-F3 observação logs",
+      "studioOSFuturo": true
+    },
+    {
+      "id": "H09",
+      "etapa": "Appointment",
+      "rota": "processCarrinhoPaymentEffects",
+      "resultadoEsperado": "≥1 Appointment status pendente; Payment linkado",
+      "validacao": "Prisma: Appointment.userId + Payment.appointmentIds",
+      "f1": "Obrigatório",
+      "f2": "Obrigatório",
+      "f3": "Obrigatório",
+      "intervencaoHumana": false,
+      "studioOSFuturo": true
+    },
+    {
+      "id": "H10",
+      "etapa": "Service",
+      "rota": "createServicesForAppointmentIfMissing",
+      "resultadoEsperado": "Service criado para appointmentId",
+      "validacao": "Admin /admin/servicos; logs serviços criados",
+      "f1": "Obrigatório",
+      "f2": "Obrigatório",
+      "f3": "Obrigatório",
+      "intervencaoHumana": false,
+      "studioOSFuturo": true
+    },
+    {
+      "id": "H11",
+      "etapa": "Minha Conta (pós-compra)",
+      "rota": "/minha-conta",
+      "resultadoEsperado": "Agendamento visível com pagamento; status pendente",
+      "validacao": "UI + /api/meus-dados após F5",
+      "f1": "Obrigatório",
+      "f2": "Obrigatório",
+      "f3": "Obrigatório",
+      "intervencaoHumana": true,
+      "studioOSFuturo": true
+    },
+    {
+      "id": "H12",
+      "etapa": "Admin",
+      "rota": "/admin/agendamentos, /admin/pagamentos, /admin/servicos",
+      "resultadoEsperado": "Pedido visível; pagamento associado; aceitar agendamento opcional F3",
+      "validacao": "pagamentoConfirmado preenchido; PATCH status aceito F3",
+      "f1": "Recomendado",
+      "f2": "Obrigatório",
+      "f3": "Obrigatório (+ aceitar)",
+      "intervencaoHumana": true,
+      "studioOSFuturo": "Parcial — API admin"
+    },
+    {
+      "id": "H13",
+      "etapa": "Logout",
+      "rota": "POST /api/logout",
+      "resultadoEsperado": "Cookie removido; Session deletada",
+      "validacao": "/api/me 401; header mostra Entrar",
+      "f1": "Obrigatório",
+      "f2": "Obrigatório",
+      "f3": "Obrigatório",
+      "intervencaoHumana": true,
+      "studioOSFuturo": true
+    },
+    {
+      "id": "H14",
+      "etapa": "Login (pós-logout)",
+      "rota": "Re-login mesma conta",
+      "resultadoEsperado": "Dados persistem; Minha Conta mantém agendamento",
+      "validacao": "Segundo ciclo login → minha-conta OK",
+      "f1": "Recomendado",
+      "f2": "Obrigatório",
+      "f3": "Obrigatório",
+      "intervencaoHumana": true,
+      "studioOSFuturo": true
+    }
+  ],
+  "humanIntervention": {
+    "obrigatoria": [
+      "H01 Registro — preencher formulário extenso",
+      "H04 Agendamento — escolher data/hora/serviços",
+      "H05 Carrinho — CPF, CEP, endereço, termos",
+      "H06 Checkout — iniciar fluxo UI",
+      "H07 Pagamento — concluir no hosted checkout Asaas (sandbox ou real)",
+      "H11 Minha Conta pós-compra — verificar UX (polling parcial; pode precisar F5)",
+      "H12 Admin — aceitar agendamento em F3; julgamento operacional",
+      "H13-H14 Logout/Login — interação browser",
+      "Configuração webhook e domínio no painel Asaas (todas as fases)",
+      "Go/No-Go Aprovação Final — Proprietário"
+    ],
+    "observacao": [
+      "H08 Webhook F1 — túnel ou replay manual se localhost",
+      "H08 Webhook F2-F3 — monitorar logs (não intervir se automático)",
+      "F3 pagamento real — decisão proprietário"
+    ],
+    "naoRequerHumano": [
+      "H09 Appointment — automático pós-webhook",
+      "H10 Service — automático pós-webhook",
+      "Validação banco via Prisma/guardian (execução humana trigger, verificação automatizável)"
+    ]
+  },
+  "studioOSAutomation": {
+    "definicao": "StudioOS = camada de agentes e automação de engenharia THouse (Domain Guardian, Release Manager, scripts de verificação, futuro E2E) — análogo ao DevOS em OPS-01",
+    "etapasAutomatizaveisFuturo": [
+      { "id": "H01", "percentual": 85, "nota": "Playwright registro + assert /api/me" },
+      { "id": "H02", "percentual": 90, "nota": "Login scriptado" },
+      { "id": "H03", "percentual": 90, "nota": "GET meus-dados assert" },
+      { "id": "H04", "percentual": 60, "nota": "UI agendamento complexa" },
+      { "id": "H05", "percentual": 55, "nota": "Formulário longo" },
+      { "id": "H06", "percentual": 80, "nota": "API checkout-carrinho + assert URL" },
+      { "id": "H07", "percentual": 15, "nota": "Asaas UI externa — permanece manual" },
+      { "id": "H08", "percentual": 75, "nota": "Log watcher + replay script com token" },
+      { "id": "H09", "percentual": 95, "nota": "Guardian invariant Payment→Appointment" },
+      { "id": "H10", "percentual": 95, "nota": "Guardian Service por appointmentId" },
+      { "id": "H11", "percentual": 70, "nota": "Polling meus-dados até appointment" },
+      { "id": "H12", "percentual": 50, "nota": "API admin PATCH; aceite julgamento humano" },
+      { "id": "H13", "percentual": 90, "nota": "Cookie assert" },
+      { "id": "H14", "percentual": 90, "nota": "Re-login script" }
+    ],
+    "percentualMedioAutomatizavel": 72,
+    "permaneceManual": ["Pagamento Asaas UI", "Go/No-Go negócio", "Config painel Asaas", "Aceite admin negócio"]
+  },
+  "checklists": {
+    "sandbox": [
+      "□ Commit 3f20ad0 confirmado",
+      "□ Banco dev/staging; migrate deploy OK",
+      "□ ASAAS_API_KEY sandbox",
+      "□ App local rodando",
+      "□ Túnel webhook OU plano replay documentado",
+      "□ H01–H11 PASS (mínimo)",
+      "□ H13 logout PASS",
+      "□ Logs [CarrinhoEffects:webhook] OK",
+      "□ Banco: Payment + Appointment + Service",
+      "□ Incidentes documentados"
+    ],
+    "preview": [
+      "□ Fase Sandbox aprovada",
+      "□ Vercel Preview deploy verde",
+      "□ Envs Preview completas",
+      "□ migrate deploy staging",
+      "□ Webhook sandbox → URL preview + token",
+      "□ Evento teste webhook recebido nos logs",
+      "□ Matriz H01–H14 PASS",
+      "□ Teste mobile (recomendado)",
+      "□ backUrls checkout corretos",
+      "□ Sem 5xx checkout-carrinho/webhook"
+    ],
+    "producao": [
+      "□ Fase Preview aprovada",
+      "□ Snapshot Neon pré-teste",
+      "□ migrate deploy produção",
+      "□ Envs Production completas ($aact_prod_*)",
+      "□ Domínio + webhook prod Asaas",
+      "□ Deploy Production 3f20ad0",
+      "□ Matriz H01–H14 PASS com pagamento REAL",
+      "□ Painel Asaas RECEIVED/CONFIRMED",
+      "□ Admin aceita agendamento teste",
+      "□ asaasId/documentação homologação arquivada",
+      "□ Runbook OPS acessível; plantão definido"
+    ],
+    "aprovacaoFinal": [
+      "□ F1 Sandbox — APROVADO (assinatura Engenheiro)",
+      "□ F2 Preview — APROVADO (assinatura Engenheiro)",
+      "□ F3 Produção — APROVADO (assinatura Engenheiro + Proprietário)",
+      "□ 14/14 etapas matriz PASS em F3",
+      "□ Zero bloqueador P0 aberto",
+      "□ Replay webhook documentado e testado",
+      "□ Canal suporte definido",
+      "□ Texto 'lançamento controlado' para 1º cliente",
+      "□ **GO** para primeiro cliente pagante externo"
+    ]
+  },
+  "confidence": {
+    "pergunta": "Após concluir essa homologação (F1+F2+F3 + Aprovação Final), qual a confiança para abrir ao primeiro cliente pagante?",
+    "percentual": 82,
+    "faixa": { "min": 78, "max": 86 },
+    "definicao": "1º cliente externo completa compra avulsa sem intervenção de engenheiro; suporte admin para aceite agendamento é aceitável",
+    "comparativo": {
+      "semHomologacao": 52,
+      "apenasSandbox": 62,
+      "sandboxPreview": 74,
+      "homologacaoCompletaF3": 82,
+      "fontes": ["E2E-01 52%", "GL-02 70%", "LS-01 74%"]
+    },
+    "residualRisks": [
+      "Cliente real com CPF/dados inválidos vs conta teste",
+      "Webhook falha após homologação (sem alerta automático)",
+      "Conflito de horário entre homologação e cliente real",
+      "UX pós-pagamento sem polling — F5 necessário",
+      "Primeiro cliente ≠ perfil homologação"
+    ]
+  }
+}

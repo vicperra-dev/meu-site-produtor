@@ -1,0 +1,82 @@
+{
+  "reportId": "GL-01-golive-fixes",
+  "mode": "IMPLEMENTACAO_CONTROLADA",
+  "generatedAt": "2026-07-10T05:20:00.000Z",
+  "language": "pt-BR",
+  "projectName": "THouse",
+  "branch": "pr03-clean",
+  "head": "3f20ad0",
+  "basedOn": "QE-03-go-live-gate",
+  "constraints": {
+    "arquitetura": "nao alterada",
+    "regrasFinanceiras": "nao alteradas",
+    "prisma": "nao alterado",
+    "banco": "nao alterado"
+  },
+  "verdict": {
+    "bloqueador1": "OK",
+    "bloqueador2": "OK",
+    "build": {
+      "tsc": { "command": "npx tsc --noEmit", "exitCode": 0 },
+      "npm": { "command": "npm run build", "exitCode": 0 }
+    }
+  },
+  "bloqueador1": {
+    "titulo": "Login automático após registro (QE-01b)",
+    "status": "OK",
+    "commit": "3f20ad0",
+    "commitMessage": "fix(auth): auto-login apos registro via createUserSession (QE-01b / GL-01)",
+    "arquivosCommitados": [
+      "src/app/lib/auth.ts",
+      "src/app/api/login/route.ts",
+      "src/app/api/registro/route.ts"
+    ],
+    "mudanca": "createUserSession(userId) extraído; login e registro delegam criação de Session + cookie session_id",
+    "fluxoCorrigido": "POST /api/registro → createUserSession → AuthContext.refresh() → /api/me retorna user → /conta acessível"
+  },
+  "bloqueador2": {
+    "titulo": "Fluxo de planos — planId perdido",
+    "status": "OK",
+    "commitado": false,
+    "auditoria": {
+      "fluxo": [
+        "planos/page.tsx → router.push(/pagamentos?tipo=plano&planId&modo)",
+        "pagamentos/page.tsx → router.replace (PERDA AQUI no HEAD anterior)",
+        "carrinho/page.tsx → checkout-carrinho (ignorava plano)"
+      ],
+      "pontoPerda": {
+        "arquivo": "src/app/pagamentos/page.tsx",
+        "linha": "router.replace(\"/carrinho\")",
+        "causa": "Redirect descartava query string com tipo, planId e modo"
+      },
+      "segundaQuebra": {
+        "arquivo": "src/app/carrinho/page.tsx",
+        "causa": "Sempre chamava checkout-carrinho; nunca POST /api/asaas/checkout com planId"
+      }
+    },
+    "correcao": {
+      "pagamentos/page.tsx": "router.replace(`/carrinho${window.location.search}`) — preserva query params",
+      "carrinho/page.tsx": [
+        "Lê searchParams tipo/planId/modo",
+        "Modo plano: resumo do plano + formulário de pagamento",
+        "handleFinalizar → POST /api/asaas/checkout com { planId, modo, tipo: plano, paymentMethod }",
+        "Modo agendamento: comportamento anterior (checkout-carrinho)"
+      ]
+    },
+    "arquivosAlteradosNaoCommitados": [
+      "src/app/pagamentos/page.tsx",
+      "src/app/carrinho/page.tsx"
+    ],
+    "fluxoCorrigido": "planos → /pagamentos?tipo=plano&planId=X&modo=Y → /carrinho?tipo=plano&planId=X&modo=Y → POST /api/asaas/checkout → Asaas → webhook → UserPlan"
+  },
+  "buildValidation": {
+    "tsc": "exit 0",
+    "nextBuild": "exit 0 — Compiled successfully",
+    "elapsedMs": 194905
+  },
+  "nextSteps": [
+    "Commitar bloqueador 2 (pagamentos + carrinho) em PR separado",
+    "Smoke test E2E: planos → carrinho → Asaas sandbox → sucesso?tipo=plano",
+    "Configurar webhook Asaas em produção"
+  ]
+}

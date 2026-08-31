@@ -1,0 +1,125 @@
+{
+  "reportId": "GO-00-business-certification",
+  "title": "GO-00 Business Certification",
+  "executedAt": "2026-07-18T07:55:00.000Z",
+  "verdict": "AINDA NÃO PRONTO",
+  "readinessPercent": 86,
+  "approvalPercent": 91.7,
+  "summary": {
+    "pass": 55,
+    "passWithCaveats": 11,
+    "fail": 0,
+    "total": 66
+  },
+  "audits": {
+    "domain": "PASS",
+    "workflow": "PASS",
+    "workflowSmoke": "PASS",
+    "sync": "PASS",
+    "regression": "PASS",
+    "homologationScenariosCatalog": "PASS",
+    "exec": "PASS",
+    "graph": "PASS",
+    "discovery": "PASS"
+  },
+  "homologationOfficial": {
+    "executed": 12,
+    "passed": 12,
+    "failed": 0,
+    "scenarios": [
+      "sessao",
+      "beat",
+      "sessao_beat",
+      "plano_bronze",
+      "plano_prata",
+      "plano_ouro",
+      "cupom_desconto",
+      "cupom_remarcacao",
+      "refund_approved",
+      "refund_failed",
+      "refund_pending",
+      "refund_timeout"
+    ]
+  },
+  "skuMatrixExecuted": {
+    "captacao_dated": "PASS",
+    "mix": "PASS",
+    "master": "PASS",
+    "mix_master": "PASS",
+    "producao_completa": "PASS",
+    "sonoplastia": "PASS",
+    "sessao_mix": "PASS",
+    "beat_mix": "PASS",
+    "note": "captacao sem data falha por regra de domínio (schedulable exige data/hora); com data/hora PASS."
+  },
+  "caveats": [
+    {
+      "id": "GO00-CAV-01",
+      "area": "PAGAMENTOS/REAL",
+      "status": "PASS COM RESSALVAS",
+      "detail": "Integração Asaas real/sandbox ponta a ponta não foi executada nesta sessão GO-00; validado via SimulationProvider + pipeline oficial."
+    },
+    {
+      "id": "GO00-CAV-02",
+      "area": "UPLOAD/STORAGE",
+      "status": "PASS COM RESSALVAS",
+      "detail": "Upload WAV/MP3/ZIP validado em código (extensão, 80MB); persistência em public/uploads não é storage definitivo em serverless."
+    },
+    {
+      "id": "GO00-CAV-03",
+      "area": "REEMBOLSO/FINANCEIRO",
+      "status": "PASS COM RESSALVAS",
+      "detail": "Refund financeiro Asaas outbound não exercitado com dinheiro real; Simulation APPROVED/FAILED/PENDING/TIMEOUT PASS."
+    },
+    {
+      "id": "GO00-CAV-04",
+      "area": "CUPONS/REFUND",
+      "status": "PASS COM RESSALVAS",
+      "detail": "Remarcação gera REBOOK (OP-02A), não REFUND fixed-value; REFUND legado percent/fixed permanece para desconto."
+    },
+    {
+      "id": "GO00-CAV-05",
+      "area": "SCHEMA/PRODUÇÃO",
+      "status": "PASS COM RESSALVAS",
+      "detail": "Payment.provider + providerPaymentId aplicados localmente; produção precisa migrate/db push antes do Go Live."
+    },
+    {
+      "id": "GO00-CAV-06",
+      "area": "ESTATÍSTICAS/UI",
+      "status": "PASS COM RESSALVAS",
+      "detail": "Cards/API alinhados (sem 'A Fazer'); gráficos não foram smoke-testados em browser nesta sessão."
+    },
+    {
+      "id": "GO00-CAV-07",
+      "area": "SEGURANÇA",
+      "status": "PASS COM RESSALVAS",
+      "detail": "Gates ADMIN/requireAuth/homologação revisados estaticamente; sem pen-test externo."
+    },
+    {
+      "id": "GO00-CAV-08",
+      "area": "HOMOLOGATION/CATÁLOGO",
+      "status": "PASS COM RESSALVAS",
+      "detail": "SKUs captacao/mix/master/etc executados via engine ad-hoc; ainda não estão no catálogo oficial HOMOLOGATION_SCENARIOS."
+    },
+    {
+      "id": "GO00-CAV-09",
+      "area": "PLANOS/LIFECYCLE",
+      "status": "PASS COM RESSALVAS",
+      "detail": "Compra simbólica Bronze/Prata/Ouro PASS (cupons gerados); cancelamento/remarcação/conclusão ponta a ponta de plano não rodou como cenário único GO-00."
+    },
+    {
+      "id": "GO00-CAV-10",
+      "area": "WORKFLOW/UI",
+      "status": "PASS COM RESSALVAS",
+      "detail": "SM guards + workflow smoke PASS; entrega/upload UI admin não reexecutada E2E browser nesta sessão."
+    },
+    {
+      "id": "GO00-CAV-11",
+      "area": "MINHA CONTA",
+      "status": "PASS COM RESSALVAS",
+      "detail": "Cupons/appointments criados pelo pipeline; player/download ZIP verificados por código pós-OP-02B, sem sessão UI manual."
+    }
+  ],
+  "fails": [],
+  "recommendation": "AINDA NÃO PRONTO — bloquear Go Live até: (1) pagamento sandbox/real Asaas ponta a ponta, (2) migrate provider/providerPaymentId em produção, (3) adicionar SKUs restantes ao catálogo oficial Homologation, (4) confirmar storage de entrega em ambiente de deploy."
+}

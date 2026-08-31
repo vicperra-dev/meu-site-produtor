@@ -1,0 +1,92 @@
+{
+  "sprint": "HS-03A",
+  "title": "Domain Consolidation",
+  "generatedAt": "2026-07-13T23:45:00.000Z",
+  "commitMessage": "refactor(domain): consolidate operational domain (HS-03A)",
+  "bases": ["HS-01", "HS-02A", "HS-02B", "TE-01A", "TE-01B", "TE-01C"],
+  "domains": {
+    "Appointment": "solicitacao_cliente_fila_admin",
+    "Service": "trabalho_entrega_conclusao",
+    "Payment": "financeiro_1_para_N",
+    "Coupon": "beneficio_tipado_canonico"
+  },
+  "created": [
+    "src/app/lib/domain/statuses.ts",
+    "src/app/lib/domain/coupon-types.ts",
+    "src/app/lib/domain/domain-service.ts",
+    "src/app/lib/domain/workflow.ts",
+    "src/app/lib/domain/index.ts",
+    "scripts/domain-audit.ts",
+    "reports/domain-guardian/hs03a-domain-consolidation.md",
+    "reports/domain-guardian/hs03a-domain-consolidation.json"
+  ],
+  "removed": [],
+  "changed": [
+    "src/app/lib/service-authority.ts",
+    "src/app/lib/coupon-origin.ts",
+    "src/app/lib/checkout-coupon-gates.ts",
+    "src/app/lib/coupon-selection.ts",
+    "src/app/lib/coupon-booking-rules.ts",
+    "src/app/lib/payment-simulation-coupon-gate.ts",
+    "src/app/lib/agendamento-payment-coupons.ts",
+    "src/app/lib/plan-coupons.ts",
+    "src/app/lib/appointment-refund-payment.ts",
+    "src/app/api/admin/agendamentos/route.ts",
+    "src/app/api/admin/agendamentos/cancelar/route.ts",
+    "src/app/api/admin/agendamentos/reverter-cancelamento/route.ts",
+    "src/app/api/admin/servicos/route.ts",
+    "src/app/api/agendamentos/cancelar/route.ts",
+    "src/app/api/agendamentos/escolher-reembolso/route.ts",
+    "src/app/api/meus-dados/route.ts",
+    "src/app/minha-conta/page.tsx",
+    "package.json",
+    "prisma/schema.prisma"
+  ],
+  "workflow": [
+    "approveAppointment",
+    "rejectAppointment",
+    "startServiceWork",
+    "cancelAppointment",
+    "revertAppointmentCancellation",
+    "startService",
+    "completeService",
+    "deliverService",
+    "updateServiceFields"
+  ],
+  "canonicalCouponTypes": [
+    "SERVICE",
+    "PLAN",
+    "DISCOUNT",
+    "REFUND",
+    "REBOOK",
+    "TEST",
+    "BONUS"
+  ],
+  "activeOperationalServiceStatuses": ["aceito", "em_andamento"],
+  "duplicationsRemoved": [
+    "inline_status_mutations_in_admin_client_routes",
+    "scattered_couponType_string_checks",
+    "simulation_type_detection_via_startsWith_in_gate_and_ui"
+  ],
+  "validation": {
+    "tsc": "PASS",
+    "prismaValidate": "PASS",
+    "build": "PASS",
+    "domainAudit": "PASS"
+  },
+  "residualRisks": [
+    "legacy_TESTE_prefix_coupons_without_couponType_test",
+    "legacy_code_discovery_queries_still_use_startsWith_on_code",
+    "refundPayment_rebookAppointment_wrappers_pending"
+  ],
+  "outOfScope": [
+    "StudioOS",
+    "QA Center",
+    "Release Gates",
+    "TE-02 simulations",
+    "PR-04",
+    "IA",
+    "layout_css_auth_asaas_faq_chat"
+  ],
+  "pendingNext": ["TE-02 Business Suites", "legacy coupon TEST backfill"]
+}

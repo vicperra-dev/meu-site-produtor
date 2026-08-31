@@ -1,0 +1,2251 @@
+{
+  "agentVersion": "1.0.0",
+  "generatedAt": "2026-07-05T21:41:15.817Z",
+  "sprint": "Sprint 1 — Estabilização",
+  "language": "pt-BR",
+  "summary": {
+    "projectName": "THouse",
+    "headline": "Sprint 1: 223 arquivos → 9 PRs → 22 commits planejados",
+    "totalFiles": 223,
+    "workGroups": 11,
+    "commitsPlanned": 22,
+    "pullRequestsPlanned": 9,
+    "migrationsCount": 9,
+    "estimatedEffort": "Alto — 2 a 4 semanas com revisão e testes entre PRs",
+    "safestPath": "Docs/Guardian → Migrations staging → Pagamentos → Cupons → Agendamentos → Minha Conta → Admin → Simulação → Agentes",
+    "workRemainingBeforeDeploy": "9 PRs para merge, 9 migrations em staging, testes manuais em área financeira, decisão BLOCKED a resolver por PR incremental"
+  },
+  "workGroups": [
+    {
+      "id": "Deploy",
+      "description": "Schema Prisma, migrations e estrutura do banco.",
+      "fileCount": 4,
+      "files": [
+        "prisma/backfill_coupon_origin.sql",
+        "prisma/ensure_account_deletion_log.sql",
+        "prisma/reset_operational_data.sql",
+        "prisma/schema.prisma"
+      ],
+      "dependencies": [],
+      "separableCommit": true,
+      "separablePr": true,
+      "risk": "Crítico",
+      "complexity": "Alta",
+      "mandatoryTests": [
+        "npx prisma migrate deploy (staging)",
+        "npx prisma generate",
+        "Smoke pós-migration"
+      ],
+      "guardianChecks": [
+        "F1",
+        "F4",
+        "A8"
+      ],
+      "relatedAdrs": [
+        "ADR-014"
+      ]
+    },
+    {
+      "id": "Financeiro",
+      "description": "Pagamentos, webhook Asaas, checkout, reembolso financeiro.",
+      "fileCount": 37,
+      "files": [
+        "/app/admin/pagamentos/page.tsx",
+        "/app/api/admin/pagamentos/route.ts",
+        "/app/api/admin/reprocessar-pagamento-teste/route.ts",
+        "/app/api/asaas/checkout-agendamento/route.ts",
+        "/app/api/asaas/checkout-carrinho/route.ts",
+        "/app/api/asaas/checkout/route.ts",
+        "/app/api/test-payment/route.ts",
+        "/app/api/webhooks/asaas/route.ts",
+        "/app/lib/agendamento-payment-coupons.ts",
+        "/app/lib/asaas-agendamento-reconcile.ts",
+        "/app/lib/payment-providers.ts",
+        "/app/lib/process-payment-webhook.ts",
+        "/app/lib/validate-coupon-checkout.ts",
+        "scripts/inspect-payments.mjs",
+        "src/app/admin/pagamentos/page.tsx",
+        "src/app/api/admin/pagamentos/route.ts",
+        "src/app/api/admin/reprocessar-pagamento-teste/route.ts",
+        "src/app/api/asaas/checkout-agendamento/route.ts",
+        "src/app/api/asaas/checkout-carrinho/route.ts",
+        "src/app/api/asaas/checkout/route.ts",
+        "src/app/api/test-payment/route.ts",
+        "src/app/api/webhooks/asaas/route.ts",
+        "src/app/lib/admin-delete-payment.ts",
+        "src/app/lib/agendamento-payment-coupons.ts",
+        "src/app/lib/agendamento-payment-rules.ts",
+        "src/app/lib/appointment-refund-payment.ts",
+        "src/app/lib/asaas-agendamento-payment-effects.ts",
+        "src/app/lib/asaas-agendamento-reconcile.ts",
+        "src/app/lib/asaas-fetch.ts",
+        "src/app/lib/asaas-plano-payment-effects.ts",
+        "src/app/lib/payment-providers.ts",
+        "src/app/lib/payment-refund-status.ts",
+        "src/app/lib/plan-payment-simulation.ts",
+        "src/app/lib/process-payment-webhook.ts",
+        "src/app/lib/symbolic-payment-resolve.ts",
+        "src/app/lib/symbolic-payment.ts",
+        "src/app/lib/validate-coupon-checkout.ts"
+      ],
+      "dependencies": [
+        "Deploy"
+      ],
+      "separableCommit": true,
+      "separablePr": true,
+      "risk": "Crítico",
+      "complexity": "Muito Alta",
+      "mandatoryTests": [
+        "Checkout sandbox agendamento",
+        "Webhook PAYMENT_RECEIVED idempotente",
+        "Reembolso escolher-reembolso"
+      ],
+      "guardianChecks": [
+        "F1",
+        "F2",
+        "F3",
+        "F4",
+        "F6",
+        "F8"
+      ],
+      "relatedAdrs": [
+        "ADR-002",
+        "ADR-003",
+        "ADR-008",
+        "ADR-009"
+      ]
+    },
+    {
+      "id": "Coupon",
+      "description": "Cupons, ownership, reembolso cupom, validação checkout.",
+      "fileCount": 27,
+      "files": [
+        "/app/api/agendamentos/com-cupom/route.ts",
+        "/app/api/coupons/validate/route.ts",
+        "/app/lib/coupon-booking-rules.ts",
+        "/app/lib/coupon-release.ts",
+        "/app/lib/coupon-stale-appointment.ts",
+        "/app/lib/plan-coupons.ts",
+        "scripts/inspect-simulation-coupons.mjs",
+        "scripts/repair-coupon-ownership.mjs",
+        "src/app/api/agendamentos/com-cupom/route.ts",
+        "src/app/api/coupons/validate/route.ts",
+        "src/app/lib/admin-delete-coupon.ts",
+        "src/app/lib/appointment-plan-coupon.ts",
+        "src/app/lib/coupon-account-ownership.ts",
+        "src/app/lib/coupon-admin-sections.ts",
+        "src/app/lib/coupon-booking-rules.ts",
+        "src/app/lib/coupon-origin.ts",
+        "src/app/lib/coupon-refund.ts",
+        "src/app/lib/coupon-release.ts",
+        "src/app/lib/coupon-scheduling-rules.ts",
+        "src/app/lib/coupon-sections.ts",
+        "src/app/lib/coupon-stale-appointment.ts",
+        "src/app/lib/coupon-visibility.ts",
+        "src/app/lib/plan-coupons.ts",
+        "src/app/lib/refund-coupon.ts",
+        "src/app/lib/simulation-coupon-codes.ts",
+        "src/app/lib/simulation-coupon-user-link.ts",
+        "src/app/lib/simulation-coupon.ts"
+      ],
+      "dependencies": [
+        "Financeiro"
+      ],
+      "separableCommit": true,
+      "separablePr": true,
+      "risk": "Alto",
+      "complexity": "Alta",
+      "mandatoryTests": [
+        "Resgate cupom",
+        "Cupom após cancelamento",
+        "Admin liberar cupom"
+      ],
+      "guardianChecks": [
+        "C1",
+        "C4",
+        "X1",
+        "X2"
+      ],
+      "relatedAdrs": [
+        "ADR-007",
+        "ADR-008"
+      ]
+    },
+    {
+      "id": "Appointment",
+      "description": "Agendamentos, arquivamento admin, disponibilidade, reembolso.",
+      "fileCount": 22,
+      "files": [
+        "/app/admin/agendamentos/page.tsx",
+        "/app/agendamento/page.tsx",
+        "/app/api/admin/agendamentos/cancelar/route.ts",
+        "/app/api/admin/agendamentos/reverter-cancelamento/route.ts",
+        "/app/api/admin/agendamentos/route.ts",
+        "/app/api/agendamentos/cancelar/route.ts",
+        "/app/api/agendamentos/disponibilidade/route.ts",
+        "/app/api/agendamentos/escolher-reembolso/route.ts",
+        "/app/api/agendamentos/route.ts",
+        "src/app/admin/agendamentos/page.tsx",
+        "src/app/agendamento/page.tsx",
+        "src/app/api/admin/agendamentos/cancelar/route.ts",
+        "src/app/api/admin/agendamentos/reverter-cancelamento/route.ts",
+        "src/app/api/admin/agendamentos/route.ts",
+        "src/app/api/agendamentos/cancelar/route.ts",
+        "src/app/api/agendamentos/disponibilidade/route.ts",
+        "src/app/api/agendamentos/escolher-reembolso/route.ts",
+        "src/app/api/agendamentos/route.ts",
+        "src/app/lib/appointment-admin-archive.ts",
+        "src/app/lib/appointment-hidden.ts",
+        "src/app/lib/appointment-refund-value.ts",
+        "src/app/lib/purge-cancelled-appointment.ts"
+      ],
+      "dependencies": [
+        "Deploy",
+        "Financeiro"
+      ],
+      "separableCommit": true,
+      "separablePr": true,
+      "risk": "Alto",
+      "complexity": "Alta",
+      "mandatoryTests": [
+        "Arquivar/restaurar agendamento admin",
+        "Checkout não considera arquivados",
+        "Disponibilidade de horários"
+      ],
+      "guardianChecks": [
+        "A5",
+        "A8",
+        "A9",
+        "F4"
+      ],
+      "relatedAdrs": [
+        "ADR-004",
+        "ADR-005"
+      ]
+    },
+    {
+      "id": "MinhaConta",
+      "description": "Área do cliente, auth, conta, meus-dados, planos usuário.",
+      "fileCount": 28,
+      "files": [
+        "/app/api/conta/route.ts",
+        "/app/api/conta/update/route.ts",
+        "/app/api/esqueci-senha/route.ts",
+        "/app/api/login/route.ts",
+        "/app/api/meus-dados/route.ts",
+        "/app/api/meus-dados/vincular-cupons-teste/route.ts",
+        "/app/conta/page.tsx",
+        "/app/context/AuthContext.tsx",
+        "/app/esqueci-senha/page.tsx",
+        "/app/lib/auth.ts",
+        "/app/login/page.tsx",
+        "/app/middleware.ts",
+        "/app/minha-conta/page.tsx",
+        "/app/registro/page.tsx",
+        "src/app/api/conta/route.ts",
+        "src/app/api/conta/update/route.ts",
+        "src/app/api/esqueci-senha/route.ts",
+        "src/app/api/login/route.ts",
+        "src/app/api/meus-dados/route.ts",
+        "src/app/api/meus-dados/vincular-cupons-teste/route.ts",
+        "src/app/conta/page.tsx",
+        "src/app/context/AuthContext.tsx",
+        "src/app/esqueci-senha/page.tsx",
+        "src/app/lib/auth.ts",
+        "src/app/login/page.tsx",
+        "src/app/middleware.ts",
+        "src/app/minha-conta/page.tsx",
+        "src/app/registro/page.tsx"
+      ],
+      "dependencies": [
+        "Coupon",
+        "Appointment"
+      ],
+      "separableCommit": true,
+      "separablePr": true,
+      "risk": "Médio",
+      "complexity": "Média",
+      "mandatoryTests": [
+        "Login/logout",
+        "Listar agendamentos e cupons",
+        "Ocultar na Minha Conta"
+      ],
+      "guardianChecks": [
+        "A7",
+        "A8"
+      ],
+      "relatedAdrs": [
+        "ADR-005",
+        "ADR-006"
+      ]
+    },
+    {
+      "id": "Simulation",
+      "description": "Pagamentos simbólicos, cupons TESTE, reset simulação admin.",
+      "fileCount": 2,
+      "files": [
+        "scripts/test-simulation-flags.mjs",
+        "src/app/lib/simulation-reset.ts"
+      ],
+      "dependencies": [
+        "Financeiro"
+      ],
+      "separableCommit": true,
+      "separablePr": true,
+      "risk": "Médio",
+      "complexity": "Média",
+      "mandatoryTests": [
+        "Reprocessar pagamento teste",
+        "Reset simulação admin"
+      ],
+      "guardianChecks": [
+        "S4",
+        "A1",
+        "A2"
+      ],
+      "relatedAdrs": [
+        "ADR-010"
+      ]
+    },
+    {
+      "id": "Admin",
+      "description": "Painel administrativo, stats, serviços, usuários.",
+      "fileCount": 12,
+      "files": [
+        "/app/api/admin/stats/detalhadas/route.ts",
+        "/app/api/admin/stats/route.ts",
+        "src/app/admin/estatisticas/page.tsx",
+        "src/app/admin/layout.tsx",
+        "src/app/admin/page.tsx",
+        "src/app/admin/planos/page.tsx",
+        "src/app/admin/servicos-aceitos/page.tsx",
+        "src/app/admin/servicos-solicitados/page.tsx",
+        "src/app/admin/usuarios/page.tsx",
+        "src/app/api/admin/stats/detalhadas/route.ts",
+        "src/app/api/admin/stats/route.ts",
+        "src/app/lib/adminAccess.ts"
+      ],
+      "dependencies": [
+        "Appointment",
+        "Financeiro",
+        "Coupon"
+      ],
+      "separableCommit": true,
+      "separablePr": true,
+      "risk": "Médio",
+      "complexity": "Média",
+      "mandatoryTests": [
+        "Navegar painel admin",
+        "Filtros arquivados",
+        "Estatísticas"
+      ],
+      "guardianChecks": [
+        "A5",
+        "A9"
+      ],
+      "relatedAdrs": [
+        "ADR-004",
+        "ADR-006"
+      ]
+    },
+    {
+      "id": "Guardian",
+      "description": "Domain Guardian, decision engine, memory, relatórios de verificação.",
+      "fileCount": 10,
+      "files": [
+        "scripts/domain-change-analyzer.ts",
+        "scripts/domain-decision-engine.ts",
+        "scripts/domain-guardian-advisor.ts",
+        "scripts/domain-guardian-audit.ts",
+        "scripts/domain-guardian-diff.ts",
+        "scripts/domain-guardian-runner.ts",
+        "scripts/domain-issue-generator.ts",
+        "scripts/domain-memory-engine.ts",
+        "scripts/domain-pr-reviewer.ts",
+        "scripts/domain-review-engine.ts"
+      ],
+      "dependencies": [],
+      "separableCommit": true,
+      "separablePr": true,
+      "risk": "Baixo",
+      "complexity": "Baixa",
+      "mandatoryTests": [
+        "domain-guardian-runner.ts exit 0",
+        "domain-decision-engine.ts"
+      ],
+      "guardianChecks": [
+        "F1",
+        "F4",
+        "A5",
+        "A8",
+        "C1",
+        "X1"
+      ],
+      "relatedAdrs": [
+        "ADR-001",
+        "ADR-015"
+      ]
+    },
+    {
+      "id": "Arquitetura",
+      "description": "Agentes IA read-only, knowledge graph, ADRs, CTO, planners.",
+      "fileCount": 9,
+      "files": [
+        "scripts/architecture-agent.ts",
+        "scripts/architecture-decision-agent.ts",
+        "scripts/cto-agent.ts",
+        "scripts/design-planner-agent.ts",
+        "scripts/evolution-agent.ts",
+        "scripts/human-report-agent.ts",
+        "scripts/implementation-planner-agent.ts",
+        "scripts/project-knowledge-graph-agent.ts",
+        "scripts/stabilization-planner.ts"
+      ],
+      "dependencies": [
+        "Guardian"
+      ],
+      "separableCommit": true,
+      "separablePr": true,
+      "risk": "Baixo",
+      "complexity": "Baixa",
+      "mandatoryTests": [
+        "Executar agentes e validar JSON gerado"
+      ],
+      "guardianChecks": [],
+      "relatedAdrs": [
+        "ADR-011",
+        "ADR-012"
+      ]
+    },
+    {
+      "id": "Scripts",
+      "description": "Scripts utilitários, inspect, repair, reset (não Guardian).",
+      "fileCount": 3,
+      "files": [
+        "scripts/check-db.mjs",
+        "scripts/domain-architecture-planner.ts",
+        "scripts/reset-operational-data.mjs"
+      ],
+      "dependencies": [],
+      "separableCommit": true,
+      "separablePr": true,
+      "risk": "Baixo",
+      "complexity": "Baixa",
+      "mandatoryTests": [
+        "Não executar reset em produção"
+      ],
+      "guardianChecks": [],
+      "relatedAdrs": []
+    },
+    {
+      "id": "Infraestrutura",
+      "description": "CI, package.json, gitignore, uploads, componentes gerais.",
+      "fileCount": 69,
+      "files": [
+        ".gitignore",
+        "/app/admin/layout.tsx",
+        "/app/carrinho/page.tsx",
+        "/app/components/Header.tsx",
+        "/app/globals.css",
+        "/app/layout.tsx",
+        "package.json",
+        "src/app/carrinho/page.tsx",
+        "src/app/components/ConditionalBodyLayout.tsx",
+        "src/app/components/Header.tsx",
+        "src/app/components/UserFeedbackDialog.tsx",
+        "src/app/globals.css",
+        "src/app/layout.tsx",
+        "/app/admin/estatisticas/page.tsx",
+        "/app/admin/page.tsx",
+        "/app/admin/planos/page.tsx",
+        "/app/admin/servicos-aceitos/page.tsx",
+        "/app/admin/servicos-solicitados/page.tsx",
+        "/app/admin/usuarios/page.tsx",
+        "/app/api/admin/cupons/liberar/route.ts",
+        "/app/api/admin/cupons/route.ts",
+        "/app/api/admin/planos/excluir-cancelados/route.ts",
+        "/app/api/admin/planos/route.ts",
+        "/app/api/admin/servicos/route.ts",
+        "/app/api/admin/usuarios/route.ts",
+        "/app/api/cupons/renunciar/route.ts",
+        "/app/api/me/route.ts",
+        "/app/api/planos/cancelar/route.ts",
+        "/app/api/planos/excluir/route.ts",
+        "/app/api/planos/solicitar-reembolso/route.ts",
+        "/app/api/trocar-senha/route.ts",
+        "/app/api/verificar-codigo/route.ts",
+        "/app/hooks/useUnreadChatCount.ts",
+        "/app/lib/delivery-url-validation.ts",
+        "/app/lib/sendEmail.ts",
+        "/app/lib/service-catalog.ts",
+        "/app/lib/validations.ts",
+        "/app/planos/page.tsx",
+        "kage.json",
+        "sma/schema.prisma",
+        "src/app/api/admin/cupons/liberar/route.ts",
+        "src/app/api/admin/cupons/route.ts",
+        "src/app/api/admin/planos/excluir-cancelados/route.ts",
+        "src/app/api/admin/planos/route.ts",
+        "src/app/api/admin/servicos/route.ts",
+        "src/app/api/admin/usuarios/route.ts",
+        "src/app/api/cupons/renunciar/route.ts",
+        "src/app/api/me/route.ts",
+        "src/app/api/planos/cancelar/route.ts",
+        "src/app/api/planos/excluir/route.ts",
+        "src/app/api/planos/solicitar-reembolso/route.ts",
+        "src/app/api/trocar-senha/route.ts",
+        "src/app/api/verificar-codigo/route.ts",
+        "src/app/hooks/useUnreadChatCount.ts",
+        "src/app/lib/active-user-plan.ts",
+        "src/app/lib/avatarDisplayUrl.ts",
+        "src/app/lib/deleteUserAccount.ts",
+        "src/app/lib/delivery-audio-upload.ts",
+        "src/app/lib/delivery-url-validation.ts",
+        "src/app/lib/plan-refund.ts",
+        "src/app/lib/prisma-errors.ts",
+        "src/app/lib/sendEmail.ts",
+        "src/app/lib/service-catalog.ts",
+        "src/app/lib/support-contact.ts",
+        "src/app/lib/user-feedback.ts",
+        "src/app/lib/user-plan-hidden.ts",
+        "src/app/lib/validations.ts",
+        "src/app/planos/page.tsx",
+        "tignore"
+      ],
+      "dependencies": [],
+      "separableCommit": true,
+      "separablePr": true,
+      "risk": "Baixo",
+      "complexity": "Baixa",
+      "mandatoryTests": [
+        "npm run build"
+      ],
+      "guardianChecks": [],
+      "relatedAdrs": []
+    }
+  ],
+  "commitPlan": [
+    {
+      "id": "C-01",
+      "title": "Guardian",
+      "description": "Domain Guardian, decision engine, memory, relatórios de verificação.",
+      "files": [
+        "scripts/domain-change-analyzer.ts",
+        "scripts/domain-decision-engine.ts",
+        "scripts/domain-guardian-advisor.ts",
+        "scripts/domain-guardian-audit.ts",
+        "scripts/domain-guardian-diff.ts",
+        "scripts/domain-guardian-runner.ts",
+        "scripts/domain-issue-generator.ts",
+        "scripts/domain-memory-engine.ts",
+        "scripts/domain-pr-reviewer.ts",
+        "scripts/domain-review-engine.ts"
+      ],
+      "objective": "Entregar alterações de Guardian no escopo Documentação e Guardian (baseline).",
+      "dependencies": [],
+      "risk": "Baixo",
+      "rollback": "git revert do commit; smoke test",
+      "suggestedMessage": "chore(guardian): add domain guardian checks and reports",
+      "workGroup": "Guardian",
+      "prId": "PR-01"
+    },
+    {
+      "id": "C-02",
+      "title": "Deploy",
+      "description": "Schema Prisma, migrations e estrutura do banco.",
+      "files": [
+        "prisma/backfill_coupon_origin.sql",
+        "prisma/ensure_account_deletion_log.sql",
+        "prisma/reset_operational_data.sql",
+        "prisma/schema.prisma"
+      ],
+      "objective": "Entregar alterações de Deploy no escopo Schema e migrations.",
+      "dependencies": [],
+      "risk": "Crítico",
+      "rollback": "git revert do commit; validar Guardian e fila Asaas",
+      "suggestedMessage": "feat(db): add schema migrations for archive and hidden fields",
+      "workGroup": "Deploy",
+      "prId": "PR-02"
+    },
+    {
+      "id": "C-03",
+      "title": "Financeiro (parte 1)",
+      "description": "Pagamentos, webhook Asaas, checkout, reembolso financeiro.",
+      "files": [
+        "/app/lib/agendamento-payment-coupons.ts",
+        "/app/lib/asaas-agendamento-reconcile.ts",
+        "/app/lib/payment-providers.ts",
+        "/app/lib/process-payment-webhook.ts",
+        "/app/lib/validate-coupon-checkout.ts",
+        "src/app/lib/admin-delete-payment.ts",
+        "src/app/lib/agendamento-payment-coupons.ts",
+        "src/app/lib/agendamento-payment-rules.ts",
+        "src/app/lib/appointment-refund-payment.ts",
+        "src/app/lib/asaas-agendamento-payment-effects.ts",
+        "src/app/lib/asaas-agendamento-reconcile.ts",
+        "src/app/lib/asaas-fetch.ts",
+        "src/app/lib/asaas-plano-payment-effects.ts",
+        "src/app/lib/payment-providers.ts",
+        "src/app/lib/payment-refund-status.ts",
+        "src/app/lib/plan-payment-simulation.ts",
+        "src/app/lib/process-payment-webhook.ts",
+        "src/app/lib/symbolic-payment-resolve.ts",
+        "src/app/lib/symbolic-payment.ts",
+        "src/app/lib/validate-coupon-checkout.ts"
+      ],
+      "objective": "Entregar alterações de Financeiro no escopo Pagamentos e webhook.",
+      "dependencies": [
+        "Deploy"
+      ],
+      "risk": "Crítico",
+      "rollback": "git revert do commit; validar Guardian e fila Asaas",
+      "suggestedMessage": "fix(payment): harden webhook idempotency and payment effects",
+      "workGroup": "Financeiro",
+      "prId": "PR-03"
+    },
+    {
+      "id": "C-04",
+      "title": "Financeiro (parte 2)",
+      "description": "Pagamentos, webhook Asaas, checkout, reembolso financeiro.",
+      "files": [
+        "/app/api/admin/pagamentos/route.ts",
+        "/app/api/admin/reprocessar-pagamento-teste/route.ts",
+        "/app/api/asaas/checkout-agendamento/route.ts",
+        "/app/api/asaas/checkout-carrinho/route.ts",
+        "/app/api/asaas/checkout/route.ts",
+        "/app/api/test-payment/route.ts",
+        "/app/api/webhooks/asaas/route.ts",
+        "src/app/api/admin/pagamentos/route.ts",
+        "src/app/api/admin/reprocessar-pagamento-teste/route.ts",
+        "src/app/api/asaas/checkout-agendamento/route.ts",
+        "src/app/api/asaas/checkout-carrinho/route.ts",
+        "src/app/api/asaas/checkout/route.ts",
+        "src/app/api/test-payment/route.ts",
+        "src/app/api/webhooks/asaas/route.ts"
+      ],
+      "objective": "Entregar alterações de Financeiro no escopo Pagamentos e webhook.",
+      "dependencies": [
+        "Deploy"
+      ],
+      "risk": "Crítico",
+      "rollback": "git revert do commit; validar Guardian e fila Asaas",
+      "suggestedMessage": "fix(payment): harden webhook idempotency and payment effects (part 2)",
+      "workGroup": "Financeiro",
+      "prId": "PR-03"
+    },
+    {
+      "id": "C-05",
+      "title": "Financeiro (parte 3)",
+      "description": "Pagamentos, webhook Asaas, checkout, reembolso financeiro.",
+      "files": [
+        "/app/admin/pagamentos/page.tsx",
+        "/app/api/admin/pagamentos/route.ts",
+        "/app/api/admin/reprocessar-pagamento-teste/route.ts",
+        "src/app/admin/pagamentos/page.tsx",
+        "src/app/api/admin/pagamentos/route.ts",
+        "src/app/api/admin/reprocessar-pagamento-teste/route.ts"
+      ],
+      "objective": "Entregar alterações de Financeiro no escopo Pagamentos e webhook.",
+      "dependencies": [
+        "Deploy"
+      ],
+      "risk": "Crítico",
+      "rollback": "git revert do commit; validar Guardian e fila Asaas",
+      "suggestedMessage": "fix(payment): harden webhook idempotency and payment effects (part 3)",
+      "workGroup": "Financeiro",
+      "prId": "PR-03"
+    },
+    {
+      "id": "C-06",
+      "title": "Financeiro (parte 4)",
+      "description": "Pagamentos, webhook Asaas, checkout, reembolso financeiro.",
+      "files": [
+        "scripts/inspect-payments.mjs"
+      ],
+      "objective": "Entregar alterações de Financeiro no escopo Pagamentos e webhook.",
+      "dependencies": [
+        "Deploy"
+      ],
+      "risk": "Crítico",
+      "rollback": "git revert do commit; validar Guardian e fila Asaas",
+      "suggestedMessage": "fix(payment): harden webhook idempotency and payment effects (part 4)",
+      "workGroup": "Financeiro",
+      "prId": "PR-03"
+    },
+    {
+      "id": "C-07",
+      "title": "Coupon (parte 1)",
+      "description": "Cupons, ownership, reembolso cupom, validação checkout.",
+      "files": [
+        "/app/lib/coupon-booking-rules.ts",
+        "/app/lib/coupon-release.ts",
+        "/app/lib/coupon-stale-appointment.ts",
+        "/app/lib/plan-coupons.ts",
+        "src/app/lib/admin-delete-coupon.ts",
+        "src/app/lib/appointment-plan-coupon.ts",
+        "src/app/lib/coupon-account-ownership.ts",
+        "src/app/lib/coupon-admin-sections.ts",
+        "src/app/lib/coupon-booking-rules.ts",
+        "src/app/lib/coupon-origin.ts",
+        "src/app/lib/coupon-refund.ts",
+        "src/app/lib/coupon-release.ts",
+        "src/app/lib/coupon-scheduling-rules.ts",
+        "src/app/lib/coupon-sections.ts",
+        "src/app/lib/coupon-stale-appointment.ts",
+        "src/app/lib/coupon-visibility.ts",
+        "src/app/lib/plan-coupons.ts",
+        "src/app/lib/refund-coupon.ts",
+        "src/app/lib/simulation-coupon-codes.ts",
+        "src/app/lib/simulation-coupon-user-link.ts",
+        "src/app/lib/simulation-coupon.ts"
+      ],
+      "objective": "Entregar alterações de Coupon no escopo Cupons e ownership.",
+      "dependencies": [
+        "Financeiro"
+      ],
+      "risk": "Alto",
+      "rollback": "git revert do commit; smoke test",
+      "suggestedMessage": "fix(coupon): preserve ownership and refund sync",
+      "workGroup": "Coupon",
+      "prId": "PR-04"
+    },
+    {
+      "id": "C-08",
+      "title": "Coupon (parte 2)",
+      "description": "Cupons, ownership, reembolso cupom, validação checkout.",
+      "files": [
+        "/app/api/agendamentos/com-cupom/route.ts",
+        "/app/api/coupons/validate/route.ts",
+        "src/app/api/agendamentos/com-cupom/route.ts",
+        "src/app/api/coupons/validate/route.ts"
+      ],
+      "objective": "Entregar alterações de Coupon no escopo Cupons e ownership.",
+      "dependencies": [
+        "Financeiro"
+      ],
+      "risk": "Alto",
+      "rollback": "git revert do commit; smoke test",
+      "suggestedMessage": "fix(coupon): preserve ownership and refund sync (part 2)",
+      "workGroup": "Coupon",
+      "prId": "PR-04"
+    },
+    {
+      "id": "C-09",
+      "title": "Coupon (parte 3)",
+      "description": "Cupons, ownership, reembolso cupom, validação checkout.",
+      "files": [
+        "scripts/inspect-simulation-coupons.mjs",
+        "scripts/repair-coupon-ownership.mjs"
+      ],
+      "objective": "Entregar alterações de Coupon no escopo Cupons e ownership.",
+      "dependencies": [
+        "Financeiro"
+      ],
+      "risk": "Alto",
+      "rollback": "git revert do commit; smoke test",
+      "suggestedMessage": "fix(coupon): preserve ownership and refund sync (part 3)",
+      "workGroup": "Coupon",
+      "prId": "PR-04"
+    },
+    {
+      "id": "C-10",
+      "title": "Appointment",
+      "description": "Agendamentos, arquivamento admin, disponibilidade, reembolso.",
+      "files": [
+        "/app/admin/agendamentos/page.tsx",
+        "/app/agendamento/page.tsx",
+        "/app/api/admin/agendamentos/cancelar/route.ts",
+        "/app/api/admin/agendamentos/reverter-cancelamento/route.ts",
+        "/app/api/admin/agendamentos/route.ts",
+        "/app/api/agendamentos/cancelar/route.ts",
+        "/app/api/agendamentos/disponibilidade/route.ts",
+        "/app/api/agendamentos/escolher-reembolso/route.ts",
+        "/app/api/agendamentos/route.ts",
+        "src/app/admin/agendamentos/page.tsx",
+        "src/app/agendamento/page.tsx",
+        "src/app/api/admin/agendamentos/cancelar/route.ts",
+        "src/app/api/admin/agendamentos/reverter-cancelamento/route.ts",
+        "src/app/api/admin/agendamentos/route.ts",
+        "src/app/api/agendamentos/cancelar/route.ts",
+        "src/app/api/agendamentos/disponibilidade/route.ts",
+        "src/app/api/agendamentos/escolher-reembolso/route.ts",
+        "src/app/api/agendamentos/route.ts",
+        "src/app/lib/appointment-admin-archive.ts",
+        "src/app/lib/appointment-hidden.ts",
+        "src/app/lib/appointment-refund-value.ts",
+        "src/app/lib/purge-cancelled-appointment.ts"
+      ],
+      "objective": "Entregar alterações de Appointment no escopo Agendamentos e arquivamento.",
+      "dependencies": [
+        "Deploy",
+        "Financeiro"
+      ],
+      "risk": "Alto",
+      "rollback": "git revert do commit; smoke test",
+      "suggestedMessage": "feat(appointment): implement admin archive and operational filters",
+      "workGroup": "Appointment",
+      "prId": "PR-05"
+    },
+    {
+      "id": "C-11",
+      "title": "MinhaConta (parte 1)",
+      "description": "Área do cliente, auth, conta, meus-dados, planos usuário.",
+      "files": [
+        "/app/lib/auth.ts",
+        "src/app/lib/auth.ts"
+      ],
+      "objective": "Entregar alterações de MinhaConta no escopo Minha Conta e autenticação.",
+      "dependencies": [
+        "Coupon",
+        "Appointment"
+      ],
+      "risk": "Médio",
+      "rollback": "git revert do commit; smoke test",
+      "suggestedMessage": "fix(account): stabilize account and meus-dados aggregation",
+      "workGroup": "MinhaConta",
+      "prId": "PR-06"
+    },
+    {
+      "id": "C-12",
+      "title": "MinhaConta (parte 2)",
+      "description": "Área do cliente, auth, conta, meus-dados, planos usuário.",
+      "files": [
+        "/app/api/conta/route.ts",
+        "/app/api/conta/update/route.ts",
+        "/app/api/esqueci-senha/route.ts",
+        "/app/api/login/route.ts",
+        "/app/api/meus-dados/route.ts",
+        "/app/api/meus-dados/vincular-cupons-teste/route.ts",
+        "src/app/api/conta/route.ts",
+        "src/app/api/conta/update/route.ts",
+        "src/app/api/esqueci-senha/route.ts",
+        "src/app/api/login/route.ts",
+        "src/app/api/meus-dados/route.ts",
+        "src/app/api/meus-dados/vincular-cupons-teste/route.ts"
+      ],
+      "objective": "Entregar alterações de MinhaConta no escopo Minha Conta e autenticação.",
+      "dependencies": [
+        "Coupon",
+        "Appointment"
+      ],
+      "risk": "Médio",
+      "rollback": "git revert do commit; smoke test",
+      "suggestedMessage": "fix(account): stabilize account and meus-dados aggregation (part 2)",
+      "workGroup": "MinhaConta",
+      "prId": "PR-06"
+    },
+    {
+      "id": "C-13",
+      "title": "MinhaConta (parte 3)",
+      "description": "Área do cliente, auth, conta, meus-dados, planos usuário.",
+      "files": [
+        "/app/conta/page.tsx",
+        "/app/context/AuthContext.tsx",
+        "/app/esqueci-senha/page.tsx",
+        "/app/login/page.tsx",
+        "/app/minha-conta/page.tsx",
+        "/app/registro/page.tsx",
+        "src/app/conta/page.tsx",
+        "src/app/context/AuthContext.tsx",
+        "src/app/esqueci-senha/page.tsx",
+        "src/app/login/page.tsx",
+        "src/app/minha-conta/page.tsx",
+        "src/app/registro/page.tsx"
+      ],
+      "objective": "Entregar alterações de MinhaConta no escopo Minha Conta e autenticação.",
+      "dependencies": [
+        "Coupon",
+        "Appointment"
+      ],
+      "risk": "Médio",
+      "rollback": "git revert do commit; smoke test",
+      "suggestedMessage": "fix(account): stabilize account and meus-dados aggregation (part 3)",
+      "workGroup": "MinhaConta",
+      "prId": "PR-06"
+    },
+    {
+      "id": "C-14",
+      "title": "MinhaConta (parte 4)",
+      "description": "Área do cliente, auth, conta, meus-dados, planos usuário.",
+      "files": [
+        "/app/middleware.ts",
+        "src/app/middleware.ts"
+      ],
+      "objective": "Entregar alterações de MinhaConta no escopo Minha Conta e autenticação.",
+      "dependencies": [
+        "Coupon",
+        "Appointment"
+      ],
+      "risk": "Médio",
+      "rollback": "git revert do commit; smoke test",
+      "suggestedMessage": "fix(account): stabilize account and meus-dados aggregation (part 4)",
+      "workGroup": "MinhaConta",
+      "prId": "PR-06"
+    },
+    {
+      "id": "C-15",
+      "title": "Admin",
+      "description": "Painel administrativo, stats, serviços, usuários.",
+      "files": [
+        "/app/api/admin/stats/detalhadas/route.ts",
+        "/app/api/admin/stats/route.ts",
+        "src/app/admin/estatisticas/page.tsx",
+        "src/app/admin/layout.tsx",
+        "src/app/admin/page.tsx",
+        "src/app/admin/planos/page.tsx",
+        "src/app/admin/servicos-aceitos/page.tsx",
+        "src/app/admin/servicos-solicitados/page.tsx",
+        "src/app/admin/usuarios/page.tsx",
+        "src/app/api/admin/stats/detalhadas/route.ts",
+        "src/app/api/admin/stats/route.ts",
+        "src/app/lib/adminAccess.ts"
+      ],
+      "objective": "Entregar alterações de Admin no escopo Painel administrativo.",
+      "dependencies": [
+        "Appointment",
+        "Financeiro",
+        "Coupon"
+      ],
+      "risk": "Médio",
+      "rollback": "git revert do commit; smoke test",
+      "suggestedMessage": "feat(admin): admin panel archive restore and stats",
+      "workGroup": "Admin",
+      "prId": "PR-07"
+    },
+    {
+      "id": "C-16",
+      "title": "Simulation",
+      "description": "Pagamentos simbólicos, cupons TESTE, reset simulação admin.",
+      "files": [
+        "scripts/test-simulation-flags.mjs",
+        "src/app/lib/simulation-reset.ts"
+      ],
+      "objective": "Entregar alterações de Simulation no escopo Simulação admin.",
+      "dependencies": [
+        "Financeiro"
+      ],
+      "risk": "Médio",
+      "rollback": "git revert do commit; smoke test",
+      "suggestedMessage": "refactor(simulation): isolate symbolic payments and legacy cleanup",
+      "workGroup": "Simulation",
+      "prId": "PR-08"
+    },
+    {
+      "id": "C-17",
+      "title": "Arquitetura",
+      "description": "Agentes IA read-only, knowledge graph, ADRs, CTO, planners.",
+      "files": [
+        "scripts/architecture-agent.ts",
+        "scripts/architecture-decision-agent.ts",
+        "scripts/cto-agent.ts",
+        "scripts/design-planner-agent.ts",
+        "scripts/evolution-agent.ts",
+        "scripts/human-report-agent.ts",
+        "scripts/implementation-planner-agent.ts",
+        "scripts/project-knowledge-graph-agent.ts",
+        "scripts/stabilization-planner.ts"
+      ],
+      "objective": "Entregar alterações de Arquitetura no escopo Agentes IA e infraestrutura.",
+      "dependencies": [
+        "Guardian"
+      ],
+      "risk": "Baixo",
+      "rollback": "git revert do commit; smoke test",
+      "suggestedMessage": "chore(agents): add read-only planning agents pipeline",
+      "workGroup": "Arquitetura",
+      "prId": "PR-09"
+    },
+    {
+      "id": "C-18",
+      "title": "Scripts",
+      "description": "Scripts utilitários, inspect, repair, reset (não Guardian).",
+      "files": [
+        "scripts/check-db.mjs",
+        "scripts/domain-architecture-planner.ts",
+        "scripts/reset-operational-data.mjs"
+      ],
+      "objective": "Entregar alterações de Scripts no escopo Agentes IA e infraestrutura.",
+      "dependencies": [],
+      "risk": "Baixo",
+      "rollback": "git revert do commit; smoke test",
+      "suggestedMessage": "chore(scripts): add utility scripts for inspection",
+      "workGroup": "Scripts",
+      "prId": "PR-09"
+    },
+    {
+      "id": "C-19",
+      "title": "Infraestrutura (parte 1)",
+      "description": "CI, package.json, gitignore, uploads, componentes gerais.",
+      "files": [
+        "/app/lib/delivery-url-validation.ts",
+        "/app/lib/sendEmail.ts",
+        "/app/lib/service-catalog.ts",
+        "/app/lib/validations.ts",
+        "src/app/lib/active-user-plan.ts",
+        "src/app/lib/avatarDisplayUrl.ts",
+        "src/app/lib/deleteUserAccount.ts",
+        "src/app/lib/delivery-audio-upload.ts",
+        "src/app/lib/delivery-url-validation.ts",
+        "src/app/lib/plan-refund.ts",
+        "src/app/lib/prisma-errors.ts",
+        "src/app/lib/sendEmail.ts",
+        "src/app/lib/service-catalog.ts",
+        "src/app/lib/support-contact.ts",
+        "src/app/lib/user-feedback.ts",
+        "src/app/lib/user-plan-hidden.ts",
+        "src/app/lib/validations.ts"
+      ],
+      "objective": "Entregar alterações de Infraestrutura no escopo Agentes IA e infraestrutura.",
+      "dependencies": [],
+      "risk": "Baixo",
+      "rollback": "git revert do commit; smoke test",
+      "suggestedMessage": "chore(infra): update build config and shared components",
+      "workGroup": "Infraestrutura",
+      "prId": "PR-09"
+    },
+    {
+      "id": "C-20",
+      "title": "Infraestrutura (parte 2)",
+      "description": "CI, package.json, gitignore, uploads, componentes gerais.",
+      "files": [
+        "/app/api/admin/cupons/liberar/route.ts",
+        "/app/api/admin/cupons/route.ts",
+        "/app/api/admin/planos/excluir-cancelados/route.ts",
+        "/app/api/admin/planos/route.ts",
+        "/app/api/admin/servicos/route.ts",
+        "/app/api/admin/usuarios/route.ts",
+        "/app/api/cupons/renunciar/route.ts",
+        "/app/api/me/route.ts",
+        "/app/api/planos/cancelar/route.ts",
+        "/app/api/planos/excluir/route.ts",
+        "/app/api/planos/solicitar-reembolso/route.ts",
+        "/app/api/trocar-senha/route.ts",
+        "/app/api/verificar-codigo/route.ts",
+        "src/app/api/admin/cupons/liberar/route.ts",
+        "src/app/api/admin/cupons/route.ts",
+        "src/app/api/admin/planos/excluir-cancelados/route.ts",
+        "src/app/api/admin/planos/route.ts",
+        "src/app/api/admin/servicos/route.ts",
+        "src/app/api/admin/usuarios/route.ts",
+        "src/app/api/cupons/renunciar/route.ts",
+        "src/app/api/me/route.ts",
+        "src/app/api/planos/cancelar/route.ts",
+        "src/app/api/planos/excluir/route.ts",
+        "src/app/api/planos/solicitar-reembolso/route.ts",
+        "src/app/api/trocar-senha/route.ts",
+        "src/app/api/verificar-codigo/route.ts"
+      ],
+      "objective": "Entregar alterações de Infraestrutura no escopo Agentes IA e infraestrutura.",
+      "dependencies": [],
+      "risk": "Baixo",
+      "rollback": "git revert do commit; smoke test",
+      "suggestedMessage": "chore(infra): update build config and shared components (part 2)",
+      "workGroup": "Infraestrutura",
+      "prId": "PR-09"
+    },
+    {
+      "id": "C-21",
+      "title": "Infraestrutura (parte 3)",
+      "description": "CI, package.json, gitignore, uploads, componentes gerais.",
+      "files": [
+        "/app/admin/layout.tsx",
+        "/app/carrinho/page.tsx",
+        "/app/components/Header.tsx",
+        "/app/layout.tsx",
+        "src/app/carrinho/page.tsx",
+        "src/app/components/ConditionalBodyLayout.tsx",
+        "src/app/components/Header.tsx",
+        "src/app/components/UserFeedbackDialog.tsx",
+        "src/app/layout.tsx",
+        "/app/admin/estatisticas/page.tsx",
+        "/app/admin/page.tsx",
+        "/app/admin/planos/page.tsx",
+        "/app/admin/servicos-aceitos/page.tsx",
+        "/app/admin/servicos-solicitados/page.tsx",
+        "/app/admin/usuarios/page.tsx",
+        "/app/api/admin/cupons/liberar/route.ts",
+        "/app/api/admin/cupons/route.ts",
+        "/app/api/admin/planos/excluir-cancelados/route.ts",
+        "/app/api/admin/planos/route.ts",
+        "/app/api/admin/servicos/route.ts",
+        "/app/api/admin/usuarios/route.ts",
+        "/app/planos/page.tsx",
+        "src/app/api/admin/cupons/liberar/route.ts",
+        "src/app/api/admin/cupons/route.ts",
+        "src/app/api/admin/planos/excluir-cancelados/route.ts",
+        "src/app/api/admin/planos/route.ts",
+        "src/app/api/admin/servicos/route.ts",
+        "src/app/api/admin/usuarios/route.ts",
+        "src/app/planos/page.tsx"
+      ],
+      "objective": "Entregar alterações de Infraestrutura no escopo Agentes IA e infraestrutura.",
+      "dependencies": [],
+      "risk": "Baixo",
+      "rollback": "git revert do commit; smoke test",
+      "suggestedMessage": "chore(infra): update build config and shared components (part 3)",
+      "workGroup": "Infraestrutura",
+      "prId": "PR-09"
+    },
+    {
+      "id": "C-22",
+      "title": "Infraestrutura (parte 4)",
+      "description": "CI, package.json, gitignore, uploads, componentes gerais.",
+      "files": [
+        ".gitignore",
+        "/app/globals.css",
+        "package.json",
+        "src/app/globals.css",
+        "/app/hooks/useUnreadChatCount.ts",
+        "kage.json",
+        "sma/schema.prisma",
+        "src/app/hooks/useUnreadChatCount.ts",
+        "tignore"
+      ],
+      "objective": "Entregar alterações de Infraestrutura no escopo Agentes IA e infraestrutura.",
+      "dependencies": [],
+      "risk": "Baixo",
+      "rollback": "git revert do commit; smoke test",
+      "suggestedMessage": "chore(infra): update build config and shared components (part 4)",
+      "workGroup": "Infraestrutura",
+      "prId": "PR-09"
+    }
+  ],
+  "pullRequestPlan": [
+    {
+      "id": "PR-01",
+      "name": "Documentação e Guardian (baseline)",
+      "objective": "Estabelecer baseline de docs e verificação automática sem alterar runtime de negócio.",
+      "commitIds": [
+        "C-01"
+      ],
+      "files": [
+        "scripts/domain-change-analyzer.ts",
+        "scripts/domain-decision-engine.ts",
+        "scripts/domain-guardian-advisor.ts",
+        "scripts/domain-guardian-audit.ts",
+        "scripts/domain-guardian-diff.ts",
+        "scripts/domain-guardian-runner.ts",
+        "scripts/domain-issue-generator.ts",
+        "scripts/domain-memory-engine.ts",
+        "scripts/domain-pr-reviewer.ts",
+        "scripts/domain-review-engine.ts"
+      ],
+      "dependencies": [],
+      "complexity": "Baixa",
+      "reviewer": "Tech lead + proprietário (leitura)",
+      "mergeCriteria": [
+        "Guardian exit 0",
+        "npm run build",
+        "Revisão humana aprovada",
+        "Decision engine não BLOCKED para escopo do PR"
+      ],
+      "rollbackCriteria": [
+        "git revert merge commit",
+        "Reexecutar Guardian"
+      ],
+      "order": 1,
+      "risk": "Baixo"
+    },
+    {
+      "id": "PR-02",
+      "name": "Schema e migrations",
+      "objective": "Aplicar estrutura de banco: arquivamento, hidden, refund tracking.",
+      "commitIds": [
+        "C-02"
+      ],
+      "files": [
+        "prisma/backfill_coupon_origin.sql",
+        "prisma/ensure_account_deletion_log.sql",
+        "prisma/reset_operational_data.sql",
+        "prisma/schema.prisma"
+      ],
+      "dependencies": [
+        "PR-01"
+      ],
+      "complexity": "Alta",
+      "reviewer": "Dev backend sênior",
+      "mergeCriteria": [
+        "Guardian exit 0",
+        "npm run build",
+        "Revisão humana aprovada",
+        "Testes sandbox Asaas",
+        "Decision engine não BLOCKED para escopo do PR"
+      ],
+      "rollbackCriteria": [
+        "git revert merge commit",
+        "Reexecutar Guardian",
+        "Não reverter migration em produção sem janela"
+      ],
+      "order": 2,
+      "risk": "Crítico"
+    },
+    {
+      "id": "PR-03",
+      "name": "Pagamentos e webhook",
+      "objective": "Hardening idempotência, checkout e efeitos pós-pagamento.",
+      "commitIds": [
+        "C-03",
+        "C-04",
+        "C-05",
+        "C-06"
+      ],
+      "files": [
+        "/app/lib/agendamento-payment-coupons.ts",
+        "/app/lib/asaas-agendamento-reconcile.ts",
+        "/app/lib/payment-providers.ts",
+        "/app/lib/process-payment-webhook.ts",
+        "/app/lib/validate-coupon-checkout.ts",
+        "src/app/lib/admin-delete-payment.ts",
+        "src/app/lib/agendamento-payment-coupons.ts",
+        "src/app/lib/agendamento-payment-rules.ts",
+        "src/app/lib/appointment-refund-payment.ts",
+        "src/app/lib/asaas-agendamento-payment-effects.ts",
+        "src/app/lib/asaas-agendamento-reconcile.ts",
+        "src/app/lib/asaas-fetch.ts",
+        "src/app/lib/asaas-plano-payment-effects.ts",
+        "src/app/lib/payment-providers.ts",
+        "src/app/lib/payment-refund-status.ts",
+        "src/app/lib/plan-payment-simulation.ts",
+        "src/app/lib/process-payment-webhook.ts",
+        "src/app/lib/symbolic-payment-resolve.ts",
+        "src/app/lib/symbolic-payment.ts",
+        "src/app/lib/validate-coupon-checkout.ts",
+        "/app/api/admin/pagamentos/route.ts",
+        "/app/api/admin/reprocessar-pagamento-teste/route.ts",
+        "/app/api/asaas/checkout-agendamento/route.ts",
+        "/app/api/asaas/checkout-carrinho/route.ts",
+        "/app/api/asaas/checkout/route.ts",
+        "/app/api/test-payment/route.ts",
+        "/app/api/webhooks/asaas/route.ts",
+        "src/app/api/admin/pagamentos/route.ts",
+        "src/app/api/admin/reprocessar-pagamento-teste/route.ts",
+        "src/app/api/asaas/checkout-agendamento/route.ts",
+        "src/app/api/asaas/checkout-carrinho/route.ts",
+        "src/app/api/asaas/checkout/route.ts",
+        "src/app/api/test-payment/route.ts",
+        "src/app/api/webhooks/asaas/route.ts",
+        "/app/admin/pagamentos/page.tsx",
+        "src/app/admin/pagamentos/page.tsx",
+        "scripts/inspect-payments.mjs"
+      ],
+      "dependencies": [
+        "PR-02"
+      ],
+      "complexity": "Muito Alta",
+      "reviewer": "Dev financeiro + tech lead",
+      "mergeCriteria": [
+        "Guardian exit 0",
+        "npm run build",
+        "Revisão humana aprovada",
+        "Testes sandbox Asaas",
+        "Decision engine não BLOCKED para escopo do PR"
+      ],
+      "rollbackCriteria": [
+        "git revert merge commit",
+        "Reexecutar Guardian"
+      ],
+      "order": 3,
+      "risk": "Crítico"
+    },
+    {
+      "id": "PR-04",
+      "name": "Cupons e ownership",
+      "objective": "Ownership, reembolso cupom, validação checkout.",
+      "commitIds": [
+        "C-07",
+        "C-08",
+        "C-09"
+      ],
+      "files": [
+        "/app/lib/coupon-booking-rules.ts",
+        "/app/lib/coupon-release.ts",
+        "/app/lib/coupon-stale-appointment.ts",
+        "/app/lib/plan-coupons.ts",
+        "src/app/lib/admin-delete-coupon.ts",
+        "src/app/lib/appointment-plan-coupon.ts",
+        "src/app/lib/coupon-account-ownership.ts",
+        "src/app/lib/coupon-admin-sections.ts",
+        "src/app/lib/coupon-booking-rules.ts",
+        "src/app/lib/coupon-origin.ts",
+        "src/app/lib/coupon-refund.ts",
+        "src/app/lib/coupon-release.ts",
+        "src/app/lib/coupon-scheduling-rules.ts",
+        "src/app/lib/coupon-sections.ts",
+        "src/app/lib/coupon-stale-appointment.ts",
+        "src/app/lib/coupon-visibility.ts",
+        "src/app/lib/plan-coupons.ts",
+        "src/app/lib/refund-coupon.ts",
+        "src/app/lib/simulation-coupon-codes.ts",
+        "src/app/lib/simulation-coupon-user-link.ts",
+        "src/app/lib/simulation-coupon.ts",
+        "/app/api/agendamentos/com-cupom/route.ts",
+        "/app/api/coupons/validate/route.ts",
+        "src/app/api/agendamentos/com-cupom/route.ts",
+        "src/app/api/coupons/validate/route.ts",
+        "scripts/inspect-simulation-coupons.mjs",
+        "scripts/repair-coupon-ownership.mjs"
+      ],
+      "dependencies": [
+        "PR-03"
+      ],
+      "complexity": "Alta",
+      "reviewer": "Dev backend",
+      "mergeCriteria": [
+        "Guardian exit 0",
+        "npm run build",
+        "Revisão humana aprovada",
+        "Decision engine não BLOCKED para escopo do PR"
+      ],
+      "rollbackCriteria": [
+        "git revert merge commit",
+        "Reexecutar Guardian"
+      ],
+      "order": 4,
+      "risk": "Alto"
+    },
+    {
+      "id": "PR-05",
+      "name": "Agendamentos e arquivamento",
+      "objective": "Arquivamento admin, queries operacionais, disponibilidade.",
+      "commitIds": [
+        "C-10"
+      ],
+      "files": [
+        "/app/admin/agendamentos/page.tsx",
+        "/app/agendamento/page.tsx",
+        "/app/api/admin/agendamentos/cancelar/route.ts",
+        "/app/api/admin/agendamentos/reverter-cancelamento/route.ts",
+        "/app/api/admin/agendamentos/route.ts",
+        "/app/api/agendamentos/cancelar/route.ts",
+        "/app/api/agendamentos/disponibilidade/route.ts",
+        "/app/api/agendamentos/escolher-reembolso/route.ts",
+        "/app/api/agendamentos/route.ts",
+        "src/app/admin/agendamentos/page.tsx",
+        "src/app/agendamento/page.tsx",
+        "src/app/api/admin/agendamentos/cancelar/route.ts",
+        "src/app/api/admin/agendamentos/reverter-cancelamento/route.ts",
+        "src/app/api/admin/agendamentos/route.ts",
+        "src/app/api/agendamentos/cancelar/route.ts",
+        "src/app/api/agendamentos/disponibilidade/route.ts",
+        "src/app/api/agendamentos/escolher-reembolso/route.ts",
+        "src/app/api/agendamentos/route.ts",
+        "src/app/lib/appointment-admin-archive.ts",
+        "src/app/lib/appointment-hidden.ts",
+        "src/app/lib/appointment-refund-value.ts",
+        "src/app/lib/purge-cancelled-appointment.ts"
+      ],
+      "dependencies": [
+        "PR-02",
+        "PR-03"
+      ],
+      "complexity": "Alta",
+      "reviewer": "Dev backend",
+      "mergeCriteria": [
+        "Guardian exit 0",
+        "npm run build",
+        "Revisão humana aprovada",
+        "Decision engine não BLOCKED para escopo do PR"
+      ],
+      "rollbackCriteria": [
+        "git revert merge commit",
+        "Reexecutar Guardian"
+      ],
+      "order": 5,
+      "risk": "Alto"
+    },
+    {
+      "id": "PR-06",
+      "name": "Minha Conta e autenticação",
+      "objective": "UX cliente, login, meus-dados, ocultação usuário.",
+      "commitIds": [
+        "C-11",
+        "C-12",
+        "C-13",
+        "C-14"
+      ],
+      "files": [
+        "/app/lib/auth.ts",
+        "src/app/lib/auth.ts",
+        "/app/api/conta/route.ts",
+        "/app/api/conta/update/route.ts",
+        "/app/api/esqueci-senha/route.ts",
+        "/app/api/login/route.ts",
+        "/app/api/meus-dados/route.ts",
+        "/app/api/meus-dados/vincular-cupons-teste/route.ts",
+        "src/app/api/conta/route.ts",
+        "src/app/api/conta/update/route.ts",
+        "src/app/api/esqueci-senha/route.ts",
+        "src/app/api/login/route.ts",
+        "src/app/api/meus-dados/route.ts",
+        "src/app/api/meus-dados/vincular-cupons-teste/route.ts",
+        "/app/conta/page.tsx",
+        "/app/context/AuthContext.tsx",
+        "/app/esqueci-senha/page.tsx",
+        "/app/login/page.tsx",
+        "/app/minha-conta/page.tsx",
+        "/app/registro/page.tsx",
+        "src/app/conta/page.tsx",
+        "src/app/context/AuthContext.tsx",
+        "src/app/esqueci-senha/page.tsx",
+        "src/app/login/page.tsx",
+        "src/app/minha-conta/page.tsx",
+        "src/app/registro/page.tsx",
+        "/app/middleware.ts",
+        "src/app/middleware.ts"
+      ],
+      "dependencies": [
+        "PR-04",
+        "PR-05"
+      ],
+      "complexity": "Média",
+      "reviewer": "Dev frontend + QA",
+      "mergeCriteria": [
+        "Guardian exit 0",
+        "npm run build",
+        "Revisão humana aprovada",
+        "Decision engine não BLOCKED para escopo do PR"
+      ],
+      "rollbackCriteria": [
+        "git revert merge commit",
+        "Reexecutar Guardian"
+      ],
+      "order": 6,
+      "risk": "Médio"
+    },
+    {
+      "id": "PR-07",
+      "name": "Painel administrativo",
+      "objective": "UI admin, stats, ações arquivar/restaurar.",
+      "commitIds": [
+        "C-15"
+      ],
+      "files": [
+        "/app/api/admin/stats/detalhadas/route.ts",
+        "/app/api/admin/stats/route.ts",
+        "src/app/admin/estatisticas/page.tsx",
+        "src/app/admin/layout.tsx",
+        "src/app/admin/page.tsx",
+        "src/app/admin/planos/page.tsx",
+        "src/app/admin/servicos-aceitos/page.tsx",
+        "src/app/admin/servicos-solicitados/page.tsx",
+        "src/app/admin/usuarios/page.tsx",
+        "src/app/api/admin/stats/detalhadas/route.ts",
+        "src/app/api/admin/stats/route.ts",
+        "src/app/lib/adminAccess.ts"
+      ],
+      "dependencies": [
+        "PR-05"
+      ],
+      "complexity": "Média",
+      "reviewer": "Proprietário + dev",
+      "mergeCriteria": [
+        "Guardian exit 0",
+        "npm run build",
+        "Revisão humana aprovada",
+        "Decision engine não BLOCKED para escopo do PR"
+      ],
+      "rollbackCriteria": [
+        "git revert merge commit",
+        "Reexecutar Guardian"
+      ],
+      "order": 7,
+      "risk": "Médio"
+    },
+    {
+      "id": "PR-08",
+      "name": "Simulação admin",
+      "objective": "Pagamentos teste, cupons simbólicos, reset.",
+      "commitIds": [
+        "C-16"
+      ],
+      "files": [
+        "scripts/test-simulation-flags.mjs",
+        "src/app/lib/simulation-reset.ts"
+      ],
+      "dependencies": [
+        "PR-03"
+      ],
+      "complexity": "Média",
+      "reviewer": "Dev backend",
+      "mergeCriteria": [
+        "Guardian exit 0",
+        "npm run build",
+        "Revisão humana aprovada",
+        "Decision engine não BLOCKED para escopo do PR"
+      ],
+      "rollbackCriteria": [
+        "git revert merge commit",
+        "Reexecutar Guardian"
+      ],
+      "order": 8,
+      "risk": "Médio"
+    },
+    {
+      "id": "PR-09",
+      "name": "Agentes IA e infraestrutura",
+      "objective": "Pipeline de agentes, scripts utilitários, build e CI.",
+      "commitIds": [
+        "C-17",
+        "C-18",
+        "C-19",
+        "C-20",
+        "C-21",
+        "C-22"
+      ],
+      "files": [
+        "scripts/architecture-agent.ts",
+        "scripts/architecture-decision-agent.ts",
+        "scripts/cto-agent.ts",
+        "scripts/design-planner-agent.ts",
+        "scripts/evolution-agent.ts",
+        "scripts/human-report-agent.ts",
+        "scripts/implementation-planner-agent.ts",
+        "scripts/project-knowledge-graph-agent.ts",
+        "scripts/stabilization-planner.ts",
+        "scripts/check-db.mjs",
+        "scripts/domain-architecture-planner.ts",
+        "scripts/reset-operational-data.mjs",
+        "/app/lib/delivery-url-validation.ts",
+        "/app/lib/sendEmail.ts",
+        "/app/lib/service-catalog.ts",
+        "/app/lib/validations.ts",
+        "src/app/lib/active-user-plan.ts",
+        "src/app/lib/avatarDisplayUrl.ts",
+        "src/app/lib/deleteUserAccount.ts",
+        "src/app/lib/delivery-audio-upload.ts",
+        "src/app/lib/delivery-url-validation.ts",
+        "src/app/lib/plan-refund.ts",
+        "src/app/lib/prisma-errors.ts",
+        "src/app/lib/sendEmail.ts",
+        "src/app/lib/service-catalog.ts",
+        "src/app/lib/support-contact.ts",
+        "src/app/lib/user-feedback.ts",
+        "src/app/lib/user-plan-hidden.ts",
+        "src/app/lib/validations.ts",
+        "/app/api/admin/cupons/liberar/route.ts",
+        "/app/api/admin/cupons/route.ts",
+        "/app/api/admin/planos/excluir-cancelados/route.ts",
+        "/app/api/admin/planos/route.ts",
+        "/app/api/admin/servicos/route.ts",
+        "/app/api/admin/usuarios/route.ts",
+        "/app/api/cupons/renunciar/route.ts",
+        "/app/api/me/route.ts",
+        "/app/api/planos/cancelar/route.ts",
+        "/app/api/planos/excluir/route.ts",
+        "/app/api/planos/solicitar-reembolso/route.ts",
+        "/app/api/trocar-senha/route.ts",
+        "/app/api/verificar-codigo/route.ts",
+        "src/app/api/admin/cupons/liberar/route.ts",
+        "src/app/api/admin/cupons/route.ts",
+        "src/app/api/admin/planos/excluir-cancelados/route.ts",
+        "src/app/api/admin/planos/route.ts",
+        "src/app/api/admin/servicos/route.ts",
+        "src/app/api/admin/usuarios/route.ts",
+        "src/app/api/cupons/renunciar/route.ts",
+        "src/app/api/me/route.ts",
+        "src/app/api/planos/cancelar/route.ts",
+        "src/app/api/planos/excluir/route.ts",
+        "src/app/api/planos/solicitar-reembolso/route.ts",
+        "src/app/api/trocar-senha/route.ts",
+        "src/app/api/verificar-codigo/route.ts",
+        "/app/admin/layout.tsx",
+        "/app/carrinho/page.tsx",
+        "/app/components/Header.tsx",
+        "/app/layout.tsx",
+        "src/app/carrinho/page.tsx",
+        "src/app/components/ConditionalBodyLayout.tsx",
+        "src/app/components/Header.tsx",
+        "src/app/components/UserFeedbackDialog.tsx",
+        "src/app/layout.tsx",
+        "/app/admin/estatisticas/page.tsx",
+        "/app/admin/page.tsx",
+        "/app/admin/planos/page.tsx",
+        "/app/admin/servicos-aceitos/page.tsx",
+        "/app/admin/servicos-solicitados/page.tsx",
+        "/app/admin/usuarios/page.tsx",
+        "/app/planos/page.tsx",
+        "src/app/planos/page.tsx",
+        ".gitignore",
+        "/app/globals.css",
+        "package.json",
+        "src/app/globals.css",
+        "/app/hooks/useUnreadChatCount.ts",
+        "kage.json",
+        "sma/schema.prisma",
+        "src/app/hooks/useUnreadChatCount.ts",
+        "tignore"
+      ],
+      "dependencies": [
+        "PR-01"
+      ],
+      "complexity": "Baixa",
+      "reviewer": "Tech lead",
+      "mergeCriteria": [
+        "Guardian exit 0",
+        "npm run build",
+        "Revisão humana aprovada",
+        "Decision engine não BLOCKED para escopo do PR"
+      ],
+      "rollbackCriteria": [
+        "git revert merge commit",
+        "Reexecutar Guardian"
+      ],
+      "order": 9,
+      "risk": "Baixo"
+    }
+  ],
+  "deploymentPlan": {
+    "homologation": {
+      "checklist": [
+        "Criar ambiente staging (Vercel preview ou branch)",
+        "Configurar DATABASE_URL de staging",
+        "Merge PR-01 e PR-02 em staging",
+        "npx prisma migrate deploy",
+        "Merge PRs 03-08 sequencialmente",
+        "Executar Guardian após cada merge",
+        "Testes sandbox Asaas",
+        "Validação proprietário no admin"
+      ],
+      "variables": [
+        "DATABASE_URL",
+        "ASAAS_API_KEY (sandbox)",
+        "NEXTAUTH_SECRET",
+        "DIRECT_URL (Neon)"
+      ],
+      "migrations": [
+        "prisma/migrations/20260504200000_add_foto_position/",
+        "prisma/migrations/20260504213000_account_deletion_log/",
+        "prisma/migrations/20260511231500_user_plan_admin_inactive/",
+        "prisma/migrations/20260511234500_coupon_refund_tracking/",
+        "prisma/migrations/20260512030000_appointment_refund_confirmation/",
+        "prisma/migrations/20260512040000_user_plan_refund_tracking/",
+        "prisma/migrations/20260604210000_user_plan_user_hidden/",
+        "prisma/migrations/20260605120000_appointment_user_hidden/",
+        "prisma/migrations/20260617120000_appointment_admin_archive/"
+      ],
+      "validation": [
+        "Smoke",
+        "Checkout completo",
+        "Arquivamento admin",
+        "Minha Conta inalterada para cliente"
+      ],
+      "guardian": [
+        "node --experimental-strip-types scripts/domain-guardian-runner.ts",
+        "node --experimental-strip-types scripts/domain-decision-engine.ts"
+      ]
+    },
+    "production": {
+      "checklist": [
+        "Todos PRs mergeados em main",
+        "Guardian HEALTHY em produção pós-migration",
+        "Backup banco Neon",
+        "npx prisma migrate deploy (produção)",
+        "Deploy Vercel",
+        "Smoke pós-deploy",
+        "Monitorar webhooks Asaas 24h"
+      ],
+      "rollback": [
+        "Revert deploy Vercel para commit anterior",
+        "Não reverter migration sem SQL manual",
+        "Verificar fila webhooks Asaas",
+        "Comunicar proprietário"
+      ],
+      "monitoring": [
+        "Guardian diário por 7 dias",
+        "Logs webhook /api/webhooks/asaas",
+        "Admin stats sem divergência",
+        "Zero erros F1/F4"
+      ]
+    }
+  },
+  "rollbackPlan": [
+    {
+      "prId": "PR-01",
+      "howToRevert": [
+        "git revert -m 1 <merge-commit-PR-01>",
+        "Redeploy versão anterior na Vercel",
+        "git revert merge commit",
+        "Reexecutar Guardian"
+      ],
+      "impact": "Baixo",
+      "requiresMigration": false,
+      "dataImpact": "Sem perda de dados em soft-archive",
+      "guardianAfterRollback": "domain-guardian-runner.ts deve retornar HEALTHY ou findings explicados"
+    },
+    {
+      "prId": "PR-02",
+      "howToRevert": [
+        "git revert -m 1 <merge-commit-PR-02>",
+        "Redeploy versão anterior na Vercel",
+        "git revert merge commit",
+        "Reexecutar Guardian",
+        "Não reverter migration em produção sem janela"
+      ],
+      "impact": "Alto — área financeira ou schema",
+      "requiresMigration": true,
+      "dataImpact": "Migration já aplicada permanece — rollback de código apenas",
+      "guardianAfterRollback": "domain-guardian-runner.ts deve retornar HEALTHY ou findings explicados"
+    },
+    {
+      "prId": "PR-03",
+      "howToRevert": [
+        "git revert -m 1 <merge-commit-PR-03>",
+        "Redeploy versão anterior na Vercel",
+        "git revert merge commit",
+        "Reexecutar Guardian"
+      ],
+      "impact": "Alto — área financeira ou schema",
+      "requiresMigration": false,
+      "dataImpact": "Sem perda de dados em soft-archive",
+      "guardianAfterRollback": "domain-guardian-runner.ts deve retornar HEALTHY ou findings explicados"
+    },
+    {
+      "prId": "PR-04",
+      "howToRevert": [
+        "git revert -m 1 <merge-commit-PR-04>",
+        "Redeploy versão anterior na Vercel",
+        "git revert merge commit",
+        "Reexecutar Guardian"
+      ],
+      "impact": "Médio",
+      "requiresMigration": false,
+      "dataImpact": "Sem perda de dados em soft-archive",
+      "guardianAfterRollback": "domain-guardian-runner.ts deve retornar HEALTHY ou findings explicados"
+    },
+    {
+      "prId": "PR-05",
+      "howToRevert": [
+        "git revert -m 1 <merge-commit-PR-05>",
+        "Redeploy versão anterior na Vercel",
+        "git revert merge commit",
+        "Reexecutar Guardian"
+      ],
+      "impact": "Médio",
+      "requiresMigration": false,
+      "dataImpact": "Sem perda de dados em soft-archive",
+      "guardianAfterRollback": "domain-guardian-runner.ts deve retornar HEALTHY ou findings explicados"
+    },
+    {
+      "prId": "PR-06",
+      "howToRevert": [
+        "git revert -m 1 <merge-commit-PR-06>",
+        "Redeploy versão anterior na Vercel",
+        "git revert merge commit",
+        "Reexecutar Guardian"
+      ],
+      "impact": "Baixo",
+      "requiresMigration": false,
+      "dataImpact": "Sem perda de dados em soft-archive",
+      "guardianAfterRollback": "domain-guardian-runner.ts deve retornar HEALTHY ou findings explicados"
+    },
+    {
+      "prId": "PR-07",
+      "howToRevert": [
+        "git revert -m 1 <merge-commit-PR-07>",
+        "Redeploy versão anterior na Vercel",
+        "git revert merge commit",
+        "Reexecutar Guardian"
+      ],
+      "impact": "Baixo",
+      "requiresMigration": false,
+      "dataImpact": "Sem perda de dados em soft-archive",
+      "guardianAfterRollback": "domain-guardian-runner.ts deve retornar HEALTHY ou findings explicados"
+    },
+    {
+      "prId": "PR-08",
+      "howToRevert": [
+        "git revert -m 1 <merge-commit-PR-08>",
+        "Redeploy versão anterior na Vercel",
+        "git revert merge commit",
+        "Reexecutar Guardian"
+      ],
+      "impact": "Baixo",
+      "requiresMigration": false,
+      "dataImpact": "Sem perda de dados em soft-archive",
+      "guardianAfterRollback": "domain-guardian-runner.ts deve retornar HEALTHY ou findings explicados"
+    },
+    {
+      "prId": "PR-09",
+      "howToRevert": [
+        "git revert -m 1 <merge-commit-PR-09>",
+        "Redeploy versão anterior na Vercel",
+        "git revert merge commit",
+        "Reexecutar Guardian"
+      ],
+      "impact": "Baixo",
+      "requiresMigration": false,
+      "dataImpact": "Sem perda de dados em soft-archive",
+      "guardianAfterRollback": "domain-guardian-runner.ts deve retornar HEALTHY ou findings explicados"
+    }
+  ],
+  "testingPlan": [
+    {
+      "prId": "PR-01",
+      "smoke": [
+        "npm run build",
+        "Aplicação inicia sem erro",
+        "Login admin"
+      ],
+      "integration": [
+        "domain-guardian-runner.ts exit 0",
+        "domain-decision-engine.ts"
+      ],
+      "guardianMandatory": [
+        "node --experimental-strip-types scripts/domain-guardian-runner.ts",
+        "Check F1 OK",
+        "Check F4 OK",
+        "Check A5 OK",
+        "Check A8 OK",
+        "Check C1 OK",
+        "Check X1 OK"
+      ],
+      "criticalFlows": [
+        "Regressão meus-dados"
+      ],
+      "manual": [
+        "Revisar diff com review-checklist.md",
+        "Confirmar com proprietário se UI admin mudou"
+      ]
+    },
+    {
+      "prId": "PR-02",
+      "smoke": [
+        "npm run build",
+        "Aplicação inicia sem erro",
+        "Login admin"
+      ],
+      "integration": [
+        "npx prisma migrate deploy (staging)",
+        "npx prisma generate",
+        "Smoke pós-migration"
+      ],
+      "guardianMandatory": [
+        "node --experimental-strip-types scripts/domain-guardian-runner.ts",
+        "Check F1 OK",
+        "Check F4 OK",
+        "Check A8 OK"
+      ],
+      "criticalFlows": [
+        "Regressão meus-dados"
+      ],
+      "manual": [
+        "Revisar diff com review-checklist.md",
+        "Confirmar com proprietário se UI admin mudou"
+      ]
+    },
+    {
+      "prId": "PR-03",
+      "smoke": [
+        "npm run build",
+        "Aplicação inicia sem erro",
+        "Login admin"
+      ],
+      "integration": [
+        "Checkout sandbox agendamento",
+        "Webhook PAYMENT_RECEIVED idempotente",
+        "Reembolso escolher-reembolso"
+      ],
+      "guardianMandatory": [
+        "node --experimental-strip-types scripts/domain-guardian-runner.ts",
+        "Check F1 OK",
+        "Check F2 OK",
+        "Check F3 OK",
+        "Check F4 OK",
+        "Check F6 OK",
+        "Check F8 OK"
+      ],
+      "criticalFlows": [
+        "Checkout → webhook → Payment → Appointment"
+      ],
+      "manual": [
+        "Revisar diff com review-checklist.md",
+        "Confirmar com proprietário se UI admin mudou"
+      ]
+    },
+    {
+      "prId": "PR-04",
+      "smoke": [
+        "npm run build",
+        "Aplicação inicia sem erro",
+        "Login admin"
+      ],
+      "integration": [
+        "Resgate cupom",
+        "Cupom após cancelamento",
+        "Admin liberar cupom"
+      ],
+      "guardianMandatory": [
+        "node --experimental-strip-types scripts/domain-guardian-runner.ts",
+        "Check C1 OK",
+        "Check C4 OK",
+        "Check X1 OK",
+        "Check X2 OK"
+      ],
+      "criticalFlows": [
+        "Regressão meus-dados"
+      ],
+      "manual": [
+        "Revisar diff com review-checklist.md",
+        "Confirmar com proprietário se UI admin mudou"
+      ]
+    },
+    {
+      "prId": "PR-05",
+      "smoke": [
+        "npm run build",
+        "Aplicação inicia sem erro",
+        "Login admin"
+      ],
+      "integration": [
+        "Arquivar/restaurar agendamento admin",
+        "Checkout não considera arquivados",
+        "Disponibilidade de horários"
+      ],
+      "guardianMandatory": [
+        "node --experimental-strip-types scripts/domain-guardian-runner.ts",
+        "Check A5 OK",
+        "Check A8 OK",
+        "Check A9 OK",
+        "Check F4 OK"
+      ],
+      "criticalFlows": [
+        "Arquivar → filtro operacional → restaurar"
+      ],
+      "manual": [
+        "Revisar diff com review-checklist.md",
+        "Confirmar com proprietário se UI admin mudou"
+      ]
+    },
+    {
+      "prId": "PR-06",
+      "smoke": [
+        "npm run build",
+        "Aplicação inicia sem erro",
+        "Login admin"
+      ],
+      "integration": [
+        "Login/logout",
+        "Listar agendamentos e cupons",
+        "Ocultar na Minha Conta"
+      ],
+      "guardianMandatory": [
+        "node --experimental-strip-types scripts/domain-guardian-runner.ts",
+        "Check A7 OK",
+        "Check A8 OK"
+      ],
+      "criticalFlows": [
+        "Regressão meus-dados"
+      ],
+      "manual": [
+        "Revisar diff com review-checklist.md",
+        "Confirmar com proprietário se UI admin mudou"
+      ]
+    },
+    {
+      "prId": "PR-07",
+      "smoke": [
+        "npm run build",
+        "Aplicação inicia sem erro",
+        "Login admin"
+      ],
+      "integration": [
+        "Navegar painel admin",
+        "Filtros arquivados",
+        "Estatísticas"
+      ],
+      "guardianMandatory": [
+        "node --experimental-strip-types scripts/domain-guardian-runner.ts",
+        "Check A5 OK",
+        "Check A9 OK"
+      ],
+      "criticalFlows": [
+        "Regressão meus-dados"
+      ],
+      "manual": [
+        "Revisar diff com review-checklist.md",
+        "Confirmar com proprietário se UI admin mudou"
+      ]
+    },
+    {
+      "prId": "PR-08",
+      "smoke": [
+        "npm run build",
+        "Aplicação inicia sem erro",
+        "Login admin"
+      ],
+      "integration": [
+        "Reprocessar pagamento teste",
+        "Reset simulação admin"
+      ],
+      "guardianMandatory": [
+        "node --experimental-strip-types scripts/domain-guardian-runner.ts",
+        "Check S4 OK",
+        "Check A1 OK",
+        "Check A2 OK"
+      ],
+      "criticalFlows": [
+        "Regressão meus-dados"
+      ],
+      "manual": [
+        "Revisar diff com review-checklist.md",
+        "Confirmar com proprietário se UI admin mudou"
+      ]
+    },
+    {
+      "prId": "PR-09",
+      "smoke": [
+        "npm run build",
+        "Aplicação inicia sem erro",
+        "Login admin"
+      ],
+      "integration": [
+        "Executar agentes e validar JSON gerado",
+        "Não executar reset em produção",
+        "npm run build"
+      ],
+      "guardianMandatory": [
+        "node --experimental-strip-types scripts/domain-guardian-runner.ts"
+      ],
+      "criticalFlows": [
+        "Regressão meus-dados"
+      ],
+      "manual": [
+        "Revisar diff com review-checklist.md",
+        "Confirmar com proprietário se UI admin mudou"
+      ]
+    }
+  ],
+  "roadmap": {
+    "sprint1": {
+      "name": "Sprint 1 — Estabilização",
+      "goals": [
+        "Dividir 173 arquivos em PRs independentes",
+        "Merge incremental com Guardian",
+        "Resolver BLOCKED por escopo"
+      ],
+      "deliverables": [
+        "Documentação e Guardian (baseline)",
+        "Schema e migrations",
+        "Pagamentos e webhook",
+        "Cupons e ownership",
+        "Agendamentos e arquivamento",
+        "Minha Conta e autenticação",
+        "Painel administrativo",
+        "Simulação admin",
+        "Agentes IA e infraestrutura"
+      ]
+    },
+    "sprint2": {
+      "name": "Sprint 2 — Homologação",
+      "goals": [
+        "Deploy staging",
+        "Migrations",
+        "Testes sandbox Asaas",
+        "Validação proprietário"
+      ],
+      "deliverables": [
+        "Ambiente homologação validado",
+        "Checklist completo assinado"
+      ]
+    },
+    "sprint3": {
+      "name": "Sprint 3 — Deploy Produção",
+      "goals": [
+        "Deploy incremental",
+        "Monitoramento 24h",
+        "Guardian em produção"
+      ],
+      "deliverables": [
+        "Produção estável",
+        "Decision engine APPROVED"
+      ]
+    },
+    "sprint4": {
+      "name": "Sprint 4 — Novas Funcionalidades",
+      "goals": [
+        "Adicionar arquivamento administrativo de pagamentos",
+        "Features do design-plan"
+      ],
+      "deliverables": [
+        "Payment archive (ADR-013)",
+        "Melhorias pós-feedback produção"
+      ]
+    }
+  },
+  "criticalPath": [
+    "PR-01 Documentação + Guardian",
+    "PR-02 Schema/migrations (staging)",
+    "PR-03 Pagamentos/webhook",
+    "PR-05 Agendamentos",
+    "Guardian exit 0",
+    "Homologação completa",
+    "Deploy produção incremental"
+  ],
+  "dependencies": [
+    {
+      "from": "PR-02",
+      "to": "PR-01",
+      "reason": "PR-02 depende de PR-01 estar mergeado"
+    },
+    {
+      "from": "PR-03",
+      "to": "PR-02",
+      "reason": "PR-03 depende de PR-02 estar mergeado"
+    },
+    {
+      "from": "PR-04",
+      "to": "PR-03",
+      "reason": "PR-04 depende de PR-03 estar mergeado"
+    },
+    {
+      "from": "PR-05",
+      "to": "PR-02",
+      "reason": "PR-05 depende de PR-02 estar mergeado"
+    },
+    {
+      "from": "PR-05",
+      "to": "PR-03",
+      "reason": "PR-05 depende de PR-03 estar mergeado"
+    },
+    {
+      "from": "PR-06",
+      "to": "PR-04",
+      "reason": "PR-06 depende de PR-04 estar mergeado"
+    },
+    {
+      "from": "PR-06",
+      "to": "PR-05",
+      "reason": "PR-06 depende de PR-05 estar mergeado"
+    },
+    {
+      "from": "PR-07",
+      "to": "PR-05",
+      "reason": "PR-07 depende de PR-05 estar mergeado"
+    },
+    {
+      "from": "PR-08",
+      "to": "PR-03",
+      "reason": "PR-08 depende de PR-03 estar mergeado"
+    },
+    {
+      "from": "PR-09",
+      "to": "PR-01",
+      "reason": "PR-09 depende de PR-01 estar mergeado"
+    }
+  ],
+  "recommendations": [
+    "Estabilizar: dividir PR, executar testes, resolver BLOCKED — depois deploy incremental.",
+    "Finalizar migração de simulação (S4): vincular ou eliminar cupons legados TESTE_AGEND_/TESTE_PAY_ antes de remover helpers @legacy.",
+    "Alta frequência de BLOCKED: adotar PRs menores (split-to-prs) e rodar change-analyzer antes de abrir PR.",
+    "Nunca mergear todos os arquivos em um único PR",
+    "Rodar stabilization-planner após cada PR mergeado para atualizar plano",
+    "Proprietário valida PR-07 (admin UI) manualmente"
+  ],
+  "context": {
+    "sourcesConsulted": [
+      {
+        "path": "reports/domain-guardian/cto-report.json",
+        "loaded": true
+      },
+      {
+        "path": "reports/domain-guardian/project-context.json",
+        "loaded": true
+      },
+      {
+        "path": "reports/domain-guardian/project-knowledge-graph.json",
+        "loaded": true
+      },
+      {
+        "path": "reports/domain-guardian/architecture-decisions.json",
+        "loaded": true
+      },
+      {
+        "path": "reports/domain-guardian/evolution-report.json",
+        "loaded": true
+      },
+      {
+        "path": "reports/domain-guardian/implementation-plan.json",
+        "loaded": true
+      },
+      {
+        "path": "reports/domain-guardian/design-plan.json",
+        "loaded": true
+      },
+      {
+        "path": "reports/domain-guardian/memory.json",
+        "loaded": true
+      },
+      {
+        "path": "reports/domain-guardian/latest.json",
+        "loaded": true
+      },
+      {
+        "path": "reports/human/project-report.json",
+        "loaded": true
+      },
+      {
+        "path": "reports/domain-guardian/change-analysis.md",
+        "loaded": true
+      },
+      {
+        "path": "reports/domain-guardian/action-plan.md",
+        "loaded": true
+      },
+      {
+        "path": "reports/domain-guardian/advisor.md",
+        "loaded": true
+      },
+      {
+        "path": "reports/domain-guardian/decision.md",
+        "loaded": true
+      },
+      {
+        "path": "reports/domain-guardian/review-checklist.md",
+        "loaded": true
+      },
+      {
+        "path": "reports/domain-guardian/pr-review.md",
+        "loaded": true
+      },
+      {
+        "path": "reports/domain-guardian/issues.md",
+        "loaded": true
+      },
+      {
+        "path": "docs/ai/domain-map.md",
+        "loaded": true
+      },
+      {
+        "path": "docs/ai/domain-dependencies.md",
+        "loaded": true
+      },
+      {
+        "path": "docs/ai/domain-invariants.md",
+        "loaded": true
+      },
+      {
+        "path": "docs/ai/domain-risks.md",
+        "loaded": true
+      },
+      {
+        "path": "docs/ai/payment-lifecycle-audit.md",
+        "loaded": true
+      },
+      {
+        "path": "docs/ai/appointment-archive-audit.md",
+        "loaded": true
+      }
+    ],
+    "ctoVerdict": "Estabilizar antes de avançar",
+    "decisionStatus": "BLOCKED",
+    "guardianStatus": "HEALTHY",
+    "gitHead": "fd9ff6d"
+  },
+  "limitations": [
+    "Agrupamento por heurística de caminho — arquivos podem pertencer a múltiplos domínios.",
+    "Commits sugeridos não validam compilação por chunk — ajustar se build falhar.",
+    "Ordem de PRs conservadora — paralelizar PR-09 com PR-03 apenas após validação.",
+    "Não estima horas por desenvolvedor — apenas esforço qualitativo.",
+    "Migrations listadas do evolution-report — verificar estado real do banco staging."
+  ]
+}

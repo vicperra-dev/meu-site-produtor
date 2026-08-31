@@ -1,0 +1,436 @@
+{
+  "reportId": "HS-02A-service-domain-map",
+  "mode": "READ_ONLY",
+  "roles": ["STAFF_SOFTWARE_ENGINEER", "DOMAIN_ARCHITECT", "DOMAIN_GUARDIAN"],
+  "generatedAt": "2026-07-13T22:30:00.000Z",
+  "language": "pt-BR",
+  "scope": "Domínio Service — ciclo de vida completo, baseado exclusivamente no código existente",
+  "constraints": {
+    "codeChanged": false,
+    "commitsCreated": false,
+    "migrationsCreated": false,
+    "bugsFixed": false
+  },
+  "schema": {
+    "model": "Service",
+    "file": "prisma/schema.prisma",
+    "fields": {
+      "id": "String @id uuid",
+      "userId": "String FK User Cascade",
+      "appointmentId": "Int? FK Appointment SetNull",
+      "tipo": "String (catálogo: sessao, captacao, mix, master, ...)",
+      "description": "String?",
+      "status": "String default pendente",
+      "acceptedAt": "DateTime?",
+      "deliveryAudioUrl": "String?",
+      "deliveryAudioFormat": "String? wav|mp3",
+      "createdAt": "DateTime",
+      "updatedAt": "DateTime @updatedAt"
+    },
+    "statusEnumDocumentado": ["pendente", "aceito", "em_andamento", "recusado", "cancelado", "concluido"],
+    "statusNaoExistemNoCodigo": ["PENDING", "ACCEPTED", "IN_PROGRESS", "DELIVERED", "COMPLETED", "REFUNDED", "entregue"],
+    "nota": "Não há status DELIVERED/entregue: entrega = status concluido + deliveryAudioUrl preenchida"
+  },
+  "cicloDeVidaIdealObservado": [
+    "Payment RECEIVED (webhook) → Appointment (se aplicável) → Service.status=pendente",
+    "Admin aceita Appointment → Service.status=aceito (+ ensureServices se faltava)",
+    "Admin inicia trabalho → Appointment+Service em_andamento",
+    "Admin conclui Service com URL áudio → Service.concluido → Appointment.concluido se todos terminais",
+    "Cancelamento/recusa → Service.cancelado|recusado"
+  ],
+  "1_quemCriaService": {
+    "funcoesCanonicas": [
+      {
+        "nome": "createServicesForAppointmentIfMissing",
+        "arquivo": "src/app/lib/asaas-agendamento-payment-effects.ts",
+        "comportamento": "Idempotente: cria N linhas (servicos+beats×quantidade) só se count(appointmentId)==0; status=pendente; se parcial (0<count<expected) NÃO cria extras",
+        "chamadoPor": [
+          "processAgendamentoPaymentEffects",
+          "processCarrinhoPaymentEffects",
+          "asaas-agendamento-reconcile (2 pontos)",
+          "ensureServicesForAppointment (quando há metadata de pagamento)"
+        ]
+      },
+      {
+        "nome": "ensureServicesForAppointment",
+        "arquivo": "src/app/lib/ensure-appointment-services.ts",
+        "comportamento": "Se já existem services, return 0. Senão tenta metadata do Payment vinculado; fallback cria 1 Service a partir de coupon/apt.tipo, status mapeado do Appointment",
+        "chamadoPor": ["src/app/api/admin/agendamentos/route.ts PATCH accept"]
+      }
+    ],
+    "caminhosDiretosPrismaCreate": [
+      {
+        "arquivo": "src/app/lib/asaas-agendamento-payment-effects.ts",
+        "via": "createServicesForAppointmentIfMissing → prisma.service.create"
+      },
+      {
+        "arquivo": "src/app/lib/ensure-appointment-services.ts",
+        "via": "fallback prisma.service.create (1 linha)"
+      },
+      {
+        "arquivo": "src/app/api/admin/servicos/route.ts GET",
+        "via": "backfill em appointments sem Service — side effect no GET"
+      },
+      {
+        "arquivo": "src/app/api/agendamentos/com-cupom/route.ts",
+        "via": "tx.service.create na mesma transaction do Appointment (status pendente)"
+      }
+    ],
+    "caminhosIndiretos": [
+      {
+        "origem": "Webhook PAYMENT_RECEIVED tipo=agendamento",
+        "arquivo": "src/app/api/webhooks/asaas/route.ts",
+        "cadeia": "processAgendamentoPaymentEffects → createServicesForAppointmentIfMissing"
+      },
+      {
+        "origem": "Webhook PAYMENT_RECEIVED tipo=carrinho",
+        "arquivo": "src/app/api/webhooks/asaas/route.ts",
+        "cadeia": "processCarrinhoPaymentEffects → createServicesForAppointmentIfMissing por Appointment"
+      },
+      {
+        "origem": "process-payment-webhook.ts",
+        "cadeia": "processAgendamentoPaymentEffects (paths manuais/local)"
+      },
+      {
+        "origem": "Admin reprocessar pagamento teste",
+        "arquivo": "src/app/api/admin/reprocessar-pagamento-teste/route.ts",
+        "cadeia": "processAgendamentoPaymentEffects"
+      },
+      {
+        "origem": "Reconcile",
+        "arquivo": "src/app/lib/asaas-agendamento-reconcile.ts",
+        "cadeia": "createServicesForAppointmentIfMissing"
+      }
+    ],
+    "naoCriamService": [
+      "Checkout Asaas (só Payment + Metadata)",
+      "Criação pura de Appointment sem efeitos",
+      "Webhook plano (gera cupons, não Service)",
+      "PAYMENT_REFUNDED"
+    ]
+  },
+  "2_quemAlteraService": {
+    "status": [
+      {
+        "arquivo": "src/app/api/admin/agendamentos/route.ts",
+        "acoes": {
+          "aceite": "updateMany → aceito + acceptedAt",
+          "recusa": "updateMany → recusado",
+          "em_andamento": "updateMany (aceito|pendente) → em_andamento",
+          "idempotente alreadyProcessed": "também updateMany em_andamento se aplicável"
+        }
+      },
+      {
+        "arquivo": "src/app/api/admin/servicos/route.ts PATCH",
+        "acoes": "aceito (acceptedAt), em_andamento, concluido (+ delivery), outros status via update genérico"
+      },
+      {
+        "arquivo": "src/app/api/agendamentos/cancelar/route.ts",
+        "acoes": "updateMany → cancelado (usuário)"
+      },
+      {
+        "arquivo": "src/app/api/admin/agendamentos/cancelar/route.ts",
+        "acoes": "updateMany → cancelado (admin)"
+      }
+    ],
+    "delivery": [
+      {
+        "arquivo": "src/app/api/admin/servicos/route.ts PATCH",
+        "campos": ["deliveryAudioUrl", "deliveryAudioFormat"],
+        "regra": "concluir exige URL http(s) + wav|mp3; Service sem appointmentId NÃO pode concluir"
+      }
+    ],
+    "owner_userId": {
+      "alteradoAposCreate": false,
+      "nota": "userId só setado na criação; sem update de owner no código"
+    },
+    "appointmentId": {
+      "alteradoAposCreate": false,
+      "onDeleteAppointment": "SetNull (schema)",
+      "nota": "Nenhum PATCH reatribui appointmentId"
+    },
+    "datas": {
+      "acceptedAt": "setado ao status aceito (admin agendamentos e admin servicos)",
+      "createdAt": "auto",
+      "updatedAt": "auto @updatedAt"
+    },
+    "delete": [
+      {
+        "arquivo": "src/app/api/admin/servicos/route.ts DELETE",
+        "acao": "prisma.service.delete"
+      }
+    ],
+    "sincronizacaoSemAlterarService": [
+      {
+        "arquivo": "src/app/lib/appointment-service-sync.ts",
+        "acao": "reconcileAppointmentWithServices — ajusta Appointment a partir dos Status dos Services"
+      }
+    ],
+    "naoSincronizaService": [
+      "src/app/api/admin/agendamentos/reverter-cancelamento/route.ts — volta Appointment para aceito SEM tocar Service"
+    ]
+  },
+  "3_quemConsomeService": {
+    "servicosGerais": {
+      "ui": "src/app/admin/servicos-aceitos/page.tsx",
+      "nav": "/admin/servicos-aceitos",
+      "api": "GET /api/admin/servicos",
+      "filtroCliente": "todos os services da API; filtro opcional por status/busca"
+    },
+    "servicosSelecionados": {
+      "ui": "src/app/admin/servicos-solicitados/page.tsx",
+      "nav": "/admin/servicos-solicitados",
+      "api": "GET /api/admin/servicos",
+      "filtroCliente": "appointmentId != null AND status in {pendente, aceito, em_andamento}"
+    },
+    "paginaAlternativa": {
+      "ui": "src/app/admin/servicos/page.tsx",
+      "nav": "NÃO ligada no admin/layout.tsx nem admin/page.tsx",
+      "classificacao": "UI paralela / possivelmente morta no fluxo de navegação"
+    },
+    "minhaConta": {
+      "api": "src/app/api/meus-dados/route.ts",
+      "consumo": "Services concluídos com deliveryAudioUrl agrupados em entregas[] do Appointment",
+      "ui": "src/app/minha-conta/page.tsx (links de download)"
+    },
+    "dashboardEstatisticas": {
+      "src/app/api/admin/stats/route.ts": "count total Services",
+      "src/app/api/admin/stats/detalhadas/route.ts": "counts por status Service (não conta em_andamento/recusado nas chaves principais)",
+      "src/app/api/admin/stats/graficos/route.ts": "série servicos usa Service; série tipos de agendamento usa Appointment.tipo"
+    },
+    "entrega": {
+      "escrita": "admin Serviços Selecionados → PATCH /api/admin/servicos",
+      "leituraUsuario": "meus-dados → Minha Conta"
+    },
+    "admin": ["servicos-aceitos", "servicos-solicitados", "agendamentos (link), PATCH agendamentos propaga status"],
+    "apis": ["/api/admin/servicos", "/api/meus-dados", cancelamentos, efeitos de pagamento"],
+    "scripts": [
+      "scripts/hs01-data-integrity-audit.js",
+      "scripts/ex02-financial-flow.js",
+      "scripts/migrar-para-postgresql-v2.js"
+    ]
+  },
+  "4_status": {
+    "valoresReais": [
+      {
+        "status": "pendente",
+        "quemCria": ["createServicesForAppointmentIfMissing", "com-cupom", "ensure fallback se apt.pendente", "GET admin/servicos backfill"],
+        "quemAlteraPara": ["admin aceite → aceito", "admin start → em_andamento", "admin PATCH", "cancel → cancelado", "recusa → recusado"],
+        "quemLe": ["UI Geral/Selecionados", "stats.pendentes", "ACTIVE_SERVICE_STATUSES"]
+      },
+      {
+        "status": "aceito",
+        "quemCriaOuDefine": ["admin agendamentos accept updateMany", "ensure/backfill se apt aceito|confirmado", "PATCH servicos"],
+        "quemLe": ["Selecionados ativos", "stats.aceitos / aFazer"]
+      },
+      {
+        "status": "em_andamento",
+        "quemDefine": ["admin agendamentos start", "PATCH servicos", "ensure se apt em_andamento"],
+        "quemLe": ["Selecionados ACTIVE", "UI Geral", "graficos NÃO inclui em_andamento nas statusKeys"]
+      },
+      {
+        "status": "concluido",
+        "quemDefine": ["PATCH admin/servicos com delivery", "ensure/backfill se apt concluido"],
+        "efeitoColateral": "se todos services do apt terminal → Appointment.concluido",
+        "quemLe": ["Minha Conta entregas", "stats.concluidos", "Selecionados EXCLUI (não está em ACTIVE)"]
+      },
+      {
+        "status": "recusado",
+        "quemDefine": ["admin agendamentos reject updateMany", "backfill map"],
+        "quemLe": ["Geral filtro", "graficos statusKeys inclui recusado"]
+      },
+      {
+        "status": "cancelado",
+        "quemDefine": ["cancelar usuário", "cancelar admin"],
+        "quemLe": ["Geral", "stats.cancelados"]
+      }
+    ],
+    "appointmentStatusConfirmado": {
+      "valor": "confirmado",
+      "existeEmService": false,
+      "mapeamento": "Appointment.confirmado → Service/mapa tratado como aceito"
+    }
+  },
+  "5_appointmentToService": {
+    "fluxosMultiplos": true,
+    "fluxos": [
+      {
+        "id": "F1_webhook_pagamento",
+        "descricao": "Payment → Appointment (criar/vincular) → createServicesForAppointmentIfMissing"
+      },
+      {
+        "id": "F2_carrinho",
+        "descricao": "Payment carrinho → N Appointments → createServices por cada"
+      },
+      {
+        "id": "F3_cupom",
+        "descricao": "com-cupom: Appointment + Services na mesma transaction (sem Payment necessário)"
+      },
+      {
+        "id": "F4_admin_accept_ensure",
+        "descricao": "Admin aceita → ensureServicesForAppointment (cria se faltava) → updateMany aceito"
+      },
+      {
+        "id": "F5_get_backfill",
+        "descricao": "GET /api/admin/servicos cria Service para appointments órfãos"
+      },
+      {
+        "id": "F6_reconcile",
+        "descricao": "asaas-agendamento-reconcile recria via createServicesIfMissing"
+      }
+    ],
+    "duplicacao": {
+      "risco": "MEDIO",
+      "mitigacaoParcial": "createServicesForAppointmentIfMissing é idempotente se count>=expected; se 0<count<expected NÃO completa (warn)",
+      "ensureEBackfill": "podem criar 1 linha genérica diferente do metadata multi-item"
+    },
+    "fallback": true,
+    "sincronizacaoParcial": true,
+    "detalheSyncParcial": "reconcileAppointmentWithServices só promove Appointment; cancelamento reverter não atualiza Service; aceito synca Services via updateMany mas se zero services, ensure cria primeiro"
+  },
+  "6_webhook": {
+    "criaServiceDiretamente": false,
+    "criaViaEffects": true,
+    "quando": "PAYMENT_RECEIVED / status RECEIVED confirmado, após Payment persistido",
+    "condicoesAgendamento": [
+      "tipo metadata/payment = agendamento (ou descrição de agendamento)",
+      "não é couponsOnly",
+      "há appointmentId final (existente, metadata, ou criado com data+hora single-scheduled)",
+      "servicos/beats no metadata com expected>0"
+    ],
+    "condicoesCarrinho": "tipo=carrinho → processCarrinhoPaymentEffects cria Appointments + createServices por item",
+    "plano": "não cria Service; gera cupons de plano",
+    "seFalha": "Appointment pode existir sem Service → A5; backfill GET ou ensure no aceite tentam recuperar"
+  },
+  "7_aceiteAdmin": {
+    "criaService": "SIM, indiretamente via ensureServicesForAppointment antes do updateMany",
+    "atualiza": "SIM — todos Services do appointmentId → aceito + acceptedAt",
+    "sincroniza": "SIM — reconcileAppointmentWithServices após efeitos",
+    "podeDuplicar": {
+      "updateMany": false,
+      "ensure": "não se count>0; se createServicesIfMissing e fallback genérico falharem/completos de forma diferente, risco residual baixo",
+      "GET_backfill_concorrente": "possível race se UI carregar servicos durante accept"
+    }
+  },
+  "8_servicosGerais": {
+    "consulta": "GET /api/admin/servicos → prisma.service.findMany orderBy createdAt desc + include user/appointment",
+    "sideEffectGET": "backfill cria Services faltantes ANTES do findMany",
+    "filtrosUI": "busca texto; filtroStatus (todos|pendente|aceito|em_andamento|recusado|cancelado|concluido)",
+    "cache": "nenhum SWR/React Query; fetch client no mount; sem cache:no-store explícito na página gerais",
+    "codigoMortoRelacionado": "/admin/servicos (page.tsx) fora da nav oficial"
+  },
+  "9_servicosSelecionados": {
+    "alimentacao": "mesma API GET /api/admin/servicos",
+    "decisao": "filtro client: appointmentId != null && ACTIVE = pendente|aceito|em_andamento",
+    "acoes": "Começar=em_andamento; Concluir modal=concluido+delivery; Aceitar=aceito",
+    "sincronizacao": "notifyAppDataChanged + poll 30s + visibility; após PATCH notifica",
+    "risco": "concluidos sumindo da lista é intencional (ACTIVE); Serviços Gerais mostra o histórico completo"
+  },
+  "10_dashboard": {
+    "fonteMisturada": true,
+    "Appointment": "contagens agendamentos, gráficos de tipos (Appointment.tipo), cards admin por status de agendamento",
+    "Service": "stats detalhadas.servicos.*, stats.route count, graficos secao=servicos",
+    "Payment": "stats pagamentos/receita — não conta Service",
+    "inconsistencias": [
+      "Appointment.tipo vs Service.tipo podem divergir (pacotes multi-service)",
+      "detalhadas não conta em_andamento nem recusado nas métricas nomeadas",
+      "graficos servicos statusKeys omitem em_andamento",
+      "aFazer = aceitos apenas (ignora em_andamento e pendente)"
+    ]
+  },
+  "11_delivery": {
+    "uploadArquivoNoServer": false,
+    "mecanismo": "admin cola URL pública (http/https) + formato wav|mp3",
+    "quemMarcaEntregue": "admin via Serviços Selecionados (ou PATCH direto) → status concluido",
+    "validacao": "validateDeliveryAudioUrl; probe opcional DELIVERY_AUDIO_URL_PROBE",
+    "quemRecebe": "usuário vê em Minha Conta via meus-dados.entregas",
+    "quemMudaStatusAppointment": "último service aberto concluído → Appointment.concluido; depois reconcile"
+  },
+  "12_fonteDaVerdade": {
+    "hoje": {
+      "agendamentoOperacionalFila": "Appointment.status (admin agendamentos)",
+      "trabalhoEntregaItem": "Service.status + deliveryAudio*",
+      "pagamento": "Payment.status",
+      "existenciaDeTrabalho": "Service rows (A5 exige ≥1 quando aceito)"
+    },
+    "conflito": "duas autoridades de status (Appointment e Service) com sync parcial",
+    "documentacaoExistente": "docs/ai/domain-invariants.md A5; domain-map.md Service↔Appointment"
+  },
+  "13_duplicacoes": [
+    "createServicesForAppointmentIfMissing vs admin/servicos GET backfill vs ensure fallback vs com-cupom create",
+    "mapAppointmentStatusToServiceStatus (admin/servicos) vs map inline em ensure-appointment-services",
+    "updateMany status aceito/em_andamento/recusado em admin/agendamentos E PATCH admin/servicos",
+    "três UIs: servicos-aceitos, servicos-solicitados, servicos/page",
+    "processAgendamentoPaymentEffects vs processCarrinhoPaymentEffects ambos chamam createServices"
+  ],
+  "14_codigoMortoOuParalelo": [
+    {
+      "item": "src/app/admin/servicos/page.tsx",
+      "motivo": "não referenciada no layout/nav admin nem admin home cards (href aponta para servicos-aceitos)"
+    },
+    {
+      "item": "Status inglês PENDING/DELIVERED/etc",
+      "motivo": "não existem no schema nem no código"
+    },
+    {
+      "item": "reverter-cancelamento sem sync Service",
+      "motivo": "não é morto, mas lacuna de sincronização"
+    }
+  ],
+  "15_arquiteturaIdeal": {
+    "fonteUnicaVerdadeProposta": "Service como unidade de trabalho/entrega; Appointment como container de slot/agenda e agregador de status derivado",
+    "regras": [
+      "Uma única factory createServicesForAppointment (sem GET side-effect backfill)",
+      "Appointment.status sempre derivado de Services via reconcile (única direção)",
+      "Aceite admin: ensure + propagate em um pipeline único",
+      "Estatísticas por Service.tipo para trabalho; Appointment só para capacidade/agenda",
+      "Delivery = Service.concluido + deliveryAudioUrl (sem status paralelo entregue)"
+    ]
+  },
+  "tabelaSintese": {
+    "origem": ["Webhook payment effects", "com-cupom", "ensure accept", "GET backfill", "reconcile"],
+    "destino": "model Service (+ opcional appointmentId)",
+    "consumidores": ["servicos-aceitos", "servicos-solicitados", "meus-dados/Minha Conta", "stats/graficos", "scripts auditoria"],
+    "responsaveis": {
+      "criacao": "payment effects + com-cupom + ensure + GET backfill",
+      "statusOperacional": "admin agendamentos + admin servicos",
+      "entrega": "admin servicos PATCH",
+      "sync": "appointment-service-sync"
+    },
+    "dependencias": ["Appointment", "Payment/PaymentMetadata", "Coupon (tipo/fallback)", "User", "service-catalog normalize"],
+    "riscos": [
+      "Appointment aceito sem Service (A5) se webhook falhou e ensure/backfill não rodou",
+      "Services incompletos não auto-completados (count parcial)",
+      "GET mutável (backfill) em listagem",
+      "Dupla autoridade Appointment/Service",
+      "revert cancelamento desalinha Service",
+      "Stats misturam Appointment.tipo e Service"
+    ],
+    "duplicacoes": "ver seção 13",
+    "codigoMorto": "admin/servicos/page.tsx fora da nav",
+    "fonteDaVerdade": "hoje dual; ideal Service para trabalho, Appointment derivado"
+  },
+  "diagramaTextual": [
+    "Payment(approved)",
+    "  ├─[agendamento]→ processAgendamentoPaymentEffects → Appointment? → createServices*(pendente)",
+    "  ├─[carrinho]→ processCarrinhoPaymentEffects → Appointments[] → createServices*",
+    "  └─[plano]→ cupons (NÃO Service)",
+    "com-cupom → Appointment + Service*(pendente) [mesma TX]",
+    "Admin ACEITA Appointment → ensureServices? → Service*=aceito → reconcile",
+    "Admin START → Appointment+Service*=em_andamento",
+    "Admin CONCLUI Service (URL) → Service=concluido → se todos terminais Appointment=concluido",
+    "Cancel/Recusa → Service*=cancelado|recusado",
+    "GET /admin/servicos → [side-effect backfill] → list",
+    "  ├─ Serviços Gerais: todos",
+    "  └─ Serviços Selecionados: ativos com appointmentId",
+    "Minha Conta ← meus-dados ← Service(concluido+URL)"
+  ],
+  "hs02bHints": [
+    "Unificar factories de criação",
+    "Remover side-effect do GET ou mover para job explícito",
+    "Decidir autoridade única de status",
+    "Alinhar stats a Service.tipo",
+    "Sincronizar reverter-cancelamento com Services",
+    "Remover ou redirecionar /admin/servicos page"
+  ]
+}

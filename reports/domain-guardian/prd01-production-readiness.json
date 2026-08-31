@@ -1,0 +1,587 @@
+{
+  "reportId": "PRD-01-production-readiness",
+  "mode": "READ_ONLY",
+  "generatedAt": "2026-07-10T06:00:00.000Z",
+  "language": "pt-BR",
+  "projectName": "THouse",
+  "branch": "pr03-clean",
+  "head": "3f20ad0",
+  "scope": "Auditoria final de Production Readiness — primeiro cliente real",
+  "basedOn": [
+    "QE-03-go-live-gate",
+    "GL-01-golive-fixes",
+    "E2E-01-customer-journey",
+    "E2E-02-hardening-plan",
+    "PRE_LANCAMENTO_CHECKLIST.md",
+    "Código-fonte HEAD + working tree"
+  ],
+  "workingTreeNote": {
+    "uncommitted": [
+      "src/app/carrinho/page.tsx (GL-01 B2 — fluxo de planos)",
+      "src/app/pagamentos/page.tsx (GL-01 B2 — preserva query params)"
+    ],
+    "impact": "Bloqueador de planos corrigido localmente mas não deployável até commit"
+  },
+  "verdict": {
+    "productionReady": false,
+    "emoji": "🟡",
+    "conditionalGo": {
+      "scope": "Agendamento avulso pago (carrinho → checkout-carrinho → webhook)",
+      "readyAfterChecklist": true,
+      "note": "Código núcleo PR-03 está maduro para 1º cliente avulso após gates operacionais H1; planos exigem commit GL-01 B2"
+    },
+    "fullProductReady": false,
+    "summary": "NÃO está pronto para deploy cego. Está pronto para 1º cliente real somente após checklist Go Live H1 (config Asaas, migration prod, smoke E2E) e com suporte humano de prontidão."
+  },
+  "audit": {
+    "1_infraestrutura": {
+      "emoji": "🟡",
+      "items": {
+        "DATABASE_URL": {
+          "emoji": "🟡",
+          "status": "Código exige PostgreSQL via Prisma; valor depende do host (Neon/Vercel). Sem .env.example no repo.",
+          "evidencia": "prisma/schema.prisma datasource url = env(DATABASE_URL)"
+        },
+        "prisma": {
+          "emoji": "🟢",
+          "status": "Prisma 5.19, client gerado no build e postinstall.",
+          "evidencia": "package.json: build = prisma generate && next build; postinstall = prisma generate"
+        },
+        "backup": {
+          "emoji": "🔴",
+          "status": "Nenhum backup automatizado no código ou CI. Mencionado apenas em planos de agentes (Neon manual).",
+          "evidencia": "stabilization-plan.json, release-manager-agent.ts — sem script pg_dump ou integração Neon PITR documentada no deploy"
+        },
+        "migrations": {
+          "emoji": "🟡",
+          "status": "30 migrations versionadas; deploy não executa migrate deploy automaticamente.",
+          "evidencia": "prisma/migrations/*; build não inclui prisma migrate deploy; última: 20260617120000_appointment_admin_archive"
+        }
+      }
+    },
+    "2_asaas": {
+      "emoji": "🟡",
+      "items": {
+        "api_key": {
+          "emoji": "🟡",
+          "status": "getAsaasApiKey() robusto (Vercel + dev .env); checkout falha com mensagem clara se ausente.",
+          "evidencia": "src/app/lib/env.ts, checkout-carrinho/route.ts"
+        },
+        "webhook": {
+          "emoji": "🟡",
+          "status": "Rota canônica /api/webhooks/asaas; sempre HTTP 200; efeitos modulares PR-03. Falhas internas silenciosas.",
+          "evidencia": "src/app/api/webhooks/asaas/route.ts"
+        },
+        "token": {
+          "emoji": "🟡",
+          "status": "ASAAS_WEBHOOK_ACCESS_TOKEN validado via header asaas-access-token; em prod sem token loga erro mas retorna 200.",
+          "evidencia": "webhooks/asaas/route.ts L35-51"
+        },
+        "sandbox": {
+          "emoji": "🟢",
+          "status": "IS_TEST = NODE_ENV !== 'production'; URL API derivada de ambiente e prefixo da chave ($aact_prod_).",
+          "evidencia": "checkout-carrinho/route.ts, payment-providers.ts"
+        }
+      }
+    },
+    "3_sessao": {
+      "emoji": "🟢",
+      "items": {
+        "cookies": {
+          "emoji": "🟢",
+          "status": "session_id httpOnly, sameSite lax, secure em produção, path /.",
+          "evidencia": "src/app/lib/auth.ts createUserSession"
+        },
+        "expiracao": {
+          "emoji": "🟢",
+          "status": "TTL 7 dias; getSessionUser invalida sessão expirada.",
+          "evidencia": "auth.ts SESSION_TTL_MS; getSessionUser expiresAt check"
+        },
+        "logout": {
+          "emoji": "🟢",
+          "status": "POST /api/logout deleta Session no banco e limpa cookie.",
+          "evidencia": "src/app/api/logout/route.ts"
+        },
+        "registro_auto_login": {
+          "emoji": "🟢",
+          "status": "GL-01 B1 commitado em 3f20ad0 — createUserSession no registro.",
+          "evidencia": "src/app/api/registro/route.ts, commit 3f20ad0"
+        }
+      }
+    },
+    "4_seguranca": {
+      "emoji": "🟡",
+      "items": {
+        "permissoes": {
+          "emoji": "🟢",
+          "status": "requireAuth/requireAdmin em rotas sensíveis; admin/* protegido.",
+          "evidencia": "src/app/lib/auth.ts, api/admin/*"
+        },
+        "cross_user": {
+          "emoji": "🟢",
+          "status": "APIs de usuário filtram por user.id; checks explícitos em appointments, chat, planos.",
+          "evidencia": "meus-dados/route.ts, appointments/mark-read, escolher-reembolso"
+        },
+        "admin": {
+          "emoji": "🟡",
+          "status": "requireAdmin + bypass hardcoded thouse.rec.tremv@gmail.com; rotas debug exigem admin.",
+          "evidencia": "auth.ts L55, PRE_LANCAMENTO_CHECKLIST.md §4-5"
+        },
+        "headers": {
+          "emoji": "🟢",
+          "status": "X-Frame-Options SAMEORIGIN + CSP em next.config.ts.",
+          "evidencia": "next.config.ts — CSP permite unsafe-inline/unsafe-eval (YouTube)"
+        },
+        "dados_sensiveis": {
+          "emoji": "🟡",
+          "status": "Webhook loga primeiros 500 chars do body; registro loga body completo em console.error; sem redação de PII.",
+          "evidencia": "webhooks/asaas/route.ts, registro/route.ts"
+        }
+      }
+    },
+    "5_operacao": {
+      "emoji": "🔴",
+      "items": {
+        "logs": {
+          "emoji": "🟡",
+          "status": "Console.log extensivo; sem formato estruturado nem correlação de requestId.",
+          "evidencia": "webhook, checkout, registro, meus-dados"
+        },
+        "monitoramento": {
+          "emoji": "🔴",
+          "status": "Sem Sentry, Datadog, Vercel Log Drains ou health check dedicado.",
+          "evidencia": "Ausência em package.json e código"
+        },
+        "alertas": {
+          "emoji": "🔴",
+          "status": "Falha de efeitos de webhook não dispara alerta; admin depende de verificação manual.",
+          "evidencia": "E2E-02 H-WH-02; webhook sempre 200"
+        },
+        "rollback": {
+          "emoji": "🟡",
+          "status": "Rollback via redeploy commit anterior (Vercel) possível; sem runbook documentado no repo.",
+          "evidencia": "README genérico; release-report menciona backup Neon mas não procedimento"
+        }
+      }
+    },
+    "6_ux": {
+      "emoji": "🟡",
+      "items": {
+        "loading": {
+          "emoji": "🟢",
+          "status": "AuthContext loading, páginas admin/chat, pagamentos/sucesso com spinner.",
+          "evidencia": "AuthContext.tsx, pagamentos/sucesso/page.tsx"
+        },
+        "erros": {
+          "emoji": "🟡",
+          "status": "Mix de alert(), mensagens inline e erros genéricos no checkout Asaas.",
+          "evidencia": "conta/page.tsx alert; carrinho checkout errors"
+        },
+        "feedback": {
+          "emoji": "🟡",
+          "status": "Pós-pagamento: polling parcial (status Asaas, não confirma Appointment criado). Pós-registro vai para /conta, não /minha-conta.",
+          "evidencia": "pagamentos/sucesso/page.tsx, registro/page.tsx L103, E2E-02 H-MC-01/02"
+        },
+        "empty_states": {
+          "emoji": "🟢",
+          "status": "Chat, admin usuários, minha-conta tratam listas vazias.",
+          "evidencia": "chat/page.tsx, admin/usuarios/page.tsx, minha-conta/page.tsx"
+        }
+      }
+    },
+    "7_deploy": {
+      "emoji": "🟡",
+      "items": {
+        "build": {
+          "emoji": "🟢",
+          "status": "npm run build passou após GL-01 (tsc + next build, 138 páginas estáticas em RL-03).",
+          "evidencia": "gl01-golive-fixes.json, rl03-release-closed.json"
+        },
+        "env": {
+          "emoji": "🟡",
+          "status": "PRE_LANCAMENTO_CHECKLIST.md cobre CRON_SECRET e webhook; RELATORIO_E_ROADMAP lista DATABASE_URL, ASAAS_*, SUPPORT_EMAIL, NEXT_PUBLIC_SITE_URL. Sem .env.example versionado.",
+          "evidencia": "PRE_LANCAMENTO_CHECKLIST.md, RELATORIO_E_ROADMAP_BETA.md §1.5"
+        },
+        "variaveis_obrigatorias": {
+          "emoji": "🟡",
+          "producao": [
+            "DATABASE_URL",
+            "ASAAS_API_KEY ($aact_prod_*)",
+            "ASAAS_WEBHOOK_ACCESS_TOKEN",
+            "NEXT_PUBLIC_SITE_URL",
+            "CRON_SECRET"
+          ],
+          "recomendadas": [
+            "SUPPORT_EMAIL",
+            "SUPPORT_EMAIL_PASSWORD",
+            "SUPPORT_DEST_EMAIL"
+          ],
+          "opcionais": [
+            "PAYMENT_PROCESS_SECRET"
+          ]
+        },
+        "checklist": {
+          "emoji": "🟡",
+          "status": "PRE_LANCAMENTO_CHECKLIST.md parcial; Domain Guardian CI existe mas não substitui smoke de pagamento real.",
+          "evidencia": ".github/workflows/domain-guardian.yml"
+        }
+      }
+    }
+  },
+  "blockers": {
+    "codigo": [
+      {
+        "id": "C1",
+        "titulo": "GL-01 B2 planos não commitado",
+        "severidade": "P0 se planos no escopo",
+        "emoji": "🟡",
+        "detalhe": "carrinho/page.tsx e pagamentos/page.tsx modificados localmente; sem commit não entra no deploy"
+      },
+      {
+        "id": "C2",
+        "titulo": "Polling pós-pagamento não confirma Appointment",
+        "severidade": "P1",
+        "emoji": "🟡",
+        "detalhe": "pagamentos/sucesso verifica status Asaas mas não poll meus-dados até agendamento aparecer (E2E-02 H-MC-02)"
+      },
+      {
+        "id": "C3",
+        "titulo": "Redirect pós-registro para /conta em vez de /minha-conta",
+        "severidade": "P2",
+        "emoji": "🟡",
+        "detalhe": "registro/page.tsx router.push('/conta') — fricção de descoberta do painel operacional"
+      },
+      {
+        "id": "C4",
+        "titulo": "Legado financeiro ~40% coexistindo",
+        "severidade": "P2",
+        "emoji": "🟡",
+        "detalhe": "metadata fallback no webhook; process-payment-webhook paralelo — risco em edge cases, não no happy path avulso"
+      },
+      {
+        "id": "C5",
+        "titulo": "Admin bypass por email hardcoded",
+        "severidade": "P2",
+        "emoji": "🟡",
+        "detalhe": "requireAdmin aceita thouse.rec.tremv@gmail.com independente de role"
+      }
+    ],
+    "configuracao": [
+      {
+        "id": "CFG1",
+        "titulo": "ASAAS_API_KEY produção não verificável no repo",
+        "severidade": "P0",
+        "emoji": "🔴",
+        "detalhe": "Deve ser chave $aact_prod_* no Vercel; mismatch com NODE_ENV causa falha de checkout"
+      },
+      {
+        "id": "CFG2",
+        "titulo": "Webhook Asaas não registrado em produção",
+        "severidade": "P0",
+        "emoji": "🔴",
+        "detalhe": "URL https://{dominio}/api/webhooks/asaas + token = ASAAS_WEBHOOK_ACCESS_TOKEN"
+      },
+      {
+        "id": "CFG3",
+        "titulo": "NEXT_PUBLIC_SITE_URL incorreto",
+        "severidade": "P0",
+        "emoji": "🔴",
+        "detalhe": "backUrls do checkout e emails dependem desta variável"
+      },
+      {
+        "id": "CFG4",
+        "titulo": "DATABASE_URL produção + migrate deploy",
+        "severidade": "P0",
+        "emoji": "🔴",
+        "detalhe": "npx prisma migrate deploy deve rodar antes ou no deploy; 30 migrations pendentes se banco novo"
+      },
+      {
+        "id": "CFG5",
+        "titulo": "CRON_SECRET + agendador de crons",
+        "severidade": "P1",
+        "emoji": "🟡",
+        "detalhe": "Sem vercel.json crons; renovar-planos e limpar-chats exigem chamada externa com Bearer token"
+      },
+      {
+        "id": "CFG6",
+        "titulo": "SUPPORT_EMAIL para recuperação de senha e notificações",
+        "severidade": "P1",
+        "emoji": "🟡",
+        "detalhe": "sendEmail.ts falha silenciosamente se credenciais ausentes"
+      },
+      {
+        "id": "CFG7",
+        "titulo": "Domínio aprovado no painel Asaas",
+        "severidade": "P0",
+        "emoji": "🔴",
+        "detalhe": "Checkout rejeita se domínio de callback não cadastrado"
+      }
+    ],
+    "operacionais": [
+      {
+        "id": "OP1",
+        "titulo": "Backup do banco antes do 1º cliente",
+        "severidade": "P0",
+        "emoji": "🔴",
+        "detalhe": "Neon PITR ou snapshot manual — não automatizado"
+      },
+      {
+        "id": "OP2",
+        "titulo": "Smoke E2E pós-deploy",
+        "severidade": "P0",
+        "emoji": "🔴",
+        "detalhe": "Registro → agendamento → pagamento sandbox/prod mínimo → confirmar Payment + Appointment no banco"
+      },
+      {
+        "id": "OP3",
+        "titulo": "Monitoramento e alertas",
+        "severidade": "P1",
+        "emoji": "🔴",
+        "detalhe": "Sem ferramenta; falhas de webhook invisíveis até ticket do cliente"
+      },
+      {
+        "id": "OP4",
+        "titulo": "Runbook de rollback e pagamento órfão",
+        "severidade": "P1",
+        "emoji": "🟡",
+        "detalhe": "Admin tem rotas debug/reprocessar; procedimento não documentado para operador"
+      },
+      {
+        "id": "OP5",
+        "titulo": "SLA admin para aceitar agendamento",
+        "severidade": "P2",
+        "emoji": "🟡",
+        "detalhe": "Cliente paga mas agendamento pode ficar pendente até ação admin"
+      }
+    ],
+    "ux": [
+      {
+        "id": "UX1",
+        "titulo": "Pós-registro não leva a Minha Conta",
+        "severidade": "P2",
+        "emoji": "🟡",
+        "detalhe": "E2E-01 etapa 4 — usuário não descobre agendamentos sem explorar menu"
+      },
+      {
+        "id": "UX2",
+        "titulo": "'Paguei e não apareceu' sem mensagem proativa",
+        "severidade": "P1",
+        "emoji": "🟡",
+        "detalhe": "Sucesso mostra link manual para Minha Conta; sem polling até Appointment existir"
+      },
+      {
+        "id": "UX3",
+        "titulo": "Formulário longo no checkout (CPF/endereço)",
+        "severidade": "P2",
+        "emoji": "🟡",
+        "detalhe": "Abandono no meio do funil; erros Asaas como alert genérico"
+      },
+      {
+        "id": "UX4",
+        "titulo": "Uso de alert() em fluxos de conta/admin",
+        "severidade": "P3",
+        "emoji": "🟡",
+        "detalhe": "Feedback inconsistente com design system"
+      }
+    ]
+  },
+  "goLiveChecklist": [
+    {
+      "id": "GL-01",
+      "categoria": "Código",
+      "item": "Confirmar HEAD deployável inclui 3f20ad0 (auto-login registro)",
+      "obrigatorio": true,
+      "status": "pronto"
+    },
+    {
+      "id": "GL-02",
+      "categoria": "Código",
+      "item": "Se planos no escopo: commitar e deployar GL-01 B2 (carrinho + pagamentos)",
+      "obrigatorio": false,
+      "condicao": "Venda de planos ativa",
+      "status": "pendente"
+    },
+    {
+      "id": "GL-03",
+      "categoria": "Infra",
+      "item": "DATABASE_URL produção configurada (PostgreSQL/Neon)",
+      "obrigatorio": true,
+      "status": "verificar_manual"
+    },
+    {
+      "id": "GL-04",
+      "categoria": "Infra",
+      "item": "npx prisma migrate deploy no banco de produção",
+      "obrigatorio": true,
+      "status": "verificar_manual"
+    },
+    {
+      "id": "GL-05",
+      "categoria": "Infra",
+      "item": "Backup/snapshot Neon antes do primeiro tráfego real",
+      "obrigatorio": true,
+      "status": "pendente"
+    },
+    {
+      "id": "GL-06",
+      "categoria": "Asaas",
+      "item": "ASAAS_API_KEY produção ($aact_prod_*) no Vercel",
+      "obrigatorio": true,
+      "status": "verificar_manual"
+    },
+    {
+      "id": "GL-07",
+      "categoria": "Asaas",
+      "item": "ASAAS_WEBHOOK_ACCESS_TOKEN no Vercel = token no painel Asaas",
+      "obrigatorio": true,
+      "status": "verificar_manual"
+    },
+    {
+      "id": "GL-08",
+      "categoria": "Asaas",
+      "item": "Webhook registrado: https://{dominio}/api/webhooks/asaas",
+      "obrigatorio": true,
+      "status": "verificar_manual"
+    },
+    {
+      "id": "GL-09",
+      "categoria": "Asaas",
+      "item": "Domínio de produção aprovado no painel Asaas",
+      "obrigatorio": true,
+      "status": "verificar_manual"
+    },
+    {
+      "id": "GL-10",
+      "categoria": "Deploy",
+      "item": "NEXT_PUBLIC_SITE_URL = URL pública final (https)",
+      "obrigatorio": true,
+      "status": "verificar_manual"
+    },
+    {
+      "id": "GL-11",
+      "categoria": "Deploy",
+      "item": "npm run build passa no CI ou local antes do push",
+      "obrigatorio": true,
+      "status": "pronto"
+    },
+    {
+      "id": "GL-12",
+      "categoria": "Operação",
+      "item": "CRON_SECRET configurado + jobs limpar-chats e renovar-planos agendados",
+      "obrigatorio": true,
+      "status": "pendente"
+    },
+    {
+      "id": "GL-13",
+      "categoria": "Operação",
+      "item": "SUPPORT_EMAIL + SUPPORT_EMAIL_PASSWORD para emails transacionais",
+      "obrigatorio": true,
+      "status": "verificar_manual"
+    },
+    {
+      "id": "GL-14",
+      "categoria": "Operação",
+      "item": "Smoke E2E: registro → agendamento avulso → pagamento → Appointment em Minha Conta",
+      "obrigatorio": true,
+      "status": "pendente"
+    },
+    {
+      "id": "GL-15",
+      "categoria": "Operação",
+      "item": "Verificar logs Vercel após smoke: webhook PAYMENT_RECEIVED sem erro",
+      "obrigatorio": true,
+      "status": "pendente"
+    },
+    {
+      "id": "GL-16",
+      "categoria": "Operação",
+      "item": "Runbook: como reprocessar pagamento órfão (admin/debug ou manual)",
+      "obrigatorio": true,
+      "status": "pendente"
+    },
+    {
+      "id": "GL-17",
+      "categoria": "UX",
+      "item": "Comunicar ao 1º cliente que é lançamento controlado + canal de suporte",
+      "obrigatorio": true,
+      "status": "pendente"
+    },
+    {
+      "id": "GL-18",
+      "categoria": "Código",
+      "item": "(Recomendado H1) Polling pós-pagamento até Appointment existir",
+      "obrigatorio": false,
+      "status": "pendente"
+    },
+    {
+      "id": "GL-19",
+      "categoria": "UX",
+      "item": "(Recomendado H1) Redirect pós-registro para /minha-conta",
+      "obrigatorio": false,
+      "status": "pendente"
+    },
+    {
+      "id": "GL-20",
+      "categoria": "Operação",
+      "item": "(Recomendado H2) Alerta em falha de efeitos de webhook",
+      "obrigatorio": false,
+      "status": "pendente"
+    }
+  ],
+  "probability": {
+    "baseline": {
+      "coreAgendamentoAvulso": 52,
+      "fonte": "E2E-01 — produção com Asaas configurado, sem hardening H1"
+    },
+    "afterMandatoryChecklist": {
+      "coreAgendamentoAvulso": {
+        "min": 72,
+        "max": 78,
+        "percent": 75,
+        "cenario": "GL-01 a GL-17 concluídos; escopo = agendamento avulso; suporte humano disponível"
+      },
+      "fullProductComPlanos": {
+        "min": 58,
+        "max": 68,
+        "percent": 63,
+        "cenario": "Inclui GL-02 commitado; ainda sem H2 completo"
+      }
+    },
+    "afterFullChecklistIncludingRecommended": {
+      "coreAgendamentoAvulso": {
+        "min": 78,
+        "max": 85,
+        "percent": 82,
+        "cenario": "GL-01 a GL-20 + H1 UX (polling, redirect minha-conta)"
+      },
+      "fullProductComPlanos": {
+        "min": 72,
+        "max": 80,
+        "percent": 76,
+        "cenario": "GL-02 + H2 parcial"
+      }
+    },
+    "residualRisks": [
+      "Pagamento órfão se webhook falhar após smoke (sem alerta automático)",
+      "Conflito de horário entre checkout e confirmação",
+      "Cliente sem CPF no perfil bloqueado no checkout Asaas",
+      "Dependência de ação admin pós-pagamento",
+      "Legado financeiro em cenários de metadata ambígua"
+    ],
+    "definitionOfSuccess": "1ª semana sem ticket crítico de 'paguei e não apareceu' e sem perda financeira não recuperável"
+  },
+  "scoresSummary": {
+    "green": 12,
+    "yellow": 22,
+    "red": 6,
+    "areas": {
+      "infraestrutura": "🟡",
+      "asaas": "🟡",
+      "sessao": "🟢",
+      "seguranca": "🟡",
+      "operacao": "🔴",
+      "ux": "🟡",
+      "deploy": "🟡"
+    }
+  }
+}

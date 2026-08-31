@@ -1,0 +1,277 @@
+{
+  "reportId": "OP-01-sandbox-preparation",
+  "mode": "READ_ONLY",
+  "generatedAt": "2026-07-10T08:35:00.000Z",
+  "language": "pt-BR",
+  "projectName": "THouse Rec",
+  "branch": "pr03-clean",
+  "head": "3f20ad0",
+  "basedOn": [
+    "EX-01-sandbox-execution",
+    "EX-01a-sandbox-config",
+    "LE-01-launch-execution",
+    "HL-01-final-homologation",
+    "OPS-01-runbook"
+  ],
+  "objective": "Garantir ambiente Sandbox 100% pronto antes da continuação do EX-01",
+  "readinessSummary": {
+    "overallPercent": 42,
+    "status": "NAO_PRONTO",
+    "blockers": [
+      "ASAAS_API_KEY é token de produção ($aact_prod_*)",
+      "ASAAS_WEBHOOK_ACCESS_TOKEN ausente",
+      "1 migration Prisma pendente",
+      "NEXT_PUBLIC_SITE_URL aponta para túnel loca.lt (não localhost F1)"
+    ],
+    "readyItems": [
+      "DATABASE_URL conecta (SELECT 1 OK)",
+      "npm run build passou no EX-01 (exit 0)",
+      "Scripts ex01-* disponíveis",
+      "ASAAS_SKIP_TLS_VERIFY=true em dev"
+    ]
+  },
+  "sections": {
+    "contaSandboxAsaas": {
+      "existe": "NAO_VERIFICAVEL_REMOTAMENTE",
+      "ativa": "NAO_VERIFICAVEL_REMOTAMENTE",
+      "evidenciaLocal": "Ambiente local usa ASAAS_API_KEY de PRODUÇÃO — indica que conta sandbox ainda não está vinculada a este workspace",
+      "acaoOperador": "Acessar https://sandbox.asaas.com com credenciais da conta teste; confirmar login e saldo/ambiente de testes visível",
+      "criterioPronto": "Conta sandbox acessível no painel; API Key gerada no ambiente sandbox (não produção)"
+    },
+    "apiKeySandbox": {
+      "configurada": false,
+      "ambienteAtual": "PRODUCAO",
+      "arquivo": ".env.local",
+      "prefixoAtual": "$aact_prod_...",
+      "comprimento": 166,
+      "formatoEsperado": {
+        "prefixo": "$aact_",
+        "proibido": "$aact_prod_",
+        "comprimentoTipico": "140–180 caracteres",
+        "origem": "Painel sandbox.asaas.com → Integrações → API"
+      },
+      "validacaoSemExporChave": [
+        "node scripts/ex01-check-env.js → linha ASAAS_API_KEY: OK ... type=sandbox",
+        "node scripts/ex01-asaas-verify.js → environment: SANDBOX, sandboxOk: true, exit 0",
+        "No código: payment-providers.ts roteia tokens não-prod para https://sandbox.asaas.com/api/v3",
+        "Nunca colar a chave em chat, commit ou relatório — apenas prefixo e comprimento"
+      ],
+      "resultadoAtual": {
+        "ex01-check-env": "ASAAS_API_KEY: OK set len=166 type=PROD",
+        "ex01-asaas-verify": "environment: PRODUCTION, sandboxOk: false, exit 2"
+      }
+    },
+    "webhookSandbox": {
+      "url": {
+        "configuradaNoPainel": "NAO_VERIFICAVEL",
+        "padrao": "{NEXT_PUBLIC_SITE_URL}/api/webhooks/asaas",
+        "f1ComLocalhost": "http://localhost:3000/api/webhooks/asaas — Asaas NÃO alcança; usar plano B (replay curl) para webhook",
+        "f1ComTunel": "https://{tunel}/api/webhooks/asaas — necessário apenas se webhook automático for exigido",
+        "ex01Escopo": "Smoke até antes do pagamento — webhook automático NÃO obrigatório para aprovar EX-01 etapas 6–7"
+      },
+      "token": {
+        "variavel": "ASAAS_WEBHOOK_ACCESS_TOKEN",
+        "configurada": false,
+        "headerEsperado": "asaas-access-token",
+        "origem": "Painel Asaas Sandbox → Integrações → Webhooks → token de autenticação",
+        "comportamentoCodigo": "Se token definido e header divergir, webhook retorna 200 mas ignora evento (src/app/api/webhooks/asaas/route.ts)"
+      },
+      "eventos": {
+        "suportadosPeloCodigo": [
+          "PAYMENT_CREATED",
+          "PAYMENT_RECEIVED",
+          "PAYMENT_REFUNDED",
+          "PAYMENT_OVERDUE",
+          "PAYMENT_DELETED"
+        ],
+        "criticoMVP": "PAYMENT_RECEIVED (status RECEIVED ou CONFIRMED)",
+        "recomendadosNoPainel": ["PAYMENT_RECEIVED", "PAYMENT_REFUNDED", "PAYMENT_CREATED"]
+      },
+      "status": "NAO_CONFIGURADO_LOCALMENTE",
+      "planoB": "Replay curl documentado em OPS-01-runbook com header asaas-access-token"
+    },
+    "nextPublicSiteUrl": {
+      "valorAtual": "https://crazy-pans-own.loca.lt",
+      "arquivo": ".env",
+      "tipo": "TUNEL",
+      "recomendadoF1": "http://localhost:3000",
+      "justificativa": "EX-01 smoke até checkout (sem pagamento) não exige webhook externo; localhost evita dependência de túnel instável e alinha com LE-F1-001",
+      "quandoUsarTunel": "Somente se for testar webhook automático do Asaas sandbox alcançando a máquina local; nesse caso NEXT_PUBLIC_SITE_URL deve ser a URL pública do túnel",
+      "fallbackCodigo": "Rotas usam process.env.NEXT_PUBLIC_SITE_URL || http://localhost:3000"
+    },
+    "bancoLocal": {
+      "conectado": true,
+      "provider": "PostgreSQL localhost:5432/thouse_rec",
+      "evidencia": "DATABASE_CONNECT: OK [{\"ok\":1}], USER_COUNT: 2",
+      "migracoes": {
+        "total": 29,
+        "aplicadas": 28,
+        "pendentes": ["20260617120000_appointment_admin_archive"],
+        "statusComando": "npx prisma migrate status → 1 migration not yet applied",
+        "acaoRecomendada": "npx prisma migrate deploy (ou prisma migrate dev em dev) antes do smoke test",
+        "riscoSeIgnorado": "Schema desalinhado pode causar erros em rotas que usam adminArchivedAt"
+      }
+    },
+    "servidorNextJs": {
+      "comandoDev": "npm run dev",
+      "host": "0.0.0.0 (package.json)",
+      "portaPadrao": 3000,
+      "reinicioAposEnv": {
+        "motivo": "Next.js carrega .env/.env.local na inicialização; ASAAS_API_KEY em dev também é lida via env.ts do arquivo",
+        "passos": [
+          "1. No terminal onde npm run dev está rodando: Ctrl+C",
+          "2. Confirmar que nenhum processo node/next ocupa a porta 3000",
+          "3. Editar .env.local com novas variáveis sandbox",
+          "4. Salvar arquivo",
+          "5. Executar npm run dev novamente",
+          "6. Aguardar 'Ready' no log antes de testar"
+        ],
+        "windowsVerificarPorta": "netstat -ano | findstr :3000",
+        "naoRequerRebuild": "Para mudança só de env em dev; npm run build só se código mudou"
+      }
+    },
+    "scriptsSequencia": {
+      "ordem": [
+        {
+          "step": 1,
+          "comando": "node scripts/ex01-check-env.js",
+          "proposito": "Validar presença e classificação das variáveis core",
+          "esperado": "DATABASE_URL OK; ASAAS_API_KEY type=sandbox; WEBHOOK set; SITE_URL OK"
+        },
+        {
+          "step": 2,
+          "comando": "node scripts/ex01-asaas-verify.js",
+          "proposito": "Confirmar ambiente Asaas sandbox sem expor chave completa",
+          "esperado": "sandboxOk: true, exit code 0"
+        },
+        {
+          "step": 3,
+          "comando": "node scripts/ex01-db-ping.js",
+          "proposito": "Confirmar conexão Prisma ao banco local",
+          "esperado": "DATABASE_CONNECT: OK"
+        },
+        {
+          "step": 4,
+          "comando": "npm run dev",
+          "proposito": "Subir aplicação local",
+          "esperado": "http://localhost:3000 acessível"
+        },
+        {
+          "step": 5,
+          "comando": "Smoke Test manual (browser)",
+          "proposito": "Registro → Login → Minha Conta → Agendamento → Carrinho → Checkout (até antes pagamento)",
+          "esperado": "POST /api/registro 200; /api/me autenticado; checkout-carrinho retorna initPoint sandbox.asaas.com"
+        }
+      ],
+      "preRequisitoExtra": "npx prisma migrate deploy (antes dos scripts, se migration pendente)",
+      "comandoUnicoValidacao": "node scripts/ex01-check-env.js && node scripts/ex01-asaas-verify.js && node scripts/ex01-db-ping.js"
+    }
+  },
+  "checklistOperacional": [
+    {
+      "id": "OP-01",
+      "fazer": "Acessar conta Sandbox em sandbox.asaas.com",
+      "validar": "Login bem-sucedido; ambiente exibe dados de teste (não produção)",
+      "resultadoEsperado": "Conta sandbox ativa e acessível"
+    },
+    {
+      "id": "OP-02",
+      "fazer": "Gerar/copiar API Key no painel Sandbox (Integrações → API)",
+      "validar": "node scripts/ex01-check-env.js",
+      "resultadoEsperado": "ASAAS_API_KEY: OK ... type=sandbox (prefixo $aact_ sem prod)"
+    },
+    {
+      "id": "OP-03",
+      "fazer": "Remover chave de produção de .env.local e colar API Key sandbox",
+      "validar": "node scripts/ex01-asaas-verify.js",
+      "resultadoEsperado": "environment: SANDBOX, sandboxOk: true, exit 0"
+    },
+    {
+      "id": "OP-04",
+      "fazer": "Obter Webhook Token no painel Sandbox e adicionar ASAAS_WEBHOOK_ACCESS_TOKEN em .env.local",
+      "validar": "node scripts/ex01-check-env.js",
+      "resultadoEsperado": "ASAAS_WEBHOOK_ACCESS_TOKEN: OK set len>0"
+    },
+    {
+      "id": "OP-05",
+      "fazer": "Definir NEXT_PUBLIC_SITE_URL=http://localhost:3000 em .env ou .env.local",
+      "validar": "node scripts/ex01-check-env.js",
+      "resultadoEsperado": "NEXT_PUBLIC_SITE_URL: OK (localhost:3000)"
+    },
+    {
+      "id": "OP-06",
+      "fazer": "Aplicar migration pendente: npx prisma migrate deploy",
+      "validar": "npx prisma migrate status",
+      "resultadoEsperado": "Database schema is up to date; 0 pending migrations"
+    },
+    {
+      "id": "OP-07",
+      "fazer": "Parar servidor Next.js (Ctrl+C) se estiver rodando",
+      "validar": "netstat -ano | findstr :3000 (porta livre ou novo PID após restart)",
+      "resultadoEsperado": "Nenhum processo stale usando env antigo"
+    },
+    {
+      "id": "OP-08",
+      "fazer": "Iniciar npm run dev",
+      "validar": "Abrir http://localhost:3000 no browser",
+      "resultadoEsperado": "Home carrega sem erro 5xx; log sem erro Prisma"
+    },
+    {
+      "id": "OP-09",
+      "fazer": "Smoke: Registro de conta teste nova",
+      "validar": "DevTools → POST /api/registro 200; GET /api/me retorna user",
+      "resultadoEsperado": "Auto-login GL-01; header logado"
+    },
+    {
+      "id": "OP-10",
+      "fazer": "Smoke: Minha Conta",
+      "validar": "GET /api/meus-dados 200",
+      "resultadoEsperado": "/minha-conta carrega sem redirect /login"
+    },
+    {
+      "id": "OP-11",
+      "fazer": "Smoke: Agendamento → adicionar ao carrinho",
+      "validar": "sessionStorage carrinho populado; /carrinho exibe item",
+      "resultadoEsperado": "Item visível no carrinho"
+    },
+    {
+      "id": "OP-12",
+      "fazer": "Smoke: Checkout até antes do pagamento (POST checkout-carrinho)",
+      "validar": "Network → POST /api/asaas/checkout-carrinho 200; initPoint contém sandbox.asaas.com",
+      "resultadoEsperado": "Redirect URL Asaas sandbox gerada; NÃO concluir pagamento real"
+    },
+    {
+      "id": "OP-13",
+      "fazer": "(Opcional F1+) Configurar webhook no painel ou documentar replay curl",
+      "validar": "Evento teste ou curl com asaas-access-token",
+      "resultadoEsperado": "Log [Asaas Webhook] Evento recebido — fora do escopo mínimo EX-01"
+    }
+  ],
+  "probabilidadeEx01": {
+    "pergunta": "Depois dessa configuração, qual a probabilidade do EX-01 ser aprovado na próxima execução?",
+    "percentual": 74,
+    "intervaloConfianca": "68%–78%",
+    "estadoAtualSemConfig": 8,
+    "metodologia": "Peso por etapas EX-01: gates técnicos (env, DB, build) ~95% após checklist; integração Asaas sandbox ~88%; smoke manual H01–H08 ~78%; migration pendente mitigada se OP-06 executado. Produto condicional ≈ 74%. Alinhado a LS-01 (~74%) para plano operacional completo.",
+    "fatoresPositivos": [
+      "Build e Prisma generate já passaram no EX-01",
+      "DATABASE_URL conecta",
+      "GL-01 B1 auto-login commitado (3f20ad0)",
+      "ASAAS_SKIP_TLS_VERIFY mitiga TLS local",
+      "Escopo EX-01 para antes do pagamento (webhook não bloqueante)"
+    ],
+    "fatoresRisco": [
+      "Smoke test manual (erro operador, dados teste, horário agendamento)",
+      "Migration pendente se OP-06 ignorado",
+      "Conta sandbox Asaas não validada remotamente neste relatório",
+      "Túnel loca.lt instável se operador não migrar para localhost",
+      "Alterações não commitadas em carrinho/pagamentos (GL-01 B2) podem divergir do smoke esperado"
+    ],
+    "condicao": "Percentual assume checklist OP-01 a OP-12 100% concluído com sucesso"
+  },
+  "comandoRetomadaEx01": {
+    "aposChecklist": "node scripts/ex01-check-env.js && node scripts/ex01-asaas-verify.js && node scripts/ex01-db-ping.js",
+    "windows": "node scripts/ex01-check-env.js; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; node scripts/ex01-asaas-verify.js; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; node scripts/ex01-db-ping.js",
+    "continuacao": "npm run dev → Smoke Test → atualizar ex01-sandbox-execution.json"
+  }
+}

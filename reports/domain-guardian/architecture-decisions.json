@@ -1,0 +1,3303 @@
+{
+  "agentVersion": "1.0.0",
+  "generatedAt": "2026-07-05T21:07:26.866Z",
+  "language": "pt-BR",
+  "summary": {
+    "totalDecisions": 15,
+    "accepted": 14,
+    "proposed": 1,
+    "deprecated": 0,
+    "byCategory": {
+      "Financeiro": 7,
+      "Agendamento": 2,
+      "Administração": 1,
+      "Guardian": 2,
+      "Arquitetura": 1,
+      "Infraestrutura": 0,
+      "Documentação": 1,
+      "IA": 1
+    },
+    "criticalDecisions": 5,
+    "headline": "15 decisão(ões) arquitetural(is) registrada(s) — 5 crítica(s)"
+  },
+  "decisions": [
+    {
+      "adrId": "ADR-001",
+      "title": "Domain Guardian — verificação automática de invariantes",
+      "status": "Aceito",
+      "category": "Guardian",
+      "context": "Sistema THouse com regras financeiras críticas (pagamentos, cupons, agendamentos) sem verificação automatizada em produção.",
+      "problem": "Bugs em webhook ou ownership de cupons podem passar despercebidos até impactar clientes ou receita.",
+      "objective": "Detectar violações de invariantes no banco antes e depois de deploys.",
+      "decision": "Implementar Domain Guardian com checks F1–S4, runner, advisor, decision engine e memória histórica.",
+      "alternativesConsidered": [
+        "Testes manuais apenas antes de deploy",
+        "Monitoramento externo (Datadog/Sentry) sem regras de domínio",
+        "Code review sem verificação de dados"
+      ],
+      "alternativesRejected": [
+        "Testes manuais — não escalam e não cobrem estado do banco",
+        "Monitoramento genérico — não conhece invariantes F1/F4/X1"
+      ],
+      "choiceRationale": "Regras de domínio são específicas do negócio; Guardian codifica invariantes documentados e roda localmente/CI.",
+      "positiveConsequences": [
+        "Detecção de pagamento duplicado (F1)",
+        "Detecção de agendamento órfão pós-pagamento (F4)",
+        "Histórico em memory.json para tendências"
+      ],
+      "negativeConsequences": [
+        "Manutenção de checks quando schema evolui",
+        "Falso senso de segurança se não rodar antes de deploy"
+      ],
+      "acceptedRisks": [
+        "Checks podem ficar desatualizados se docs não forem sincronizados"
+      ],
+      "files": [
+        "scripts/domain-guardian-runner.ts",
+        "scripts/domain-guardian-audit.ts",
+        "scripts/domain-decision-engine.ts",
+        "reports/domain-guardian/latest.json"
+      ],
+      "entities": [
+        "Payment",
+        "Appointment",
+        "Coupon",
+        "UserPlan"
+      ],
+      "flows": [
+        "Verificação pré-deploy",
+        "Auditoria de banco"
+      ],
+      "invariants": [
+        "F1",
+        "F4",
+        "A5",
+        "A8",
+        "C1",
+        "X1",
+        "X2"
+      ],
+      "guardianChecks": [
+        "F1",
+        "F4",
+        "A5",
+        "A8",
+        "C1",
+        "C2",
+        "P2",
+        "S1",
+        "S4",
+        "X1",
+        "X2"
+      ],
+      "dependencies": [
+        "ADR-011"
+      ],
+      "financialImpact": "Protege integridade financeira — gate antes de merge em áreas críticas.",
+      "adminImpact": "Advisor.md orienta ações corretivas por check.",
+      "userImpact": "Indireto — evita bugs visíveis ao cliente.",
+      "removalCriteria": "Nunca remover sem substituto equivalente de verificação de invariantes.",
+      "evolutionCriteria": "Adicionar checks A9+ conforme novas entidades (ex.: arquivamento).",
+      "date": "2026-07-05",
+      "origin": "git-diff",
+      "priority": "Crítica",
+      "risk": "Crítico",
+      "whatBreaksIfRemoved": "Deploys podem introduzir pagamentos duplicados, cupons órfãos ou agendamentos fantasmas sem detecção.",
+      "replaces": null,
+      "stillValid": true,
+      "neverRemoveBecause": "É a rede de segurança do domínio financeiro-operacional."
+    },
+    {
+      "adrId": "ADR-002",
+      "title": "Webhook Idempotency — Payment.create por asaasId único",
+      "status": "Aceito",
+      "category": "Financeiro",
+      "context": "Asaas reenvia webhooks PAYMENT_RECEIVED em retries; sem idempotência há risco de duplicata.",
+      "problem": "Dois Payments com mesmo asaasId causam reconciliação incorreta e efeitos duplicados.",
+      "objective": "Garantir um único Payment por cobrança Asaas confirmada.",
+      "decision": "Verificar existência de Payment por asaasId antes de criar; reconcile em caso de retry (F1, F3).",
+      "alternativesConsidered": [
+        "Lock distribuído (Redis)",
+        "Deduplicação apenas no Asaas",
+        "Constraint UNIQUE no banco"
+      ],
+      "alternativesRejected": [
+        "Redis — infra extra não disponível no projeto",
+        "Só Asaas — retries ainda chegam ao webhook"
+      ],
+      "choiceRationale": "Verificação em application layer + invariante F1 no Guardian; UNIQUE parcial possível futuramente.",
+      "positiveConsequences": [
+        "Sem cobrança duplicada no sistema",
+        "Retries seguros",
+        "Reconcile cobre artefatos"
+      ],
+      "negativeConsequences": [
+        "Lógica de reconcile complexa",
+        "Race condition teórica em alta concorrência"
+      ],
+      "acceptedRisks": [
+        "Race rara entre dois webhooks simultâneos — mitigada por transação"
+      ],
+      "files": [
+        "src/app/api/webhooks/asaas/route.ts",
+        "src/app/lib/process-payment-webhook.ts",
+        "src/app/lib/asaas-agendamento-reconcile.ts"
+      ],
+      "entities": [
+        "Payment",
+        "PaymentMetadata"
+      ],
+      "flows": [
+        "Webhook Asaas",
+        "PAYMENT_RECEIVED"
+      ],
+      "invariants": [
+        "F1",
+        "F2",
+        "F3",
+        "F4"
+      ],
+      "guardianChecks": [
+        "F1",
+        "F4"
+      ],
+      "dependencies": [
+        "ADR-003",
+        "ADR-009"
+      ],
+      "financialImpact": "Crítico — base de toda contabilidade do sistema.",
+      "adminImpact": "Reprocessamento admin deve respeitar mesma idempotência.",
+      "userImpact": "Cliente não vê cobrança ou agendamento duplicado.",
+      "removalCriteria": "Proibido remover sem substituir por mecanismo equivalente.",
+      "evolutionCriteria": "Adicionar UNIQUE constraint em asaasId quando migration permitir.",
+      "date": "2026-07-05",
+      "origin": "git-diff",
+      "priority": "Crítica",
+      "risk": "Crítico",
+      "whatBreaksIfRemoved": "Pagamentos duplicados, agendamentos e cupons em dobro, perda de confiança financeira.",
+      "replaces": null,
+      "stillValid": true,
+      "neverRemoveBecause": "Invariante F1 é fundacional — todo fluxo de pagamento depende disso."
+    },
+    {
+      "adrId": "ADR-003",
+      "title": "PaymentMetadata — cache pré-checkout Asaas",
+      "status": "Aceito",
+      "category": "Financeiro",
+      "context": "Asaas limita externalReference (~100 chars); payload de checkout é maior.",
+      "problem": "Webhook não teria contexto completo (tipo, serviços, cupons) só com userId.",
+      "objective": "Persistir payload de checkout antes do POST Asaas; resolver no webhook por asaasId.",
+      "decision": "PaymentMetadata.create antes do checkout; TTL ~24h; webhook resolve e descarta após Payment.create.",
+      "alternativesConsidered": [
+        "Codificar tudo em externalReference",
+        "Session server-side sem persistência",
+        "JSON em Payment.description"
+      ],
+      "alternativesRejected": [
+        "externalReference — limite de tamanho Asaas",
+        "Session — perde estado em serverless/restart"
+      ],
+      "choiceRationale": "Metadata transitório com asaasId como chave de junção — padrão documentado em M1–M4.",
+      "positiveConsequences": [
+        "Checkout flexível",
+        "Webhook com contexto completo",
+        "Suporte a carrinho multi-item"
+      ],
+      "negativeConsequences": [
+        "Registros órfãos se webhook nunca chegar",
+        "Sem FK formal com User"
+      ],
+      "acceptedRisks": [
+        "Metadata expirado antes do pagamento — usuário refaz checkout"
+      ],
+      "files": [
+        "src/app/api/asaas/checkout-agendamento/route.ts",
+        "src/app/lib/symbolic-payment-resolve.ts",
+        "src/app/api/webhooks/asaas/route.ts"
+      ],
+      "entities": [
+        "PaymentMetadata",
+        "Payment",
+        "User"
+      ],
+      "flows": [
+        "Checkout agendamento",
+        "Checkout plano",
+        "PaymentMetadata → Payment"
+      ],
+      "invariants": [
+        "M1",
+        "M2",
+        "M3",
+        "M4"
+      ],
+      "guardianChecks": [],
+      "dependencies": [
+        "ADR-009"
+      ],
+      "financialImpact": "Alto — sem metadata, webhook não cria agendamento/plano corretamente.",
+      "adminImpact": "Reprocessamento teste usa metadata ou janela temporal.",
+      "userImpact": "Checkout funciona; falha silenciosa se metadata expirar.",
+      "removalCriteria": "Só remover se Asaas permitir payload completo em externalReference.",
+      "evolutionCriteria": "Garbage collection de metadata órfão; backfill em falhas.",
+      "date": "2026-07-05",
+      "origin": "git-diff",
+      "priority": "Alta",
+      "risk": "Alto",
+      "whatBreaksIfRemoved": "Webhook não sabe tipo de compra; F4 e efeitos pós-pagamento falham.",
+      "replaces": null,
+      "stillValid": true,
+      "neverRemoveBecause": "Ponte obrigatória entre checkout UI e confirmação Asaas."
+    },
+    {
+      "adrId": "ADR-004",
+      "title": "Appointment Archive — adminArchivedAt soft-archive",
+      "status": "Aceito",
+      "category": "Agendamento",
+      "context": "Admin precisava limpar fila operacional sem apagar histórico financeiro.",
+      "problem": "DELETE retornava 422; purge físico apagaria Payment links (F4, X4).",
+      "objective": "Arquivar agendamentos com justificativa; excluir de operações; preservar Payment.",
+      "decision": "Campos adminArchivedAt + adminArchivedReason; filtro em queries operacionais; PATCH archive/restore.",
+      "alternativesConsidered": [
+        "DELETE físico com cascade",
+        "Apenas userHiddenAt",
+        "Status especial 'arquivado'"
+      ],
+      "alternativesRejected": [
+        "DELETE — viola histórico financeiro",
+        "userHiddenAt — só oculta para usuário, não para admin ops",
+        "Status arquivado — mistura ciclo de vida com limpeza admin"
+      ],
+      "choiceRationale": "Espelha UserPlan.adminInactiveAt; ortogonal a userHiddenAt (A7, A9).",
+      "positiveConsequences": [
+        "Painel admin organizado",
+        "Histórico e Payment preservados",
+        "Restauração possível"
+      ],
+      "negativeConsequences": [
+        "Mais filtros em queries",
+        "Risco de arquivar ativo por engano"
+      ],
+      "acceptedRisks": [
+        "Admin arquiva pendente sem cancelar — slot ocupado até restaurar"
+      ],
+      "files": [
+        "src/app/lib/appointment-admin-archive.ts",
+        "prisma/migrations/20260617120000_appointment_admin_archive/"
+      ],
+      "entities": [
+        "Appointment"
+      ],
+      "flows": [
+        "Aceite/recusa admin",
+        "Disponibilidade",
+        "Checkout"
+      ],
+      "invariants": [
+        "A5",
+        "A8",
+        "A9",
+        "F4",
+        "X4"
+      ],
+      "guardianChecks": [
+        "A5",
+        "A8",
+        "A9"
+      ],
+      "dependencies": [
+        "ADR-005"
+      ],
+      "financialImpact": "Baixo direto — Payment.appointmentId preservado.",
+      "adminImpact": "Arquivar/Restaurar no painel; filtro arquivados.",
+      "userImpact": "Nenhum — Minha Conta inalterada.",
+      "removalCriteria": "Se purge físico for reintroduzido com guards financeiros equivalentes.",
+      "evolutionCriteria": "Estender padrão a Payment (ADR-013).",
+      "date": "2026-07-05",
+      "origin": "git-diff",
+      "priority": "Alta",
+      "risk": "Médio",
+      "whatBreaksIfRemoved": "Admin volta a ter só DELETE 422 ou purge arriscado; perda de organização.",
+      "replaces": "DELETE físico de agendamentos",
+      "stillValid": true,
+      "neverRemoveBecause": "Único mecanismo seguro de limpeza admin sem apagar pagamentos."
+    },
+    {
+      "adrId": "ADR-005",
+      "title": "Appointment Hidden — userHiddenAt (Minha Conta)",
+      "status": "Aceito",
+      "category": "Agendamento",
+      "context": "Usuário quer ocultar agendamentos encerrados da Minha Conta sem apagar dados.",
+      "problem": "Exclusão física quebraria vínculos financeiros e histórico admin.",
+      "objective": "Ocultação apenas na visão do usuário (A7).",
+      "decision": "Campo userHiddenAt em Appointment; filtro em meus-dados; admin mantém visível.",
+      "alternativesConsidered": [
+        "Delete físico",
+        "Status cancelado como ocultação",
+        "Soft-delete global"
+      ],
+      "alternativesRejected": [
+        "Delete — F4",
+        "Status — semântica diferente"
+      ],
+      "choiceRationale": "Invariante A7 — eixo usuário separado do eixo admin (ADR-004).",
+      "positiveConsequences": [
+        "UX Minha Conta limpa",
+        "Dados preservados",
+        "Admin não afetado"
+      ],
+      "negativeConsequences": [
+        "Dois eixos de visibilidade para entender"
+      ],
+      "acceptedRisks": [
+        "Confusão entre userHidden e adminArchived — documentação crítica"
+      ],
+      "files": [
+        "src/app/lib/appointment-hidden.ts",
+        "src/app/api/meus-dados/route.ts"
+      ],
+      "entities": [
+        "Appointment",
+        "User"
+      ],
+      "flows": [
+        "Minha Conta (leitura)",
+        "Ocultação usuário"
+      ],
+      "invariants": [
+        "A7"
+      ],
+      "guardianChecks": [
+        "A8"
+      ],
+      "dependencies": [],
+      "financialImpact": "Nenhum — não altera Payment.",
+      "adminImpact": "Admin vê todos inclusive ocultos pelo usuário.",
+      "userImpact": "Botão ocultar em Minha Conta.",
+      "removalCriteria": "Se UX unificar ocultação usuário e admin em um só campo.",
+      "evolutionCriteria": "Documentar diferença vs adminArchivedAt em treinamento admin.",
+      "date": "2026-07-05",
+      "origin": "git-diff",
+      "priority": "Média",
+      "risk": "Baixo",
+      "whatBreaksIfRemoved": "Usuários não podem limpar visualmente Minha Conta.",
+      "replaces": null,
+      "stillValid": true,
+      "neverRemoveBecause": "Garante LGPD/UX sem delete físico."
+    },
+    {
+      "adrId": "ADR-006",
+      "title": "UserPlan Admin Inactive + User Hidden",
+      "status": "Aceito",
+      "category": "Administração",
+      "context": "Planos cancelados ou inativos poluíam operação admin e Minha Conta.",
+      "problem": "Sem distinção entre inativação admin e ocultação usuário.",
+      "objective": "adminInactiveAt bloqueia cupons (P4); userHiddenAt oculta na Minha Conta.",
+      "decision": "Dois campos em UserPlan espelhando padrão Appointment.",
+      "alternativesConsidered": [
+        "Delete plano",
+        "Apenas status cancelled"
+      ],
+      "alternativesRejected": [
+        "Delete — perde histórico de pagamento"
+      ],
+      "choiceRationale": "P4 e P5 exigem inativação admin sem apagar registro.",
+      "positiveConsequences": [
+        "Cupons bloqueados corretamente",
+        "Minha Conta limpa"
+      ],
+      "negativeConsequences": [
+        "Mesma complexidade de dois eixos"
+      ],
+      "acceptedRisks": [
+        "Admin inativa plano ativo por engano"
+      ],
+      "files": [
+        "src/app/lib/user-plan-hidden.ts",
+        "src/app/lib/active-user-plan.ts"
+      ],
+      "entities": [
+        "UserPlan",
+        "Coupon"
+      ],
+      "flows": [
+        "Minha Conta",
+        "Planos",
+        "Cupons de plano"
+      ],
+      "invariants": [
+        "P1",
+        "P4",
+        "P5"
+      ],
+      "guardianChecks": [
+        "C1"
+      ],
+      "dependencies": [
+        "ADR-005"
+      ],
+      "financialImpact": "Médio — afeta cupons vinculados a plano.",
+      "adminImpact": "Inativar plano no admin.",
+      "userImpact": "Plano oculto ou cupons bloqueados na Minha Conta.",
+      "removalCriteria": "Unificação de modelo de visibilidade em todas entidades.",
+      "evolutionCriteria": "Alinhar nomenclatura com Appointment archive.",
+      "date": "2026-07-05",
+      "origin": "git-diff",
+      "priority": "Alta",
+      "risk": "Médio",
+      "whatBreaksIfRemoved": "Cupons de plano inativo podem reaparecer indevidamente.",
+      "replaces": null,
+      "stillValid": true,
+      "neverRemoveBecause": "P4 depende de adminInactiveAt."
+    },
+    {
+      "adrId": "ADR-007",
+      "title": "Coupon Account Ownership",
+      "status": "Aceito",
+      "category": "Financeiro",
+      "context": "Cupons podiam ficar vinculados ao usuário errado após remarcação ou simulação.",
+      "problem": "Usuário A usa cupom de usuário B; violação X1.",
+      "objective": "Garantir ownership consistente Payment → User → Coupon (X1, X2).",
+      "decision": "coupon-account-ownership.ts + assignedUserId + validações em rotas de resgate.",
+      "alternativesConsidered": [
+        "FK estrita Coupon→User",
+        "Confiar apenas em paymentId"
+      ],
+      "alternativesRejected": [
+        "Só paymentId — remarcação quebra cadeia"
+      ],
+      "choiceRationale": "Ownership explícito cobre remarcação e simulação.",
+      "positiveConsequences": [
+        "Cupom na conta certa",
+        "Guardian X1/X2"
+      ],
+      "negativeConsequences": [
+        "Lógica de repair manual para legado S4"
+      ],
+      "acceptedRisks": [
+        "Cupons TESTE_* legados até migração S4"
+      ],
+      "files": [
+        "src/app/lib/coupon-account-ownership.ts",
+        "src/app/lib/coupon-visibility.ts",
+        "scripts/repair-coupon-ownership.mjs"
+      ],
+      "entities": [
+        "Coupon",
+        "User",
+        "Payment",
+        "Appointment"
+      ],
+      "flows": [
+        "Remarcação (cupom)",
+        "Resgate",
+        "Minha Conta"
+      ],
+      "invariants": [
+        "X1",
+        "X2",
+        "X4",
+        "C4"
+      ],
+      "guardianChecks": [
+        "X1",
+        "X2",
+        "C1"
+      ],
+      "dependencies": [
+        "ADR-002"
+      ],
+      "financialImpact": "Alto — cupom errado = desconto indevido.",
+      "adminImpact": "Correção de cupons antigos no admin.",
+      "userImpact": "Cupons aparecem na conta correta.",
+      "removalCriteria": "Nunca sem modelo alternativo de ownership.",
+      "evolutionCriteria": "Finalizar S4 — eliminar cupons TESTE legados.",
+      "date": "2026-07-05",
+      "origin": "git-diff",
+      "priority": "Crítica",
+      "risk": "Alto",
+      "whatBreaksIfRemoved": "Cupons cruzados entre contas; fraude ou insatisfação.",
+      "replaces": null,
+      "stillValid": true,
+      "neverRemoveBecause": "Invariante X1 é crítica para integridade comercial."
+    },
+    {
+      "adrId": "ADR-008",
+      "title": "Refund Engine — outbound e inbound",
+      "status": "Aceito",
+      "category": "Financeiro",
+      "context": "Cancelamentos exigem devolução em dinheiro ou cupom de remarcação.",
+      "problem": "Estado inconsistente entre Asaas, Payment, Appointment e Coupon pós-reembolso.",
+      "objective": "Orquestrar refundAsaasPayment + syncInboundAsaasRefund + escolher-reembolso.",
+      "decision": "Trilha em Appointment/Coupon/UserPlan; webhook PAYMENT_REFUNDED sincroniza status; usuário confirma.",
+      "alternativesConsidered": [
+        "Reembolso só manual no Asaas",
+        "Cupom sem trilha de refund"
+      ],
+      "alternativesRejected": [
+        "Manual — não escala",
+        "Sem trilha — disputas impossíveis"
+      ],
+      "choiceRationale": "Financeiro e operacional precisam mesma fonte de verdade.",
+      "positiveConsequences": [
+        "Reembolso rastreável",
+        "Cupom de remarcação coordenado",
+        "Inbound sync"
+      ],
+      "negativeConsequences": [
+        "Muitos estados intermediários",
+        "Testes complexos"
+      ],
+      "acceptedRisks": [
+        "Divergência temporária Asaas vs banco até webhook REFUNDED"
+      ],
+      "files": [
+        "src/app/lib/appointment-refund-payment.ts",
+        "src/app/lib/coupon-refund.ts",
+        "src/app/lib/plan-refund.ts",
+        "src/app/api/agendamentos/escolher-reembolso/route.ts"
+      ],
+      "entities": [
+        "Payment",
+        "Appointment",
+        "Coupon",
+        "UserPlan"
+      ],
+      "flows": [
+        "Reembolso",
+        "PAYMENT_REFUNDED",
+        "Remarcação"
+      ],
+      "invariants": [
+        "F6",
+        "F8",
+        "A2",
+        "C4"
+      ],
+      "guardianChecks": [
+        "F4",
+        "C1"
+      ],
+      "dependencies": [
+        "ADR-002",
+        "ADR-009"
+      ],
+      "financialImpact": "Crítico — devolução de receita.",
+      "adminImpact": "Visibilidade de reembolsos pendentes.",
+      "userImpact": "Escolha reembolso ou cupom na Minha Conta.",
+      "removalCriteria": "Proibido em produção com pagamentos reais.",
+      "evolutionCriteria": "Automatizar disputas refundUserDisputedAt.",
+      "date": "2026-07-05",
+      "origin": "git-diff",
+      "priority": "Crítica",
+      "risk": "Crítico",
+      "whatBreaksIfRemoved": "Reembolsos manuais, estados incoerentes, risco legal/consumidor.",
+      "replaces": null,
+      "stillValid": true,
+      "neverRemoveBecause": "Obrigatório para operação comercial com cancelamento."
+    },
+    {
+      "adrId": "ADR-009",
+      "title": "Asaas Integration — provedor de pagamento",
+      "status": "Aceito",
+      "category": "Financeiro",
+      "context": "THouse precisa cobrar agendamentos e planos online no Brasil.",
+      "problem": "Sem gateway, checkout não completa pagamento real.",
+      "objective": "Asaas como provedor único com checkout, webhook e refund API.",
+      "decision": "asaas-fetch.ts, checkout routes, webhook route, refundAsaasPayment.",
+      "alternativesConsidered": [
+        "Stripe",
+        "Mercado Pago",
+        "Pagamento manual"
+      ],
+      "alternativesRejected": [
+        "Stripe — foco BR e PIX",
+        "Manual — não escala"
+      ],
+      "choiceRationale": "Asaas já integrado; PIX/boleto/cartão; webhooks maduros.",
+      "positiveConsequences": [
+        "PIX e cartão",
+        "Webhook nativo",
+        "Sandbox para testes"
+      ],
+      "negativeConsequences": [
+        "Vendor lock-in",
+        "Limite externalReference"
+      ],
+      "acceptedRisks": [
+        "Indisponibilidade Asaas — sem fallback automático"
+      ],
+      "files": [
+        "src/app/lib/asaas-fetch.ts",
+        "src/app/lib/payment-providers.ts",
+        "src/app/api/webhooks/asaas/route.ts"
+      ],
+      "entities": [
+        "Payment",
+        "PaymentMetadata"
+      ],
+      "flows": [
+        "Checkout",
+        "Webhook Asaas"
+      ],
+      "invariants": [
+        "F2",
+        "F3"
+      ],
+      "guardianChecks": [
+        "F1"
+      ],
+      "dependencies": [],
+      "financialImpact": "Fundacional — toda receita online.",
+      "adminImpact": "Reprocessar pagamento teste via admin.",
+      "userImpact": "Checkout com PIX/cartão.",
+      "removalCriteria": "Migração completa para outro provedor com paridade de webhook.",
+      "evolutionCriteria": "Abstração em payment-providers.ts para segundo provedor.",
+      "date": "2026-07-05",
+      "origin": "git-diff",
+      "priority": "Crítica",
+      "risk": "Crítico",
+      "whatBreaksIfRemoved": "Nenhum pagamento online funciona.",
+      "replaces": null,
+      "stillValid": true,
+      "neverRemoveBecause": "Provedor de pagamento é infraestrutura core."
+    },
+    {
+      "adrId": "ADR-010",
+      "title": "Simulation Refactor — pagamentos simbólicos A1/A2",
+      "status": "Aceito",
+      "category": "Financeiro",
+      "context": "Admin precisa testar fluxos sem cobrança real; legado TESTE_* no banco.",
+      "problem": "Cupons TESTE_AGEND_/TESTE_PAY_ sem ownership; confusão com produção.",
+      "objective": "symbolicAgendamento/symbolicPlano + canUseSymbolicSimulation; migrar legado S4.",
+      "decision": "Flags A1/A2 em Payment; helpers simulation-*; reset admin controlado.",
+      "alternativesConsidered": [
+        "Ambiente separado",
+        "Desabilitar simulação"
+      ],
+      "alternativesRejected": [
+        "Ambiente separado — custo operacional",
+        "Desabilitar — admin perde testes"
+      ],
+      "choiceRationale": "Simulação in-band com classificação explícita e Guardian S4.",
+      "positiveConsequences": [
+        "Testes admin seguros",
+        "Distinção produção vs teste"
+      ],
+      "negativeConsequences": [
+        "Legado S4 até limpeza",
+        "Complexidade em checkout"
+      ],
+      "acceptedRisks": [
+        "Cupom TESTE legado — info S4 no Guardian"
+      ],
+      "files": [
+        "src/app/lib/symbolic-payment.ts",
+        "src/app/lib/simulation-coupon.ts",
+        "src/app/lib/simulation-reset.ts"
+      ],
+      "entities": [
+        "Payment",
+        "Coupon"
+      ],
+      "flows": [
+        "Simulação admin",
+        "Checkout teste"
+      ],
+      "invariants": [
+        "A1",
+        "A2",
+        "S4"
+      ],
+      "guardianChecks": [
+        "S4"
+      ],
+      "dependencies": [
+        "ADR-009"
+      ],
+      "financialImpact": "Médio — evita confundir teste com receita real.",
+      "adminImpact": "Reprocessar pagamento teste; reset simulação.",
+      "userImpact": "Nenhum em produção.",
+      "removalCriteria": "Após eliminar todos cupons TESTE e ter staging dedicado.",
+      "evolutionCriteria": "Completar migração S4; remover @legacy helpers.",
+      "date": "2026-07-05",
+      "origin": "git-diff",
+      "priority": "Média",
+      "risk": "Médio",
+      "whatBreaksIfRemoved": "Admin não testa fluxos end-to-end sem cobrança.",
+      "replaces": "Cupons TESTE_* ad-hoc",
+      "stillValid": true,
+      "neverRemoveBecause": "Operação admin depende de testes simbólicos."
+    },
+    {
+      "adrId": "ADR-011",
+      "title": "Domain Map — documentação estruturada de entidades",
+      "status": "Aceito",
+      "category": "Documentação",
+      "context": "Agentes e revisores precisavam entender entidades sem ler todo o código.",
+      "problem": "Conhecimento tribal; onboarding lento; Guardian sem spec.",
+      "objective": "Mapa de domínio com entidades, arquivos, invariantes e fluxos.",
+      "decision": "docs/ai/domain-map.md + domain-dependencies + domain-invariants + domain-risks.",
+      "alternativesConsidered": [
+        "Wiki externa",
+        "Comentários no código apenas"
+      ],
+      "alternativesRejected": [
+        "Wiki — desatualiza",
+        "Só código — agentes não leem tudo"
+      ],
+      "choiceRationale": "Markdown versionado no repo; consumido por todos os agentes.",
+      "positiveConsequences": [
+        "Base para Guardian",
+        "Onboarding",
+        "ADRs derivados"
+      ],
+      "negativeConsequences": [
+        "Manutenção manual quando código muda"
+      ],
+      "acceptedRisks": [
+        "Drift doc vs código — mitigado por Architecture Agent"
+      ],
+      "files": [
+        "docs/ai/domain-map.md",
+        "docs/ai/domain-dependencies.md",
+        "docs/ai/domain-invariants.md",
+        "docs/ai/domain-risks.md"
+      ],
+      "entities": [
+        "Payment",
+        "Appointment",
+        "Coupon",
+        "UserPlan",
+        "User",
+        "Service"
+      ],
+      "flows": [
+        "Todas"
+      ],
+      "invariants": [
+        "Todos documentados"
+      ],
+      "guardianChecks": [],
+      "dependencies": [],
+      "financialImpact": "Indireto — reduz bugs por desconhecimento.",
+      "adminImpact": "Nenhum direto.",
+      "userImpact": "Nenhum.",
+      "removalCriteria": "Se substituído por spec machine-readable única.",
+      "evolutionCriteria": "Sincronizar após cada feature; audits por entidade.",
+      "date": "2026-07-05",
+      "origin": "documentação-auditoria",
+      "priority": "Alta",
+      "risk": "Baixo",
+      "whatBreaksIfRemoved": "Agentes e Guardian perdem fonte de verdade semântica.",
+      "replaces": null,
+      "stillValid": true,
+      "neverRemoveBecause": "Fundamento da memória arquitetural do projeto."
+    },
+    {
+      "adrId": "ADR-012",
+      "title": "Architecture Agent Pipeline — agentes read-only",
+      "status": "Aceito",
+      "category": "IA",
+      "context": "Deploys arriscados sem planejamento nem relatório para proprietário.",
+      "problem": "Decisão de deploy baseada em intuição; proprietário não entende mudanças.",
+      "objective": "Pipeline: Architecture → Design → Implementation → Evolution → Human Report → ADR.",
+      "decision": "Scripts *-agent.ts geram JSON/MD em reports/ sem modificar runtime.",
+      "alternativesConsidered": [
+        "Documentação manual",
+        "CI apenas com testes"
+      ],
+      "alternativesRejected": [
+        "Manual — não escala",
+        "Só testes — não explicam porquê"
+      ],
+      "choiceRationale": "Agentes leem mesmas fontes; encadeamento reproduzível.",
+      "positiveConsequences": [
+        "Plano antes de codar",
+        "Relatório humano",
+        "Evolução pré-deploy",
+        "Memória ADR"
+      ],
+      "negativeConsequences": [
+        "Manutenção dos scripts",
+        "Heurísticas V1"
+      ],
+      "acceptedRisks": [
+        "Agentes não substituem code review humano"
+      ],
+      "files": [
+        "scripts/architecture-agent.ts",
+        "scripts/design-planner-agent.ts",
+        "scripts/implementation-planner-agent.ts",
+        "scripts/evolution-agent.ts",
+        "scripts/human-report-agent.ts",
+        "scripts/architecture-decision-agent.ts"
+      ],
+      "entities": [],
+      "flows": [
+        "Planejamento",
+        "Deploy readiness"
+      ],
+      "invariants": [],
+      "guardianChecks": [],
+      "dependencies": [
+        "ADR-011",
+        "ADR-001"
+      ],
+      "financialImpact": "Indireto — reduz deploy com bugs financeiros.",
+      "adminImpact": "Nenhum.",
+      "userImpact": "Nenhum.",
+      "removalCriteria": "Se CI/CD absorver todas funções com paridade.",
+      "evolutionCriteria": "Integrar no workflow GitHub; V2 com LLM opcional.",
+      "date": "2026-07-05",
+      "origin": "git-diff",
+      "priority": "Média",
+      "risk": "Baixo",
+      "whatBreaksIfRemoved": "Perde memória de planejamento e relatórios automáticos.",
+      "replaces": "Documentação ad-hoc em chats",
+      "stillValid": true,
+      "neverRemoveBecause": "Institucionaliza como o projeto pensa antes de mudar."
+    },
+    {
+      "adrId": "ADR-013",
+      "title": "Payment Admin Archive — arquivamento de pagamentos (planejado)",
+      "status": "Proposto",
+      "category": "Financeiro",
+      "context": "Payment não tem adminArchivedAt; delete admin é restrito.",
+      "problem": "Admin não pode organizar pagamentos encerrados sem risco financeiro.",
+      "objective": "Soft-archive em Payment preservando Minha Conta e histórico.",
+      "decision": "Proposta: adminArchivedAt + adminArchivedReason; espelhar ADR-004.",
+      "alternativesConsidered": [
+        "DELETE admin",
+        "userHidden em Payment"
+      ],
+      "alternativesRejected": [
+        "DELETE — canAdminDeletePayment restrito",
+        "userHidden — semântica usuário"
+      ],
+      "choiceRationale": "Auditoria payment-lifecycle recomenda soft-archive vs purge.",
+      "positiveConsequences": [
+        "Painel pagamentos organizado",
+        "Histórico preservado"
+      ],
+      "negativeConsequences": [
+        "Toca F1–F8",
+        "Queries admin mais complexas"
+      ],
+      "acceptedRisks": [
+        "Implementação em área crítica — BLOCKED até testes"
+      ],
+      "files": [
+        "src/app/lib/admin-delete-payment.ts",
+        "src/app/api/admin/pagamentos/route.ts",
+        "prisma/schema.prisma"
+      ],
+      "entities": [
+        "Payment"
+      ],
+      "flows": [
+        "Minha Conta (pagamentos)",
+        "Admin pagamentos"
+      ],
+      "invariants": [
+        "F1",
+        "F4",
+        "F6",
+        "F8"
+      ],
+      "guardianChecks": [
+        "F1",
+        "F4"
+      ],
+      "dependencies": [
+        "ADR-004",
+        "ADR-002"
+      ],
+      "financialImpact": "Alto — não pode ocultar pagamento do usuário indevidamente.",
+      "adminImpact": "Arquivar/restaurar no painel pagamentos.",
+      "userImpact": "Nenhum na Minha Conta.",
+      "removalCriteria": "N/A — ainda não implementado.",
+      "evolutionCriteria": "Implementar conforme design-plan + implementation-plan.",
+      "date": "2026-07-05",
+      "origin": "git-diff",
+      "priority": "Alta",
+      "risk": "Alto",
+      "whatBreaksIfRemoved": "N/A — proposta.",
+      "replaces": "canAdminDeletePayment como única saída",
+      "stillValid": true,
+      "neverRemoveBecause": "N/A até aceito e implementado."
+    },
+    {
+      "adrId": "ADR-014",
+      "title": "Vínculos lógicos sem FK — Payment → Appointment",
+      "status": "Aceito",
+      "category": "Arquitetura",
+      "context": "Payment referencia Appointment por appointmentId/appointmentIds sem FK Prisma.",
+      "problem": "FK rígida dificulta carrinho multi-item, remarcação e arquivamento.",
+      "objective": "Flexibilidade com invariantes Guardian (F4, X4) compensando ausência de FK.",
+      "decision": "Campos lógicos + reconcile + Guardian F4 em vez de CASCADE no banco.",
+      "alternativesConsidered": [
+        "FK estrita",
+        "Tabela de junção PaymentAppointment"
+      ],
+      "alternativesRejected": [
+        "FK — bloqueia cenários de remarcação",
+        "Junção — refactor grande"
+      ],
+      "choiceRationale": "Legado pragmático; Guardian detecta órfãos.",
+      "positiveConsequences": [
+        "Remarcação flexível",
+        "Carrinho N agendamentos"
+      ],
+      "negativeConsequences": [
+        "Órfãos possíveis",
+        "Integridade só por aplicação"
+      ],
+      "acceptedRisks": [
+        "Payment sem Appointment válido — F4 detecta"
+      ],
+      "files": [
+        "prisma/schema.prisma",
+        "src/app/lib/asaas-agendamento-payment-effects.ts"
+      ],
+      "entities": [
+        "Payment",
+        "Appointment"
+      ],
+      "flows": [
+        "Payment → Appointment",
+        "Checkout carrinho"
+      ],
+      "invariants": [
+        "F4",
+        "X4"
+      ],
+      "guardianChecks": [
+        "F4"
+      ],
+      "dependencies": [
+        "ADR-001"
+      ],
+      "financialImpact": "Alto se órfão — pagamento sem serviço.",
+      "adminImpact": "Reconcile manual em incidentes.",
+      "userImpact": "Agendamento pode não aparecer se F4 violado.",
+      "removalCriteria": "Migration para FK/junção com migração de dados completa.",
+      "evolutionCriteria": "Avaliar tabela de junção em V2 schema.",
+      "date": "2026-07-05",
+      "origin": "git-diff",
+      "priority": "Alta",
+      "risk": "Alto",
+      "whatBreaksIfRemoved": "Remarcação e carrinho; exigiria redesign schema.",
+      "replaces": null,
+      "stillValid": true,
+      "neverRemoveBecause": "Compensado por reconcile + F4 — remover sem substituir quebra integridade."
+    },
+    {
+      "adrId": "ADR-015",
+      "title": "Decision Engine — gate BLOCKED em mudanças CRITICAL",
+      "status": "Aceito",
+      "category": "Guardian",
+      "context": "Diff grande em schema + payment + appointment simultaneamente.",
+      "problem": "Merge/deploy automático de mudanças CRITICAL sem revisão.",
+      "objective": "BLOCKED quando risco CRITICAL e invariantes críticos no diff.",
+      "decision": "domain-decision-engine.ts gera decision.md com APPROVED/REVIEW/BLOCKED.",
+      "alternativesConsidered": [
+        "Só Guardian",
+        "Aprovação manual sempre"
+      ],
+      "alternativesRejected": [
+        "Só Guardian — não olha diff Git",
+        "Sempre manual — lento"
+      ],
+      "choiceRationale": "Combina saúde do banco (Guardian) com escopo do diff (change-analyzer).",
+      "positiveConsequences": [
+        "Deploy seguro",
+        "PRs menores incentivados"
+      ],
+      "negativeConsequences": [
+        "BLOCKED frequente em branches grandes"
+      ],
+      "acceptedRisks": [
+        "Falsos positivos — revisão humana necessária"
+      ],
+      "files": [
+        "scripts/domain-decision-engine.ts",
+        "reports/domain-guardian/decision.md"
+      ],
+      "entities": [
+        "Payment",
+        "Appointment",
+        "Coupon"
+      ],
+      "flows": [
+        "Merge",
+        "Deploy"
+      ],
+      "invariants": [
+        "Críticos no diff"
+      ],
+      "guardianChecks": [],
+      "dependencies": [
+        "ADR-001"
+      ],
+      "financialImpact": "Indireto — evita deploy arriscado.",
+      "adminImpact": "Nenhum.",
+      "userImpact": "Nenhum.",
+      "removalCriteria": "Se CI tiver gate equivalente com mesmas regras.",
+      "evolutionCriteria": "Integrar ao GitHub Actions; split-to-prs automático.",
+      "date": "2026-07-05",
+      "origin": "git-diff",
+      "priority": "Alta",
+      "risk": "Médio",
+      "whatBreaksIfRemoved": "Deploy de 150+ arquivos CRITICAL sem barreira.",
+      "replaces": null,
+      "stillValid": true,
+      "neverRemoveBecause": "Última linha de defesa antes de merge em main."
+    }
+  ],
+  "decisionMatrix": [
+    {
+      "adrId": "ADR-001",
+      "title": "Domain Guardian — verificação automática de invariantes",
+      "entities": [
+        "Payment",
+        "Appointment",
+        "Coupon",
+        "UserPlan"
+      ],
+      "files": [
+        "scripts/domain-guardian-runner.ts",
+        "scripts/domain-guardian-audit.ts",
+        "scripts/domain-decision-engine.ts",
+        "reports/domain-guardian/latest.json"
+      ],
+      "guardianChecks": [
+        "F1",
+        "F4",
+        "A5",
+        "A8",
+        "C1",
+        "C2",
+        "P2",
+        "S1",
+        "S4",
+        "X1",
+        "X2"
+      ],
+      "flows": [
+        "Verificação pré-deploy",
+        "Auditoria de banco"
+      ],
+      "risk": "Crítico",
+      "priority": "Crítica"
+    },
+    {
+      "adrId": "ADR-002",
+      "title": "Webhook Idempotency — Payment.create por asaasId único",
+      "entities": [
+        "Payment",
+        "PaymentMetadata"
+      ],
+      "files": [
+        "src/app/api/webhooks/asaas/route.ts",
+        "src/app/lib/process-payment-webhook.ts",
+        "src/app/lib/asaas-agendamento-reconcile.ts"
+      ],
+      "guardianChecks": [
+        "F1",
+        "F4"
+      ],
+      "flows": [
+        "Webhook Asaas",
+        "PAYMENT_RECEIVED"
+      ],
+      "risk": "Crítico",
+      "priority": "Crítica"
+    },
+    {
+      "adrId": "ADR-003",
+      "title": "PaymentMetadata — cache pré-checkout Asaas",
+      "entities": [
+        "PaymentMetadata",
+        "Payment",
+        "User"
+      ],
+      "files": [
+        "src/app/api/asaas/checkout-agendamento/route.ts",
+        "src/app/lib/symbolic-payment-resolve.ts",
+        "src/app/api/webhooks/asaas/route.ts"
+      ],
+      "guardianChecks": [],
+      "flows": [
+        "Checkout agendamento",
+        "Checkout plano",
+        "PaymentMetadata → Payment"
+      ],
+      "risk": "Alto",
+      "priority": "Alta"
+    },
+    {
+      "adrId": "ADR-004",
+      "title": "Appointment Archive — adminArchivedAt soft-archive",
+      "entities": [
+        "Appointment"
+      ],
+      "files": [
+        "src/app/lib/appointment-admin-archive.ts",
+        "prisma/migrations/20260617120000_appointment_admin_archive/"
+      ],
+      "guardianChecks": [
+        "A5",
+        "A8",
+        "A9"
+      ],
+      "flows": [
+        "Aceite/recusa admin",
+        "Disponibilidade",
+        "Checkout"
+      ],
+      "risk": "Médio",
+      "priority": "Alta"
+    },
+    {
+      "adrId": "ADR-005",
+      "title": "Appointment Hidden — userHiddenAt (Minha Conta)",
+      "entities": [
+        "Appointment",
+        "User"
+      ],
+      "files": [
+        "src/app/lib/appointment-hidden.ts",
+        "src/app/api/meus-dados/route.ts"
+      ],
+      "guardianChecks": [
+        "A8"
+      ],
+      "flows": [
+        "Minha Conta (leitura)",
+        "Ocultação usuário"
+      ],
+      "risk": "Baixo",
+      "priority": "Média"
+    },
+    {
+      "adrId": "ADR-006",
+      "title": "UserPlan Admin Inactive + User Hidden",
+      "entities": [
+        "UserPlan",
+        "Coupon"
+      ],
+      "files": [
+        "src/app/lib/user-plan-hidden.ts",
+        "src/app/lib/active-user-plan.ts"
+      ],
+      "guardianChecks": [
+        "C1"
+      ],
+      "flows": [
+        "Minha Conta",
+        "Planos",
+        "Cupons de plano"
+      ],
+      "risk": "Médio",
+      "priority": "Alta"
+    },
+    {
+      "adrId": "ADR-007",
+      "title": "Coupon Account Ownership",
+      "entities": [
+        "Coupon",
+        "User",
+        "Payment",
+        "Appointment"
+      ],
+      "files": [
+        "src/app/lib/coupon-account-ownership.ts",
+        "src/app/lib/coupon-visibility.ts",
+        "scripts/repair-coupon-ownership.mjs"
+      ],
+      "guardianChecks": [
+        "X1",
+        "X2",
+        "C1"
+      ],
+      "flows": [
+        "Remarcação (cupom)",
+        "Resgate",
+        "Minha Conta"
+      ],
+      "risk": "Alto",
+      "priority": "Crítica"
+    },
+    {
+      "adrId": "ADR-008",
+      "title": "Refund Engine — outbound e inbound",
+      "entities": [
+        "Payment",
+        "Appointment",
+        "Coupon",
+        "UserPlan"
+      ],
+      "files": [
+        "src/app/lib/appointment-refund-payment.ts",
+        "src/app/lib/coupon-refund.ts",
+        "src/app/lib/plan-refund.ts",
+        "src/app/api/agendamentos/escolher-reembolso/route.ts"
+      ],
+      "guardianChecks": [
+        "F4",
+        "C1"
+      ],
+      "flows": [
+        "Reembolso",
+        "PAYMENT_REFUNDED",
+        "Remarcação"
+      ],
+      "risk": "Crítico",
+      "priority": "Crítica"
+    },
+    {
+      "adrId": "ADR-009",
+      "title": "Asaas Integration — provedor de pagamento",
+      "entities": [
+        "Payment",
+        "PaymentMetadata"
+      ],
+      "files": [
+        "src/app/lib/asaas-fetch.ts",
+        "src/app/lib/payment-providers.ts",
+        "src/app/api/webhooks/asaas/route.ts"
+      ],
+      "guardianChecks": [
+        "F1"
+      ],
+      "flows": [
+        "Checkout",
+        "Webhook Asaas"
+      ],
+      "risk": "Crítico",
+      "priority": "Crítica"
+    },
+    {
+      "adrId": "ADR-010",
+      "title": "Simulation Refactor — pagamentos simbólicos A1/A2",
+      "entities": [
+        "Payment",
+        "Coupon"
+      ],
+      "files": [
+        "src/app/lib/symbolic-payment.ts",
+        "src/app/lib/simulation-coupon.ts",
+        "src/app/lib/simulation-reset.ts"
+      ],
+      "guardianChecks": [
+        "S4"
+      ],
+      "flows": [
+        "Simulação admin",
+        "Checkout teste"
+      ],
+      "risk": "Médio",
+      "priority": "Média"
+    },
+    {
+      "adrId": "ADR-011",
+      "title": "Domain Map — documentação estruturada de entidades",
+      "entities": [
+        "Payment",
+        "Appointment",
+        "Coupon",
+        "UserPlan",
+        "User",
+        "Service"
+      ],
+      "files": [
+        "docs/ai/domain-map.md",
+        "docs/ai/domain-dependencies.md",
+        "docs/ai/domain-invariants.md",
+        "docs/ai/domain-risks.md"
+      ],
+      "guardianChecks": [],
+      "flows": [
+        "Todas"
+      ],
+      "risk": "Baixo",
+      "priority": "Alta"
+    },
+    {
+      "adrId": "ADR-012",
+      "title": "Architecture Agent Pipeline — agentes read-only",
+      "entities": [],
+      "files": [
+        "scripts/architecture-agent.ts",
+        "scripts/design-planner-agent.ts",
+        "scripts/implementation-planner-agent.ts",
+        "scripts/evolution-agent.ts",
+        "scripts/human-report-agent.ts",
+        "scripts/architecture-decision-agent.ts"
+      ],
+      "guardianChecks": [],
+      "flows": [
+        "Planejamento",
+        "Deploy readiness"
+      ],
+      "risk": "Baixo",
+      "priority": "Média"
+    },
+    {
+      "adrId": "ADR-013",
+      "title": "Payment Admin Archive — arquivamento de pagamentos (planejado)",
+      "entities": [
+        "Payment"
+      ],
+      "files": [
+        "src/app/lib/admin-delete-payment.ts",
+        "src/app/api/admin/pagamentos/route.ts",
+        "prisma/schema.prisma"
+      ],
+      "guardianChecks": [
+        "F1",
+        "F4"
+      ],
+      "flows": [
+        "Minha Conta (pagamentos)",
+        "Admin pagamentos"
+      ],
+      "risk": "Alto",
+      "priority": "Alta"
+    },
+    {
+      "adrId": "ADR-014",
+      "title": "Vínculos lógicos sem FK — Payment → Appointment",
+      "entities": [
+        "Payment",
+        "Appointment"
+      ],
+      "files": [
+        "prisma/schema.prisma",
+        "src/app/lib/asaas-agendamento-payment-effects.ts"
+      ],
+      "guardianChecks": [
+        "F4"
+      ],
+      "flows": [
+        "Payment → Appointment",
+        "Checkout carrinho"
+      ],
+      "risk": "Alto",
+      "priority": "Alta"
+    },
+    {
+      "adrId": "ADR-015",
+      "title": "Decision Engine — gate BLOCKED em mudanças CRITICAL",
+      "entities": [
+        "Payment",
+        "Appointment",
+        "Coupon"
+      ],
+      "files": [
+        "scripts/domain-decision-engine.ts",
+        "reports/domain-guardian/decision.md"
+      ],
+      "guardianChecks": [],
+      "flows": [
+        "Merge",
+        "Deploy"
+      ],
+      "risk": "Médio",
+      "priority": "Alta"
+    }
+  ],
+  "history": [
+    {
+      "adrId": "ADR-001",
+      "title": "Domain Guardian — verificação automática de invariantes",
+      "date": "2026-07-05",
+      "status": "Aceito",
+      "origin": "git-diff"
+    },
+    {
+      "adrId": "ADR-002",
+      "title": "Webhook Idempotency — Payment.create por asaasId único",
+      "date": "2026-07-05",
+      "status": "Aceito",
+      "origin": "git-diff"
+    },
+    {
+      "adrId": "ADR-003",
+      "title": "PaymentMetadata — cache pré-checkout Asaas",
+      "date": "2026-07-05",
+      "status": "Aceito",
+      "origin": "git-diff"
+    },
+    {
+      "adrId": "ADR-004",
+      "title": "Appointment Archive — adminArchivedAt soft-archive",
+      "date": "2026-07-05",
+      "status": "Aceito",
+      "origin": "git-diff"
+    },
+    {
+      "adrId": "ADR-005",
+      "title": "Appointment Hidden — userHiddenAt (Minha Conta)",
+      "date": "2026-07-05",
+      "status": "Aceito",
+      "origin": "git-diff"
+    },
+    {
+      "adrId": "ADR-006",
+      "title": "UserPlan Admin Inactive + User Hidden",
+      "date": "2026-07-05",
+      "status": "Aceito",
+      "origin": "git-diff"
+    },
+    {
+      "adrId": "ADR-007",
+      "title": "Coupon Account Ownership",
+      "date": "2026-07-05",
+      "status": "Aceito",
+      "origin": "git-diff"
+    },
+    {
+      "adrId": "ADR-008",
+      "title": "Refund Engine — outbound e inbound",
+      "date": "2026-07-05",
+      "status": "Aceito",
+      "origin": "git-diff"
+    },
+    {
+      "adrId": "ADR-009",
+      "title": "Asaas Integration — provedor de pagamento",
+      "date": "2026-07-05",
+      "status": "Aceito",
+      "origin": "git-diff"
+    },
+    {
+      "adrId": "ADR-010",
+      "title": "Simulation Refactor — pagamentos simbólicos A1/A2",
+      "date": "2026-07-05",
+      "status": "Aceito",
+      "origin": "git-diff"
+    },
+    {
+      "adrId": "ADR-011",
+      "title": "Domain Map — documentação estruturada de entidades",
+      "date": "2026-07-05",
+      "status": "Aceito",
+      "origin": "documentação-auditoria"
+    },
+    {
+      "adrId": "ADR-012",
+      "title": "Architecture Agent Pipeline — agentes read-only",
+      "date": "2026-07-05",
+      "status": "Aceito",
+      "origin": "git-diff"
+    },
+    {
+      "adrId": "ADR-013",
+      "title": "Payment Admin Archive — arquivamento de pagamentos (planejado)",
+      "date": "2026-07-05",
+      "status": "Proposto",
+      "origin": "git-diff"
+    },
+    {
+      "adrId": "ADR-014",
+      "title": "Vínculos lógicos sem FK — Payment → Appointment",
+      "date": "2026-07-05",
+      "status": "Aceito",
+      "origin": "git-diff"
+    },
+    {
+      "adrId": "ADR-015",
+      "title": "Decision Engine — gate BLOCKED em mudanças CRITICAL",
+      "date": "2026-07-05",
+      "status": "Aceito",
+      "origin": "git-diff"
+    }
+  ],
+  "architectureEvolution": {
+    "phases": [
+      "Domain Map e invariantes",
+      "Integração Asaas + PaymentMetadata",
+      "Webhook idempotency + Refund Engine",
+      "Ocultação usuário + inativação admin",
+      "Appointment Archive",
+      "Domain Guardian + Decision Engine",
+      "Agentes IA (planejamento e relatórios)",
+      "Payment Archive (proposto)"
+    ],
+    "before": "Monólito Next.js com pagamentos Asaas e regras implícitas no código.",
+    "after": "Domínio documentado, Guardian, ADRs, soft-archive e pipeline de agentes read-only.",
+    "maturity": "Alta"
+  },
+  "dependencies": [
+    {
+      "adrId": "ADR-001",
+      "dependsOn": [
+        "ADR-011"
+      ],
+      "dependedBy": [
+        "ADR-012",
+        "ADR-014",
+        "ADR-015"
+      ]
+    },
+    {
+      "adrId": "ADR-002",
+      "dependsOn": [
+        "ADR-003",
+        "ADR-009"
+      ],
+      "dependedBy": [
+        "ADR-007",
+        "ADR-008",
+        "ADR-013"
+      ]
+    },
+    {
+      "adrId": "ADR-003",
+      "dependsOn": [
+        "ADR-009"
+      ],
+      "dependedBy": [
+        "ADR-002"
+      ]
+    },
+    {
+      "adrId": "ADR-004",
+      "dependsOn": [
+        "ADR-005"
+      ],
+      "dependedBy": [
+        "ADR-013"
+      ]
+    },
+    {
+      "adrId": "ADR-005",
+      "dependsOn": [],
+      "dependedBy": [
+        "ADR-004",
+        "ADR-006"
+      ]
+    },
+    {
+      "adrId": "ADR-006",
+      "dependsOn": [
+        "ADR-005"
+      ],
+      "dependedBy": []
+    },
+    {
+      "adrId": "ADR-007",
+      "dependsOn": [
+        "ADR-002"
+      ],
+      "dependedBy": []
+    },
+    {
+      "adrId": "ADR-008",
+      "dependsOn": [
+        "ADR-002",
+        "ADR-009"
+      ],
+      "dependedBy": []
+    },
+    {
+      "adrId": "ADR-009",
+      "dependsOn": [],
+      "dependedBy": [
+        "ADR-002",
+        "ADR-003",
+        "ADR-008",
+        "ADR-010"
+      ]
+    },
+    {
+      "adrId": "ADR-010",
+      "dependsOn": [
+        "ADR-009"
+      ],
+      "dependedBy": []
+    },
+    {
+      "adrId": "ADR-011",
+      "dependsOn": [],
+      "dependedBy": [
+        "ADR-001",
+        "ADR-012"
+      ]
+    },
+    {
+      "adrId": "ADR-012",
+      "dependsOn": [
+        "ADR-011",
+        "ADR-001"
+      ],
+      "dependedBy": []
+    },
+    {
+      "adrId": "ADR-013",
+      "dependsOn": [
+        "ADR-004",
+        "ADR-002"
+      ],
+      "dependedBy": []
+    },
+    {
+      "adrId": "ADR-014",
+      "dependsOn": [
+        "ADR-001"
+      ],
+      "dependedBy": []
+    },
+    {
+      "adrId": "ADR-015",
+      "dependsOn": [
+        "ADR-001"
+      ],
+      "dependedBy": []
+    }
+  ],
+  "guardianRelations": [
+    {
+      "adrId": "ADR-001",
+      "checks": [
+        "F1",
+        "F4",
+        "A5",
+        "A8",
+        "C1",
+        "C2",
+        "P2",
+        "S1",
+        "S4",
+        "X1",
+        "X2"
+      ],
+      "purpose": "Validar decisão: Domain Guardian — verificação automática de invariantes"
+    },
+    {
+      "adrId": "ADR-002",
+      "checks": [
+        "F1",
+        "F4"
+      ],
+      "purpose": "Validar decisão: Webhook Idempotency — Payment.create por asaasId único"
+    },
+    {
+      "adrId": "ADR-004",
+      "checks": [
+        "A5",
+        "A8",
+        "A9"
+      ],
+      "purpose": "Validar decisão: Appointment Archive — adminArchivedAt soft-archive"
+    },
+    {
+      "adrId": "ADR-005",
+      "checks": [
+        "A8"
+      ],
+      "purpose": "Validar decisão: Appointment Hidden — userHiddenAt (Minha Conta)"
+    },
+    {
+      "adrId": "ADR-006",
+      "checks": [
+        "C1"
+      ],
+      "purpose": "Validar decisão: UserPlan Admin Inactive + User Hidden"
+    },
+    {
+      "adrId": "ADR-007",
+      "checks": [
+        "X1",
+        "X2",
+        "C1"
+      ],
+      "purpose": "Validar decisão: Coupon Account Ownership"
+    },
+    {
+      "adrId": "ADR-008",
+      "checks": [
+        "F4",
+        "C1"
+      ],
+      "purpose": "Validar decisão: Refund Engine — outbound e inbound"
+    },
+    {
+      "adrId": "ADR-009",
+      "checks": [
+        "F1"
+      ],
+      "purpose": "Validar decisão: Asaas Integration — provedor de pagamento"
+    },
+    {
+      "adrId": "ADR-010",
+      "checks": [
+        "S4"
+      ],
+      "purpose": "Validar decisão: Simulation Refactor — pagamentos simbólicos A1/A2"
+    },
+    {
+      "adrId": "ADR-013",
+      "checks": [
+        "F1",
+        "F4"
+      ],
+      "purpose": "Validar decisão: Payment Admin Archive — arquivamento de pagamentos (planejado)"
+    },
+    {
+      "adrId": "ADR-014",
+      "checks": [
+        "F4"
+      ],
+      "purpose": "Validar decisão: Vínculos lógicos sem FK — Payment → Appointment"
+    }
+  ],
+  "businessImpact": {
+    "financial": [
+      "Crítico — base de toda contabilidade do sistema.",
+      "Alto — sem metadata, webhook não cria agendamento/plano corretamente.",
+      "Alto — cupom errado = desconto indevido.",
+      "Crítico — devolução de receita.",
+      "Fundacional — toda receita online.",
+      "Médio — evita confundir teste com receita real.",
+      "Alto — não pode ocultar pagamento do usuário indevidamente."
+    ],
+    "admin": [
+      "Arquivar/Restaurar no painel; filtro arquivados.",
+      "Admin vê todos inclusive ocultos pelo usuário.",
+      "Inativar plano no admin."
+    ],
+    "user": [
+      "ADR-001: Indireto — evita bugs visíveis ao cliente.",
+      "ADR-002: Cliente não vê cobrança ou agendamento duplicado.",
+      "ADR-003: Checkout funciona; falha silenciosa se metadata expirar.",
+      "ADR-005: Botão ocultar em Minha Conta.",
+      "ADR-006: Plano oculto ou cupons bloqueados na Minha Conta.",
+      "ADR-007: Cupons aparecem na conta correta.",
+      "ADR-008: Escolha reembolso ou cupom na Minha Conta.",
+      "ADR-009: Checkout com PIX/cartão.",
+      "ADR-014: Agendamento pode não aparecer se F4 violado."
+    ]
+  },
+  "technicalImpact": {
+    "apis": [
+      "src/app/api/webhooks/asaas/route.ts",
+      "src/app/api/asaas/checkout-agendamento/route.ts",
+      "src/app/api/meus-dados/route.ts",
+      "src/app/api/agendamentos/escolher-reembolso/route.ts",
+      "src/app/api/admin/pagamentos/route.ts"
+    ],
+    "database": [
+      "prisma/migrations/20260617120000_appointment_admin_archive/",
+      "prisma/schema.prisma"
+    ],
+    "scripts": [
+      "scripts/domain-guardian-runner.ts",
+      "scripts/domain-guardian-audit.ts",
+      "scripts/domain-decision-engine.ts",
+      "scripts/repair-coupon-ownership.mjs",
+      "scripts/architecture-agent.ts",
+      "scripts/design-planner-agent.ts",
+      "scripts/implementation-planner-agent.ts",
+      "scripts/evolution-agent.ts",
+      "scripts/human-report-agent.ts",
+      "scripts/architecture-decision-agent.ts"
+    ],
+    "docs": [
+      "docs/ai/domain-map.md",
+      "docs/ai/domain-dependencies.md",
+      "docs/ai/domain-invariants.md",
+      "docs/ai/domain-risks.md"
+    ]
+  },
+  "futureRecommendations": [
+    "Finalizar migração de simulação (S4): vincular ou eliminar cupons legados TESTE_AGEND_/TESTE_PAY_ antes de remover helpers @legacy.",
+    "Alta frequência de BLOCKED: adotar PRs menores (split-to-prs) e rodar change-analyzer antes de abrir PR.",
+    "Divergência banco saudável vs diff CRITICAL: separar gate de dados (Guardian) do gate de merge (Decision Engine).",
+    "Adicionar arquivamento administrativo de pagamentos",
+    "Implementar ADR-013 (Payment Archive) conforme design-plan",
+    "Completar migração S4 — cupons TESTE legados",
+    "Integrar architecture-decisions.json no pipeline CI pré-deploy"
+  ],
+  "knowledgeGraph": {
+    "nodes": [
+      {
+        "id": "ADR-001",
+        "type": "decision",
+        "label": "Domain Guardian — verificação automática de invariantes"
+      },
+      {
+        "id": "file:scripts/domain-guardian-runner.ts",
+        "type": "file",
+        "label": "scripts/domain-guardian-runner.ts"
+      },
+      {
+        "id": "file:scripts/domain-guardian-audit.ts",
+        "type": "file",
+        "label": "scripts/domain-guardian-audit.ts"
+      },
+      {
+        "id": "file:scripts/domain-decision-engine.ts",
+        "type": "file",
+        "label": "scripts/domain-decision-engine.ts"
+      },
+      {
+        "id": "file:reports/domain-guardian/latest.json",
+        "type": "file",
+        "label": "reports/domain-guardian/latest.json"
+      },
+      {
+        "id": "entity:Payment",
+        "type": "entity",
+        "label": "Payment"
+      },
+      {
+        "id": "entity:Appointment",
+        "type": "entity",
+        "label": "Appointment"
+      },
+      {
+        "id": "entity:Coupon",
+        "type": "entity",
+        "label": "Coupon"
+      },
+      {
+        "id": "entity:UserPlan",
+        "type": "entity",
+        "label": "UserPlan"
+      },
+      {
+        "id": "flow:Verificação pré-deploy",
+        "type": "flow",
+        "label": "Verificação pré-deploy"
+      },
+      {
+        "id": "flow:Auditoria de banco",
+        "type": "flow",
+        "label": "Auditoria de banco"
+      },
+      {
+        "id": "guardian:F1",
+        "type": "guardian",
+        "label": "F1"
+      },
+      {
+        "id": "guardian:F4",
+        "type": "guardian",
+        "label": "F4"
+      },
+      {
+        "id": "guardian:A5",
+        "type": "guardian",
+        "label": "A5"
+      },
+      {
+        "id": "guardian:A8",
+        "type": "guardian",
+        "label": "A8"
+      },
+      {
+        "id": "guardian:C1",
+        "type": "guardian",
+        "label": "C1"
+      },
+      {
+        "id": "guardian:C2",
+        "type": "guardian",
+        "label": "C2"
+      },
+      {
+        "id": "guardian:P2",
+        "type": "guardian",
+        "label": "P2"
+      },
+      {
+        "id": "guardian:S1",
+        "type": "guardian",
+        "label": "S1"
+      },
+      {
+        "id": "guardian:S4",
+        "type": "guardian",
+        "label": "S4"
+      },
+      {
+        "id": "guardian:X1",
+        "type": "guardian",
+        "label": "X1"
+      },
+      {
+        "id": "guardian:X2",
+        "type": "guardian",
+        "label": "X2"
+      },
+      {
+        "id": "risk:ADR-001",
+        "type": "risk",
+        "label": "Crítico"
+      },
+      {
+        "id": "ADR-002",
+        "type": "decision",
+        "label": "Webhook Idempotency — Payment.create por asaasId único"
+      },
+      {
+        "id": "file:src/app/api/webhooks/asaas/route.ts",
+        "type": "file",
+        "label": "src/app/api/webhooks/asaas/route.ts"
+      },
+      {
+        "id": "file:src/app/lib/process-payment-webhook.ts",
+        "type": "file",
+        "label": "src/app/lib/process-payment-webhook.ts"
+      },
+      {
+        "id": "file:src/app/lib/asaas-agendamento-reconcile.ts",
+        "type": "file",
+        "label": "src/app/lib/asaas-agendamento-reconcile.ts"
+      },
+      {
+        "id": "entity:PaymentMetadata",
+        "type": "entity",
+        "label": "PaymentMetadata"
+      },
+      {
+        "id": "flow:Webhook Asaas",
+        "type": "flow",
+        "label": "Webhook Asaas"
+      },
+      {
+        "id": "flow:PAYMENT_RECEIVED",
+        "type": "flow",
+        "label": "PAYMENT_RECEIVED"
+      },
+      {
+        "id": "risk:ADR-002",
+        "type": "risk",
+        "label": "Crítico"
+      },
+      {
+        "id": "ADR-003",
+        "type": "decision",
+        "label": "PaymentMetadata — cache pré-checkout Asaas"
+      },
+      {
+        "id": "file:src/app/api/asaas/checkout-agendamento/route.ts",
+        "type": "file",
+        "label": "src/app/api/asaas/checkout-agendamento/route.ts"
+      },
+      {
+        "id": "file:src/app/lib/symbolic-payment-resolve.ts",
+        "type": "file",
+        "label": "src/app/lib/symbolic-payment-resolve.ts"
+      },
+      {
+        "id": "entity:User",
+        "type": "entity",
+        "label": "User"
+      },
+      {
+        "id": "flow:Checkout agendamento",
+        "type": "flow",
+        "label": "Checkout agendamento"
+      },
+      {
+        "id": "flow:Checkout plano",
+        "type": "flow",
+        "label": "Checkout plano"
+      },
+      {
+        "id": "flow:PaymentMetadata → Payment",
+        "type": "flow",
+        "label": "PaymentMetadata → Payment"
+      },
+      {
+        "id": "risk:ADR-003",
+        "type": "risk",
+        "label": "Alto"
+      },
+      {
+        "id": "ADR-004",
+        "type": "decision",
+        "label": "Appointment Archive — adminArchivedAt soft-archive"
+      },
+      {
+        "id": "file:src/app/lib/appointment-admin-archive.ts",
+        "type": "file",
+        "label": "src/app/lib/appointment-admin-archive.ts"
+      },
+      {
+        "id": "file:prisma/migrations/20260617120000_appointment_admin_archive/",
+        "type": "file",
+        "label": "prisma/migrations/20260617120000_appointment_admin_archive/"
+      },
+      {
+        "id": "flow:Aceite/recusa admin",
+        "type": "flow",
+        "label": "Aceite/recusa admin"
+      },
+      {
+        "id": "flow:Disponibilidade",
+        "type": "flow",
+        "label": "Disponibilidade"
+      },
+      {
+        "id": "flow:Checkout",
+        "type": "flow",
+        "label": "Checkout"
+      },
+      {
+        "id": "guardian:A9",
+        "type": "guardian",
+        "label": "A9"
+      },
+      {
+        "id": "risk:ADR-004",
+        "type": "risk",
+        "label": "Médio"
+      },
+      {
+        "id": "ADR-005",
+        "type": "decision",
+        "label": "Appointment Hidden — userHiddenAt (Minha Conta)"
+      },
+      {
+        "id": "file:src/app/lib/appointment-hidden.ts",
+        "type": "file",
+        "label": "src/app/lib/appointment-hidden.ts"
+      },
+      {
+        "id": "file:src/app/api/meus-dados/route.ts",
+        "type": "file",
+        "label": "src/app/api/meus-dados/route.ts"
+      },
+      {
+        "id": "flow:Minha Conta (leitura)",
+        "type": "flow",
+        "label": "Minha Conta (leitura)"
+      },
+      {
+        "id": "flow:Ocultação usuário",
+        "type": "flow",
+        "label": "Ocultação usuário"
+      },
+      {
+        "id": "risk:ADR-005",
+        "type": "risk",
+        "label": "Baixo"
+      },
+      {
+        "id": "ADR-006",
+        "type": "decision",
+        "label": "UserPlan Admin Inactive + User Hidden"
+      },
+      {
+        "id": "file:src/app/lib/user-plan-hidden.ts",
+        "type": "file",
+        "label": "src/app/lib/user-plan-hidden.ts"
+      },
+      {
+        "id": "file:src/app/lib/active-user-plan.ts",
+        "type": "file",
+        "label": "src/app/lib/active-user-plan.ts"
+      },
+      {
+        "id": "flow:Minha Conta",
+        "type": "flow",
+        "label": "Minha Conta"
+      },
+      {
+        "id": "flow:Planos",
+        "type": "flow",
+        "label": "Planos"
+      },
+      {
+        "id": "flow:Cupons de plano",
+        "type": "flow",
+        "label": "Cupons de plano"
+      },
+      {
+        "id": "risk:ADR-006",
+        "type": "risk",
+        "label": "Médio"
+      },
+      {
+        "id": "ADR-007",
+        "type": "decision",
+        "label": "Coupon Account Ownership"
+      },
+      {
+        "id": "file:src/app/lib/coupon-account-ownership.ts",
+        "type": "file",
+        "label": "src/app/lib/coupon-account-ownership.ts"
+      },
+      {
+        "id": "file:src/app/lib/coupon-visibility.ts",
+        "type": "file",
+        "label": "src/app/lib/coupon-visibility.ts"
+      },
+      {
+        "id": "file:scripts/repair-coupon-ownership.mjs",
+        "type": "file",
+        "label": "scripts/repair-coupon-ownership.mjs"
+      },
+      {
+        "id": "flow:Remarcação (cupom)",
+        "type": "flow",
+        "label": "Remarcação (cupom)"
+      },
+      {
+        "id": "flow:Resgate",
+        "type": "flow",
+        "label": "Resgate"
+      },
+      {
+        "id": "risk:ADR-007",
+        "type": "risk",
+        "label": "Alto"
+      },
+      {
+        "id": "ADR-008",
+        "type": "decision",
+        "label": "Refund Engine — outbound e inbound"
+      },
+      {
+        "id": "file:src/app/lib/appointment-refund-payment.ts",
+        "type": "file",
+        "label": "src/app/lib/appointment-refund-payment.ts"
+      },
+      {
+        "id": "file:src/app/lib/coupon-refund.ts",
+        "type": "file",
+        "label": "src/app/lib/coupon-refund.ts"
+      },
+      {
+        "id": "file:src/app/lib/plan-refund.ts",
+        "type": "file",
+        "label": "src/app/lib/plan-refund.ts"
+      },
+      {
+        "id": "file:src/app/api/agendamentos/escolher-reembolso/route.ts",
+        "type": "file",
+        "label": "src/app/api/agendamentos/escolher-reembolso/route.ts"
+      },
+      {
+        "id": "flow:Reembolso",
+        "type": "flow",
+        "label": "Reembolso"
+      },
+      {
+        "id": "flow:PAYMENT_REFUNDED",
+        "type": "flow",
+        "label": "PAYMENT_REFUNDED"
+      },
+      {
+        "id": "flow:Remarcação",
+        "type": "flow",
+        "label": "Remarcação"
+      },
+      {
+        "id": "risk:ADR-008",
+        "type": "risk",
+        "label": "Crítico"
+      },
+      {
+        "id": "ADR-009",
+        "type": "decision",
+        "label": "Asaas Integration — provedor de pagamento"
+      },
+      {
+        "id": "file:src/app/lib/asaas-fetch.ts",
+        "type": "file",
+        "label": "src/app/lib/asaas-fetch.ts"
+      },
+      {
+        "id": "file:src/app/lib/payment-providers.ts",
+        "type": "file",
+        "label": "src/app/lib/payment-providers.ts"
+      },
+      {
+        "id": "risk:ADR-009",
+        "type": "risk",
+        "label": "Crítico"
+      },
+      {
+        "id": "ADR-010",
+        "type": "decision",
+        "label": "Simulation Refactor — pagamentos simbólicos A1/A2"
+      },
+      {
+        "id": "file:src/app/lib/symbolic-payment.ts",
+        "type": "file",
+        "label": "src/app/lib/symbolic-payment.ts"
+      },
+      {
+        "id": "file:src/app/lib/simulation-coupon.ts",
+        "type": "file",
+        "label": "src/app/lib/simulation-coupon.ts"
+      },
+      {
+        "id": "file:src/app/lib/simulation-reset.ts",
+        "type": "file",
+        "label": "src/app/lib/simulation-reset.ts"
+      },
+      {
+        "id": "flow:Simulação admin",
+        "type": "flow",
+        "label": "Simulação admin"
+      },
+      {
+        "id": "flow:Checkout teste",
+        "type": "flow",
+        "label": "Checkout teste"
+      },
+      {
+        "id": "risk:ADR-010",
+        "type": "risk",
+        "label": "Médio"
+      },
+      {
+        "id": "ADR-011",
+        "type": "decision",
+        "label": "Domain Map — documentação estruturada de entidades"
+      },
+      {
+        "id": "file:docs/ai/domain-map.md",
+        "type": "file",
+        "label": "docs/ai/domain-map.md"
+      },
+      {
+        "id": "file:docs/ai/domain-dependencies.md",
+        "type": "file",
+        "label": "docs/ai/domain-dependencies.md"
+      },
+      {
+        "id": "file:docs/ai/domain-invariants.md",
+        "type": "file",
+        "label": "docs/ai/domain-invariants.md"
+      },
+      {
+        "id": "file:docs/ai/domain-risks.md",
+        "type": "file",
+        "label": "docs/ai/domain-risks.md"
+      },
+      {
+        "id": "entity:Service",
+        "type": "entity",
+        "label": "Service"
+      },
+      {
+        "id": "flow:Todas",
+        "type": "flow",
+        "label": "Todas"
+      },
+      {
+        "id": "risk:ADR-011",
+        "type": "risk",
+        "label": "Baixo"
+      },
+      {
+        "id": "ADR-012",
+        "type": "decision",
+        "label": "Architecture Agent Pipeline — agentes read-only"
+      },
+      {
+        "id": "file:scripts/architecture-agent.ts",
+        "type": "file",
+        "label": "scripts/architecture-agent.ts"
+      },
+      {
+        "id": "file:scripts/design-planner-agent.ts",
+        "type": "file",
+        "label": "scripts/design-planner-agent.ts"
+      },
+      {
+        "id": "file:scripts/implementation-planner-agent.ts",
+        "type": "file",
+        "label": "scripts/implementation-planner-agent.ts"
+      },
+      {
+        "id": "file:scripts/evolution-agent.ts",
+        "type": "file",
+        "label": "scripts/evolution-agent.ts"
+      },
+      {
+        "id": "file:scripts/human-report-agent.ts",
+        "type": "file",
+        "label": "scripts/human-report-agent.ts"
+      },
+      {
+        "id": "flow:Planejamento",
+        "type": "flow",
+        "label": "Planejamento"
+      },
+      {
+        "id": "flow:Deploy readiness",
+        "type": "flow",
+        "label": "Deploy readiness"
+      },
+      {
+        "id": "risk:ADR-012",
+        "type": "risk",
+        "label": "Baixo"
+      },
+      {
+        "id": "ADR-013",
+        "type": "decision",
+        "label": "Payment Admin Archive — arquivamento de pagamentos (planejado)"
+      },
+      {
+        "id": "file:src/app/lib/admin-delete-payment.ts",
+        "type": "file",
+        "label": "src/app/lib/admin-delete-payment.ts"
+      },
+      {
+        "id": "file:src/app/api/admin/pagamentos/route.ts",
+        "type": "file",
+        "label": "src/app/api/admin/pagamentos/route.ts"
+      },
+      {
+        "id": "file:prisma/schema.prisma",
+        "type": "file",
+        "label": "prisma/schema.prisma"
+      },
+      {
+        "id": "flow:Minha Conta (pagamentos)",
+        "type": "flow",
+        "label": "Minha Conta (pagamentos)"
+      },
+      {
+        "id": "flow:Admin pagamentos",
+        "type": "flow",
+        "label": "Admin pagamentos"
+      },
+      {
+        "id": "risk:ADR-013",
+        "type": "risk",
+        "label": "Alto"
+      },
+      {
+        "id": "ADR-014",
+        "type": "decision",
+        "label": "Vínculos lógicos sem FK — Payment → Appointment"
+      },
+      {
+        "id": "file:src/app/lib/asaas-agendamento-payment-effects.ts",
+        "type": "file",
+        "label": "src/app/lib/asaas-agendamento-payment-effects.ts"
+      },
+      {
+        "id": "flow:Payment → Appointment",
+        "type": "flow",
+        "label": "Payment → Appointment"
+      },
+      {
+        "id": "flow:Checkout carrinho",
+        "type": "flow",
+        "label": "Checkout carrinho"
+      },
+      {
+        "id": "risk:ADR-014",
+        "type": "risk",
+        "label": "Alto"
+      },
+      {
+        "id": "ADR-015",
+        "type": "decision",
+        "label": "Decision Engine — gate BLOCKED em mudanças CRITICAL"
+      },
+      {
+        "id": "file:reports/domain-guardian/decision.md",
+        "type": "file",
+        "label": "reports/domain-guardian/decision.md"
+      },
+      {
+        "id": "flow:Merge",
+        "type": "flow",
+        "label": "Merge"
+      },
+      {
+        "id": "flow:Deploy",
+        "type": "flow",
+        "label": "Deploy"
+      },
+      {
+        "id": "risk:ADR-015",
+        "type": "risk",
+        "label": "Médio"
+      }
+    ],
+    "edges": [
+      {
+        "from": "ADR-001",
+        "to": "file:scripts/domain-guardian-runner.ts",
+        "relation": "implementa"
+      },
+      {
+        "from": "ADR-001",
+        "to": "file:scripts/domain-guardian-audit.ts",
+        "relation": "implementa"
+      },
+      {
+        "from": "ADR-001",
+        "to": "file:scripts/domain-decision-engine.ts",
+        "relation": "implementa"
+      },
+      {
+        "from": "ADR-001",
+        "to": "file:reports/domain-guardian/latest.json",
+        "relation": "implementa"
+      },
+      {
+        "from": "ADR-001",
+        "to": "entity:Payment",
+        "relation": "afeta"
+      },
+      {
+        "from": "ADR-001",
+        "to": "entity:Appointment",
+        "relation": "afeta"
+      },
+      {
+        "from": "ADR-001",
+        "to": "entity:Coupon",
+        "relation": "afeta"
+      },
+      {
+        "from": "ADR-001",
+        "to": "entity:UserPlan",
+        "relation": "afeta"
+      },
+      {
+        "from": "ADR-001",
+        "to": "flow:Verificação pré-deploy",
+        "relation": "impacta"
+      },
+      {
+        "from": "ADR-001",
+        "to": "flow:Auditoria de banco",
+        "relation": "impacta"
+      },
+      {
+        "from": "ADR-001",
+        "to": "guardian:F1",
+        "relation": "verificado-por"
+      },
+      {
+        "from": "ADR-001",
+        "to": "guardian:F4",
+        "relation": "verificado-por"
+      },
+      {
+        "from": "ADR-001",
+        "to": "guardian:A5",
+        "relation": "verificado-por"
+      },
+      {
+        "from": "ADR-001",
+        "to": "guardian:A8",
+        "relation": "verificado-por"
+      },
+      {
+        "from": "ADR-001",
+        "to": "guardian:C1",
+        "relation": "verificado-por"
+      },
+      {
+        "from": "ADR-001",
+        "to": "guardian:C2",
+        "relation": "verificado-por"
+      },
+      {
+        "from": "ADR-001",
+        "to": "guardian:P2",
+        "relation": "verificado-por"
+      },
+      {
+        "from": "ADR-001",
+        "to": "guardian:S1",
+        "relation": "verificado-por"
+      },
+      {
+        "from": "ADR-001",
+        "to": "guardian:S4",
+        "relation": "verificado-por"
+      },
+      {
+        "from": "ADR-001",
+        "to": "guardian:X1",
+        "relation": "verificado-por"
+      },
+      {
+        "from": "ADR-001",
+        "to": "guardian:X2",
+        "relation": "verificado-por"
+      },
+      {
+        "from": "ADR-001",
+        "to": "risk:ADR-001",
+        "relation": "risco"
+      },
+      {
+        "from": "ADR-002",
+        "to": "file:src/app/api/webhooks/asaas/route.ts",
+        "relation": "implementa"
+      },
+      {
+        "from": "ADR-002",
+        "to": "file:src/app/lib/process-payment-webhook.ts",
+        "relation": "implementa"
+      },
+      {
+        "from": "ADR-002",
+        "to": "file:src/app/lib/asaas-agendamento-reconcile.ts",
+        "relation": "implementa"
+      },
+      {
+        "from": "ADR-002",
+        "to": "entity:Payment",
+        "relation": "afeta"
+      },
+      {
+        "from": "ADR-002",
+        "to": "entity:PaymentMetadata",
+        "relation": "afeta"
+      },
+      {
+        "from": "ADR-002",
+        "to": "flow:Webhook Asaas",
+        "relation": "impacta"
+      },
+      {
+        "from": "ADR-002",
+        "to": "flow:PAYMENT_RECEIVED",
+        "relation": "impacta"
+      },
+      {
+        "from": "ADR-002",
+        "to": "guardian:F1",
+        "relation": "verificado-por"
+      },
+      {
+        "from": "ADR-002",
+        "to": "guardian:F4",
+        "relation": "verificado-por"
+      },
+      {
+        "from": "ADR-002",
+        "to": "risk:ADR-002",
+        "relation": "risco"
+      },
+      {
+        "from": "ADR-003",
+        "to": "file:src/app/api/asaas/checkout-agendamento/route.ts",
+        "relation": "implementa"
+      },
+      {
+        "from": "ADR-003",
+        "to": "file:src/app/lib/symbolic-payment-resolve.ts",
+        "relation": "implementa"
+      },
+      {
+        "from": "ADR-003",
+        "to": "file:src/app/api/webhooks/asaas/route.ts",
+        "relation": "implementa"
+      },
+      {
+        "from": "ADR-003",
+        "to": "entity:PaymentMetadata",
+        "relation": "afeta"
+      },
+      {
+        "from": "ADR-003",
+        "to": "entity:Payment",
+        "relation": "afeta"
+      },
+      {
+        "from": "ADR-003",
+        "to": "entity:User",
+        "relation": "afeta"
+      },
+      {
+        "from": "ADR-003",
+        "to": "flow:Checkout agendamento",
+        "relation": "impacta"
+      },
+      {
+        "from": "ADR-003",
+        "to": "flow:Checkout plano",
+        "relation": "impacta"
+      },
+      {
+        "from": "ADR-003",
+        "to": "flow:PaymentMetadata → Payment",
+        "relation": "impacta"
+      },
+      {
+        "from": "ADR-003",
+        "to": "risk:ADR-003",
+        "relation": "risco"
+      },
+      {
+        "from": "ADR-004",
+        "to": "file:src/app/lib/appointment-admin-archive.ts",
+        "relation": "implementa"
+      },
+      {
+        "from": "ADR-004",
+        "to": "file:prisma/migrations/20260617120000_appointment_admin_archive/",
+        "relation": "implementa"
+      },
+      {
+        "from": "ADR-004",
+        "to": "entity:Appointment",
+        "relation": "afeta"
+      },
+      {
+        "from": "ADR-004",
+        "to": "flow:Aceite/recusa admin",
+        "relation": "impacta"
+      },
+      {
+        "from": "ADR-004",
+        "to": "flow:Disponibilidade",
+        "relation": "impacta"
+      },
+      {
+        "from": "ADR-004",
+        "to": "flow:Checkout",
+        "relation": "impacta"
+      },
+      {
+        "from": "ADR-004",
+        "to": "guardian:A5",
+        "relation": "verificado-por"
+      },
+      {
+        "from": "ADR-004",
+        "to": "guardian:A8",
+        "relation": "verificado-por"
+      },
+      {
+        "from": "ADR-004",
+        "to": "guardian:A9",
+        "relation": "verificado-por"
+      },
+      {
+        "from": "ADR-004",
+        "to": "risk:ADR-004",
+        "relation": "risco"
+      },
+      {
+        "from": "ADR-005",
+        "to": "file:src/app/lib/appointment-hidden.ts",
+        "relation": "implementa"
+      },
+      {
+        "from": "ADR-005",
+        "to": "file:src/app/api/meus-dados/route.ts",
+        "relation": "implementa"
+      },
+      {
+        "from": "ADR-005",
+        "to": "entity:Appointment",
+        "relation": "afeta"
+      },
+      {
+        "from": "ADR-005",
+        "to": "entity:User",
+        "relation": "afeta"
+      },
+      {
+        "from": "ADR-005",
+        "to": "flow:Minha Conta (leitura)",
+        "relation": "impacta"
+      },
+      {
+        "from": "ADR-005",
+        "to": "flow:Ocultação usuário",
+        "relation": "impacta"
+      },
+      {
+        "from": "ADR-005",
+        "to": "guardian:A8",
+        "relation": "verificado-por"
+      },
+      {
+        "from": "ADR-005",
+        "to": "risk:ADR-005",
+        "relation": "risco"
+      },
+      {
+        "from": "ADR-006",
+        "to": "file:src/app/lib/user-plan-hidden.ts",
+        "relation": "implementa"
+      },
+      {
+        "from": "ADR-006",
+        "to": "file:src/app/lib/active-user-plan.ts",
+        "relation": "implementa"
+      },
+      {
+        "from": "ADR-006",
+        "to": "entity:UserPlan",
+        "relation": "afeta"
+      },
+      {
+        "from": "ADR-006",
+        "to": "entity:Coupon",
+        "relation": "afeta"
+      },
+      {
+        "from": "ADR-006",
+        "to": "flow:Minha Conta",
+        "relation": "impacta"
+      },
+      {
+        "from": "ADR-006",
+        "to": "flow:Planos",
+        "relation": "impacta"
+      },
+      {
+        "from": "ADR-006",
+        "to": "flow:Cupons de plano",
+        "relation": "impacta"
+      },
+      {
+        "from": "ADR-006",
+        "to": "guardian:C1",
+        "relation": "verificado-por"
+      },
+      {
+        "from": "ADR-006",
+        "to": "risk:ADR-006",
+        "relation": "risco"
+      },
+      {
+        "from": "ADR-007",
+        "to": "file:src/app/lib/coupon-account-ownership.ts",
+        "relation": "implementa"
+      },
+      {
+        "from": "ADR-007",
+        "to": "file:src/app/lib/coupon-visibility.ts",
+        "relation": "implementa"
+      },
+      {
+        "from": "ADR-007",
+        "to": "file:scripts/repair-coupon-ownership.mjs",
+        "relation": "implementa"
+      },
+      {
+        "from": "ADR-007",
+        "to": "entity:Coupon",
+        "relation": "afeta"
+      },
+      {
+        "from": "ADR-007",
+        "to": "entity:User",
+        "relation": "afeta"
+      },
+      {
+        "from": "ADR-007",
+        "to": "entity:Payment",
+        "relation": "afeta"
+      },
+      {
+        "from": "ADR-007",
+        "to": "entity:Appointment",
+        "relation": "afeta"
+      },
+      {
+        "from": "ADR-007",
+        "to": "flow:Remarcação (cupom)",
+        "relation": "impacta"
+      },
+      {
+        "from": "ADR-007",
+        "to": "flow:Resgate",
+        "relation": "impacta"
+      },
+      {
+        "from": "ADR-007",
+        "to": "flow:Minha Conta",
+        "relation": "impacta"
+      },
+      {
+        "from": "ADR-007",
+        "to": "guardian:X1",
+        "relation": "verificado-por"
+      },
+      {
+        "from": "ADR-007",
+        "to": "guardian:X2",
+        "relation": "verificado-por"
+      },
+      {
+        "from": "ADR-007",
+        "to": "guardian:C1",
+        "relation": "verificado-por"
+      },
+      {
+        "from": "ADR-007",
+        "to": "risk:ADR-007",
+        "relation": "risco"
+      },
+      {
+        "from": "ADR-008",
+        "to": "file:src/app/lib/appointment-refund-payment.ts",
+        "relation": "implementa"
+      },
+      {
+        "from": "ADR-008",
+        "to": "file:src/app/lib/coupon-refund.ts",
+        "relation": "implementa"
+      },
+      {
+        "from": "ADR-008",
+        "to": "file:src/app/lib/plan-refund.ts",
+        "relation": "implementa"
+      },
+      {
+        "from": "ADR-008",
+        "to": "file:src/app/api/agendamentos/escolher-reembolso/route.ts",
+        "relation": "implementa"
+      },
+      {
+        "from": "ADR-008",
+        "to": "entity:Payment",
+        "relation": "afeta"
+      },
+      {
+        "from": "ADR-008",
+        "to": "entity:Appointment",
+        "relation": "afeta"
+      },
+      {
+        "from": "ADR-008",
+        "to": "entity:Coupon",
+        "relation": "afeta"
+      },
+      {
+        "from": "ADR-008",
+        "to": "entity:UserPlan",
+        "relation": "afeta"
+      },
+      {
+        "from": "ADR-008",
+        "to": "flow:Reembolso",
+        "relation": "impacta"
+      },
+      {
+        "from": "ADR-008",
+        "to": "flow:PAYMENT_REFUNDED",
+        "relation": "impacta"
+      },
+      {
+        "from": "ADR-008",
+        "to": "flow:Remarcação",
+        "relation": "impacta"
+      },
+      {
+        "from": "ADR-008",
+        "to": "guardian:F4",
+        "relation": "verificado-por"
+      },
+      {
+        "from": "ADR-008",
+        "to": "guardian:C1",
+        "relation": "verificado-por"
+      },
+      {
+        "from": "ADR-008",
+        "to": "risk:ADR-008",
+        "relation": "risco"
+      },
+      {
+        "from": "ADR-009",
+        "to": "file:src/app/lib/asaas-fetch.ts",
+        "relation": "implementa"
+      },
+      {
+        "from": "ADR-009",
+        "to": "file:src/app/lib/payment-providers.ts",
+        "relation": "implementa"
+      },
+      {
+        "from": "ADR-009",
+        "to": "file:src/app/api/webhooks/asaas/route.ts",
+        "relation": "implementa"
+      },
+      {
+        "from": "ADR-009",
+        "to": "entity:Payment",
+        "relation": "afeta"
+      },
+      {
+        "from": "ADR-009",
+        "to": "entity:PaymentMetadata",
+        "relation": "afeta"
+      },
+      {
+        "from": "ADR-009",
+        "to": "flow:Checkout",
+        "relation": "impacta"
+      },
+      {
+        "from": "ADR-009",
+        "to": "flow:Webhook Asaas",
+        "relation": "impacta"
+      },
+      {
+        "from": "ADR-009",
+        "to": "guardian:F1",
+        "relation": "verificado-por"
+      },
+      {
+        "from": "ADR-009",
+        "to": "risk:ADR-009",
+        "relation": "risco"
+      },
+      {
+        "from": "ADR-010",
+        "to": "file:src/app/lib/symbolic-payment.ts",
+        "relation": "implementa"
+      },
+      {
+        "from": "ADR-010",
+        "to": "file:src/app/lib/simulation-coupon.ts",
+        "relation": "implementa"
+      },
+      {
+        "from": "ADR-010",
+        "to": "file:src/app/lib/simulation-reset.ts",
+        "relation": "implementa"
+      },
+      {
+        "from": "ADR-010",
+        "to": "entity:Payment",
+        "relation": "afeta"
+      },
+      {
+        "from": "ADR-010",
+        "to": "entity:Coupon",
+        "relation": "afeta"
+      },
+      {
+        "from": "ADR-010",
+        "to": "flow:Simulação admin",
+        "relation": "impacta"
+      },
+      {
+        "from": "ADR-010",
+        "to": "flow:Checkout teste",
+        "relation": "impacta"
+      },
+      {
+        "from": "ADR-010",
+        "to": "guardian:S4",
+        "relation": "verificado-por"
+      },
+      {
+        "from": "ADR-010",
+        "to": "risk:ADR-010",
+        "relation": "risco"
+      },
+      {
+        "from": "ADR-011",
+        "to": "file:docs/ai/domain-map.md",
+        "relation": "implementa"
+      },
+      {
+        "from": "ADR-011",
+        "to": "file:docs/ai/domain-dependencies.md",
+        "relation": "implementa"
+      },
+      {
+        "from": "ADR-011",
+        "to": "file:docs/ai/domain-invariants.md",
+        "relation": "implementa"
+      },
+      {
+        "from": "ADR-011",
+        "to": "file:docs/ai/domain-risks.md",
+        "relation": "implementa"
+      },
+      {
+        "from": "ADR-011",
+        "to": "entity:Payment",
+        "relation": "afeta"
+      },
+      {
+        "from": "ADR-011",
+        "to": "entity:Appointment",
+        "relation": "afeta"
+      },
+      {
+        "from": "ADR-011",
+        "to": "entity:Coupon",
+        "relation": "afeta"
+      },
+      {
+        "from": "ADR-011",
+        "to": "entity:UserPlan",
+        "relation": "afeta"
+      },
+      {
+        "from": "ADR-011",
+        "to": "entity:User",
+        "relation": "afeta"
+      },
+      {
+        "from": "ADR-011",
+        "to": "entity:Service",
+        "relation": "afeta"
+      },
+      {
+        "from": "ADR-011",
+        "to": "flow:Todas",
+        "relation": "impacta"
+      },
+      {
+        "from": "ADR-011",
+        "to": "risk:ADR-011",
+        "relation": "risco"
+      },
+      {
+        "from": "ADR-012",
+        "to": "file:scripts/architecture-agent.ts",
+        "relation": "implementa"
+      },
+      {
+        "from": "ADR-012",
+        "to": "file:scripts/design-planner-agent.ts",
+        "relation": "implementa"
+      },
+      {
+        "from": "ADR-012",
+        "to": "file:scripts/implementation-planner-agent.ts",
+        "relation": "implementa"
+      },
+      {
+        "from": "ADR-012",
+        "to": "file:scripts/evolution-agent.ts",
+        "relation": "implementa"
+      },
+      {
+        "from": "ADR-012",
+        "to": "file:scripts/human-report-agent.ts",
+        "relation": "implementa"
+      },
+      {
+        "from": "ADR-012",
+        "to": "flow:Planejamento",
+        "relation": "impacta"
+      },
+      {
+        "from": "ADR-012",
+        "to": "flow:Deploy readiness",
+        "relation": "impacta"
+      },
+      {
+        "from": "ADR-012",
+        "to": "risk:ADR-012",
+        "relation": "risco"
+      },
+      {
+        "from": "ADR-013",
+        "to": "file:src/app/lib/admin-delete-payment.ts",
+        "relation": "implementa"
+      },
+      {
+        "from": "ADR-013",
+        "to": "file:src/app/api/admin/pagamentos/route.ts",
+        "relation": "implementa"
+      },
+      {
+        "from": "ADR-013",
+        "to": "file:prisma/schema.prisma",
+        "relation": "implementa"
+      },
+      {
+        "from": "ADR-013",
+        "to": "entity:Payment",
+        "relation": "afeta"
+      },
+      {
+        "from": "ADR-013",
+        "to": "flow:Minha Conta (pagamentos)",
+        "relation": "impacta"
+      },
+      {
+        "from": "ADR-013",
+        "to": "flow:Admin pagamentos",
+        "relation": "impacta"
+      },
+      {
+        "from": "ADR-013",
+        "to": "guardian:F1",
+        "relation": "verificado-por"
+      },
+      {
+        "from": "ADR-013",
+        "to": "guardian:F4",
+        "relation": "verificado-por"
+      },
+      {
+        "from": "ADR-013",
+        "to": "risk:ADR-013",
+        "relation": "risco"
+      },
+      {
+        "from": "ADR-014",
+        "to": "file:prisma/schema.prisma",
+        "relation": "implementa"
+      },
+      {
+        "from": "ADR-014",
+        "to": "file:src/app/lib/asaas-agendamento-payment-effects.ts",
+        "relation": "implementa"
+      },
+      {
+        "from": "ADR-014",
+        "to": "entity:Payment",
+        "relation": "afeta"
+      },
+      {
+        "from": "ADR-014",
+        "to": "entity:Appointment",
+        "relation": "afeta"
+      },
+      {
+        "from": "ADR-014",
+        "to": "flow:Payment → Appointment",
+        "relation": "impacta"
+      },
+      {
+        "from": "ADR-014",
+        "to": "flow:Checkout carrinho",
+        "relation": "impacta"
+      },
+      {
+        "from": "ADR-014",
+        "to": "guardian:F4",
+        "relation": "verificado-por"
+      },
+      {
+        "from": "ADR-014",
+        "to": "risk:ADR-014",
+        "relation": "risco"
+      },
+      {
+        "from": "ADR-015",
+        "to": "file:scripts/domain-decision-engine.ts",
+        "relation": "implementa"
+      },
+      {
+        "from": "ADR-015",
+        "to": "file:reports/domain-guardian/decision.md",
+        "relation": "implementa"
+      },
+      {
+        "from": "ADR-015",
+        "to": "entity:Payment",
+        "relation": "afeta"
+      },
+      {
+        "from": "ADR-015",
+        "to": "entity:Appointment",
+        "relation": "afeta"
+      },
+      {
+        "from": "ADR-015",
+        "to": "entity:Coupon",
+        "relation": "afeta"
+      },
+      {
+        "from": "ADR-015",
+        "to": "flow:Merge",
+        "relation": "impacta"
+      },
+      {
+        "from": "ADR-015",
+        "to": "flow:Deploy",
+        "relation": "impacta"
+      },
+      {
+        "from": "ADR-015",
+        "to": "risk:ADR-015",
+        "relation": "risco"
+      }
+    ],
+    "ascii": "Decision\n↓\nArquivos\n↓\nEntidades\n↓\nFluxos\n↓\nChecks Guardian\n↓\nRiscos"
+  },
+  "context": {
+    "sourcesConsulted": [
+      {
+        "path": "reports/domain-guardian/action-plan.md",
+        "loaded": true
+      },
+      {
+        "path": "reports/domain-guardian/change-analysis.md",
+        "loaded": true
+      },
+      {
+        "path": "reports/domain-guardian/decision.md",
+        "loaded": true
+      },
+      {
+        "path": "reports/domain-guardian/advisor.md",
+        "loaded": true
+      },
+      {
+        "path": "reports/domain-guardian/pr-review.md",
+        "loaded": true
+      },
+      {
+        "path": "reports/domain-guardian/review-checklist.md",
+        "loaded": true
+      },
+      {
+        "path": "reports/domain-guardian/issues.md",
+        "loaded": true
+      },
+      {
+        "path": "docs/ai/domain-map.md",
+        "loaded": true
+      },
+      {
+        "path": "docs/ai/domain-dependencies.md",
+        "loaded": true
+      },
+      {
+        "path": "docs/ai/domain-invariants.md",
+        "loaded": true
+      },
+      {
+        "path": "docs/ai/payment-lifecycle-audit.md",
+        "loaded": true
+      },
+      {
+        "path": "docs/ai/domain-risks.md",
+        "loaded": true
+      },
+      {
+        "path": "docs/ai/appointment-archive-audit.md",
+        "loaded": true
+      }
+    ],
+    "gitHead": "fd9ff6d",
+    "gitBranch": "main",
+    "existingAdrDir": true
+  },
+  "limitations": [
+    "ADRs inferidos de auditorias, domain-map e arquivos — não lê comentários no código-fonte.",
+    "Detecção por padrões de caminho; decisões não documentadas podem faltar.",
+    "Datas aproximadas quando não há commit explícito no histórico.",
+    "ADR-013 permanece Proposto até implementação confirmada no código.",
+    "Não substitui revisão humana de arquitetura.",
+    "Grafo limitado a 5 arquivos por decisão para tamanho do JSON."
+  ]
+}

@@ -1,0 +1,177 @@
+{
+  "reportId": "QE-01a-auth-flow",
+  "mode": "READ_ONLY",
+  "generatedAt": "2026-07-10T03:25:00.000Z",
+  "language": "pt-BR",
+  "projectName": "THouse",
+  "branch": "pr03-clean",
+  "head": "66a8e5c",
+  "answers": {
+    "1_registroApiFlow": {
+      "file": "src/app/api/registro/route.ts",
+      "clientEntry": "src/app/registro/page.tsx → AuthContext.registro()",
+      "steps": [
+        "POST /api/registro — body JSON",
+        "registroSchema.safeParse (src/app/lib/validations.ts)",
+        "prisma.user.findUnique — verifica email duplicado",
+        "bcrypt.hash(senha, 10)",
+        "prisma.user.create — role USER, campos do formulário",
+        "NextResponse.json({ user: { id, nomeArtistico, email, role } })",
+        "Sem cookies(), sem prisma.session.create"
+      ],
+      "methods": ["POST", "GET (405)"],
+      "runtime": "nodejs"
+    },
+    "2_afterUserCreated": {
+      "server": "Retorna JSON 200 com subset do user — fim da request",
+      "database": "User persistido; nenhuma Session criada",
+      "cookies": "Nenhum cookie Set-Cookie",
+      "client": "AuthContext.registro() → refresh() → GET /api/me → user:null",
+      "page": "registro/page.tsx → router.push('/conta')",
+      "contaPage": "user null → router.push('/login') — bounce indireto"
+    },
+    "3_reusableSessionFunction": {
+      "answer": false,
+      "detail": "Não existe helper createSession() em auth.ts ou outro módulo",
+      "onlyLocation": "src/app/api/login/route.ts linhas 75-89 (inline)",
+      "authLibProvides": ["getSessionUser()", "requireAuth()", "requireAdmin() — leitura/validação apenas"]
+    },
+    "4_loginSessionCreation": {
+      "file": "src/app/api/login/route.ts",
+      "preconditions": [
+        "loginSchema validado",
+        "user encontrado",
+        "bcrypt.compare OK",
+        "user.blocked === false"
+      ],
+      "sessionBlock": "prisma.session.create({ userId, expiresAt: now + 7 dias })",
+      "cookieBlock": "cookies().set('session_id', session.id, { httpOnly, path:/, sameSite:lax, secure:production })",
+      "response": "JSON { user: { id, nomeArtistico, email, role } }"
+    },
+    "5_registroCouldReuseSameFunction": {
+      "answer": true,
+      "detail": "Após user.create, registro pode invocar o mesmo bloco session+cookie do login",
+      "ideal": "Extrair para createUserSession(userId) em auth.ts e chamar de login e registro",
+      "userIdAvailable": true,
+      "passwordAlreadyValidated": true,
+      "blockedCheck": "Não necessário no registro (usuário recém-criado)"
+    },
+    "6_duplicationRisk": {
+      "answer": true,
+      "ifCopyPaste": "Alto — session TTL, cookie flags duplicados em dois routes",
+      "ifSharedHelper": "Baixo — única fonte de verdade",
+      "currentState": "Lógica existe só no login; registro não duplica porque não cria sessão"
+    },
+    "7_loginCookies": {
+      "count": 1,
+      "cookies": [
+        {
+          "name": "session_id",
+          "value": "Session.id (UUID)",
+          "httpOnly": true,
+          "path": "/",
+          "sameSite": "lax",
+          "secure": "process.env.NODE_ENV === 'production'",
+          "maxAge": "não definido explicitamente — persiste como session cookie do browser até logout ou fechar browser (expiração real validada no DB via expiresAt)"
+        }
+      ],
+      "note": "Nenhum outro cookie de auth é setado no login"
+    },
+    "8_loginSessionStepByStep": [
+      "1. Cliente POST /api/login { email, senha } com credentials:include",
+      "2. Validação Zod loginSchema",
+      "3. prisma.user.findUnique({ where: { email } })",
+      "4. bcrypt.compare(senha, user.senha)",
+      "5. prisma.loginLog.create (auditoria, success true/false)",
+      "6. Se blocked → 403",
+      "7. prisma.session.create({ userId: user.id, expiresAt: +7d })",
+      "8. cookies().set('session_id', session.id, flags)",
+      "9. Response JSON user subset",
+      "10. AuthContext.login() → refresh() → GET /api/me",
+      "11. getSessionUser(): cookie → session.findUnique → expiresAt check → user",
+      "12. AuthContext.setUser(data.user)"
+    ],
+    "9_minimalChangeForLoginEquivalentState": {
+      "serverOnly": {
+        "file": "src/app/api/registro/route.ts",
+        "after": "prisma.user.create",
+        "add": [
+          "prisma.session.create({ userId: user.id, expiresAt: +7d })",
+          "cookies().set('session_id', session.id, mesmas flags do login)"
+        ],
+        "linesOfCode": "~15 (ou 1 chamada a helper extraído)",
+        "responseShape": "Já idêntica ao login — sem mudança"
+      },
+      "optionalClient": {
+        "file": "src/app/registro/page.tsx",
+        "change": "router.push('/minha-conta') em vez de '/conta' — apenas UX, não auth",
+        "requiredForAuth": false
+      },
+      "optionalAudit": "loginLog.create success:true — paridade com login, não obrigatório para sessão",
+      "noChangeNeeded": ["AuthContext.registro já chama refresh()", "auth.ts leitura já funciona"]
+    },
+    "10_contaVsMinhaConta": {
+      "conta": {
+        "path": "/conta",
+        "file": "src/app/conta/page.tsx",
+        "api": "GET /api/conta, POST /api/conta/update",
+        "purpose": "Perfil cadastral — visualizar e editar dados pessoais (nome, email, telefone, endereço, senha)",
+        "headerLabel": "Perfil"
+      },
+      "minhaConta": {
+        "path": "/minha-conta",
+        "file": "src/app/minha-conta/page.tsx",
+        "api": "GET /api/meus-dados (+ várias ações)",
+        "purpose": "Dashboard operacional — agendamentos, planos, cupons, FAQ, reembolsos, entregas",
+        "headerLabel": "Minha Conta"
+      },
+      "reason": "Separação de responsabilidades: /conta = CRUD do perfil; /minha-conta = visão transacional do cliente no produto",
+      "redirectMismatch": "Login e registro redirecionam para /conta (perfil), não para /minha-conta (dashboard)"
+    },
+    "bestSolution": {
+      "choice": "A",
+      "label": "Login automático",
+      "justification": [
+        "AuthContext.registro() já assume sessão via refresh() após sucesso",
+        "registro/page.tsx já redireciona para /conta (rota protegida)",
+        "Credenciais já validadas no registro — criar sessão é equivalente seguro ao login",
+        "UX padrão de mercado: registrar = entrar",
+        "Menor alteração: reutilizar bloco session+cookie do login (idealmente extraído)",
+        "Opção B mantém bounce registro→conta→login e frustra o usuário sem ganho de segurança"
+      ],
+      "rejectedB": {
+        "label": "Redirecionar para Login",
+        "whyNot": "Mudança menor no server mas pior UX; exige alterar registro/page.tsx + mensagem; AuthContext.registro retornaria true sem user até novo login — inconsistente com código atual"
+      }
+    }
+  },
+  "architectureDiagram": {
+    "registroAtual": [
+      "registro/page.tsx",
+      "→ POST /api/registro",
+      "→ user.create",
+      "→ JSON (sem cookie)",
+      "→ refresh() → /api/me → null",
+      "→ /conta → /login"
+    ],
+    "loginReferencia": [
+      "login/page.tsx",
+      "→ POST /api/login",
+      "→ session.create + cookie",
+      "→ refresh() → /api/me → user",
+      "→ /conta OK"
+    ],
+    "registroProposto": [
+      "registro/page.tsx",
+      "→ POST /api/registro",
+      "→ user.create + session.create + cookie",
+      "→ refresh() → /api/me → user",
+      "→ /conta ou /minha-conta OK"
+    ]
+  },
+  "constraintsRespected": {
+    "noCodeChanges": true,
+    "noCommits": true,
+    "noDatabaseChanges": true
+  }
+}

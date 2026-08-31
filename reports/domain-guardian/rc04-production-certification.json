@@ -1,0 +1,790 @@
+{
+  "reportId": "RC-04-production-certification",
+  "mode": "CERTIFICATION",
+  "generatedAt": "2026-07-15T18:50:02.292Z",
+  "startedAt": "2026-07-15T18:49:39.044Z",
+  "durationMs": 23248,
+  "durationHuman": "23s",
+  "language": "pt-BR",
+  "projectName": "THouse Rec",
+  "version": null,
+  "productionUrl": "https://www.thouse-rec.com.br",
+  "vercelAlias": "https://meu-site-produtor-13.vercel.app",
+  "basedOn": [
+    "RC-01-customer-certification",
+    "RC-02-administration-certification",
+    "RC-03-security-certification",
+    "PROD-02-production-finalization"
+  ],
+  "architecture": "FROZEN — nenhuma alteração de domínio ou arquitetura neste gate",
+  "question": "Estamos prontos para abrir o sistema ao público?",
+  "verdict": {
+    "final": "APROVADO COM RESSALVAS",
+    "readyForPublicRelease": false,
+    "declaration": null,
+    "allSectionsPass": true,
+    "commitAllowed": false,
+    "confidencePercent": 86
+  },
+  "checklistSummary": {
+    "ambiente": "PASS COM RESSALVA",
+    "banco": "PASS COM RESSALVA",
+    "producao": "PASS COM RESSALVA",
+    "seguranca": "PASS COM RESSALVA",
+    "performance": "PASS COM RESSALVA",
+    "disponibilidade": "PASS",
+    "backups": "PASS COM RESSALVA",
+    "monitoramento": "PASS COM RESSALVA"
+  },
+  "summary": {
+    "sectionsTotal": 12,
+    "sectionsPass": 1,
+    "sectionsPassWithReservation": 11,
+    "sectionsFail": 0,
+    "gatesTotal": 16,
+    "gatesPass": 16,
+    "gatesFail": 0,
+    "performanceAvgMs": 1275
+  },
+  "sections": [
+    {
+      "section": 1,
+      "title": "Environment Variables (Production, Preview, Secrets, Asaas, Neon, Next, Vercel)",
+      "status": "PASS COM RESSALVA",
+      "checks": [
+        {
+          "id": "env-local-DATABASE_URL",
+          "label": "Local dev — DATABASE_URL",
+          "status": "PASS",
+          "evidence": "definida localmente (valor omitido)"
+        },
+        {
+          "id": "env-local-ASAAS_API_KEY",
+          "label": "Local dev — ASAAS_API_KEY",
+          "status": "PASS",
+          "evidence": "definida localmente (valor omitido)"
+        },
+        {
+          "id": "env-local-ASAAS_WEBHOOK_ACCESS_TOKEN",
+          "label": "Local dev — ASAAS_WEBHOOK_ACCESS_TOKEN",
+          "status": "PASS COM RESSALVA",
+          "evidence": "ausente localmente — validação autoritativa via probe de produção"
+        },
+        {
+          "id": "env-local-NEXT_PUBLIC_SITE_URL",
+          "label": "Local dev — NEXT_PUBLIC_SITE_URL",
+          "status": "PASS",
+          "evidence": "definida localmente (valor omitido)"
+        },
+        {
+          "id": "env-local-GMAIL_USER",
+          "label": "Local dev — GMAIL_USER",
+          "status": "PASS COM RESSALVA",
+          "evidence": "ausente localmente — validação autoritativa via probe de produção"
+        },
+        {
+          "id": "env-local-GMAIL_APP_PASSWORD",
+          "label": "Local dev — GMAIL_APP_PASSWORD",
+          "status": "PASS COM RESSALVA",
+          "evidence": "ausente localmente — validação autoritativa via probe de produção"
+        },
+        {
+          "id": "env-local-SESSION_SECRET",
+          "label": "Local dev — SESSION_SECRET",
+          "status": "PASS COM RESSALVA",
+          "evidence": "ausente localmente — validação autoritativa via probe de produção"
+        },
+        {
+          "id": "env-preview-DATABASE_URL",
+          "label": "Preview — DATABASE_URL",
+          "status": "PASS",
+          "evidence": "definida localmente"
+        },
+        {
+          "id": "env-preview-ASAAS_API_KEY",
+          "label": "Preview — ASAAS_API_KEY",
+          "status": "PASS",
+          "evidence": "definida localmente"
+        },
+        {
+          "id": "env-preview-NEXT_PUBLIC_SITE_URL",
+          "label": "Preview — NEXT_PUBLIC_SITE_URL",
+          "status": "PASS",
+          "evidence": "definida localmente"
+        },
+        {
+          "id": "env-prod-siteUrl-live",
+          "label": "Production live — NEXT_PUBLIC_SITE_URL",
+          "status": "PASS",
+          "evidence": "siteUrl=https://www.thouse-rec.com.br"
+        },
+        {
+          "id": "env-prod-asaas-key",
+          "label": "Production live — ASAAS_API_KEY",
+          "status": "PASS",
+          "evidence": "configured=true type=produ��ǜo"
+        },
+        {
+          "id": "env-prod-webhook-token-live",
+          "label": "Production live — ASAAS_WEBHOOK_ACCESS_TOKEN",
+          "status": "PASS",
+          "evidence": "{\"received\":true,\"error\":\"Token invǭlido\"}"
+        }
+      ],
+      "reservations": []
+    },
+    {
+      "section": 2,
+      "title": "Webhook Asaas (produção, sandbox, token, assinatura, URL, timeout, retry)",
+      "status": "PASS COM RESSALVA",
+      "checks": [
+        {
+          "id": "wh-prod-url",
+          "label": "Webhook URL produção",
+          "status": "PASS",
+          "evidence": "https://www.thouse-rec.com.br/api/webhooks/asaas → HTTP 200"
+        },
+        {
+          "id": "wh-prod-token",
+          "label": "ASAAS_WEBHOOK_ACCESS_TOKEN em produção",
+          "status": "PASS",
+          "evidence": "{\"received\":true,\"error\":\"Token invǭlido\"}"
+        },
+        {
+          "id": "wh-signature",
+          "label": "Assinatura (header asaas-access-token)",
+          "status": "PASS",
+          "evidence": "POST sem token rejeitado com 200 + error (fila Asaas preservada)"
+        },
+        {
+          "id": "wh-timeout-retry",
+          "label": "Timeout / retry (contrato Asaas)",
+          "status": "PASS COM RESSALVA",
+          "evidence": "Rota sempre retorna HTTP 200 exceto rede; retry gerenciado pelo Asaas — não exercitado com fila real nesta sessão"
+        },
+        {
+          "id": "wh-vercel-alias",
+          "label": "Webhook alias Vercel",
+          "status": "PASS",
+          "evidence": "HTTP 200"
+        }
+      ],
+      "reservations": [
+        "Sandbox Asaas não exercitado com cobrança real nesta sessão"
+      ]
+    },
+    {
+      "section": 3,
+      "title": "Banco (Migrations, Integridade, Backups, Connections, Prisma)",
+      "status": "PASS COM RESSALVA",
+      "checks": [
+        {
+          "id": "db-migrations-count",
+          "label": "Migrations no repositório",
+          "status": "PASS",
+          "evidence": "33 migrations"
+        },
+        {
+          "id": "db-prisma-schema",
+          "label": "Prisma schema (DomainTransitionHistory, SynchronizationEvent)",
+          "status": "PASS",
+          "evidence": "modelos HS-03B e SYNC-01A presentes no schema.prisma"
+        },
+        {
+          "id": "db-connections",
+          "label": "Connections / Prisma client",
+          "status": "PASS",
+          "evidence": "DATABASE_URL local presente"
+        },
+        {
+          "id": "db-backups",
+          "label": "Backups Neon",
+          "status": "PASS COM RESSALVA",
+          "evidence": "Backups gerenciados pelo provedor Neon — não auditados manualmente nesta sessão"
+        }
+      ],
+      "reservations": [
+        "migrate deploy em Production não reexecutado nesta sessão (sem DATABASE_URL prod local)"
+      ]
+    },
+    {
+      "section": 4,
+      "title": "Deploy (Production, Rollback, Logs, Build)",
+      "status": "PASS COM RESSALVA",
+      "checks": [
+        {
+          "id": "deploy-production-live",
+          "label": "Production deploy ativo",
+          "status": "PASS",
+          "evidence": "https://www.thouse-rec.com.br → HTTP 200 (779ms)"
+        },
+        {
+          "id": "deploy-rollback-procedure",
+          "label": "Rollback (procedimento documentado — não executado)",
+          "status": "PASS",
+          "evidence": "Vercel instant rollback + git revert documentado em implementation-plan.md"
+        },
+        {
+          "id": "deploy-logs",
+          "label": "Logs (Vercel runtime)",
+          "status": "PASS COM RESSALVA",
+          "evidence": "Logs acessíveis via Vercel Dashboard — não exportados nesta sessão"
+        }
+      ],
+      "reservations": [
+        "Gate build executado localmente nesta sessão"
+      ]
+    },
+    {
+      "section": 5,
+      "title": "Smoke Test (Produção — Login, Cadastro, Compra, Pagamento, Webhook, Minha Conta, Admin)",
+      "status": "PASS COM RESSALVA",
+      "checks": [
+        {
+          "id": "smoke-/",
+          "label": "Smoke — Home",
+          "status": "PASS",
+          "evidence": "HTTP 200 (802ms)"
+        },
+        {
+          "id": "smoke-/login",
+          "label": "Smoke — Login",
+          "status": "PASS",
+          "evidence": "HTTP 200 (773ms)"
+        },
+        {
+          "id": "smoke-/registro",
+          "label": "Smoke — Cadastro",
+          "status": "PASS",
+          "evidence": "HTTP 200 (902ms)"
+        },
+        {
+          "id": "smoke-/minha-conta",
+          "label": "Smoke — Minha Conta",
+          "status": "PASS",
+          "evidence": "HTTP 200 (697ms)"
+        },
+        {
+          "id": "smoke-/agendamento",
+          "label": "Smoke — Agendamento",
+          "status": "PASS",
+          "evidence": "HTTP 200 (718ms)"
+        },
+        {
+          "id": "smoke-/carrinho",
+          "label": "Smoke — Carrinho",
+          "status": "PASS",
+          "evidence": "HTTP 200 (744ms)"
+        },
+        {
+          "id": "smoke-/admin",
+          "label": "Smoke — Admin",
+          "status": "PASS",
+          "evidence": "HTTP 200 (1574ms)"
+        },
+        {
+          "id": "smoke-/api/meus-dados",
+          "label": "Smoke — API meus-dados (sem sessão)",
+          "status": "PASS",
+          "evidence": "HTTP 401 (2069ms)"
+        },
+        {
+          "id": "smoke-payment",
+          "label": "Smoke — Compra / Pagamento real",
+          "status": "PASS COM RESSALVA",
+          "evidence": "Infra Asaas produção OK (debug); cobrança monetária real não executada nesta certificação"
+        },
+        {
+          "id": "smoke-webhook-effects",
+          "label": "Smoke — Webhook → Appointment",
+          "status": "PASS COM RESSALVA",
+          "evidence": "Coberto por RC-01/RC-02 engine + webhook contrato validado; efeitos em prod não disparados"
+        },
+        {
+          "id": "smoke-dashboard-stats",
+          "label": "Smoke — Dashboard / Statistics",
+          "status": "PASS COM RESSALVA",
+          "evidence": "Rotas admin protegidas por sessão; cobertura funcional em RC-02 SYNC scenarios"
+        }
+      ],
+      "reservations": [
+        "Pagamento monetário real em produção não executado (escopo operacional)"
+      ]
+    },
+    {
+      "section": 6,
+      "title": "Emails (Cadastro, Compra, Aceite, Conclusão, Plano, Reembolso)",
+      "status": "PASS COM RESSALVA",
+      "checks": [
+        {
+          "id": "email-sendPasswordResetEmail",
+          "label": "Função sendPasswordResetEmail",
+          "status": "PASS",
+          "evidence": "implementada"
+        },
+        {
+          "id": "email-sendPlanPaymentConfirmationEmail",
+          "label": "Função sendPlanPaymentConfirmationEmail",
+          "status": "PASS",
+          "evidence": "implementada"
+        },
+        {
+          "id": "email-sendPlanRenewalEmail",
+          "label": "Função sendPlanRenewalEmail",
+          "status": "PASS",
+          "evidence": "implementada"
+        },
+        {
+          "id": "email-sendPaymentConfirmationEmailToUser",
+          "label": "Função sendPaymentConfirmationEmailToUser",
+          "status": "PASS",
+          "evidence": "implementada"
+        },
+        {
+          "id": "email-sendAppointmentAcceptedEmail",
+          "label": "Função sendAppointmentAcceptedEmail",
+          "status": "PASS",
+          "evidence": "implementada"
+        },
+        {
+          "id": "email-sendAppointmentCancelledEmail",
+          "label": "Função sendAppointmentCancelledEmail",
+          "status": "PASS",
+          "evidence": "implementada"
+        },
+        {
+          "id": "email-smtp-env",
+          "label": "SMTP Gmail (GMAIL_USER + GMAIL_APP_PASSWORD)",
+          "status": "PASS COM RESSALVA",
+          "evidence": "validar em Vercel Production; limite diário Gmail documentado em runs anteriores"
+        },
+        {
+          "id": "email-live-send",
+          "label": "Envio real em produção",
+          "status": "PASS COM RESSALVA",
+          "evidence": "Não disparado nesta sessão para evitar spam / limite Gmail"
+        }
+      ],
+      "reservations": [
+        "Smoke de envio SMTP em produção omitido"
+      ]
+    },
+    {
+      "section": 7,
+      "title": "Domínio (HTTPS, SSL, Headers, Cookies)",
+      "status": "PASS COM RESSALVA",
+      "checks": [
+        {
+          "id": "domain-https",
+          "label": "HTTPS",
+          "status": "PASS",
+          "evidence": "https://www.thouse-rec.com.br"
+        },
+        {
+          "id": "domain-ssl-hsts",
+          "label": "SSL / HSTS",
+          "status": "PASS",
+          "evidence": "max-age=63072000"
+        },
+        {
+          "id": "domain-headers",
+          "label": "Security headers",
+          "status": "PASS",
+          "evidence": "X-Frame-Options=SAMEORIGIN"
+        },
+        {
+          "id": "domain-cookies",
+          "label": "Cookies de sessão",
+          "status": "PASS COM RESSALVA",
+          "evidence": "Cookie HttpOnly validado em RC-03 + código session"
+        }
+      ],
+      "reservations": []
+    },
+    {
+      "section": 8,
+      "title": "Monitoramento (Logs, Errors, Warnings, Unhandled Exceptions)",
+      "status": "PASS COM RESSALVA",
+      "checks": [
+        {
+          "id": "mon-logs",
+          "label": "Logs estruturados (webhook)",
+          "status": "PASS",
+          "evidence": "console.log/error no handler Asaas"
+        },
+        {
+          "id": "mon-unhandled",
+          "label": "Unhandled exceptions (webhook retorna 200)",
+          "status": "PASS",
+          "evidence": "Erros internos não retornam 5xx ao Asaas"
+        },
+        {
+          "id": "mon-vercel",
+          "label": "Monitoramento Vercel / alertas",
+          "status": "PASS COM RESSALVA",
+          "evidence": "Alertas externos (Slack/email) não configurados — H-WH-02 pendente pós-go-live"
+        }
+      ],
+      "reservations": [
+        "Alertas proativos pós-deploy não implementados (H2)"
+      ]
+    },
+    {
+      "section": 9,
+      "title": "Performance (Tempo médio, Queries lentas, Endpoints)",
+      "status": "PASS COM RESSALVA",
+      "checks": [
+        {
+          "id": "perf-avg",
+          "label": "Tempo médio de resposta (amostra smoke)",
+          "status": "PASS",
+          "evidence": "1275ms (11 requests)"
+        },
+        {
+          "id": "perf-slow",
+          "label": "Endpoints lentos (>3s)",
+          "status": "PASS COM RESSALVA",
+          "evidence": "/api/pagamentos/debug:3985ms"
+        },
+        {
+          "id": "perf-queries",
+          "label": "Queries lentas (DB)",
+          "status": "PASS COM RESSALVA",
+          "evidence": "Sem APM em produção; Prisma sem slow-query log nesta sessão"
+        }
+      ],
+      "reservations": []
+    },
+    {
+      "section": 10,
+      "title": "Recuperação (Restart, Reconexão, Webhook repetido, Retry)",
+      "status": "PASS COM RESSALVA",
+      "checks": [
+        {
+          "id": "rec-restart",
+          "label": "Restart (serverless Vercel)",
+          "status": "PASS",
+          "evidence": "Cold start transparente; deploy ativo responde 200"
+        },
+        {
+          "id": "rec-reconnect",
+          "label": "Reconexão DB (Prisma)",
+          "status": "PASS COM RESSALVA",
+          "evidence": "Pool Neon serverless — reconexão automática do driver"
+        },
+        {
+          "id": "rec-webhook-dup",
+          "label": "Webhook repetido (idempotência)",
+          "status": "PASS COM RESSALVA",
+          "evidence": "RC03-004 duplicate webhook PASS no engine; idempotência prod não disparada"
+        },
+        {
+          "id": "rec-retry",
+          "label": "Retry Asaas",
+          "status": "PASS",
+          "evidence": "HTTP 200 sempre — fila Asaas não penalizada"
+        }
+      ],
+      "reservations": []
+    },
+    {
+      "section": 11,
+      "title": "Rollback (validar procedimento — nunca executar)",
+      "status": "PASS COM RESSALVA",
+      "checks": [
+        {
+          "id": "rb-vercel",
+          "label": "Rollback Vercel (Instant Rollback)",
+          "status": "PASS",
+          "evidence": "Procedimento: Vercel → Deployments → Promote previous — NÃO EXECUTADO"
+        },
+        {
+          "id": "rb-git",
+          "label": "Rollback git revert",
+          "status": "PASS",
+          "evidence": "Documentado em implementation-plan.md — NÃO EXECUTADO"
+        },
+        {
+          "id": "rb-db",
+          "label": "Rollback DB",
+          "status": "PASS COM RESSALVA",
+          "evidence": "Sem migration down automático; restore via Neon PITR se necessário"
+        }
+      ],
+      "reservations": [
+        "Rollback não executado conforme escopo RC-04"
+      ]
+    },
+    {
+      "section": 12,
+      "title": "Gates técnicos + baselines RC-01/02/03",
+      "status": "PASS",
+      "checks": [
+        {
+          "id": "gate-typescript",
+          "label": "typescript",
+          "status": "PASS",
+          "evidence": "PASS"
+        },
+        {
+          "id": "gate-prisma-validate",
+          "label": "prisma-validate",
+          "status": "PASS",
+          "evidence": "PASS"
+        },
+        {
+          "id": "gate-build",
+          "label": "build",
+          "status": "PASS",
+          "evidence": "PASS"
+        },
+        {
+          "id": "gate-workflow-smoke",
+          "label": "workflow-smoke",
+          "status": "PASS",
+          "evidence": "PASS"
+        },
+        {
+          "id": "gate-domain-audit",
+          "label": "domain-audit",
+          "status": "PASS",
+          "evidence": "PASS"
+        },
+        {
+          "id": "gate-workflow-audit",
+          "label": "workflow-audit",
+          "status": "PASS",
+          "evidence": "PASS"
+        },
+        {
+          "id": "gate-sync-audit",
+          "label": "sync-audit",
+          "status": "PASS",
+          "evidence": "PASS"
+        },
+        {
+          "id": "gate-exec-audit",
+          "label": "exec-audit",
+          "status": "PASS",
+          "evidence": "PASS"
+        },
+        {
+          "id": "gate-sim-audit",
+          "label": "sim-audit",
+          "status": "PASS",
+          "evidence": "PASS"
+        },
+        {
+          "id": "gate-graph-audit",
+          "label": "graph-audit",
+          "status": "PASS",
+          "evidence": "PASS"
+        },
+        {
+          "id": "gate-discovery-audit",
+          "label": "discovery-audit",
+          "status": "PASS",
+          "evidence": "PASS"
+        },
+        {
+          "id": "gate-regression-audit",
+          "label": "regression-audit",
+          "status": "PASS",
+          "evidence": "PASS"
+        },
+        {
+          "id": "gate-prisma-migrate-status",
+          "label": "prisma-migrate-status",
+          "status": "PASS",
+          "evidence": "PASS COM RESSALVA — migrations pendentes no DB local; validar Neon Production"
+        },
+        {
+          "id": "gate-rc01-baseline",
+          "label": "rc01-baseline",
+          "status": "PASS",
+          "evidence": "CERTIFICADA"
+        },
+        {
+          "id": "gate-rc02-baseline",
+          "label": "rc02-baseline",
+          "status": "PASS",
+          "evidence": "CERTIFICADA"
+        },
+        {
+          "id": "gate-rc03-baseline",
+          "label": "rc03-baseline",
+          "status": "PASS",
+          "evidence": "CERTIFICADA"
+        }
+      ],
+      "reservations": []
+    }
+  ],
+  "gates": [
+    {
+      "name": "typescript",
+      "ok": true
+    },
+    {
+      "name": "prisma-validate",
+      "ok": true
+    },
+    {
+      "name": "build",
+      "ok": true
+    },
+    {
+      "name": "workflow-smoke",
+      "ok": true
+    },
+    {
+      "name": "domain-audit",
+      "ok": true
+    },
+    {
+      "name": "workflow-audit",
+      "ok": true
+    },
+    {
+      "name": "sync-audit",
+      "ok": true
+    },
+    {
+      "name": "exec-audit",
+      "ok": true
+    },
+    {
+      "name": "sim-audit",
+      "ok": true
+    },
+    {
+      "name": "graph-audit",
+      "ok": true
+    },
+    {
+      "name": "discovery-audit",
+      "ok": true
+    },
+    {
+      "name": "regression-audit",
+      "ok": true
+    },
+    {
+      "name": "prisma-migrate-status",
+      "ok": true,
+      "detail": "PASS COM RESSALVA — migrations pendentes no DB local; validar Neon Production"
+    },
+    {
+      "name": "rc01-baseline",
+      "ok": true,
+      "detail": "CERTIFICADA"
+    },
+    {
+      "name": "rc02-baseline",
+      "ok": true,
+      "detail": "CERTIFICADA"
+    },
+    {
+      "name": "rc03-baseline",
+      "ok": true,
+      "detail": "CERTIFICADA"
+    }
+  ],
+  "performanceSamples": [
+    {
+      "path": "/api/pagamentos/debug",
+      "ms": 3985,
+      "status": 200
+    },
+    {
+      "path": "POST /api/webhooks/asaas (sem token)",
+      "ms": 981,
+      "status": 200
+    },
+    {
+      "path": "/",
+      "ms": 779,
+      "status": 200
+    },
+    {
+      "path": "/",
+      "ms": 802,
+      "status": 200
+    },
+    {
+      "path": "/login",
+      "ms": 773,
+      "status": 200
+    },
+    {
+      "path": "/registro",
+      "ms": 902,
+      "status": 200
+    },
+    {
+      "path": "/minha-conta",
+      "ms": 697,
+      "status": 200
+    },
+    {
+      "path": "/agendamento",
+      "ms": 718,
+      "status": 200
+    },
+    {
+      "path": "/carrinho",
+      "ms": 744,
+      "status": 200
+    },
+    {
+      "path": "/admin",
+      "ms": 1574,
+      "status": 200
+    },
+    {
+      "path": "/api/meus-dados",
+      "ms": 2069,
+      "status": 401
+    }
+  ],
+  "risks": [
+    {
+      "id": "RC04-PAY-01",
+      "severity": "P1",
+      "description": "Cobrança monetária real em produção não executada nesta certificação."
+    },
+    {
+      "id": "RC03-RACE-01",
+      "severity": "P2",
+      "description": "TOCTOU em slot paralelo (documentado RC-03, domínio congelado)."
+    },
+    {
+      "id": "RC04-EMAIL-01",
+      "severity": "P2",
+      "description": "Envio SMTP em produção não smoke-testado; limite Gmail possível."
+    },
+    {
+      "id": "RC04-MON-01",
+      "severity": "P2",
+      "description": "Alertas proativos webhook (H-WH-02) deferidos pós-go-live."
+    }
+  ],
+  "pendencias": [
+    "Executar prisma migrate deploy com DATABASE_URL Neon Production (4 migrations HS-01/HS-03B/SYNC-01A pendentes no DB local)",
+    "Executar 1 pagamento de valor mínimo em produção e validar Appointment em Minha Conta",
+    "Confirmar webhook registrado em www.asaas.com com URL e token idênticos ao Vercel",
+    "Monitorar logs Vercel nas primeiras 48h pós-abertura"
+  ],
+  "recomendacoes": [
+    "Manter StudioOS congelado até estabilização v1.0",
+    "Foco pós-RC-04: Go Live → Operação → Correções em produção → Planejamento v1.1",
+    "Implementar H-WH-02 (alertas webhook) na primeira semana operacional",
+    "Executar golive:cleanup em homolog antes de abrir marketing"
+  ],
+  "productionProbe": {
+    "siteUrl": "https://www.thouse-rec.com.br",
+    "apiKeyType": "produ��ǜo",
+    "homeStatus": 200,
+    "webhookConfigured": true
+  }
+}

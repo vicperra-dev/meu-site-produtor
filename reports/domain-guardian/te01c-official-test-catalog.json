@@ -1,0 +1,4582 @@
+{
+  "reportId": "TE-01C-official-test-catalog",
+  "mode": "READ_ONLY",
+  "generatedAt": "2026-07-13T23:13:15.479Z",
+  "language": "pt-BR",
+  "basedOn": [
+    "TE-01A",
+    "TE-01B",
+    "HS-01",
+    "HS-02A",
+    "HS-02B",
+    "domain-invariants"
+  ],
+  "constraints": {
+    "codeChanged": false,
+    "commits": false,
+    "scriptsCreated": false
+  },
+  "idNamespaces": [
+    "AUTH",
+    "PAY",
+    "APT",
+    "SRV",
+    "CPN",
+    "PLN",
+    "DEL",
+    "ADM",
+    "ANA",
+    "FAQ",
+    "CHAT",
+    "XSC"
+  ],
+  "totals": {
+    "tests": 132,
+    "P0": 65,
+    "P1": 56,
+    "P2": 11,
+    "coverageAtual": 3,
+    "coverageParcial": 29,
+    "coverageFutura": 100,
+    "autoSIM": 54,
+    "autoPARCIAL": 71,
+    "autoNAO": 7
+  },
+  "byDomain": {
+    "AUTH": {
+      "total": 16,
+      "P0": 9,
+      "P1": 6,
+      "P2": 1,
+      "atual": 0,
+      "parcial": 4,
+      "futura": 12
+    },
+    "PAYMENT": {
+      "total": 16,
+      "P0": 10,
+      "P1": 5,
+      "P2": 1,
+      "atual": 2,
+      "parcial": 4,
+      "futura": 10
+    },
+    "APPOINTMENT": {
+      "total": 13,
+      "P0": 8,
+      "P1": 4,
+      "P2": 1,
+      "atual": 1,
+      "parcial": 0,
+      "futura": 12
+    },
+    "SERVICE": {
+      "total": 20,
+      "P0": 6,
+      "P1": 14,
+      "P2": 0,
+      "atual": 0,
+      "parcial": 5,
+      "futura": 15
+    },
+    "COUPONS": {
+      "total": 15,
+      "P0": 8,
+      "P1": 5,
+      "P2": 2,
+      "atual": 0,
+      "parcial": 2,
+      "futura": 13
+    },
+    "PLANS": {
+      "total": 11,
+      "P0": 8,
+      "P1": 2,
+      "P2": 1,
+      "atual": 0,
+      "parcial": 1,
+      "futura": 10
+    },
+    "DELIVERY": {
+      "total": 8,
+      "P0": 5,
+      "P1": 3,
+      "P2": 0,
+      "atual": 0,
+      "parcial": 1,
+      "futura": 7
+    },
+    "ADMIN": {
+      "total": 11,
+      "P0": 5,
+      "P1": 6,
+      "P2": 0,
+      "atual": 0,
+      "parcial": 6,
+      "futura": 5
+    },
+    "ANALYTICS": {
+      "total": 9,
+      "P0": 2,
+      "P1": 6,
+      "P2": 1,
+      "atual": 0,
+      "parcial": 6,
+      "futura": 3
+    },
+    "FAQ": {
+      "total": 2,
+      "P0": 0,
+      "P1": 1,
+      "P2": 1,
+      "atual": 0,
+      "parcial": 0,
+      "futura": 2
+    },
+    "CHAT": {
+      "total": 2,
+      "P0": 0,
+      "P1": 1,
+      "P2": 1,
+      "atual": 0,
+      "parcial": 0,
+      "futura": 2
+    },
+    "CROSS": {
+      "total": 9,
+      "P0": 4,
+      "P1": 3,
+      "P2": 2,
+      "atual": 0,
+      "parcial": 0,
+      "futura": 9
+    }
+  },
+  "roadmap": {
+    "TE-02-Business": [
+      "AUTH-001",
+      "AUTH-004",
+      "AUTH-005",
+      "AUTH-006",
+      "AUTH-009",
+      "AUTH-010",
+      "AUTH-011",
+      "PAY-001",
+      "PAY-002",
+      "PAY-003",
+      "PAY-010",
+      "PAY-011",
+      "PAY-012",
+      "PAY-013",
+      "PAY-014",
+      "APT-001",
+      "APT-002",
+      "APT-003",
+      "APT-004",
+      "APT-005",
+      "APT-006",
+      "APT-007",
+      "APT-008",
+      "APT-009",
+      "APT-010",
+      "APT-011",
+      "APT-012",
+      "SRV-001",
+      "SRV-002",
+      "SRV-003",
+      "SRV-004",
+      "SRV-005",
+      "SRV-006",
+      "SRV-007",
+      "SRV-008",
+      "SRV-009",
+      "SRV-010",
+      "SRV-011",
+      "SRV-012",
+      "SRV-013",
+      "SRV-014",
+      "SRV-016",
+      "SRV-017",
+      "SRV-018",
+      "SRV-019",
+      "CPN-001",
+      "CPN-002",
+      "CPN-003",
+      "CPN-004",
+      "CPN-005",
+      "CPN-006",
+      "CPN-008",
+      "CPN-011",
+      "CPN-012",
+      "CPN-013",
+      "CPN-014",
+      "PLN-001",
+      "PLN-002",
+      "PLN-003",
+      "PLN-004",
+      "PLN-005",
+      "PLN-006",
+      "PLN-007",
+      "PLN-008",
+      "PLN-009",
+      "PLN-011",
+      "DEL-001",
+      "DEL-004",
+      "DEL-005",
+      "DEL-006",
+      "DEL-007",
+      "DEL-008",
+      "ADM-003",
+      "ADM-004",
+      "ADM-006",
+      "ADM-007",
+      "ADM-008",
+      "ANA-001",
+      "ANA-002",
+      "ANA-003",
+      "ANA-004",
+      "ANA-005",
+      "ANA-007",
+      "ANA-008",
+      "ANA-009",
+      "FAQ-001",
+      "CHAT-001",
+      "CHAT-002",
+      "XSC-001",
+      "XSC-002",
+      "XSC-003",
+      "XSC-004",
+      "XSC-005",
+      "XSC-006",
+      "XSC-007"
+    ],
+    "TE-03-Regression": [
+      "AUTH-003",
+      "AUTH-005",
+      "AUTH-006",
+      "AUTH-007",
+      "AUTH-008",
+      "AUTH-009",
+      "AUTH-010",
+      "AUTH-012",
+      "AUTH-014",
+      "AUTH-015",
+      "AUTH-016",
+      "PAY-003",
+      "PAY-004",
+      "PAY-005",
+      "PAY-006",
+      "PAY-008",
+      "PAY-009",
+      "PAY-012",
+      "PAY-014",
+      "PAY-015",
+      "APT-003",
+      "APT-004",
+      "APT-006",
+      "APT-007",
+      "APT-010",
+      "APT-013",
+      "SRV-001",
+      "SRV-002",
+      "SRV-003",
+      "SRV-004",
+      "SRV-005",
+      "SRV-006",
+      "SRV-007",
+      "SRV-008",
+      "SRV-009",
+      "SRV-010",
+      "SRV-011",
+      "SRV-012",
+      "SRV-013",
+      "SRV-015",
+      "SRV-016",
+      "SRV-017",
+      "SRV-020",
+      "CPN-003",
+      "CPN-005",
+      "CPN-006",
+      "CPN-007",
+      "CPN-009",
+      "CPN-010",
+      "CPN-015",
+      "PLN-011",
+      "DEL-002",
+      "DEL-003",
+      "DEL-005",
+      "ADM-002",
+      "ADM-006",
+      "ADM-010",
+      "ANA-006",
+      "ANA-007",
+      "FAQ-002"
+    ],
+    "TE-04-ReleaseGates": [
+      "AUTH-001",
+      "AUTH-002",
+      "AUTH-004",
+      "AUTH-013",
+      "PAY-001",
+      "PAY-002",
+      "PAY-005",
+      "PAY-007",
+      "PAY-010",
+      "PAY-011",
+      "PAY-013",
+      "APT-001",
+      "APT-002",
+      "SRV-016",
+      "SRV-019",
+      "CPN-008",
+      "PLN-001",
+      "PLN-004",
+      "PLN-010",
+      "DEL-001",
+      "ADM-001",
+      "ADM-003",
+      "ADM-004",
+      "ADM-005",
+      "ADM-009",
+      "ADM-021",
+      "ANA-001",
+      "XSC-001",
+      "XSC-007"
+    ],
+    "TE-05-Stress": [
+      "PAY-015",
+      "PAY-016",
+      "XSC-008",
+      "XSC-009"
+    ],
+    "TE-06-Migration": [
+      "SRV-015",
+      "CPN-010"
+    ],
+    "TE-07-Security": [
+      "AUTH-005",
+      "AUTH-014",
+      "PAY-004",
+      "PAY-005",
+      "PAY-007",
+      "PAY-008",
+      "CPN-009",
+      "CPN-015",
+      "DEL-002",
+      "ADM-009"
+    ]
+  },
+  "tests": [
+    {
+      "id": "AUTH-001",
+      "name": "Registro com dados validos",
+      "domain": "AUTH",
+      "objective": "Criar User+session",
+      "priority": "P0",
+      "categories": [
+        "Smoke",
+        "Release Gate",
+        "Business"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "POST /api/registro"
+      ],
+      "eventsFired": [
+        "UserRegistered"
+      ],
+      "expectedAsserts": [
+        "user criado",
+        "session cookie"
+      ],
+      "dataCreated": [
+        "User",
+        "Session"
+      ],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "SIM",
+      "linkedInvariants": [],
+      "teScenarioHints": [
+        "TE-S01"
+      ],
+      "coverage": "parcial"
+    },
+    {
+      "id": "AUTH-002",
+      "name": "Login com credenciais validas",
+      "domain": "AUTH",
+      "objective": "Autenticar e emitir session",
+      "priority": "P0",
+      "categories": [
+        "Smoke",
+        "Release Gate"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "POST /api/login"
+      ],
+      "eventsFired": [
+        "UserLoggedIn"
+      ],
+      "expectedAsserts": [
+        "session valida"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "SIM",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "parcial"
+    },
+    {
+      "id": "AUTH-003",
+      "name": "Logout invalidar session",
+      "domain": "AUTH",
+      "objective": "Encerrar sessao",
+      "priority": "P1",
+      "categories": [
+        "Regression"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "POST /api/logout"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "session inexistente"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "SIM",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "AUTH-004",
+      "name": "Auto-login pos-registro",
+      "domain": "AUTH",
+      "objective": "Registro autenticar sem login manual",
+      "priority": "P0",
+      "categories": [
+        "Smoke",
+        "Business"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "POST /api/registro"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "/api/me 200"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "SIM",
+      "linkedInvariants": [],
+      "teScenarioHints": [
+        "TE-S01"
+      ],
+      "coverage": "parcial"
+    },
+    {
+      "id": "AUTH-005",
+      "name": "CPF duplicado rejeitado",
+      "domain": "AUTH",
+      "objective": "Unique CPF HS-01",
+      "priority": "P0",
+      "categories": [
+        "Regression",
+        "Business",
+        "Security"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "POST /api/registro"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "400 CPF ja cadastrado"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "SIM",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "AUTH-006",
+      "name": "Data nascimento ano invalido",
+      "domain": "AUTH",
+      "objective": "Rejeitar anos fora 1900-2026",
+      "priority": "P0",
+      "categories": [
+        "Regression",
+        "Business"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "POST /api/registro"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "400 data invalida"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "SIM",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "AUTH-007",
+      "name": "Data inexistente 31/02",
+      "domain": "AUTH",
+      "objective": "Rejeitar calendarios invalidos",
+      "priority": "P1",
+      "categories": [
+        "Regression"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "POST /api/registro"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "400"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "SIM",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "AUTH-008",
+      "name": "Data futura rejeitada",
+      "domain": "AUTH",
+      "objective": "Nascimento nao futuro",
+      "priority": "P1",
+      "categories": [
+        "Regression"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "POST /api/registro"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "400"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "SIM",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "AUTH-009",
+      "name": "Sexo obrigatorio",
+      "domain": "AUTH",
+      "objective": "Bloquear Selecione vazio",
+      "priority": "P0",
+      "categories": [
+        "Regression",
+        "Business"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "POST /api/registro"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "400 sexo"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "SIM",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "AUTH-010",
+      "name": "Genero obrigatorio",
+      "domain": "AUTH",
+      "objective": "Bloquear Selecione vazio",
+      "priority": "P0",
+      "categories": [
+        "Regression",
+        "Business"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "POST /api/registro"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "400 genero"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "SIM",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "AUTH-011",
+      "name": "Genero prefiro nao informar",
+      "domain": "AUTH",
+      "objective": "Aceitar prefiro_nao_informar",
+      "priority": "P1",
+      "categories": [
+        "Business"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "POST /api/registro"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "user.genero=prefiro_nao_informar"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "SIM",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "AUTH-012",
+      "name": "Atualizacao conta CPF unico",
+      "domain": "AUTH",
+      "objective": "Update conta respeita unique CPF",
+      "priority": "P1",
+      "categories": [
+        "Regression"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "POST /api/conta/update"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "400 se CPF alheio"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "PARCIAL",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "AUTH-013",
+      "name": "Minha Conta autenticada",
+      "domain": "AUTH",
+      "objective": "GET meus-dados 200 logado",
+      "priority": "P0",
+      "categories": [
+        "Smoke",
+        "Release Gate"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "GET /api/meus-dados"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "200 payload"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "SIM",
+      "linkedInvariants": [],
+      "teScenarioHints": [
+        "TE-S01",
+        "TE-S09"
+      ],
+      "coverage": "parcial"
+    },
+    {
+      "id": "AUTH-014",
+      "name": "Minha Conta sem auth",
+      "domain": "AUTH",
+      "objective": "401/redirect sem session",
+      "priority": "P1",
+      "categories": [
+        "Security",
+        "Regression"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "GET /api/meus-dados"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "401"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "SIM",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "AUTH-015",
+      "name": "Email duplicado registro",
+      "domain": "AUTH",
+      "objective": "Email unique",
+      "priority": "P0",
+      "categories": [
+        "Regression"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "POST /api/registro"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "400 Email ja registrado"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "SIM",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "AUTH-016",
+      "name": "Senha minima",
+      "domain": "AUTH",
+      "objective": "Validacao senha Zod",
+      "priority": "P2",
+      "categories": [
+        "Regression"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "POST /api/registro"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "400"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "SIM",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "PAY-001",
+      "name": "Checkout agendamento cria metadata",
+      "domain": "PAYMENT",
+      "objective": "PaymentMetadata antes do charge",
+      "priority": "P0",
+      "categories": [
+        "Smoke",
+        "Release Gate",
+        "Business"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "POST /api/asaas/checkout-agendamento"
+      ],
+      "eventsFired": [
+        "CheckoutStarted"
+      ],
+      "expectedAsserts": [
+        "PaymentMetadata row"
+      ],
+      "dataCreated": [
+        "PaymentMetadata"
+      ],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "PARCIAL",
+      "linkedInvariants": [
+        "F4"
+      ],
+      "teScenarioHints": [],
+      "coverage": "parcial"
+    },
+    {
+      "id": "PAY-002",
+      "name": "Pagamento aprovado via webhook",
+      "domain": "PAYMENT",
+      "objective": "PAYMENT_RECEIVED → Payment approved + effects",
+      "priority": "P0",
+      "categories": [
+        "Smoke",
+        "Release Gate",
+        "Business"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "processPaymentWebhook"
+      ],
+      "eventsFired": [
+        "PaymentApproved"
+      ],
+      "expectedAsserts": [
+        "assertPayment approved"
+      ],
+      "dataCreated": [
+        "Payment",
+        "Appointment?",
+        "Service?"
+      ],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "SIM",
+      "linkedInvariants": [
+        "F2",
+        "F4"
+      ],
+      "teScenarioHints": [
+        "TE-S01"
+      ],
+      "coverage": "atual"
+    },
+    {
+      "id": "PAY-003",
+      "name": "Pagamento recusado/nao confirmado",
+      "domain": "PAYMENT",
+      "objective": "Sem effects sem RECEIVED",
+      "priority": "P0",
+      "categories": [
+        "Regression",
+        "Business"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "processPaymentWebhook"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "sem Appointment indevido"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "SIM",
+      "linkedInvariants": [],
+      "teScenarioHints": [
+        "TE-S04"
+      ],
+      "coverage": "futura"
+    },
+    {
+      "id": "PAY-004",
+      "name": "Pagamento duplicado asaasId",
+      "domain": "PAYMENT",
+      "objective": "F1 unique Payment.asaasId",
+      "priority": "P0",
+      "categories": [
+        "Regression",
+        "Security"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "processPaymentWebhook"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "1 Payment"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "SIM",
+      "linkedInvariants": [
+        "F1"
+      ],
+      "teScenarioHints": [
+        "TE-S05"
+      ],
+      "coverage": "futura"
+    },
+    {
+      "id": "PAY-005",
+      "name": "Webhook duplicado idempotente",
+      "domain": "PAYMENT",
+      "objective": "F3 segundo RECEIVED nao duplica",
+      "priority": "P0",
+      "categories": [
+        "Regression",
+        "Release Gate",
+        "Security"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "processPaymentWebhook x2"
+      ],
+      "eventsFired": [
+        "Webhook.DuplicateIgnored"
+      ],
+      "expectedAsserts": [
+        "count Payment=1",
+        "effects nao duplicam"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "SIM",
+      "linkedInvariants": [
+        "F3"
+      ],
+      "teScenarioHints": [
+        "TE-S05"
+      ],
+      "coverage": "futura"
+    },
+    {
+      "id": "PAY-006",
+      "name": "Webhook body invalido",
+      "domain": "PAYMENT",
+      "objective": "Parse fail retorna 200 received",
+      "priority": "P1",
+      "categories": [
+        "Regression"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "POST /api/webhooks/asaas"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "200 received error parse"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "SIM",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "PAY-007",
+      "name": "Webhook sem token em producao",
+      "domain": "PAYMENT",
+      "objective": "Token ausente → nao processa",
+      "priority": "P0",
+      "categories": [
+        "Security",
+        "Release Gate"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "POST /api/webhooks/asaas"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "Token invalido ou Webhook nao configurado"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "SIM",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "parcial"
+    },
+    {
+      "id": "PAY-008",
+      "name": "Webhook token incorreto",
+      "domain": "PAYMENT",
+      "objective": "asaas-access-token mismatch",
+      "priority": "P0",
+      "categories": [
+        "Security",
+        "Regression"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "POST /api/webhooks/asaas"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "Token invalido"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "SIM",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "PAY-009",
+      "name": "Replay webhook canonico",
+      "domain": "PAYMENT",
+      "objective": "Replay seguro apos primeiro sucesso",
+      "priority": "P1",
+      "categories": [
+        "Regression"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "processPaymentWebhook replay"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "idempotente"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "SIM",
+      "linkedInvariants": [
+        "F3"
+      ],
+      "teScenarioHints": [
+        "TE-S05"
+      ],
+      "coverage": "parcial"
+    },
+    {
+      "id": "PAY-010",
+      "name": "Pagamento simbolico R",
+      "domain": "PAYMENT",
+      "objective": "symbolicAgendamento metadata + effects",
+      "priority": "P0",
+      "categories": [
+        "Smoke",
+        "Business"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "adapter TE + webhook"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "symbolic flags",
+        "Payment amount 5"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "SIM",
+      "linkedInvariants": [
+        "C7"
+      ],
+      "teScenarioHints": [
+        "TE-S01"
+      ],
+      "coverage": "atual"
+    },
+    {
+      "id": "PAY-011",
+      "name": "Pagamento real sandbox/prod",
+      "domain": "PAYMENT",
+      "objective": "Charge Asaas real path",
+      "priority": "P1",
+      "categories": [
+        "Release Gate",
+        "Business"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "checkout Asaas"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "initPoint asaas"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "PARCIAL",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "parcial"
+    },
+    {
+      "id": "PAY-012",
+      "name": "Checkout carrinho multi",
+      "domain": "PAYMENT",
+      "objective": "tipo carrinho → N appointments",
+      "priority": "P0",
+      "categories": [
+        "Business",
+        "Regression"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "checkout-carrinho",
+        "processCarrinhoPaymentEffects"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "appointmentIds"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "PARCIAL",
+      "linkedInvariants": [],
+      "teScenarioHints": [
+        "TE-S02"
+      ],
+      "coverage": "futura"
+    },
+    {
+      "id": "PAY-013",
+      "name": "Checkout plano",
+      "domain": "PAYMENT",
+      "objective": "Plano → UserPlan + cupons",
+      "priority": "P0",
+      "categories": [
+        "Business",
+        "Release Gate"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "processPlanoPaymentEffects"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "UserPlan",
+        "cupons"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "PARCIAL",
+      "linkedInvariants": [
+        "F5",
+        "P2"
+      ],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "PAY-014",
+      "name": "PAYMENT_REFUNDED sync",
+      "domain": "PAYMENT",
+      "objective": "F7 sync refundAsaasStatus",
+      "priority": "P1",
+      "categories": [
+        "Regression",
+        "Business"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "webhook REFUNDED"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "refundAsaasStatus"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "PARCIAL",
+      "linkedInvariants": [
+        "F7"
+      ],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "PAY-015",
+      "name": "Webhook fora de ordem",
+      "domain": "PAYMENT",
+      "objective": "CREATED apos RECEIVED nao corrompe",
+      "priority": "P1",
+      "categories": [
+        "Stress",
+        "Regression"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "webhooks multi"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "Payment coerente"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "PARCIAL",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "PAY-016",
+      "name": "Race twin checkout",
+      "domain": "PAYMENT",
+      "objective": "Dois checkouts concorrentes",
+      "priority": "P2",
+      "categories": [
+        "Stress"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "checkout paralel"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "sem slot duplo A8"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "PARCIAL",
+      "linkedInvariants": [
+        "A8"
+      ],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "APT-001",
+      "name": "Solicitacao apos pagamento",
+      "domain": "APPOINTMENT",
+      "objective": "Appointment pendente pos-effects",
+      "priority": "P0",
+      "categories": [
+        "Smoke",
+        "Business"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "processAgendamentoPaymentEffects"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "assertAppointment pendente"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "SIM",
+      "linkedInvariants": [
+        "A1",
+        "F4"
+      ],
+      "teScenarioHints": [
+        "TE-S01"
+      ],
+      "coverage": "atual"
+    },
+    {
+      "id": "APT-002",
+      "name": "Aceite admin",
+      "domain": "APPOINTMENT",
+      "objective": "pendente→aceito + Services aceitos",
+      "priority": "P0",
+      "categories": [
+        "Smoke",
+        "Release Gate",
+        "Business"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "PATCH /api/admin/agendamentos"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "status aceito",
+        "Service aceito"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "SIM",
+      "linkedInvariants": [
+        "A5"
+      ],
+      "teScenarioHints": [
+        "TE-S08",
+        "TE-S13"
+      ],
+      "coverage": "futura"
+    },
+    {
+      "id": "APT-003",
+      "name": "Recusa admin",
+      "domain": "APPOINTMENT",
+      "objective": "pendente→recusado + Services",
+      "priority": "P0",
+      "categories": [
+        "Business",
+        "Regression"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "PATCH admin"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "recusado"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "SIM",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "APT-004",
+      "name": "Cancelamento user",
+      "domain": "APPOINTMENT",
+      "objective": "Cancelar agendamento autenticado",
+      "priority": "P0",
+      "categories": [
+        "Business",
+        "Regression"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "POST /api/agendamentos/cancelar"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "cancelado",
+        "Service cancelado"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "PARCIAL",
+      "linkedInvariants": [
+        "A3"
+      ],
+      "teScenarioHints": [
+        "TE-S03"
+      ],
+      "coverage": "futura"
+    },
+    {
+      "id": "APT-005",
+      "name": "Cancelamento apos aceite",
+      "domain": "APPOINTMENT",
+      "objective": "Cancel com status aceito",
+      "priority": "P0",
+      "categories": [
+        "Business"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "cancelar"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "opcoes reembolso/cupom"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "PARCIAL",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "APT-006",
+      "name": "Em andamento",
+      "domain": "APPOINTMENT",
+      "objective": "aceito→em_andamento espelho Service",
+      "priority": "P0",
+      "categories": [
+        "Business",
+        "Regression"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "PATCH admin"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "Service em_andamento"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "SIM",
+      "linkedInvariants": [],
+      "teScenarioHints": [
+        "TE-S08"
+      ],
+      "coverage": "futura"
+    },
+    {
+      "id": "APT-007",
+      "name": "Concluido derivado de Services",
+      "domain": "APPOINTMENT",
+      "objective": "Todos services terminais → Appointment concluido",
+      "priority": "P0",
+      "categories": [
+        "Business",
+        "Regression"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "PATCH servicos + reconcile"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "Appointment concluido"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "SIM",
+      "linkedInvariants": [
+        "A6"
+      ],
+      "teScenarioHints": [
+        "TE-S08"
+      ],
+      "coverage": "futura"
+    },
+    {
+      "id": "APT-008",
+      "name": "Reagendamento com cupom",
+      "domain": "APPOINTMENT",
+      "objective": "com-cupom cria novo Appointment",
+      "priority": "P1",
+      "categories": [
+        "Business"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "POST /api/agendamentos/com-cupom"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "Appointment+Service",
+        "cupom used"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "PARCIAL",
+      "linkedInvariants": [
+        "C2"
+      ],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "APT-009",
+      "name": "Multiplos agendamentos usuario",
+      "domain": "APPOINTMENT",
+      "objective": "Usuario com N appointments",
+      "priority": "P1",
+      "categories": [
+        "Business"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "effects multi"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "N rows"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "PARCIAL",
+      "linkedInvariants": [],
+      "teScenarioHints": [
+        "TE-S02"
+      ],
+      "coverage": "futura"
+    },
+    {
+      "id": "APT-010",
+      "name": "Conflito de slot A8",
+      "domain": "APPOINTMENT",
+      "objective": "Dois ativos mesmo horario bloqueados",
+      "priority": "P0",
+      "categories": [
+        "Regression",
+        "Business"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "checkout"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "409/skip"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "SIM",
+      "linkedInvariants": [
+        "A8"
+      ],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "APT-011",
+      "name": "userHiddenAt Minha Conta",
+      "domain": "APPOINTMENT",
+      "objective": "Ocultar sem afetar Payment",
+      "priority": "P2",
+      "categories": [
+        "Business"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "API hide"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "A7"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "PARCIAL",
+      "linkedInvariants": [
+        "A7"
+      ],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "APT-012",
+      "name": "Admin archive terminal",
+      "domain": "APPOINTMENT",
+      "objective": "adminArchivedAt regras A9",
+      "priority": "P1",
+      "categories": [
+        "Business"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "PATCH archive"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "A9"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "PARCIAL",
+      "linkedInvariants": [
+        "A9"
+      ],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "APT-013",
+      "name": "Reverter cancelamento",
+      "domain": "APPOINTMENT",
+      "objective": "Cancel→aceito + Services realinhados",
+      "priority": "P1",
+      "categories": [
+        "Regression"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "reverter-cancelamento"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "Services aceito"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "PARCIAL",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "SRV-001",
+      "name": "Service tipo Sessao",
+      "domain": "SERVICE",
+      "objective": "Criar/normalizar tipo sessao",
+      "priority": "P1",
+      "categories": [
+        "Business",
+        "Regression"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "createServicesForAppointmentIfMissing",
+        "normalizeServiceTypeId"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "Service.tipo=sessao"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "PARCIAL",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "SRV-002",
+      "name": "Service tipo Captacao",
+      "domain": "SERVICE",
+      "objective": "Criar/normalizar tipo captacao",
+      "priority": "P1",
+      "categories": [
+        "Business",
+        "Regression"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "createServicesForAppointmentIfMissing",
+        "normalizeServiceTypeId"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "Service.tipo=captacao"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "PARCIAL",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "SRV-003",
+      "name": "Service tipo Mix",
+      "domain": "SERVICE",
+      "objective": "Criar/normalizar tipo mix",
+      "priority": "P1",
+      "categories": [
+        "Business",
+        "Regression"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "createServicesForAppointmentIfMissing",
+        "normalizeServiceTypeId"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "Service.tipo=mix"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "PARCIAL",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "SRV-004",
+      "name": "Service tipo Master",
+      "domain": "SERVICE",
+      "objective": "Criar/normalizar tipo master",
+      "priority": "P1",
+      "categories": [
+        "Business",
+        "Regression"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "createServicesForAppointmentIfMissing",
+        "normalizeServiceTypeId"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "Service.tipo=master"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "PARCIAL",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "SRV-005",
+      "name": "Service tipo Mix + Master",
+      "domain": "SERVICE",
+      "objective": "Criar/normalizar tipo mix_master",
+      "priority": "P1",
+      "categories": [
+        "Business",
+        "Regression"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "createServicesForAppointmentIfMissing",
+        "normalizeServiceTypeId"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "Service.tipo=mix_master"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "PARCIAL",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "SRV-006",
+      "name": "Service tipo Beat",
+      "domain": "SERVICE",
+      "objective": "Criar/normalizar tipo beat1",
+      "priority": "P1",
+      "categories": [
+        "Business",
+        "Regression"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "createServicesForAppointmentIfMissing",
+        "normalizeServiceTypeId"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "Service.tipo=beat1"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "PARCIAL",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "SRV-007",
+      "name": "Service tipo 2 Beats",
+      "domain": "SERVICE",
+      "objective": "Criar/normalizar tipo beat2",
+      "priority": "P1",
+      "categories": [
+        "Business",
+        "Regression"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "createServicesForAppointmentIfMissing",
+        "normalizeServiceTypeId"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "Service.tipo=beat2"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "PARCIAL",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "SRV-008",
+      "name": "Service tipo 3 Beats",
+      "domain": "SERVICE",
+      "objective": "Criar/normalizar tipo beat3",
+      "priority": "P1",
+      "categories": [
+        "Business",
+        "Regression"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "createServicesForAppointmentIfMissing",
+        "normalizeServiceTypeId"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "Service.tipo=beat3"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "PARCIAL",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "SRV-009",
+      "name": "Service tipo 4 Beats",
+      "domain": "SERVICE",
+      "objective": "Criar/normalizar tipo beat4",
+      "priority": "P1",
+      "categories": [
+        "Business",
+        "Regression"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "createServicesForAppointmentIfMissing",
+        "normalizeServiceTypeId"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "Service.tipo=beat4"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "PARCIAL",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "SRV-010",
+      "name": "Service tipo Beat Mix Master",
+      "domain": "SERVICE",
+      "objective": "Criar/normalizar tipo beat_mix_master",
+      "priority": "P1",
+      "categories": [
+        "Business",
+        "Regression"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "createServicesForAppointmentIfMissing",
+        "normalizeServiceTypeId"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "Service.tipo=beat_mix_master"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "PARCIAL",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "SRV-011",
+      "name": "Service tipo Producao Completa",
+      "domain": "SERVICE",
+      "objective": "Criar/normalizar tipo producao_completa",
+      "priority": "P1",
+      "categories": [
+        "Business",
+        "Regression"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "createServicesForAppointmentIfMissing",
+        "normalizeServiceTypeId"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "Service.tipo=producao_completa"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "PARCIAL",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "SRV-012",
+      "name": "Service tipo Sonoplastia",
+      "domain": "SERVICE",
+      "objective": "Criar/normalizar tipo sonoplastia",
+      "priority": "P1",
+      "categories": [
+        "Business",
+        "Regression"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "createServicesForAppointmentIfMissing",
+        "normalizeServiceTypeId"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "Service.tipo=sonoplastia"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "PARCIAL",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "SRV-013",
+      "name": "Mais de um Service por pagamento",
+      "domain": "SERVICE",
+      "objective": "Multi linhas servicos/beats",
+      "priority": "P0",
+      "categories": [
+        "Business",
+        "Regression"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "effects multi items"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "count Services expected"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "SIM",
+      "linkedInvariants": [],
+      "teScenarioHints": [
+        "TE-S02"
+      ],
+      "coverage": "futura"
+    },
+    {
+      "id": "SRV-014",
+      "name": "Mais de um servico no carrinho",
+      "domain": "SERVICE",
+      "objective": "Carrinho N appointments/services",
+      "priority": "P0",
+      "categories": [
+        "Business"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "carrinho effects"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "N services"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "PARCIAL",
+      "linkedInvariants": [],
+      "teScenarioHints": [
+        "TE-S02"
+      ],
+      "coverage": "futura"
+    },
+    {
+      "id": "SRV-015",
+      "name": "Service orfao appointmentId null",
+      "domain": "SERVICE",
+      "objective": "Detectar orfao audit",
+      "priority": "P1",
+      "categories": [
+        "Regression",
+        "Migration"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "integrity audit"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "report orfao"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "SIM",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "parcial"
+    },
+    {
+      "id": "SRV-016",
+      "name": "Appointment aceito sem Service A5",
+      "domain": "SERVICE",
+      "objective": "ensure cria Service no aceite",
+      "priority": "P0",
+      "categories": [
+        "Regression",
+        "Release Gate",
+        "Business"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "ensureServicesForAppointment"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        ">=1 Service"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "SIM",
+      "linkedInvariants": [
+        "A5"
+      ],
+      "teScenarioHints": [
+        "TE-S13"
+      ],
+      "coverage": "parcial"
+    },
+    {
+      "id": "SRV-017",
+      "name": "Servicos Selecionados so ativos",
+      "domain": "SERVICE",
+      "objective": "Filtro ACTIVE_OPERATIONAL",
+      "priority": "P0",
+      "categories": [
+        "Business",
+        "Regression"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "GET admin/servicos + filter UI"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "sem concluido na lista"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "PARCIAL",
+      "linkedInvariants": [],
+      "teScenarioHints": [
+        "TE-S10"
+      ],
+      "coverage": "parcial"
+    },
+    {
+      "id": "SRV-018",
+      "name": "Servicos Gerais todos",
+      "domain": "SERVICE",
+      "objective": "Listagem completa autoridade Service",
+      "priority": "P0",
+      "categories": [
+        "Business"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "GET /api/admin/servicos"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "todos status"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "PARCIAL",
+      "linkedInvariants": [],
+      "teScenarioHints": [
+        "TE-S10"
+      ],
+      "coverage": "parcial"
+    },
+    {
+      "id": "SRV-019",
+      "name": "Status aceito→em_andamento→concluido",
+      "domain": "SERVICE",
+      "objective": "Transicao operacional unica",
+      "priority": "P0",
+      "categories": [
+        "Smoke",
+        "Business"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "PATCH admin/servicos"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "status finais"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "SIM",
+      "linkedInvariants": [],
+      "teScenarioHints": [
+        "TE-S08"
+      ],
+      "coverage": "futura"
+    },
+    {
+      "id": "SRV-020",
+      "name": "Service authority pos-HS-02B",
+      "domain": "SERVICE",
+      "objective": "Ops nao deriva status de Appointment",
+      "priority": "P1",
+      "categories": [
+        "Regression"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "UIs Service"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "fonte Service"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "PARCIAL",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "parcial"
+    },
+    {
+      "id": "CPN-001",
+      "name": "Cupom de servico emissao",
+      "domain": "COUPONS",
+      "objective": "Emitir cupom service type",
+      "priority": "P0",
+      "categories": [
+        "Business"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "agendamento-payment-coupons / plan-coupons"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "Coupon.code unique"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "PARCIAL",
+      "linkedInvariants": [
+        "C1"
+      ],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "CPN-002",
+      "name": "Cupom remarcacao",
+      "domain": "COUPONS",
+      "objective": "Cupom apos cancel para remarcar",
+      "priority": "P0",
+      "categories": [
+        "Business"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "escolher reembolso cupom"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "couponType"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "PARCIAL",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "CPN-003",
+      "name": "Cupom reembolso",
+      "domain": "COUPONS",
+      "objective": "Cupom tipo reembolso C3",
+      "priority": "P0",
+      "categories": [
+        "Business",
+        "Regression"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "refund coupon flow"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "C3 ownership"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "PARCIAL",
+      "linkedInvariants": [
+        "C3"
+      ],
+      "teScenarioHints": [
+        "TE-S07"
+      ],
+      "coverage": "futura"
+    },
+    {
+      "id": "CPN-004",
+      "name": "Cupom desconto checkout",
+      "domain": "COUPONS",
+      "objective": "Desconto aplica em compra",
+      "priority": "P1",
+      "categories": [
+        "Business"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "checkout + cupomCode"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "valor cobrado"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "PARCIAL",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "CPN-005",
+      "name": "Cupom expirado rejeitado",
+      "domain": "COUPONS",
+      "objective": "expiresAt passado",
+      "priority": "P0",
+      "categories": [
+        "Regression",
+        "Business"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "com-cupom/checkout"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "400/erro"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "SIM",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "CPN-006",
+      "name": "Cupom ja usado",
+      "domain": "COUPONS",
+      "objective": "used=true bloqueia",
+      "priority": "P0",
+      "categories": [
+        "Regression",
+        "Business"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "com-cupom"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "rejeita"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "SIM",
+      "linkedInvariants": [
+        "C2"
+      ],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "CPN-007",
+      "name": "Cupom invalido/inexistente",
+      "domain": "COUPONS",
+      "objective": "Code desconhecido",
+      "priority": "P1",
+      "categories": [
+        "Regression"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "com-cupom"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "404/400"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "SIM",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "CPN-008",
+      "name": "Cupom de plano",
+      "domain": "COUPONS",
+      "objective": "Cupons gerados por plano C4",
+      "priority": "P0",
+      "categories": [
+        "Business",
+        "Release Gate"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "processPlanoPaymentEffects"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "userPlanId set"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "PARCIAL",
+      "linkedInvariants": [
+        "C4",
+        "P2"
+      ],
+      "teScenarioHints": [
+        "TE-S06"
+      ],
+      "coverage": "futura"
+    },
+    {
+      "id": "CPN-009",
+      "name": "Cupom duplicado code",
+      "domain": "COUPONS",
+      "objective": "C1 unique code",
+      "priority": "P0",
+      "categories": [
+        "Security",
+        "Regression"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "create coupon"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "P2002"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "SIM",
+      "linkedInvariants": [
+        "C1"
+      ],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "CPN-010",
+      "name": "Cupom sem owner",
+      "domain": "COUPONS",
+      "objective": "Detectar orfao audit",
+      "priority": "P1",
+      "categories": [
+        "Migration",
+        "Regression"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "hs01 audit"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "issue cupons_sem_owner"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "SIM",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "parcial"
+    },
+    {
+      "id": "CPN-011",
+      "name": "Cupom plano bloqueado pos-cancel plano",
+      "domain": "COUPONS",
+      "objective": "C5 block",
+      "priority": "P0",
+      "categories": [
+        "Business"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "com-cupom"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "bloqueio C5"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "PARCIAL",
+      "linkedInvariants": [
+        "C5"
+      ],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "CPN-012",
+      "name": "Cupom usado parcialmente (suite futura)",
+      "domain": "COUPONS",
+      "objective": "Uso parcial se modelo permitir",
+      "priority": "P2",
+      "categories": [
+        "Business"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "TBD"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "documentar comportamento"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "NAO",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "CPN-013",
+      "name": "Cupom servico abre pagina do servico",
+      "domain": "COUPONS",
+      "objective": "Deep link UX cupom→servico",
+      "priority": "P2",
+      "categories": [
+        "Business"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "frontend"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "rota correta"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "NAO",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "CPN-014",
+      "name": "Multiplos cupons mesmo plano agendados",
+      "domain": "COUPONS",
+      "objective": "N redeem com-cupom",
+      "priority": "P1",
+      "categories": [
+        "Business"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "com-cupom xN"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "N appointments"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "PARCIAL",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "CPN-015",
+      "name": "Cupom simulacao isolado C7",
+      "domain": "COUPONS",
+      "objective": "TESTE_ isolavel",
+      "priority": "P1",
+      "categories": [
+        "Security",
+        "Regression"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "symbolic"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "prefixo TESTE_"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "PARCIAL",
+      "linkedInvariants": [
+        "C7"
+      ],
+      "teScenarioHints": [],
+      "coverage": "parcial"
+    },
+    {
+      "id": "PLN-001",
+      "name": "Plano Bronze compra",
+      "domain": "PLANS",
+      "objective": "Ativar Bronze",
+      "priority": "P0",
+      "categories": [
+        "Business",
+        "Release Gate"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "checkout plano",
+        "processPlano"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "UserPlan bronze"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "PARCIAL",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "PLN-002",
+      "name": "Plano Prata compra",
+      "domain": "PLANS",
+      "objective": "Ativar Prata",
+      "priority": "P0",
+      "categories": [
+        "Business"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "processPlano"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "UserPlan prata"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "PARCIAL",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "PLN-003",
+      "name": "Plano Ouro compra",
+      "domain": "PLANS",
+      "objective": "Ativar Ouro",
+      "priority": "P0",
+      "categories": [
+        "Business"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "processPlano"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "UserPlan ouro"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "PARCIAL",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "PLN-004",
+      "name": "Plano gera todos cupons catalogo",
+      "domain": "PLANS",
+      "objective": "P2 geracao inicial",
+      "priority": "P0",
+      "categories": [
+        "Business",
+        "Release Gate"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "generatePlanServiceCoupons"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "count cupons esperado"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "PARCIAL",
+      "linkedInvariants": [
+        "P2"
+      ],
+      "teScenarioHints": [
+        "TE-S06"
+      ],
+      "coverage": "futura"
+    },
+    {
+      "id": "PLN-005",
+      "name": "Agendamento individual com cupom plano",
+      "domain": "PLANS",
+      "objective": "Redeem 1 cupom",
+      "priority": "P0",
+      "categories": [
+        "Business"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "com-cupom"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "Appointment"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "PARCIAL",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "PLN-006",
+      "name": "Cancelamento de plano",
+      "domain": "PLANS",
+      "objective": "Cancel UserPlan",
+      "priority": "P0",
+      "categories": [
+        "Business"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "POST /api/planos/cancelar"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "status cancel"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "PARCIAL",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "PLN-007",
+      "name": "Reembolso de plano",
+      "domain": "PLANS",
+      "objective": "Solicitar reembolso plano",
+      "priority": "P0",
+      "categories": [
+        "Business"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "solicitar-reembolso"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "refundProcessedAt"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "PARCIAL",
+      "linkedInvariants": [],
+      "teScenarioHints": [
+        "TE-S07"
+      ],
+      "coverage": "futura"
+    },
+    {
+      "id": "PLN-008",
+      "name": "Renovacao plano",
+      "domain": "PLANS",
+      "objective": "Subscription renewal path",
+      "priority": "P1",
+      "categories": [
+        "Business"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "webhook subscription"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "endDate extend"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "PARCIAL",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "PLN-009",
+      "name": "Plano + servico na mesma compra",
+      "domain": "PLANS",
+      "objective": "Combo futuro",
+      "priority": "P2",
+      "categories": [
+        "Business"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "TBD"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "ambos effects"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "NAO",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "PLN-010",
+      "name": "Plano simbolico admin",
+      "domain": "PLANS",
+      "objective": "symbolicPlano",
+      "priority": "P1",
+      "categories": [
+        "Smoke"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "reprocessar plano teste"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "UserPlan teste"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "PARCIAL",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "parcial"
+    },
+    {
+      "id": "PLN-011",
+      "name": "Cupons bloqueados apos reembolso plano",
+      "domain": "PLANS",
+      "objective": "C5 apos refund",
+      "priority": "P0",
+      "categories": [
+        "Business",
+        "Regression"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "com-cupom"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "bloqueio"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "PARCIAL",
+      "linkedInvariants": [
+        "C5"
+      ],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "DEL-001",
+      "name": "Entrega com URL valida",
+      "domain": "DELIVERY",
+      "objective": "concluido + deliveryAudioUrl",
+      "priority": "P0",
+      "categories": [
+        "Smoke",
+        "Business",
+        "Release Gate"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "PATCH /api/admin/servicos"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "Service concluido",
+        "Minha Conta link"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "SIM",
+      "linkedInvariants": [],
+      "teScenarioHints": [
+        "TE-S08"
+      ],
+      "coverage": "futura"
+    },
+    {
+      "id": "DEL-002",
+      "name": "Link invalido rejeitado",
+      "domain": "DELIVERY",
+      "objective": "validateDeliveryAudioUrl fail",
+      "priority": "P0",
+      "categories": [
+        "Regression",
+        "Security"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "PATCH servicos"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "400"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "SIM",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "DEL-003",
+      "name": "Link valido http(s)",
+      "domain": "DELIVERY",
+      "objective": "URL http aceita",
+      "priority": "P0",
+      "categories": [
+        "Regression"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "PATCH"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "200"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "SIM",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "DEL-004",
+      "name": "Conclusao Service",
+      "domain": "DELIVERY",
+      "objective": "status concluido",
+      "priority": "P0",
+      "categories": [
+        "Business"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "PATCH"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "concluido"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "SIM",
+      "linkedInvariants": [],
+      "teScenarioHints": [
+        "TE-S08"
+      ],
+      "coverage": "futura"
+    },
+    {
+      "id": "DEL-005",
+      "name": "Conclusao automatica Appointment",
+      "domain": "DELIVERY",
+      "objective": "Ultimo service → Appointment concluido",
+      "priority": "P0",
+      "categories": [
+        "Business",
+        "Regression"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "reconcile"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "Appointment concluido"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "SIM",
+      "linkedInvariants": [],
+      "teScenarioHints": [
+        "TE-S08"
+      ],
+      "coverage": "futura"
+    },
+    {
+      "id": "DEL-006",
+      "name": "Entrega parcial multi-service",
+      "domain": "DELIVERY",
+      "objective": "1 concluido outros abertos",
+      "priority": "P1",
+      "categories": [
+        "Business"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "PATCH parcial"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "Appointment nao concluido"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "SIM",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "DEL-007",
+      "name": "Entrega multipla",
+      "domain": "DELIVERY",
+      "objective": "N services com URLs",
+      "priority": "P1",
+      "categories": [
+        "Business"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "PATCH xN"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "N entregas Minha Conta"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "PARCIAL",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "DEL-008",
+      "name": "Selecionados some apos conclusao",
+      "domain": "DELIVERY",
+      "objective": "Filtro ACTIVE",
+      "priority": "P1",
+      "categories": [
+        "Business"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "UI filter"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "sumiu da lista"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "PARCIAL",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "parcial"
+    },
+    {
+      "id": "ADM-001",
+      "name": "Lista agendamentos admin",
+      "domain": "ADMIN",
+      "objective": "GET admin agendamentos",
+      "priority": "P0",
+      "categories": [
+        "Smoke"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "GET /api/admin/agendamentos"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "200"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "PARCIAL",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "parcial"
+    },
+    {
+      "id": "ADM-002",
+      "name": "Lista pagamentos admin",
+      "domain": "ADMIN",
+      "objective": "GET admin pagamentos",
+      "priority": "P1",
+      "categories": [
+        "Regression"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "GET /api/admin/pagamentos"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "200"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "PARCIAL",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "ADM-003",
+      "name": "Servicos Gerais",
+      "domain": "ADMIN",
+      "objective": "Listagem Service completa",
+      "priority": "P0",
+      "categories": [
+        "Smoke",
+        "Business"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "GET /api/admin/servicos"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "servicos[]"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "PARCIAL",
+      "linkedInvariants": [],
+      "teScenarioHints": [
+        "TE-S10"
+      ],
+      "coverage": "parcial"
+    },
+    {
+      "id": "ADM-004",
+      "name": "Servicos Selecionados ativos",
+      "domain": "ADMIN",
+      "objective": "Fila operacional",
+      "priority": "P0",
+      "categories": [
+        "Smoke",
+        "Business"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "GET servicos + filter"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "so ativos"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "PARCIAL",
+      "linkedInvariants": [],
+      "teScenarioHints": [
+        "TE-S10"
+      ],
+      "coverage": "parcial"
+    },
+    {
+      "id": "ADM-005",
+      "name": "Dashboard admin home",
+      "domain": "ADMIN",
+      "objective": "Cards navegacao",
+      "priority": "P1",
+      "categories": [
+        "Smoke"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "/admin"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "links"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "NAO",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "ADM-006",
+      "name": "Estatisticas detalhadas Service",
+      "domain": "ADMIN",
+      "objective": "Stats operacionais Service",
+      "priority": "P0",
+      "categories": [
+        "Business",
+        "Regression"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "GET /api/admin/stats/detalhadas"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "servicos.*"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "SIM",
+      "linkedInvariants": [],
+      "teScenarioHints": [
+        "TE-S10"
+      ],
+      "coverage": "parcial"
+    },
+    {
+      "id": "ADM-007",
+      "name": "Usuarios admin",
+      "domain": "ADMIN",
+      "objective": "Gestao usuarios",
+      "priority": "P1",
+      "categories": [
+        "Business"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "admin usuarios APIs"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "lista"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "PARCIAL",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "ADM-008",
+      "name": "Cupons admin",
+      "domain": "ADMIN",
+      "objective": "CRUD/associar cupons",
+      "priority": "P1",
+      "categories": [
+        "Business"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "admin cupons"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "assign"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "PARCIAL",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "ADM-009",
+      "name": "Admin gate requireAdmin",
+      "domain": "ADMIN",
+      "objective": "403 USER comum",
+      "priority": "P0",
+      "categories": [
+        "Security",
+        "Release Gate"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "GET admin/*"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "403"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "SIM",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "ADM-010",
+      "name": "Repair orfaos ?repair=1",
+      "domain": "ADMIN",
+      "objective": "ensure orphans",
+      "priority": "P1",
+      "categories": [
+        "Regression"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "GET servicos?repair=1"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "repaired>=0"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "PARCIAL",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "parcial"
+    },
+    {
+      "id": "ADM-021",
+      "name": "Reprocessar pagamento teste",
+      "domain": "ADMIN",
+      "objective": "Admin symbolic reprocess",
+      "priority": "P1",
+      "categories": [
+        "Smoke"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "reprocessar-pagamento-teste"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "effects"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "PARCIAL",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "parcial"
+    },
+    {
+      "id": "ANA-001",
+      "name": "Receita pagamento approved",
+      "domain": "ANALYTICS",
+      "objective": "Soma Payment approved",
+      "priority": "P0",
+      "categories": [
+        "Business",
+        "Release Gate"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "stats detalhadas"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "valorTotal"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "SIM",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "parcial"
+    },
+    {
+      "id": "ANA-002",
+      "name": "Clientes usuarios count",
+      "domain": "ANALYTICS",
+      "objective": "stats.usuarios",
+      "priority": "P1",
+      "categories": [
+        "Business"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "stats"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "total"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "SIM",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "parcial"
+    },
+    {
+      "id": "ANA-003",
+      "name": "Servicos por status",
+      "domain": "ANALYTICS",
+      "objective": "contagens Service",
+      "priority": "P0",
+      "categories": [
+        "Business"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "stats"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "emAndamento",
+        "aFazer"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "SIM",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "parcial"
+    },
+    {
+      "id": "ANA-004",
+      "name": "Planos ativos",
+      "domain": "ANALYTICS",
+      "objective": "UserPlan active",
+      "priority": "P1",
+      "categories": [
+        "Business"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "stats"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "planos.ativos"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "SIM",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "parcial"
+    },
+    {
+      "id": "ANA-005",
+      "name": "Pagamentos count",
+      "domain": "ANALYTICS",
+      "objective": "pagamentos.total",
+      "priority": "P1",
+      "categories": [
+        "Business"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "stats"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "total"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "SIM",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "parcial"
+    },
+    {
+      "id": "ANA-006",
+      "name": "Tipos Service graficos",
+      "domain": "ANALYTICS",
+      "objective": "agendamentos-servicos usa Service.tipo",
+      "priority": "P1",
+      "categories": [
+        "Regression"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "stats/graficos"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "series por tipo"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "PARCIAL",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "parcial"
+    },
+    {
+      "id": "ANA-007",
+      "name": "Estatisticas apos cancelamento",
+      "domain": "ANALYTICS",
+      "objective": "Counts refletem cancel",
+      "priority": "P1",
+      "categories": [
+        "Business",
+        "Regression"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "stats pos cancel"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "cancelados++"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "SIM",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "ANA-008",
+      "name": "Estatisticas apos reembolso",
+      "domain": "ANALYTICS",
+      "objective": "Receita/reembolsos coerentes",
+      "priority": "P1",
+      "categories": [
+        "Business"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "stats pos refund"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "consistencia"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "PARCIAL",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "ANA-009",
+      "name": "Conversoes registro→pagamento",
+      "domain": "ANALYTICS",
+      "objective": "Metrica conversao futura",
+      "priority": "P2",
+      "categories": [
+        "Business"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "TBD"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "taxa"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "NAO",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "FAQ-001",
+      "name": "FAQ fluxo completo",
+      "domain": "FAQ",
+      "objective": "Perguntar→responder→Minha Conta",
+      "priority": "P1",
+      "categories": [
+        "Business"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "FAQ APIs"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "status respondida"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "PARCIAL",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "FAQ-002",
+      "name": "FAQ mark-read",
+      "domain": "FAQ",
+      "objective": "Marcar lida",
+      "priority": "P2",
+      "categories": [
+        "Regression"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "mark-read"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "readAt"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "PARCIAL",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "CHAT-001",
+      "name": "Chat fluxo completo",
+      "domain": "CHAT",
+      "objective": "Abrir sessao→mensagem→admin",
+      "priority": "P1",
+      "categories": [
+        "Business"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "chat APIs"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "session+message"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "PARCIAL",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "CHAT-002",
+      "name": "Chat human requested",
+      "domain": "CHAT",
+      "objective": "humanRequested flag",
+      "priority": "P2",
+      "categories": [
+        "Business"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "chat"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "flag"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "PARCIAL",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "XSC-001",
+      "name": "Compra multiplos servicos",
+      "domain": "CROSS",
+      "objective": "Um pagamento varios Services",
+      "priority": "P0",
+      "categories": [
+        "Business",
+        "Release Gate"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "effects multi"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "N services"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "SIM",
+      "linkedInvariants": [],
+      "teScenarioHints": [
+        "TE-S02"
+      ],
+      "coverage": "futura"
+    },
+    {
+      "id": "XSC-002",
+      "name": "Compra plano + servico",
+      "domain": "CROSS",
+      "objective": "Combo futuro",
+      "priority": "P2",
+      "categories": [
+        "Business"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "TBD"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "plano+apt"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "NAO",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "XSC-003",
+      "name": "Plano multiplos cupons",
+      "domain": "CROSS",
+      "objective": "P2",
+      "priority": "P0",
+      "categories": [
+        "Business"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "plan-coupons"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "N cupons"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "PARCIAL",
+      "linkedInvariants": [],
+      "teScenarioHints": [
+        "TE-S06"
+      ],
+      "coverage": "futura"
+    },
+    {
+      "id": "XSC-004",
+      "name": "Agendar multiplos cupons plano",
+      "domain": "CROSS",
+      "objective": "N com-cupom",
+      "priority": "P1",
+      "categories": [
+        "Business"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "com-cupom"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "N appointments"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "PARCIAL",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "XSC-005",
+      "name": "Cancelamento plano",
+      "domain": "CROSS",
+      "objective": "Alias PLN-006 gate",
+      "priority": "P0",
+      "categories": [
+        "Business"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "cancelar plano"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "cancel"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "PARCIAL",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "XSC-006",
+      "name": "Reembolso parcial",
+      "domain": "CROSS",
+      "objective": "Parcial se suportado",
+      "priority": "P2",
+      "categories": [
+        "Business"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "TBD Asaas"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "doc"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "NAO",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "XSC-007",
+      "name": "Reembolso integral",
+      "domain": "CROSS",
+      "objective": "Refund full",
+      "priority": "P0",
+      "categories": [
+        "Business",
+        "Release Gate"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "escolher-reembolso"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "refund"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "PARCIAL",
+      "linkedInvariants": [
+        "F6"
+      ],
+      "teScenarioHints": [
+        "TE-S07"
+      ],
+      "coverage": "futura"
+    },
+    {
+      "id": "XSC-008",
+      "name": "Webhook out-of-order",
+      "domain": "CROSS",
+      "objective": "Alias PAY-015",
+      "priority": "P1",
+      "categories": [
+        "Stress"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "webhooks"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "coerencia"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "PARCIAL",
+      "linkedInvariants": [],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    },
+    {
+      "id": "XSC-009",
+      "name": "Race condition slot",
+      "domain": "CROSS",
+      "objective": "Alias PAY-016/A8",
+      "priority": "P1",
+      "categories": [
+        "Stress"
+      ],
+      "prerequisites": [
+        "ambiente TE permitido",
+        "DB disponivel"
+      ],
+      "pipeline": [
+        "parallel"
+      ],
+      "eventsFired": [],
+      "expectedAsserts": [
+        "A8"
+      ],
+      "dataCreated": [],
+      "dataRemoved": [
+        "cleanup TE artefacts"
+      ],
+      "cleanupRequired": true,
+      "canRunAutomatically": "PARCIAL",
+      "linkedInvariants": [
+        "A8"
+      ],
+      "teScenarioHints": [],
+      "coverage": "futura"
+    }
+  ]
+}

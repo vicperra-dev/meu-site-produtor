@@ -1,0 +1,222 @@
+{
+  "reportId": "GL-01-go-live-readiness",
+  "generatedAt": "2026-07-15T05:42:00.000Z",
+  "architecture": "FROZEN_AFTER_EC_01",
+  "verdict": {
+    "production": "APROVADA COM RESTRIÇÕES",
+    "confidencePercent": 90,
+    "reason": "Todos os gates locais e cenários oficiais passaram. A restrição é operacional: a URL/token do webhook Asaas em produção e um pagamento sandbox ponta a ponta precisam ser confirmados no ambiente público."
+  },
+  "bugsFound": [
+    {
+      "id": "GL01-FIN-01",
+      "severity": "P0",
+      "title": "Checkouts de serviços confiavam em preço e total do browser",
+      "status": "fixed"
+    },
+    {
+      "id": "GL01-CPN-01",
+      "severity": "P0",
+      "title": "Validação de cupom não aplicava owner, tipo canônico e serviço exato de forma uniforme",
+      "status": "fixed"
+    },
+    {
+      "id": "GL01-WH-01",
+      "severity": "P0",
+      "title": "Webhook podia escolher metadata por userId, recência ou email do customer",
+      "status": "fixed"
+    },
+    {
+      "id": "GL01-WH-02",
+      "severity": "P0",
+      "title": "Valor recebido no webhook não era comparado ao valor calculado no servidor",
+      "status": "fixed"
+    },
+    {
+      "id": "GL01-UX-01",
+      "severity": "P1",
+      "title": "Página de sucesso fazia polling e processava plano pelo cliente",
+      "status": "fixed"
+    },
+    {
+      "id": "GL01-ADM-01",
+      "severity": "P1",
+      "title": "Shim de vínculo de cupons de teste aceitava usuário comum e associação ambígua",
+      "status": "fixed"
+    },
+    {
+      "id": "GL01-MULTI-01",
+      "severity": "P1",
+      "title": "Cupom aplicado no carrinho não era consumido atomicamente nos efeitos",
+      "status": "fixed"
+    },
+    {
+      "id": "GL01-CLEAN-01",
+      "severity": "P2",
+      "title": "Cleanup oficial deixava eventos de sincronização e histórico de testes",
+      "status": "fixed"
+    },
+    {
+      "id": "GL01-TS-01",
+      "severity": "gate",
+      "title": "Literal BigInt incompatível com target ES2017 bloqueava tsc",
+      "status": "fixed"
+    }
+  ],
+  "bugsRemaining": [],
+  "restrictions": [
+    {
+      "id": "GL01-OPS-01",
+      "type": "external_configuration",
+      "description": "Confirmar ASAAS_WEBHOOK_ACCESS_TOKEN e URL pública /api/webhooks/asaas no painel Asaas."
+    },
+    {
+      "id": "GL01-OPS-02",
+      "type": "production_smoke",
+      "description": "Executar pagamento sandbox real: registro, checkout, webhook, Synchronization Event e Minha Conta."
+    },
+    {
+      "id": "GL01-PROVIDER-01",
+      "type": "scope",
+      "description": "Asaas é o único provider ativo. Mercado Pago/InfinityPay exigem evento de sincronização equivalente antes de eventual ativação."
+    }
+  ],
+  "financialSecurity": {
+    "serverCatalogAuthority": true,
+    "clientSubtotalIgnored": true,
+    "clientTotalIgnored": true,
+    "clientDiscountIgnored": true,
+    "clientPriceIgnored": true,
+    "quantityValidated": true,
+    "webhookAmountVerified": true
+  },
+  "coupons": {
+    "canonicalTypesCovered": [
+      "SERVICE",
+      "PLAN",
+      "DISCOUNT",
+      "REBOOK",
+      "REFUND",
+      "BONUS",
+      "TEST"
+    ],
+    "checks": [
+      "existence",
+      "canonical type",
+      "expiration",
+      "owner",
+      "used",
+      "refund lock",
+      "appointment",
+      "payment owner and approved status",
+      "plan owner and status",
+      "minimum value",
+      "service exact match",
+      "test environment gate"
+    ]
+  },
+  "webhook": {
+    "userIdFallbackRemoved": true,
+    "customerEmailFallbackRemoved": true,
+    "secureIdentifiers": [
+      "Payment.asaasId",
+      "PaymentMetadata.asaasId",
+      "PaymentMetadata.id",
+      "Subscription.asaasSubscriptionId"
+    ],
+    "ambiguousOperationExecutesEffects": false,
+    "structuredSecurityAudit": true
+  },
+  "synchronization": {
+    "successPagePolling": false,
+    "successPageClientEffects": false,
+    "transport": "Synchronization Engine SSE with cursor replay",
+    "readySignal": "PaymentConfirmed metadata.effectsReady=true",
+    "surfaces": [
+      "minha-conta",
+      "pagamentos",
+      "agenda",
+      "cupons",
+      "planos",
+      "dashboard",
+      "estatisticas"
+    ]
+  },
+  "cleanup": {
+    "testUsersFound": 6,
+    "deleted": {
+      "users": 6,
+      "services": 3,
+      "appointments": 3,
+      "payments": 4,
+      "paymentMetadata": 5,
+      "transitionHistory": 6,
+      "orphanSynchronizationEvents": 867,
+      "expiredUnlinkedPaymentMetadata": 22,
+      "temporaryUploads": 0,
+      "orphanTestCoupons": 0
+    },
+    "realDataDeleted": false,
+    "safetyBoundary": "@homolog.test, orphan technical records, tmp/temp/homolog upload folders"
+  },
+  "coverage": {
+    "catalogScenarios": 60,
+    "executed": {
+      "PH01_and_GL01": {
+        "total": 9,
+        "passed": 9
+      },
+      "TE02A": {
+        "total": 21,
+        "passed": 21
+      },
+      "SYNC01A": {
+        "total": 7,
+        "passed": 7
+      },
+      "SIM01": {
+        "total": 10,
+        "passed": 10
+      },
+      "SIM02": {
+        "total": 10,
+        "passed": 10
+      }
+    },
+    "newRegressionScenarios": [
+      "GL01-001 server catalog pricing",
+      "GL01-002 coupon owner and exact service",
+      "GL01-003 exact webhook operation identity",
+      "GL01-004 webhook amount mismatch"
+    ]
+  },
+  "gates": {
+    "typescript": "PASS",
+    "prisma": "PASS",
+    "build": "PASS",
+    "domainAudit": "PASS",
+    "workflowAudit": "PASS",
+    "synchronizationAudit": "PASS",
+    "executionAudit": "PASS",
+    "simulationAudit": "PASS_WITH_1_NON_BLOCKING_WARNING",
+    "knowledgeGraphAudit": "PASS",
+    "discoveryAudit": "PASS",
+    "regressionAudit": "PASS",
+    "PH01": "PASS_9_OF_9",
+    "TE02A": "PASS_21_OF_21",
+    "SIM01": "PASS_10_OF_10",
+    "SIM02": "PASS_10_OF_10",
+    "SYNC01A": "PASS_7_OF_7"
+  },
+  "risks": [
+    "Configuração externa do Asaas não pode ser provada por gates locais.",
+    "Simulation Audit mantém um warning não bloqueante sobre fixture prisma.coupon.create em simulação.",
+    "Rotas manuais de recuperação financeira permanecem restritas a ADMIN/secret e devem continuar fora da UX pública."
+  ],
+  "recommendations": [
+    "Executar smoke sandbox no domínio público antes de liberar tráfego.",
+    "Monitorar WEBHOOK_SECURITY_AUDIT e ausência de PaymentConfirmed effectsReady.",
+    "Não habilitar outro provider sem implementar operationId e Synchronization Event equivalentes.",
+    "Executar golive:cleanup após futuras baterias de homologação."
+  ]
+}

@@ -1,0 +1,158 @@
+{
+  "reportId": "PV-00-vercel-inventory",
+  "mode": "READ_ONLY",
+  "generatedAt": "2026-07-11T03:05:00.000Z",
+  "language": "pt-BR",
+  "projectName": "THouse Rec",
+  "branchLocal": "pr03-clean",
+  "headRc": "bfc5c38",
+  "basedOn": ["RC-01-release-consolidation", "LS-01-launch-plan", "HL-01-final-homologation", "OPS-01-runbook"],
+  "limitacoes": {
+    "vercelCli": "npx vercel whoami não concluiu (sem autenticação neste ambiente)",
+    "ghCli": "gh não instalado",
+    "painelVercel": "Não acessado — campos marcados NAO_VERIFICAVEL_REMOTAMENTE",
+    "fontesUsadas": ["git remote/branch", "git fetch origin", "package.json", "documentação domain-guardian", ".env local (somente classificação, sem valores)"]
+  },
+  "respostas": {
+    "1_projetoVercel": {
+      "nome": "meu-site-produtor (inferido package.json / repo GitHub)",
+      "nomeVerificado": "NAO_VERIFICAVEL_REMOTAMENTE",
+      "framework": "Next.js 16.1.6",
+      "repositorioConectado": "https://github.com/rvits/meu-site-produtor.git",
+      "repositorioVerificadoNoVercel": "NAO_VERIFICAVEL_REMOTAMENTE"
+    },
+    "2_branchProducao": {
+      "branch": "main",
+      "evidencia": "origin/HEAD -> origin/main",
+      "hashPublicadoRemoto": "fd9ff6d",
+      "dataUltimoCommitMain": "2026-05-04T08:07:33-03:00",
+      "mensagemUltimoCommitMain": "hardening completo sistema: cupons, webhook, idempotencia, sync e validações finais"
+    },
+    "3_previewDeployments": {
+      "habilitados": "NAO_VERIFICAVEL_REMOTAMENTE",
+      "presuncao": "SIM — padrão Vercel+GitHub para branches não-produção; confirmar no painel Settings → Git",
+      "nota": "pr03-clean ainda não existe em origin — preview exige push da branch RC"
+    },
+    "4_ultimoDeploy": {
+      "hashInferidoProducao": "fd9ff6d",
+      "dataInferida": "2026-05-04",
+      "branchInferida": "main",
+      "urlInferida": "NAO_VERIFICAVEL_REMOTAMENTE",
+      "nota": "Inferência: se Vercel auto-deploy de main está ativo, produção reflete fd9ff6d"
+    },
+    "5_productionUrl": {
+      "dominioAtivo": "NAO_VERIFICAVEL_REMOTAMENTE",
+      "candidatosDocumentados": [
+        "https://thouse-rec.com.br (comentário em mercadopago/checkout/route.ts)",
+        "https://{projeto}.vercel.app (padrão Vercel)"
+      ],
+      "localDev": "http://localhost:3000 (.env.local)",
+      "tunelLegado": "https://crazy-pans-own.loca.lt (.env — não produção)"
+    },
+    "6_variaveisPorAmbiente": {
+      "nota": "Apenas nomes esperados — valores NÃO consultados (READ ONLY)",
+      "development": {
+        "fonte": "local .env / .env.local",
+        "nomes": [
+          "DATABASE_URL",
+          "ASAAS_API_KEY",
+          "ASAAS_WEBHOOK_ACCESS_TOKEN",
+          "NEXT_PUBLIC_SITE_URL",
+          "ASAAS_SKIP_TLS_VERIFY",
+          "SUPPORT_EMAIL",
+          "SUPPORT_EMAIL_PASSWORD",
+          "SUPPORT_DEST_EMAIL",
+          "MERCADOPAGO_ACCESS_TOKEN",
+          "MP_INTEGRATOR_ID"
+        ]
+      },
+      "preview": {
+        "fonte": "Vercel Preview (NAO_VERIFICAVEL)",
+        "nomesEsperadosPv01": [
+          "DATABASE_URL",
+          "ASAAS_API_KEY",
+          "ASAAS_WEBHOOK_ACCESS_TOKEN",
+          "NEXT_PUBLIC_SITE_URL"
+        ],
+        "nomesOpcionais": [
+          "SUPPORT_EMAIL",
+          "SUPPORT_EMAIL_PASSWORD",
+          "SUPPORT_DEST_EMAIL"
+        ]
+      },
+      "production": {
+        "fonte": "Vercel Production (NAO_VERIFICAVEL)",
+        "nomesEsperados": [
+          "DATABASE_URL",
+          "ASAAS_API_KEY",
+          "ASAAS_WEBHOOK_ACCESS_TOKEN",
+          "NEXT_PUBLIC_SITE_URL"
+        ],
+        "nomesOpcionais": [
+          "MERCADOPAGO_ACCESS_TOKEN",
+          "MP_INTEGRATOR_ID",
+          "SUPPORT_EMAIL",
+          "SUPPORT_EMAIL_PASSWORD",
+          "SUPPORT_DEST_EMAIL"
+        ]
+      }
+    },
+    "7_databaseUrl": {
+      "vercelDevelopment": "NAO_VERIFICAVEL",
+      "vercelPreview": "NAO_VERIFICAVEL — esperado Staging",
+      "vercelProduction": "NAO_VERIFICAVEL — esperado Produção",
+      "localAtual": "LOCAL (postgresql://localhost:5432/thouse_rec)"
+    },
+    "8_asaasApiKey": {
+      "developmentLocal": "SANDBOX ($aact_hmlg_ — ENV-01/EX-00)",
+      "previewVercel": "NAO_VERIFICAVEL — esperado SANDBOX para F2",
+      "productionVercel": "NAO_VERIFICAVEL — esperado PRODUÇÃO ($aact_prod_*)",
+      "webhookTokenLocal": "AUSENTE",
+      "webhookTokenPreview": "NAO_VERIFICAVEL",
+      "webhookTokenProduction": "NAO_VERIFICAVEL"
+    },
+    "9_diferencaRcVsPublicada": {
+      "branchRc": "pr03-clean @ bfc5c38",
+      "branchPublicadaRemoto": "main @ fd9ff6d",
+      "commitsRcAheadOfMain": 29,
+      "pr03CleanNoOrigin": false,
+      "nota": "RC não foi pushada para origin; produção remota (se existir) ainda em main antiga",
+      "commitsRcRecentes": [
+        "bfc5c38 docs(rc01): release candidate consolidation report",
+        "106ac39 docs(homologation): EX reports",
+        "ddda5a8 chore(homologation): scripts",
+        "db4e91a fix(webhook): carrinho handler priority",
+        "3f20ad0 fix(auth): auto-login GL-01"
+      ],
+      "escopoDivergencia": "PR-01/02/03 payment pipeline, guardian, migrations, homologation fixes — não presentes em fd9ff6d"
+    },
+    "10_estrategiaRecomendada": {
+      "opcao": "A",
+      "titulo": "Deploy Preview da Release Candidate",
+      "justificativa": [
+        "HL-01 exige Fase F2 (Preview) antes de produção",
+        "29 commits de divergência — merge direto em main é alto risco",
+        "pr03-clean não está em origin — preview requer push controlado",
+        "F2 valida HTTPS, webhook público Asaas sandbox e envs Vercel sem tocar produção",
+        "EX-01/EX-02 aprovados apenas em localhost — Preview é próximo gate obrigatório",
+        "RC inclui fix webhook crítico (db4e91a) ausente em fd9ff6d"
+      ],
+      "naoRecomendado": {
+        "opcao": "B",
+        "titulo": "Merge direto na branch de produção",
+        "motivo": "Pula homologação F2; expõe produção sem validar webhook HTTPS e sem smoke em ambiente deployado"
+      }
+    }
+  },
+  "checklistPv01": [
+    "Push pr03-clean para origin",
+    "Confirmar preview deploy Vercel automático",
+    "Configurar envs Preview: DATABASE_URL staging, ASAAS sandbox, WEBHOOK token, NEXT_PUBLIC_SITE_URL preview",
+    "Registrar webhook Asaas sandbox → https://{preview}.vercel.app/api/webhooks/asaas",
+    "Executar PV-01 homologação F2"
+  ],
+  "launchConfidenceScore": {
+    "atual": 88,
+    "nota": "Pós RC-01; Preview não executado ainda"
+  }
+}

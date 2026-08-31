@@ -1,0 +1,148 @@
+{
+  "reportId": "EX-01-local-validation",
+  "mode": "EXECUCAO_CONTROLADA",
+  "generatedAt": "2026-07-10T21:15:00.000Z",
+  "language": "pt-BR",
+  "projectName": "THouse Rec",
+  "branch": "pr03-clean",
+  "head": "3f20ad0",
+  "basedOn": ["ENV-01-environment-validation", "EX-00-sandbox-activation", "SETUP-01-asaas-guide"],
+  "scope": "Homologação local F1 — MVP agendamento até checkout Sandbox (sem concluir pagamento)",
+  "veredito": "APROVADO",
+  "erroAteCheckout": "NAO",
+  "sistemaProntoEx02": true,
+  "preCondicoes": {
+    "ENV-01": "APROVADO",
+    "sandboxAtivo": true,
+    "databaseLocal": true,
+    "buildVerde": true,
+    "npmRunDev": true,
+    "migrationAplicada": "20260617120000_appointment_admin_archive (durante execução — schema estava desalinhado)"
+  },
+  "operacoesAuxiliares": [
+    {
+      "acao": "npx prisma migrate deploy",
+      "motivo": "Coluna Appointment.adminArchivedAt ausente causava 500 em /api/meus-dados",
+      "tipo": "operacional-banco",
+      "alterouCodigo": false
+    }
+  ],
+  "steps": [
+    {
+      "ordem": 1,
+      "nome": "Abrir Home",
+      "status": "PASS",
+      "tempoMs": 3745,
+      "evidencia": { "GET /": 200 }
+    },
+    {
+      "ordem": 2,
+      "nome": "Registrar usuário",
+      "status": "PASS",
+      "tempoMs": null,
+      "evidencia": {
+        "POST /api/registro": 200,
+        "email": "ex01-1783718270772@homolog.test",
+        "userId": "840be10d-e227-4bc9-9522-3282fe987ced"
+      }
+    },
+    {
+      "ordem": 3,
+      "nome": "Confirmar login automático",
+      "status": "PASS",
+      "evidencia": {
+        "GET /api/me": 200,
+        "sessionCookie": "session_id definido",
+        "autoLoginGL01": true
+      }
+    },
+    {
+      "ordem": 4,
+      "nome": "Abrir Minha Conta",
+      "status": "PASS",
+      "evidencia": {
+        "GET /api/meus-dados": 200,
+        "GET /minha-conta": 200
+      },
+      "nota": "Primeira tentativa FAIL (500) antes de migrate deploy — P2022 adminArchivedAt"
+    },
+    {
+      "ordem": 5,
+      "nome": "Selecionar um serviço",
+      "status": "PASS",
+      "evidencia": { "servico": "Sessão", "id": "sessao", "preco": 40 }
+    },
+    {
+      "ordem": 6,
+      "nome": "Selecionar data",
+      "status": "PASS",
+      "evidencia": { "data": "2026-09-20", "hora": "14:00", "duracaoMinutos": 60 }
+    },
+    {
+      "ordem": 7,
+      "nome": "Adicionar ao carrinho",
+      "status": "PASS",
+      "evidencia": { "items": 1, "total": 40, "tipo": "sessao" }
+    },
+    {
+      "ordem": 8,
+      "nome": "Abrir Carrinho",
+      "status": "PASS",
+      "evidencia": { "GET /carrinho": 200 }
+    },
+    {
+      "ordem": 9,
+      "nome": "Iniciar Checkout",
+      "status": "PASS",
+      "evidencia": {
+        "POST /api/asaas/checkout-carrinho": 200,
+        "initPoint": "https://sandbox.asaas.com/i/o7t2umh7fecupg7r",
+        "parada": "Antes de concluir pagamento — redirect Sandbox disponível"
+      },
+      "nota": "Tentativa anterior FAIL com CPF inválido no script de teste — Asaas rejeitou customer"
+    },
+    {
+      "ordem": 10,
+      "nome": "Confirmar checkout criado",
+      "status": "PASS",
+      "evidencia": {
+        "paymentId": "pay_o7t2umh7fecupg7r",
+        "paymentMetadataId": "1746c284-c15c-49b5-9ebf-b48bf432dfe4",
+        "paymentMetadataAsaasId": "pay_o7t2umh7fecupg7r",
+        "initPointSandbox": true,
+        "provider": "asaas"
+      }
+    }
+  ],
+  "checkout": {
+    "pagamentoConcluido": false,
+    "initPoint": "https://sandbox.asaas.com/i/o7t2umh7fecupg7r",
+    "paymentId": "pay_o7t2umh7fecupg7r",
+    "paymentMetadataId": "1746c284-c15c-49b5-9ebf-b48bf432dfe4",
+    "ambiente": "sandbox.asaas.com"
+  },
+  "ferramenta": "scripts/ex01-local-smoke.js (HTTP journey com cookie session_id)",
+  "tentativas": [
+    {
+      "tentativa": 1,
+      "parouEm": 4,
+      "erro": "GET /api/meus-dados 500 — coluna adminArchivedAt ausente"
+    },
+    {
+      "tentativa": 2,
+      "parouEm": 9,
+      "erro": "Asaas 400 invalid_customer — CPF de teste sem dígitos verificadores válidos"
+    },
+    {
+      "tentativa": 3,
+      "resultado": "APROVADO — 10/10 PASS"
+    }
+  ],
+  "restricoesRespeitadas": {
+    "semAlterarRegraNegocio": true,
+    "semNovasFuncionalidades": true,
+    "semRefatoracao": true,
+    "semCommit": true,
+    "pagamentoNaoConcluido": true
+  }
+}

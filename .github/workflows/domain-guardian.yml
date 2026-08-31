@@ -1,0 +1,98 @@
+# Domain Guardian — pipeline de governança de domínio (somente leitura).
+# Gate final: domain-decision-engine.ts (BLOCKED → falha do job).
+
+name: Domain Guardian
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: domain-guardian-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  domain-governance:
+    name: Governança de domínio
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+
+      - name: 1. Domain Guardian Runner
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          node --experimental-strip-types scripts/domain-guardian-runner.ts || true
+          node --experimental-strip-types scripts/domain-guardian-advisor.ts || true
+
+      - name: 2. Domain Change Analyzer
+        run: node --experimental-strip-types scripts/domain-change-analyzer.ts || true
+
+      - name: 3. Domain Review Engine
+        run: node --experimental-strip-types scripts/domain-review-engine.ts || true
+
+      - name: 4. Domain Decision Engine (gate)
+        run: node --experimental-strip-types scripts/domain-decision-engine.ts
+
+      # StudioOS: domain-architecture-planner.ts pertence ao agente de arquitetura
+      # (Fase 7) — ainda não commitado neste repositório; opcional até implementação.
+      - name: 5. Domain Architecture Planner (StudioOS — opcional)
+        run: |
+          if [ -f scripts/domain-architecture-planner.ts ]; then
+            node --experimental-strip-types scripts/domain-architecture-planner.ts
+          else
+            echo "Skipping domain-architecture-planner.ts — StudioOS agent not present in this repo."
+          fi
+
+      - name: Upload governance reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: domain-guardian-reports
+          path: |
+            reports/domain-guardian/latest.json
+            reports/domain-guardian/summary.md
+            reports/domain-guardian/advisor.md
+            reports/domain-guardian/change-analysis.md
+            reports/domain-guardian/review-checklist.md
+            reports/domain-guardian/decision.md
+            reports/domain-guardian/action-plan.md
+          retention-days: 30
+          if-no-files-found: warn
+
+      - name: Job summary — decisão
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "## Domain Guardian"
+            echo ""
+            if [ -f reports/domain-guardian/decision.md ]; then
+              sed -n '/^## 1\. Decisão final/,/^---$/p' reports/domain-guardian/decision.md | head -n 20
+            else
+              echo "_decision.md não gerado — verifique logs dos passos anteriores._"
+            fi
+            echo ""
+            if [ -f reports/domain-guardian/summary.md ]; then
+              echo "### Guardian (banco)"
+              grep -E '^\* (Errors|Warnings|Info):' reports/domain-guardian/summary.md || true
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"

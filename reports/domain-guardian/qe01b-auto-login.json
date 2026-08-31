@@ -1,0 +1,62 @@
+{
+  "reportId": "QE-01b-auto-login",
+  "mode": "IMPLEMENTAÇÃO_CONTROLADA",
+  "generatedAt": "2026-07-10T04:10:00.000Z",
+  "language": "pt-BR",
+  "projectName": "THouse",
+  "branch": "pr03-clean",
+  "head": "66a8e5c",
+  "committed": false,
+  "answers": {
+    "filesChanged": [
+      "src/app/lib/auth.ts",
+      "src/app/api/login/route.ts",
+      "src/app/api/registro/route.ts"
+    ],
+    "linesAdded": 26,
+    "linesRemoved": 18,
+    "linesNet": 8,
+    "perFile": {
+      "src/app/lib/auth.ts": { "added": 21, "removed": 0 },
+      "src/app/api/login/route.ts": { "added": 2, "removed": 17 },
+      "src/app/api/registro/route.ts": { "added": 3, "removed": 1 }
+    },
+    "duplicationEliminated": true,
+    "loginUnchanged": true,
+    "loginUnchangedDetail": "Mesma TTL (7d), cookie session_id, mesmas flags; apenas delegado a createUserSession()",
+    "registroAuthenticatedAfter": true,
+    "registroFlow": "user.create → createUserSession(user.id) → cookie + Session → AuthContext.refresh() → /api/me retorna user",
+    "build": {
+      "tsc": { "command": "npx tsc --noEmit", "exitCode": 0 },
+      "npm": { "command": "npm run build", "exitCode": 0 }
+    }
+  },
+  "implementation": {
+    "helper": {
+      "name": "createUserSession",
+      "file": "src/app/lib/auth.ts",
+      "responsibilities": [
+        "prisma.session.create({ userId, expiresAt: now + 7d })",
+        "cookies().set('session_id', session.id, { httpOnly, path:/, sameSite:lax, secure:production })"
+      ],
+      "returns": "Session"
+    },
+    "login": {
+      "change": "Substituído bloco inline por await createUserSession(user.id)",
+      "preserved": ["loginSchema", "bcrypt", "loginLog", "blocked check", "response JSON"]
+    },
+    "registro": {
+      "change": "await createUserSession(user.id) após user.create",
+      "preserved": ["registroSchema", "email unique check", "bcrypt hash", "response JSON"]
+    }
+  },
+  "constraintsRespected": {
+    "noAuthRuleChanges": true,
+    "noPrismaSchemaChanges": true,
+    "noMigrationChanges": true,
+    "sessionTtlUnchanged": "7 dias",
+    "cookieNameUnchanged": "session_id",
+    "cookieFlagsUnchanged": true,
+    "noCommit": true
+  }
+}

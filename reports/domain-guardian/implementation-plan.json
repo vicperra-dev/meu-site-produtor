@@ -1,0 +1,558 @@
+{
+  "agentVersion": "1.0.0",
+  "generatedAt": "2026-07-05T20:29:09.986Z",
+  "sourceDesignPlan": {
+    "path": "reports/domain-guardian/design-plan.json",
+    "generatedAt": "2026-07-05T19:55:02.011Z",
+    "requestTitle": "Adicionar arquivamento administrativo de pagamentos",
+    "classification": "Feature"
+  },
+  "phases": [
+    {
+      "id": "phase-1",
+      "title": "Backend / Regras de domínio",
+      "objective": "Implementar lógica de negócio e guards sem alterar contratos existentes inadvertidamente.",
+      "files": [
+        "src/app/lib/process-payment-webhook.ts",
+        "src/app/api/webhooks/asaas/route.ts",
+        "src/app/lib/asaas-agendamento-payment-effects.ts",
+        "src/app/lib/asaas-plano-payment-effects.ts",
+        "src/app/lib/asaas-agendamento-reconcile.ts",
+        "src/app/lib/appointment-refund-payment.ts",
+        "src/app/lib/symbolic-payment.ts",
+        "src/app/lib/admin-delete-payment.ts",
+        "src/app/api/asaas/checkout-agendamento/route.ts",
+        "src/app/api/admin/pagamentos/route.ts",
+        "src/app/lib/appointment-hidden.ts",
+        "src/app/lib/appointment-refund-value.ts",
+        "src/app/lib/appointment-service-sync.ts",
+        "src/app/api/agendamentos/route.ts",
+        "src/app/api/agendamentos/escolher-reembolso/route.ts"
+      ],
+      "dependencies": [],
+      "risks": [
+        {
+          "level": "Alto",
+          "description": "Toca rota de webhook em produção."
+        },
+        {
+          "level": "Crítico",
+          "description": "Domínio Payment no escopo — invariantes F1–F8."
+        }
+      ],
+      "prerequisites": [
+        "ProjectContext e design-plan revisados"
+      ],
+      "entryCriteria": [
+        "ProjectContext e design-plan revisados",
+        "Nenhuma dependência de fase pendente"
+      ],
+      "exitCriteria": [
+        "Endpoints novos ou PATCH documentados",
+        "Regras de bloqueio alinhadas à auditoria",
+        "Nenhum purge físico onde soft-archive é esperado"
+      ],
+      "rollbackNotes": [
+        "git revert do commit da fase",
+        "Reexecutar Guardian para confirmar baseline"
+      ],
+      "requiresMigration": false,
+      "requiresManualValidation": false,
+      "estimatedComplexity": "Muito Alta",
+      "parallelizableWith": [],
+      "sequenceOrder": 1,
+      "scheduleLabel": "phase-1"
+    },
+    {
+      "id": "phase-2",
+      "title": "Webhook / Efeitos pós-pagamento",
+      "objective": "Garantir idempotência e efeitos colaterais consistentes.",
+      "files": [
+        "src/app/api/webhooks/asaas/route.ts",
+        "src/app/lib/asaas-agendamento-payment-effects.ts",
+        "src/app/lib/asaas-agendamento-reconcile.ts"
+      ],
+      "dependencies": [
+        "Fase Backend"
+      ],
+      "risks": [
+        {
+          "level": "Crítico",
+          "description": "Webhook Asaas — idempotência F1/F3; falha causa F4 ou duplicata."
+        },
+        {
+          "level": "Alto",
+          "description": "Toca rota de webhook em produção."
+        }
+      ],
+      "prerequisites": [
+        "F1/F3/F4 validados no plano"
+      ],
+      "entryCriteria": [
+        "F1/F3/F4 validados no plano",
+        "Dependência satisfeita: Fase Backend"
+      ],
+      "exitCriteria": [
+        "PAYMENT_RECEIVED idempotente por asaasId",
+        "Efeitos de agendamento executados após Payment.create",
+        "Reconcile cobre retries",
+        "Validação manual documentada"
+      ],
+      "rollbackNotes": [
+        "git revert do commit da fase",
+        "Reexecutar Guardian para confirmar baseline",
+        "Verificar fila Asaas após revert",
+        "Reconcile manual se pagamentos pendentes"
+      ],
+      "requiresMigration": false,
+      "requiresManualValidation": true,
+      "estimatedComplexity": "Muito Alta",
+      "parallelizableWith": [],
+      "sequenceOrder": 2,
+      "scheduleLabel": "phase-2"
+    },
+    {
+      "id": "phase-3",
+      "title": "Admin UI",
+      "objective": "Expor operações administrativas com confirmação e justificativa.",
+      "files": [
+        "src/app/api/admin/pagamentos/route.ts",
+        "src/app/api/admin/agendamentos/route.ts"
+      ],
+      "dependencies": [
+        "Fase Backend com APIs estáveis"
+      ],
+      "risks": [
+        {
+          "level": "Médio",
+          "description": "UX admin — validação manual obrigatória."
+        }
+      ],
+      "prerequisites": [],
+      "entryCriteria": [
+        "Dependência satisfeita: Fase Backend com APIs estáveis"
+      ],
+      "exitCriteria": [
+        "Ações destrutivas substituídas por soft-archive quando aplicável",
+        "Filtros e restauração testados manualmente",
+        "Validação manual documentada"
+      ],
+      "rollbackNotes": [
+        "git revert do commit da fase",
+        "Reexecutar Guardian para confirmar baseline"
+      ],
+      "requiresMigration": false,
+      "requiresManualValidation": true,
+      "estimatedComplexity": "Média",
+      "parallelizableWith": [],
+      "sequenceOrder": 3,
+      "scheduleLabel": "phase-3"
+    },
+    {
+      "id": "phase-4",
+      "title": "Minha Conta (se aplicável)",
+      "objective": "Avaliar impacto em visibilidade do usuário — preferir ortogonalidade com admin.",
+      "files": [
+        "src/app/api/meus-dados/route.ts",
+        "src/app/lib/appointment-hidden.ts"
+      ],
+      "dependencies": [
+        "Fase Backend"
+      ],
+      "risks": [
+        {
+          "level": "Alto",
+          "description": "Minha Conta — regressão visível ao usuário (A7)."
+        }
+      ],
+      "prerequisites": [
+        "Confirmar que adminArchivedAt não filtra Minha Conta"
+      ],
+      "entryCriteria": [
+        "Confirmar que adminArchivedAt não filtra Minha Conta",
+        "Dependência satisfeita: Fase Backend"
+      ],
+      "exitCriteria": [
+        "Comportamento de userHiddenAt preservado",
+        "Fluxos de reembolso intactos",
+        "Validação manual documentada"
+      ],
+      "rollbackNotes": [
+        "git revert do commit da fase",
+        "Reexecutar Guardian para confirmar baseline"
+      ],
+      "requiresMigration": false,
+      "requiresManualValidation": true,
+      "estimatedComplexity": "Alta",
+      "parallelizableWith": [],
+      "sequenceOrder": 4,
+      "scheduleLabel": "phase-4"
+    },
+    {
+      "id": "phase-5",
+      "title": "Domain Guardian",
+      "objective": "Atualizar checks e documentação de invariantes.",
+      "files": [
+        "scripts/domain-guardian-audit.ts",
+        "docs/ai/domain-invariants.md",
+        "scripts/domain-guardian-advisor.ts"
+      ],
+      "dependencies": [
+        "Fases de implementação estáveis"
+      ],
+      "risks": [
+        {
+          "level": "Médio",
+          "description": "Risco operacional padrão — validar checklist."
+        }
+      ],
+      "prerequisites": [],
+      "entryCriteria": [
+        "Dependência satisfeita: Fases de implementação estáveis"
+      ],
+      "exitCriteria": [
+        "Novos invariantes documentados (se houver)",
+        "Checks A5/A8/A9/F4 atualizados conforme plano",
+        "domain-guardian-runner.ts sem errors",
+        "domain-guardian-runner.ts exit 0 ou findings explicados"
+      ],
+      "rollbackNotes": [
+        "Fase não altera runtime — rollback N/A"
+      ],
+      "requiresMigration": false,
+      "requiresManualValidation": false,
+      "estimatedComplexity": "Média",
+      "parallelizableWith": [],
+      "sequenceOrder": 5,
+      "scheduleLabel": "phase-5"
+    },
+    {
+      "id": "phase-6",
+      "title": "Validação",
+      "objective": "Smoke, funcional, Guardian e regressão antes de merge.",
+      "files": [
+        "reports/domain-guardian/"
+      ],
+      "dependencies": [
+        "Todas as fases anteriores"
+      ],
+      "risks": [
+        {
+          "level": "Médio",
+          "description": "Risco operacional padrão — validar checklist."
+        }
+      ],
+      "prerequisites": [
+        "design-plan.json arquivado neste run"
+      ],
+      "entryCriteria": [
+        "design-plan.json arquivado neste run",
+        "Dependência satisfeita: Todas as fases anteriores"
+      ],
+      "exitCriteria": [
+        "Checklist de validação executado",
+        "Decision Engine reavaliado",
+        "Architecture Agent reexecutado"
+      ],
+      "rollbackNotes": [
+        "git revert do commit da fase",
+        "Reexecutar Guardian para confirmar baseline"
+      ],
+      "requiresMigration": false,
+      "requiresManualValidation": false,
+      "estimatedComplexity": "Média",
+      "parallelizableWith": [],
+      "sequenceOrder": 6,
+      "scheduleLabel": "phase-6"
+    }
+  ],
+  "dependencies": {
+    "graph": [
+      {
+        "from": "phase-1",
+        "to": "phase-2",
+        "type": "critical"
+      },
+      {
+        "from": "phase-1",
+        "to": "phase-3",
+        "type": "sequential"
+      },
+      {
+        "from": "phase-2",
+        "to": "phase-3",
+        "type": "sequential"
+      },
+      {
+        "from": "phase-1",
+        "to": "phase-4",
+        "type": "sequential"
+      },
+      {
+        "from": "phase-1",
+        "to": "phase-5",
+        "type": "sequential"
+      },
+      {
+        "from": "phase-2",
+        "to": "phase-5",
+        "type": "sequential"
+      },
+      {
+        "from": "phase-3",
+        "to": "phase-5",
+        "type": "sequential"
+      },
+      {
+        "from": "phase-4",
+        "to": "phase-5",
+        "type": "sequential"
+      },
+      {
+        "from": "phase-1",
+        "to": "phase-6",
+        "type": "sequential"
+      },
+      {
+        "from": "phase-2",
+        "to": "phase-6",
+        "type": "sequential"
+      },
+      {
+        "from": "phase-3",
+        "to": "phase-6",
+        "type": "sequential"
+      },
+      {
+        "from": "phase-4",
+        "to": "phase-6",
+        "type": "sequential"
+      }
+    ],
+    "criticalDependencies": [
+      "phase-1 → phase-2"
+    ]
+  },
+  "executionOrder": [
+    "phase-1",
+    "phase-2",
+    "phase-4",
+    "phase-3",
+    "phase-5",
+    "phase-6"
+  ],
+  "parallelGroups": [],
+  "criticalPath": [
+    "phase-1",
+    "phase-2",
+    "phase-3",
+    "phase-6"
+  ],
+  "schedule": {
+    "ascii": "Fase 1: phase-1 (Backend / Regras de domínio)\n↓\nFase 2 [paralelo]: phase-2 (Webhook / Efeitos pós-pagamento) | phase-4 (Minha Conta (se aplicável))\n↓\nFase 3: phase-3 (Admin UI)\n↓\nFase 4 [paralelo]: phase-5 (Domain Guardian) | phase-6 (Validação)",
+    "steps": [
+      {
+        "label": "Camada 1",
+        "phaseIds": [
+          "phase-1"
+        ],
+        "parallel": false
+      },
+      {
+        "label": "Camada 2 (paralelo)",
+        "phaseIds": [
+          "phase-2",
+          "phase-4"
+        ],
+        "parallel": true
+      },
+      {
+        "label": "Camada 3",
+        "phaseIds": [
+          "phase-3"
+        ],
+        "parallel": false
+      },
+      {
+        "label": "Camada 4 (paralelo)",
+        "phaseIds": [
+          "phase-5",
+          "phase-6"
+        ],
+        "parallel": true
+      }
+    ]
+  },
+  "rollbackPlan": [
+    {
+      "phaseId": "phase-1",
+      "phaseTitle": "Backend / Regras de domínio",
+      "revertible": [
+        "git revert do commit da fase",
+        "Reexecutar Guardian para confirmar baseline"
+      ],
+      "requiresMigration": false,
+      "requiresManualValidation": []
+    },
+    {
+      "phaseId": "phase-2",
+      "phaseTitle": "Webhook / Efeitos pós-pagamento",
+      "revertible": [
+        "git revert do commit da fase",
+        "Reexecutar Guardian para confirmar baseline",
+        "Verificar fila Asaas após revert",
+        "Reconcile manual se pagamentos pendentes"
+      ],
+      "requiresMigration": false,
+      "requiresManualValidation": [
+        "Smoke test pós-rollback",
+        "Verificar pagamentos Asaas pendentes"
+      ]
+    },
+    {
+      "phaseId": "phase-3",
+      "phaseTitle": "Admin UI",
+      "revertible": [
+        "git revert do commit da fase",
+        "Reexecutar Guardian para confirmar baseline"
+      ],
+      "requiresMigration": false,
+      "requiresManualValidation": [
+        "Smoke test pós-rollback",
+        "Confirmar UI admin restaurada"
+      ]
+    },
+    {
+      "phaseId": "phase-4",
+      "phaseTitle": "Minha Conta (se aplicável)",
+      "revertible": [
+        "git revert do commit da fase",
+        "Reexecutar Guardian para confirmar baseline"
+      ],
+      "requiresMigration": false,
+      "requiresManualValidation": [
+        "Smoke test pós-rollback"
+      ]
+    },
+    {
+      "phaseId": "phase-5",
+      "phaseTitle": "Domain Guardian",
+      "revertible": [],
+      "requiresMigration": false,
+      "requiresManualValidation": []
+    },
+    {
+      "phaseId": "phase-6",
+      "phaseTitle": "Validação",
+      "revertible": [
+        "git revert do commit da fase",
+        "Reexecutar Guardian para confirmar baseline"
+      ],
+      "requiresMigration": false,
+      "requiresManualValidation": []
+    }
+  ],
+  "validationPlan": {
+    "smoke": [
+      "Aplicação inicia sem erro (`npm run build`)",
+      "Prisma generate após migration (se houver)",
+      "Login admin e usuário de teste"
+    ],
+    "integration": [
+      "Checkout sandbox → webhook → Payment.create → efeitos",
+      "Fluxo cancelamento → escolher reembolso/cupom",
+      "Simular PAYMENT_RECEIVED e PAYMENT_REFUNDED"
+    ],
+    "guardian": [
+      "node --experimental-strip-types scripts/domain-guardian-runner.ts",
+      "Verificar check A5 sem novos findings",
+      "Verificar check A8 sem novos findings",
+      "Verificar check A9 sem novos findings",
+      "Verificar check C1 sem novos findings",
+      "Verificar check F1 sem novos findings",
+      "Verificar check F4 sem novos findings",
+      "Verificar check S1 sem novos findings",
+      "Verificar check S3 sem novos findings",
+      "Verificar check X1 sem novos findings",
+      "Verificar check X2 sem novos findings",
+      "node --experimental-strip-types scripts/domain-decision-engine.ts"
+    ],
+    "regression": [
+      "meus-dados: listagem agendamentos/cupons/planos",
+      "Admin stats sem divergência abrupta",
+      "Reprocessar pagamento teste admin"
+    ],
+    "manual": [
+      "[Webhook / Efeitos pós-pagamento] Executar checklist manual da fase",
+      "[Admin UI] Executar checklist manual da fase",
+      "[Minha Conta (se aplicável)] Executar checklist manual da fase",
+      "Revisão de PR com review-checklist.md",
+      "Aprovação explícita antes de deploy em produção"
+    ]
+  },
+  "operationalChecklist": [
+    "Confirmar design-plan.json e implementation-plan.json na mesma revisão",
+    "Solicitação: Adicionar arquivamento administrativo de pagamentos",
+    "Classificação: Feature",
+    "Risco design: Crítico",
+    "Criar branch dedicada à implementação",
+    "Executar Architecture Agent para baseline",
+    "[phase-1] Início: validar critérios de entrada",
+    "[phase-1] Fim: validar critérios de saída",
+    "[phase-2] Início: validar critérios de entrada",
+    "[phase-2] Fim: validar critérios de saída",
+    "[phase-4] Início: validar critérios de entrada",
+    "[phase-4] Fim: validar critérios de saída",
+    "[phase-3] Início: validar critérios de entrada",
+    "[phase-3] Fim: validar critérios de saída",
+    "[phase-5] Início: validar critérios de entrada",
+    "[phase-5] Fim: validar critérios de saída",
+    "[phase-6] Início: validar critérios de entrada",
+    "[phase-6] Fim: validar critérios de saída",
+    "Executar domain-guardian-runner.ts",
+    "Executar domain-decision-engine.ts",
+    "Reexecutar Design Planner + Implementation Planner se escopo mudar",
+    "Revisar design-plan.md com stakeholder antes de codar",
+    "Confirmar que solicitação não viola invariantes críticos listados",
+    "Executar Architecture Agent para baseline atualizado",
+    "Classificação Feature — escopo alinhado",
+    "Validar impacto em F1/F4 e idempotência webhook"
+  ],
+  "estimatedComplexity": {
+    "overall": "Muito Alta",
+    "byPhase": {
+      "phase-1": "Muito Alta",
+      "phase-2": "Muito Alta",
+      "phase-3": "Média",
+      "phase-4": "Alta",
+      "phase-5": "Média",
+      "phase-6": "Média"
+    },
+    "totalFiles": 21,
+    "totalPhases": 6
+  },
+  "context": {
+    "sourcesConsulted": [
+      "reports/domain-guardian/design-plan.json",
+      "reports/domain-guardian/project-context.json",
+      "reports/domain-guardian/decision.md",
+      "reports/domain-guardian/review-checklist.md",
+      "reports/domain-guardian/action-plan.md",
+      "reports/domain-guardian/change-analysis.md",
+      "docs/ai/domain-map.md",
+      "docs/ai/domain-dependencies.md",
+      "docs/ai/domain-invariants.md"
+    ],
+    "decisionStatus": "BLOCKED",
+    "guardianStatus": "HEALTHY",
+    "changeRisk": "CRITICAL"
+  },
+  "limitations": [
+    "Cronograma derivado de design-plan — não valida disponibilidade de equipe.",
+    "Paralelização conservadora: apenas admin-ui e minha-conta na mesma camada.",
+    "Caminho crítico heurístico — revisar manualmente para o escopo real.",
+    "Rollback não gera scripts automáticos de migration down.",
+    "Estimativa de complexidade baseada em contagem de arquivos e risco.",
+    "Não substitui code review nem Decision Engine."
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "reportId": "GO-01-release-readiness",
+  "title": "GO-01 Release Readiness — Architecture Freeze",
+  "executedAt": "2026-07-18T08:38:00.000Z",
+  "verdict": "Release Candidate Final",
+  "readinessPercent": 93,
+  "architectureFreeze": true,
+  "mayProceedToGo02FinancialSmoke": true,
+  "autoStartGo02": false,
+  "summary": {
+    "migrationCreated": true,
+    "migrationAppliedThisSession": false,
+    "rollbackDocumented": true,
+    "storageProviderReady": true,
+    "asaasAudited": true,
+    "financialChecklistCreated": true,
+    "releaseChecklistCreated": true,
+    "operationalDocsCreated": true
+  },
+  "audits": {
+    "domain": "PASS",
+    "workflow": "PASS",
+    "workflowSmoke": "PASS",
+    "sync": "PASS",
+    "regression": "PASS",
+    "homologationScenariosCatalog": "PASS"
+  },
+  "homologationCatalog": {
+    "scenarios": 24,
+    "required": 24
+  },
+  "blockersEliminated": [
+    "Migration versionada provider/providerPaymentId/Coupon.serviceId",
+    "StorageProvider abstraction (Local + Cloud stub)",
+    "Catálogo Homologation completo para SKUs oficiais",
+    "Asaas release audit + checklist financeiro GO-02",
+    "Release Checklist + runbooks operacionais",
+    "Architecture Freeze declarado"
+  ],
+  "blockersRemainingForFullGoLive": [
+    "GO-02 Financial Smoke (Asaas sandbox/real) não executado",
+    "migrate deploy ainda pendente em preview/produção (runbook pronto)",
+    "Storage cloud não integrado (abstração pronta; local permanece)"
+  ],
+  "recommendation": "Aprovar GO-01 humanamente; iniciar exclusivamente GO-02 — Financial Smoke. Sem push/deploy automático nesta sprint."
+}

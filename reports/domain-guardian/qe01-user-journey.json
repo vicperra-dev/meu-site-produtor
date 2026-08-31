@@ -1,0 +1,216 @@
+{
+  "reportId": "QE-01-user-journey",
+  "mode": "READ_ONLY",
+  "generatedAt": "2026-07-10T03:10:00.000Z",
+  "language": "pt-BR",
+  "projectName": "THouse",
+  "branch": "pr03-clean",
+  "head": "66a8e5c",
+  "verdict": {
+    "jornadaNovoCliente": "REPROVADA",
+    "qe01FunctionalTesting": "NAO",
+    "reason": "Registro não cria sessão; pós-registro redireciona para área protegida sem autenticação; jornada até Minha Conta exige passo extra de login não documentado no fluxo feliz"
+  },
+  "authModel": {
+    "type": "session_cookie",
+    "cookieName": "session_id",
+    "jwt": false,
+    "storage": "Prisma Session (expiresAt 7 dias)",
+    "httpOnly": true,
+    "secureInProduction": true,
+    "sameSite": "lax"
+  },
+  "journey": {
+    "home": {
+      "classification": "OK",
+      "emoji": "🟢",
+      "page": "src/app/page.tsx",
+      "api": null,
+      "middleware": "maintenance only (pass-through)",
+      "validation": null,
+      "prisma": null,
+      "session": "AuthContext hidrata via /api/me no layout",
+      "protections": "Pública",
+      "notes": "Header oferece Entrar/Registrar quando user=null"
+    },
+    "registro": {
+      "classification": "ATENCAO",
+      "emoji": "🟡",
+      "page": "src/app/registro/page.tsx",
+      "api": "POST /api/registro",
+      "middleware": "Não protege registro",
+      "validation": "registroSchema (Zod) em src/app/lib/validations.ts",
+      "prisma": "prisma.user.create (bcrypt hash senha, role USER)",
+      "session": "NÃO cria Session nem cookie session_id",
+      "protections": "Email único, P2002, validação Zod",
+      "gap": "AuthContext.registro() chama refresh() após sucesso, mas /api/me retorna user:null; página redireciona para /conta sem sessão → /login"
+    },
+    "login": {
+      "classification": "OK",
+      "emoji": "🟢",
+      "page": "src/app/login/page.tsx",
+      "api": "POST /api/login",
+      "middleware": "Não intercepta login",
+      "validation": "loginSchema (Zod)",
+      "prisma": "user.findUnique, session.create, loginLog.create",
+      "session": "Cookie session_id + Session 7 dias",
+      "protections": "bcrypt.compare, blocked user 403, loginLog",
+      "redirect": "/conta (ou ?redirect= param)"
+    },
+    "sessaoAutenticada": {
+      "classification": "OK",
+      "emoji": "🟢",
+      "client": "src/app/context/AuthContext.tsx",
+      "api": "GET /api/me",
+      "lib": "src/app/lib/auth.ts → getSessionUser()",
+      "prisma": "session.findUnique + include user, expiresAt check",
+      "persistence": "Cookie httpOnly + registro Session no banco",
+      "logout": "POST /api/logout → deleteMany session + cookie.delete"
+    },
+    "minhaConta": {
+      "classification": "OK",
+      "emoji": "🟢",
+      "page": "src/app/minha-conta/page.tsx",
+      "api": "GET /api/meus-dados",
+      "middleware": "Sem gate server-side",
+      "validation": "requireAuth() server-side",
+      "prisma": "appointment, payment, userPlan, coupon, userQuestion filtrados por user.id",
+      "clientProtection": "useEffect: !user → router.push(/login)",
+      "dataScope": "Somente userId da sessão"
+    },
+    "contaPerfil": {
+      "classification": "ATENCAO",
+      "emoji": "🟡",
+      "page": "src/app/conta/page.tsx",
+      "api": "GET /api/conta, POST /api/conta/update",
+      "notes": "Página legada paralela a Minha Conta; login/registro redirecionam aqui, não para /minha-conta"
+    }
+  },
+  "confirmations": {
+    "registroCriaUsuario": {
+      "answer": true,
+      "evidence": "prisma.user.create com bcrypt, role USER, campos validados"
+    },
+    "loginAutentica": {
+      "answer": true,
+      "evidence": "session.create + cookie session_id após bcrypt válido"
+    },
+    "sessaoPersiste": {
+      "answer": true,
+      "evidence": "Cookie 7 dias; /api/me e getSessionUser revalidam expiresAt"
+    },
+    "logoutLimpaSessao": {
+      "answer": true,
+      "evidence": "prisma.session.deleteMany + cookie.delete; AuthContext setUser(null)"
+    },
+    "minhaContaDadosCorretos": {
+      "answer": true,
+      "evidence": "requireAuth + queries where userId: user.id",
+      "caveat": "Somente após login; não acessível direto pós-registro"
+    }
+  },
+  "protectionScenarios": {
+    "rotasProtegidas": {
+      "serverMiddleware": false,
+      "clientRedirect": true,
+      "apiRequireAuth": true,
+      "classification": "ATENCAO"
+    },
+    "usuarioSemLogin": {
+      "pages": "Redirect client-side para /login",
+      "apis": "401 Não autenticado",
+      "classification": "OK"
+    },
+    "usuarioInvalido": {
+      "login": "401 Usuário ou senha inválidos",
+      "classification": "OK"
+    },
+    "cookiesExpirados": {
+      "behavior": "getSessionUser retorna null; /api/me retorna user:null",
+      "cookieCleanup": "Cookie não removido automaticamente no /api/me",
+      "classification": "ATENCAO"
+    },
+    "jwtInvalido": {
+      "applicable": false,
+      "note": "Sistema não usa JWT; session_id inválido → findUnique null → user null",
+      "classification": "OK"
+    },
+    "sessionIdInvalido": {
+      "behavior": "user null, APIs 401",
+      "classification": "OK"
+    }
+  },
+  "risks": {
+    "fluxoMorto": {
+      "answer": true,
+      "items": [
+        "Registro → /conta sem sessão → redirect /login (usuário criado mas não autenticado)",
+        "AuthContext.registro retorna true mesmo sem sessão estabelecida"
+      ]
+    },
+    "codigoLegado": {
+      "answer": true,
+      "items": [
+        "/conta vs /minha-conta (duas áreas de conta)",
+        "Email hardcoded admin bypass (thouse.rec.tremv@gmail.com) em auth.ts e middleware.ts",
+        "Console.error verboso em /api/registro"
+      ]
+    },
+    "apiDuplicada": {
+      "answer": true,
+      "items": [
+        "GET /api/me (sessão básica) vs GET /api/conta (perfil completo) vs GET /api/meus-dados (dashboard)"
+      ],
+      "severity": "low — responsabilidades distintas"
+    },
+    "autenticacaoParalela": {
+      "answer": false,
+      "note": "Único modelo: session_id + Prisma Session"
+    },
+    "acessoDadosOutroUsuario": {
+      "answer": false,
+      "note": "APIs auditadas usam requireAuth() e filtram por user.id da sessão",
+      "caveat": "Rotas admin usam requireAdmin; rotas admin aceitam userId no body (esperado)"
+    }
+  },
+  "flowchart": [
+    "Home (page.tsx) 🟢",
+    "↓ Header: /registro ou /login",
+    "Registro (registro/page.tsx) 🟡",
+    "↓ POST /api/registro",
+    "Prisma User.create 🟢",
+    "↓ SEM Session/cookie 🔴 gap",
+    "Redirect /conta 🟡",
+    "↓ user=null",
+    "Redirect /login 🟡",
+    "Login (login/page.tsx) 🟢",
+    "↓ POST /api/login",
+    "Prisma Session.create + cookie session_id 🟢",
+    "↓ GET /api/me (AuthContext)",
+    "Sessão autenticada 🟢",
+    "↓ Header: /minha-conta",
+    "Minha Conta (minha-conta/page.tsx) 🟢",
+    "↓ GET /api/meus-dados (requireAuth)",
+    "Prisma (userId scoped) 🟢"
+  ],
+  "middleware": {
+    "file": "src/app/middleware.ts",
+    "scope": "maintenanceMode only",
+    "authGate": false,
+    "classification": "ATENCAO"
+  },
+  "apisJourney": {
+    "registro": "POST /api/registro",
+    "login": "POST /api/login",
+    "logout": "POST /api/logout",
+    "sessionCheck": "GET /api/me",
+    "perfil": "GET /api/conta",
+    "dashboard": "GET /api/meus-dados"
+  },
+  "constraintsRespected": {
+    "noCodeChanges": true,
+    "noCommits": true,
+    "noMigrate": true,
+    "noDatabaseChanges": true
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "at": "2026-07-28T20:28:35.950Z",
+  "ok": false,
+  "highCount": 3,
+  "mediumCount": 0,
+  "infoCount": 102,
+  "high": [
+    {
+      "code": "coupon_dangling_appointment",
+      "count": 1,
+      "label": "Cupom com appointmentId sem Appointment",
+      "sampleIds": [
+        "12e8943b-45fe-4c31-9f47-b2ea5d475740"
+      ]
+    },
+    {
+      "code": "appointment_without_order_or_payment",
+      "count": 2,
+      "label": "Appointment sem Order/Payment/Cupom vinculado",
+      "sampleIds": [
+        "32",
+        "33"
+      ]
+    }
+  ],
+  "medium": []
+}

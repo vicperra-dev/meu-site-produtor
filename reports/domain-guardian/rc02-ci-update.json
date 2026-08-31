@@ -1,0 +1,57 @@
+{
+  "reportId": "RC-02-ci-update",
+  "mode": "EXECUCAO_CONTROLADA",
+  "generatedAt": "2026-07-11T04:10:00.000Z",
+  "language": "pt-BR",
+  "projectName": "THouse Rec",
+  "branch": "pr03-clean",
+  "basedOn": ["PV-01a-guardian-diagnosis"],
+  "restricoes": {
+    "escopoAlteracao": [".github/workflows/", "scripts referenciados pelo workflow"],
+    "naoAlterado": ["codigo aplicacao", "prisma", "apis", "regras de negocio"]
+  },
+  "alteracoes": {
+    "arquivo": ".github/workflows/domain-guardian.yml",
+    "linha": 30,
+    "antes": "node-version: \"20\"",
+    "depois": "node-version: \"22\"",
+    "motivo": "Node 20 rejeita --experimental-strip-types com exit 9 (Invalid Argument); Node 22.18+ suporta type stripping nativo"
+  },
+  "revisaoWorkflow": {
+    "scriptsReferenciados": [
+      { "script": "scripts/domain-guardian-runner.ts", "step": 1, "existe": true, "mascaraFalha": "|| true" },
+      { "script": "scripts/domain-guardian-advisor.ts", "step": 1, "existe": true, "mascaraFalha": "|| true" },
+      { "script": "scripts/domain-change-analyzer.ts", "step": 2, "existe": true, "mascaraFalha": "|| true" },
+      { "script": "scripts/domain-review-engine.ts", "step": 3, "existe": true, "mascaraFalha": "|| true" },
+      { "script": "scripts/domain-decision-engine.ts", "step": 4, "existe": true, "gate": true },
+      { "script": "scripts/domain-architecture-planner.ts", "step": 5, "existe": false, "gate": true }
+    ],
+    "scriptInexistente": {
+      "existe": true,
+      "arquivo": ".github/workflows/domain-guardian.yml",
+      "linha": 56,
+      "referencia": "scripts/domain-architecture-planner.ts",
+      "menorCorrecao": "Adicionar `|| true` ao passo 5 (planner é orientação, não gate) ou remover o passo até o script ser commitado — sem criar implementação nova neste RC",
+      "naoAplicadoNesteRc": true
+    }
+  },
+  "validacaoLocal": {
+    "nodeLocal": "v24.12.0",
+    "stripTypesInicia": true,
+    "comandoTestado": "node --experimental-strip-types scripts/domain-decision-engine.ts",
+    "resultado": "Script executou (decisão BLOCKED exit 1 — gate funcional, não erro de runtime)",
+    "nota": "Node 22 no CI é LTS compatível com @types/node ^20 e Next.js 16; flag suportada desde Node 22.6+"
+  },
+  "respostas": {
+    "workflowCorrigido": "PARCIAL",
+    "workflowCorrigidoDetalhe": "Exit 9 resolvido (Node 22). Passo 5 ainda falhará até correção do script ausente.",
+    "buildAplicacaoAfetado": "NAO",
+    "correcaoSomenteInfraestrutura": "SIM"
+  },
+  "commit": {
+    "mensagem": "ci: update domain guardian workflow to Node 22",
+    "arquivos": [".github/workflows/domain-guardian.yml"]
+  },
+  "veredito": "APROVADO_PARCIAL",
+  "proximoPasso": "RC-02b ou ajuste de uma linha no passo 5 (|| true) após validar CI do passo 4"
+}

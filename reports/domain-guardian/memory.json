@@ -1,0 +1,1341 @@
+{
+  "version": 1,
+  "lastUpdated": "2026-06-23T07:54:44.220Z",
+  "guardianRuns": [
+    {
+      "source": "2026-06-23-01-07.json",
+      "generatedAt": "2026-06-23T04:07:31.175Z",
+      "executionMs": 593,
+      "errors": 0,
+      "warnings": 0,
+      "info": 0,
+      "status": "HEALTHY",
+      "activeChecks": [],
+      "checkDetails": {
+        "F1": {
+          "errors": 0,
+          "warnings": 0,
+          "info": 0,
+          "hadFinding": false
+        },
+        "F4": {
+          "errors": 0,
+          "warnings": 0,
+          "info": 0,
+          "hadFinding": false
+        },
+        "A5": {
+          "errors": 0,
+          "warnings": 0,
+          "info": 0,
+          "hadFinding": false
+        },
+        "A8": {
+          "errors": 0,
+          "warnings": 0,
+          "info": 0,
+          "hadFinding": false
+        },
+        "C1": {
+          "errors": 0,
+          "warnings": 0,
+          "info": 0,
+          "hadFinding": false
+        },
+        "C2": {
+          "errors": 0,
+          "warnings": 0,
+          "info": 0,
+          "hadFinding": false
+        },
+        "P2": {
+          "errors": 0,
+          "warnings": 0,
+          "info": 0,
+          "hadFinding": false
+        },
+        "X1": {
+          "errors": 0,
+          "warnings": 0,
+          "info": 0,
+          "hadFinding": false
+        },
+        "X2": {
+          "errors": 0,
+          "warnings": 0,
+          "info": 0,
+          "hadFinding": false
+        },
+        "S1": {
+          "errors": 0,
+          "warnings": 0,
+          "info": 0,
+          "hadFinding": false
+        },
+        "S2": {
+          "errors": 0,
+          "warnings": 0,
+          "info": 0,
+          "hadFinding": false
+        },
+        "S3": {
+          "errors": 0,
+          "warnings": 0,
+          "info": 0,
+          "hadFinding": false
+        },
+        "S4": {
+          "errors": 0,
+          "warnings": 0,
+          "info": 0,
+          "hadFinding": false
+        }
+      }
+    },
+    {
+      "source": "2026-06-23-02-41.json",
+      "generatedAt": "2026-06-23T05:41:58.069Z",
+      "executionMs": 599,
+      "errors": 0,
+      "warnings": 0,
+      "info": 1,
+      "status": "HEALTHY",
+      "activeChecks": [
+        "S4"
+      ],
+      "checkDetails": {
+        "F1": {
+          "errors": 0,
+          "warnings": 0,
+          "info": 0,
+          "hadFinding": false
+        },
+        "F4": {
+          "errors": 0,
+          "warnings": 0,
+          "info": 0,
+          "hadFinding": false
+        },
+        "A5": {
+          "errors": 0,
+          "warnings": 0,
+          "info": 0,
+          "hadFinding": false
+        },
+        "A8": {
+          "errors": 0,
+          "warnings": 0,
+          "info": 0,
+          "hadFinding": false
+        },
+        "C1": {
+          "errors": 0,
+          "warnings": 0,
+          "info": 0,
+          "hadFinding": false
+        },
+        "C2": {
+          "errors": 0,
+          "warnings": 0,
+          "info": 0,
+          "hadFinding": false
+        },
+        "P2": {
+          "errors": 0,
+          "warnings": 0,
+          "info": 0,
+          "hadFinding": false
+        },
+        "X1": {
+          "errors": 0,
+          "warnings": 0,
+          "info": 0,
+          "hadFinding": false
+        },
+        "X2": {
+          "errors": 0,
+          "warnings": 0,
+          "info": 0,
+          "hadFinding": false
+        },
+        "S1": {
+          "errors": 0,
+          "warnings": 0,
+          "info": 0,
+          "hadFinding": false
+        },
+        "S2": {
+          "errors": 0,
+          "warnings": 0,
+          "info": 0,
+          "hadFinding": false
+        },
+        "S3": {
+          "errors": 0,
+          "warnings": 0,
+          "info": 0,
+          "hadFinding": false
+        },
+        "S4": {
+          "errors": 0,
+          "warnings": 0,
+          "info": 1,
+          "hadFinding": true
+        }
+      }
+    },
+    {
+      "source": "2026-06-23-03-09.json",
+      "generatedAt": "2026-06-23T06:09:53.476Z",
+      "executionMs": 789,
+      "errors": 0,
+      "warnings": 0,
+      "info": 1,
+      "status": "HEALTHY",
+      "activeChecks": [
+        "S4"
+      ],
+      "checkDetails": {
+        "F1": {
+          "errors": 0,
+          "warnings": 0,
+          "info": 0,
+          "hadFinding": false
+        },
+        "F4": {
+          "errors": 0,
+          "warnings": 0,
+          "info": 0,
+          "hadFinding": false
+        },
+        "A5": {
+          "errors": 0,
+          "warnings": 0,
+          "info": 0,
+          "hadFinding": false
+        },
+        "A8": {
+          "errors": 0,
+          "warnings": 0,
+          "info": 0,
+          "hadFinding": false
+        },
+        "C1": {
+          "errors": 0,
+          "warnings": 0,
+          "info": 0,
+          "hadFinding": false
+        },
+        "C2": {
+          "errors": 0,
+          "warnings": 0,
+          "info": 0,
+          "hadFinding": false
+        },
+        "P2": {
+          "errors": 0,
+          "warnings": 0,
+          "info": 0,
+          "hadFinding": false
+        },
+        "X1": {
+          "errors": 0,
+          "warnings": 0,
+          "info": 0,
+          "hadFinding": false
+        },
+        "X2": {
+          "errors": 0,
+          "warnings": 0,
+          "info": 0,
+          "hadFinding": false
+        },
+        "S1": {
+          "errors": 0,
+          "warnings": 0,
+          "info": 0,
+          "hadFinding": false
+        },
+        "S2": {
+          "errors": 0,
+          "warnings": 0,
+          "info": 0,
+          "hadFinding": false
+        },
+        "S3": {
+          "errors": 0,
+          "warnings": 0,
+          "info": 0,
+          "hadFinding": false
+        },
+        "S4": {
+          "errors": 0,
+          "warnings": 0,
+          "info": 1,
+          "hadFinding": true
+        }
+      }
+    },
+    {
+      "source": "2026-06-23-03-20.json",
+      "generatedAt": "2026-06-23T06:20:24.360Z",
+      "executionMs": 951,
+      "errors": 0,
+      "warnings": 0,
+      "info": 1,
+      "status": "HEALTHY",
+      "activeChecks": [
+        "S4"
+      ],
+      "checkDetails": {
+        "F1": {
+          "errors": 0,
+          "warnings": 0,
+          "info": 0,
+          "hadFinding": false
+        },
+        "F4": {
+          "errors": 0,
+          "warnings": 0,
+          "info": 0,
+          "hadFinding": false
+        },
+        "A5": {
+          "errors": 0,
+          "warnings": 0,
+          "info": 0,
+          "hadFinding": false
+        },
+        "A8": {
+          "errors": 0,
+          "warnings": 0,
+          "info": 0,
+          "hadFinding": false
+        },
+        "C1": {
+          "errors": 0,
+          "warnings": 0,
+          "info": 0,
+          "hadFinding": false
+        },
+        "C2": {
+          "errors": 0,
+          "warnings": 0,
+          "info": 0,
+          "hadFinding": false
+        },
+        "P2": {
+          "errors": 0,
+          "warnings": 0,
+          "info": 0,
+          "hadFinding": false
+        },
+        "X1": {
+          "errors": 0,
+          "warnings": 0,
+          "info": 0,
+          "hadFinding": false
+        },
+        "X2": {
+          "errors": 0,
+          "warnings": 0,
+          "info": 0,
+          "hadFinding": false
+        },
+        "S1": {
+          "errors": 0,
+          "warnings": 0,
+          "info": 0,
+          "hadFinding": false
+        },
+        "S2": {
+          "errors": 0,
+          "warnings": 0,
+          "info": 0,
+          "hadFinding": false
+        },
+        "S3": {
+          "errors": 0,
+          "warnings": 0,
+          "info": 0,
+          "hadFinding": false
+        },
+        "S4": {
+          "errors": 0,
+          "warnings": 0,
+          "info": 1,
+          "hadFinding": true
+        }
+      }
+    }
+  ],
+  "decisionHistory": [
+    {
+      "generatedAt": "2026-06-23T07:15:48.150Z",
+      "decision": "BLOCKED",
+      "risk": "CRITICAL",
+      "branch": "main",
+      "head": "fd9ff6d",
+      "entities": [],
+      "criticalInvariants": [
+        "A1",
+        "A2",
+        "C1",
+        "C4",
+        "F1",
+        "F2",
+        "F3",
+        "F6",
+        "F8",
+        "M1",
+        "P3",
+        "P5",
+        "X1",
+        "X2",
+        "X4"
+      ],
+      "prRecommendation": "DO_NOT_MERGE"
+    }
+  ],
+  "aggregates": {
+    "totalGuardianRuns": 4,
+    "totalDecisionSnapshots": 1,
+    "checks": {
+      "F1": {
+        "runsWithFinding": 0,
+        "totalErrors": 0,
+        "totalWarnings": 0,
+        "totalInfo": 0,
+        "recurrenceRate": 0
+      },
+      "F4": {
+        "runsWithFinding": 0,
+        "totalErrors": 0,
+        "totalWarnings": 0,
+        "totalInfo": 0,
+        "recurrenceRate": 0
+      },
+      "A5": {
+        "runsWithFinding": 0,
+        "totalErrors": 0,
+        "totalWarnings": 0,
+        "totalInfo": 0,
+        "recurrenceRate": 0
+      },
+      "A8": {
+        "runsWithFinding": 0,
+        "totalErrors": 0,
+        "totalWarnings": 0,
+        "totalInfo": 0,
+        "recurrenceRate": 0
+      },
+      "C1": {
+        "runsWithFinding": 0,
+        "totalErrors": 0,
+        "totalWarnings": 0,
+        "totalInfo": 0,
+        "recurrenceRate": 0
+      },
+      "C2": {
+        "runsWithFinding": 0,
+        "totalErrors": 0,
+        "totalWarnings": 0,
+        "totalInfo": 0,
+        "recurrenceRate": 0
+      },
+      "P2": {
+        "runsWithFinding": 0,
+        "totalErrors": 0,
+        "totalWarnings": 0,
+        "totalInfo": 0,
+        "recurrenceRate": 0
+      },
+      "X1": {
+        "runsWithFinding": 0,
+        "totalErrors": 0,
+        "totalWarnings": 0,
+        "totalInfo": 0,
+        "recurrenceRate": 0
+      },
+      "X2": {
+        "runsWithFinding": 0,
+        "totalErrors": 0,
+        "totalWarnings": 0,
+        "totalInfo": 0,
+        "recurrenceRate": 0
+      },
+      "S1": {
+        "runsWithFinding": 0,
+        "totalErrors": 0,
+        "totalWarnings": 0,
+        "totalInfo": 0,
+        "recurrenceRate": 0
+      },
+      "S2": {
+        "runsWithFinding": 0,
+        "totalErrors": 0,
+        "totalWarnings": 0,
+        "totalInfo": 0,
+        "recurrenceRate": 0
+      },
+      "S3": {
+        "runsWithFinding": 0,
+        "totalErrors": 0,
+        "totalWarnings": 0,
+        "totalInfo": 0,
+        "recurrenceRate": 0
+      },
+      "S4": {
+        "runsWithFinding": 3,
+        "totalErrors": 0,
+        "totalWarnings": 0,
+        "totalInfo": 3,
+        "recurrenceRate": 0.75
+      }
+    },
+    "entities": {
+      "Payment": {
+        "mentions": 0
+      },
+      "PaymentMetadata": {
+        "mentions": 0
+      },
+      "Appointment": {
+        "mentions": 0
+      },
+      "Coupon": {
+        "mentions": 3
+      },
+      "UserPlan": {
+        "mentions": 0
+      },
+      "Service": {
+        "mentions": 0
+      },
+      "User": {
+        "mentions": 0
+      }
+    },
+    "files": {
+      "prisma/schema.prisma": {
+        "citations": 1,
+        "maxRisk": "CRITICAL"
+      },
+      "src/app/api/admin/agendamentos/reverter-cancelamento/route.ts": {
+        "citations": 1,
+        "maxRisk": "CRITICAL"
+      },
+      "src/app/api/admin/agendamentos/route.ts": {
+        "citations": 1,
+        "maxRisk": "CRITICAL"
+      },
+      "src/app/api/admin/cupons/liberar/route.ts": {
+        "citations": 1,
+        "maxRisk": "CRITICAL"
+      },
+      "src/app/api/admin/cupons/route.ts": {
+        "citations": 1,
+        "maxRisk": "CRITICAL"
+      },
+      "src/app/api/admin/pagamentos/route.ts": {
+        "citations": 1,
+        "maxRisk": "CRITICAL"
+      },
+      "src/app/api/admin/planos/excluir-cancelados/route.ts": {
+        "citations": 1,
+        "maxRisk": "CRITICAL"
+      },
+      "src/app/api/admin/planos/route.ts": {
+        "citations": 1,
+        "maxRisk": "CRITICAL"
+      },
+      "src/app/api/admin/reprocessar-pagamento-teste/route.ts": {
+        "citations": 1,
+        "maxRisk": "CRITICAL"
+      },
+      "src/app/api/admin/servicos/route.ts": {
+        "citations": 1,
+        "maxRisk": "CRITICAL"
+      },
+      "src/app/api/admin/stats/detalhadas/route.ts": {
+        "citations": 1,
+        "maxRisk": "CRITICAL"
+      },
+      "src/app/api/admin/stats/route.ts": {
+        "citations": 1,
+        "maxRisk": "CRITICAL"
+      },
+      "src/app/api/admin/usuarios/route.ts": {
+        "citations": 1,
+        "maxRisk": "CRITICAL"
+      },
+      "src/app/api/agendamentos/cancelar/route.ts": {
+        "citations": 1,
+        "maxRisk": "CRITICAL"
+      },
+      "src/app/api/agendamentos/com-cupom/route.ts": {
+        "citations": 1,
+        "maxRisk": "CRITICAL"
+      },
+      "src/app/api/agendamentos/escolher-reembolso/route.ts": {
+        "citations": 1,
+        "maxRisk": "CRITICAL"
+      },
+      "src/app/api/asaas/checkout-agendamento/route.ts": {
+        "citations": 1,
+        "maxRisk": "CRITICAL"
+      },
+      "src/app/api/asaas/checkout-carrinho/route.ts": {
+        "citations": 1,
+        "maxRisk": "CRITICAL"
+      },
+      "src/app/api/asaas/checkout/route.ts": {
+        "citations": 1,
+        "maxRisk": "CRITICAL"
+      },
+      "src/app/api/conta/route.ts": {
+        "citations": 1,
+        "maxRisk": "CRITICAL"
+      },
+      "src/app/api/conta/update/route.ts": {
+        "citations": 1,
+        "maxRisk": "CRITICAL"
+      },
+      "src/app/api/coupons/validate/route.ts": {
+        "citations": 1,
+        "maxRisk": "CRITICAL"
+      },
+      "src/app/api/cupons/renunciar/route.ts": {
+        "citations": 1,
+        "maxRisk": "CRITICAL"
+      },
+      "src/app/api/esqueci-senha/route.ts": {
+        "citations": 1,
+        "maxRisk": "CRITICAL"
+      },
+      "src/app/api/login/route.ts": {
+        "citations": 1,
+        "maxRisk": "CRITICAL"
+      },
+      "src/app/api/me/route.ts": {
+        "citations": 1,
+        "maxRisk": "CRITICAL"
+      },
+      "src/app/api/meus-dados/route.ts": {
+        "citations": 1,
+        "maxRisk": "CRITICAL"
+      },
+      "src/app/api/meus-dados/vincular-cupons-teste/route.ts": {
+        "citations": 1,
+        "maxRisk": "CRITICAL"
+      },
+      "src/app/api/planos/cancelar/route.ts": {
+        "citations": 1,
+        "maxRisk": "CRITICAL"
+      },
+      "src/app/api/planos/excluir/route.ts": {
+        "citations": 1,
+        "maxRisk": "CRITICAL"
+      },
+      "src/app/api/test-payment/route.ts": {
+        "citations": 1,
+        "maxRisk": "CRITICAL"
+      },
+      "src/app/api/webhooks/asaas/route.ts": {
+        "citations": 1,
+        "maxRisk": "CRITICAL"
+      },
+      "src/app/lib/admin-delete-payment.ts": {
+        "citations": 1,
+        "maxRisk": "CRITICAL"
+      },
+      "src/app/lib/agendamento-payment-coupons.ts": {
+        "citations": 1,
+        "maxRisk": "CRITICAL"
+      },
+      "src/app/lib/appointment-refund-payment.ts": {
+        "citations": 1,
+        "maxRisk": "CRITICAL"
+      },
+      "src/app/lib/asaas-agendamento-payment-effects.ts": {
+        "citations": 1,
+        "maxRisk": "CRITICAL"
+      },
+      "src/app/lib/asaas-agendamento-reconcile.ts": {
+        "citations": 1,
+        "maxRisk": "CRITICAL"
+      },
+      "src/app/lib/asaas-plano-payment-effects.ts": {
+        "citations": 1,
+        "maxRisk": "CRITICAL"
+      },
+      "src/app/lib/process-payment-webhook.ts": {
+        "citations": 1,
+        "maxRisk": "CRITICAL"
+      },
+      "src/app/lib/symbolic-payment-resolve.ts": {
+        "citations": 1,
+        "maxRisk": "CRITICAL"
+      },
+      "src/app/lib/appointment-hidden.ts": {
+        "citations": 1,
+        "maxRisk": "CRITICAL"
+      },
+      "src/app/lib/appointment-refund-value.ts": {
+        "citations": 1,
+        "maxRisk": "CRITICAL"
+      },
+      "src/app/lib/coupon-account-ownership.ts": {
+        "citations": 1,
+        "maxRisk": "CRITICAL"
+      },
+      "src/app/lib/coupon-refund.ts": {
+        "citations": 1,
+        "maxRisk": "CRITICAL"
+      },
+      "src/app/lib/coupon-stale-appointment.ts": {
+        "citations": 1,
+        "maxRisk": "CRITICAL"
+      },
+      "src/app/lib/coupon-visibility.ts": {
+        "citations": 1,
+        "maxRisk": "CRITICAL"
+      },
+      "src/app/lib/plan-coupons.ts": {
+        "citations": 1,
+        "maxRisk": "CRITICAL"
+      },
+      "src/app/lib/simulation-coupon-user-link.ts": {
+        "citations": 1,
+        "maxRisk": "CRITICAL"
+      },
+      "src/app/lib/simulation-coupon.ts": {
+        "citations": 1,
+        "maxRisk": "CRITICAL"
+      },
+      "src/app/api/planos/solicitar-reembolso/route.ts": {
+        "citations": 1,
+        "maxRisk": "CRITICAL"
+      },
+      "src/app/lib/active-user-plan.ts": {
+        "citations": 1,
+        "maxRisk": "CRITICAL"
+      },
+      "src/app/lib/plan-refund.ts": {
+        "citations": 1,
+        "maxRisk": "CRITICAL"
+      },
+      "src/app/lib/user-plan-hidden.ts": {
+        "citations": 1,
+        "maxRisk": "CRITICAL"
+      },
+      "src/app/lib/adminAccess.ts": {
+        "citations": 1,
+        "maxRisk": "CRITICAL"
+      },
+      "src/app/lib/auth.ts": {
+        "citations": 1,
+        "maxRisk": "CRITICAL"
+      },
+      "src/app/api/agendamentos/route.ts": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "src/app/lib/simulation-coupon-codes.ts": {
+        "citations": 1,
+        "maxRisk": "MEDIUM"
+      },
+      "src/app/lib/coupon-booking-rules.ts": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "src/app/api/admin/reprocessar-pagamento-plano-teste/route.ts": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "src/app/lib/symbolic-payment.ts": {
+        "citations": 1,
+        "maxRisk": "CRITICAL"
+      },
+      "src/app/lib/plan-payment-simulation.ts": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      ".gitignore": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "docs/": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "package.json": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "prisma/backfill_coupon_origin.sql": {
+        "citations": 1,
+        "maxRisk": "CRITICAL"
+      },
+      "prisma/ensure_account_deletion_log.sql": {
+        "citations": 1,
+        "maxRisk": "CRITICAL"
+      },
+      "prisma/migrations/20260504200000_add_foto_position/": {
+        "citations": 1,
+        "maxRisk": "CRITICAL"
+      },
+      "prisma/migrations/20260504213000_account_deletion_log/": {
+        "citations": 1,
+        "maxRisk": "CRITICAL"
+      },
+      "prisma/migrations/20260511231500_user_plan_admin_inactive/": {
+        "citations": 1,
+        "maxRisk": "CRITICAL"
+      },
+      "prisma/migrations/20260511234500_coupon_refund_tracking/": {
+        "citations": 1,
+        "maxRisk": "CRITICAL"
+      },
+      "prisma/migrations/20260512030000_appointment_refund_confirmation/": {
+        "citations": 1,
+        "maxRisk": "CRITICAL"
+      },
+      "prisma/migrations/20260512040000_user_plan_refund_tracking/": {
+        "citations": 1,
+        "maxRisk": "CRITICAL"
+      },
+      "prisma/migrations/20260604210000_user_plan_user_hidden/": {
+        "citations": 1,
+        "maxRisk": "CRITICAL"
+      },
+      "prisma/migrations/20260605120000_appointment_user_hidden/": {
+        "citations": 1,
+        "maxRisk": "CRITICAL"
+      },
+      "prisma/reset_operational_data.sql": {
+        "citations": 1,
+        "maxRisk": "CRITICAL"
+      },
+      "public/uploads/": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "reports/": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "scripts/check-db.mjs": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "scripts/domain-change-analyzer.ts": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "scripts/domain-guardian-advisor.ts": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "scripts/domain-guardian-audit.ts": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "scripts/domain-guardian-diff.ts": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "scripts/domain-guardian-runner.ts": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "scripts/inspect-payments.mjs": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "scripts/inspect-simulation-coupons.mjs": {
+        "citations": 1,
+        "maxRisk": "MEDIUM"
+      },
+      "scripts/repair-coupon-ownership.mjs": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "scripts/reset-operational-data.mjs": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "scripts/test-simulation-flags.mjs": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "src/app/admin/agendamentos/page.tsx": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "src/app/admin/estatisticas/page.tsx": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "src/app/admin/layout.tsx": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "src/app/admin/pagamentos/page.tsx": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "src/app/admin/page.tsx": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "src/app/admin/planos/page.tsx": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "src/app/admin/servicos-aceitos/page.tsx": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "src/app/admin/servicos-solicitados/page.tsx": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "src/app/admin/usuarios/page.tsx": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "src/app/agendamento/cupom/": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "src/app/agendamento/page.tsx": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "src/app/api/admin/cupons/excluir-lote/": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "src/app/api/admin/cupons/resetar-simulacao/": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "src/app/api/admin/reprocessar-pagamento-plano-teste/": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "src/app/api/admin/servicos/entrega/": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "src/app/api/agendamentos/confirmar-reembolso/": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "src/app/api/agendamentos/excluir/": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "src/app/api/conta/alterar-senha/": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "src/app/api/conta/excluir/": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "src/app/api/conta/foto/": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "src/app/api/coupons/resgate/": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "src/app/api/cupons/confirmar-reembolso/": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "src/app/api/cupons/excluir-usado/": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "src/app/api/cupons/solicitar-reembolso/": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "src/app/api/planos/confirmar-reembolso/": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "src/app/api/trocar-senha/route.ts": {
+        "citations": 1,
+        "maxRisk": "CRITICAL"
+      },
+      "src/app/api/verificar-codigo/route.ts": {
+        "citations": 1,
+        "maxRisk": "CRITICAL"
+      },
+      "src/app/carrinho/page.tsx": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "src/app/components/ConditionalBodyLayout.tsx": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "src/app/components/Header.tsx": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "src/app/components/UserFeedbackDialog.tsx": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "src/app/conta/alterar-senha/": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "src/app/conta/page.tsx": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "src/app/context/AuthContext.tsx": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "src/app/esqueci-senha/page.tsx": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "src/app/globals.css": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "src/app/hooks/useUnreadChatCount.ts": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "src/app/layout.tsx": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "src/app/lib/admin-delete-coupon.ts": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "src/app/lib/agendamento-payment-rules.ts": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "src/app/lib/appointment-plan-coupon.ts": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "src/app/lib/asaas-fetch.ts": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "src/app/lib/avatarDisplayUrl.ts": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "src/app/lib/coupon-admin-sections.ts": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "src/app/lib/coupon-origin.ts": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "src/app/lib/coupon-release.ts": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "src/app/lib/coupon-scheduling-rules.ts": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "src/app/lib/coupon-sections.ts": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "src/app/lib/deleteUserAccount.ts": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "src/app/lib/delivery-audio-upload.ts": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "src/app/lib/delivery-url-validation.ts": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "src/app/lib/payment-providers.ts": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "src/app/lib/payment-refund-status.ts": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "src/app/lib/prisma-errors.ts": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "src/app/lib/purge-cancelled-appointment.ts": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "src/app/lib/refund-coupon.ts": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "src/app/lib/sendEmail.ts": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "src/app/lib/service-catalog.ts": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "src/app/lib/simulation-reset.ts": {
+        "citations": 1,
+        "maxRisk": "CRITICAL"
+      },
+      "src/app/lib/support-contact.ts": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "src/app/lib/user-feedback.ts": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "src/app/lib/validate-coupon-checkout.ts": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "src/app/lib/validations.ts": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "src/app/login/page.tsx": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "src/app/middleware.ts": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "src/app/minha-conta/page.tsx": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "src/app/planos/page.tsx": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      },
+      "src/app/registro/page.tsx": {
+        "citations": 1,
+        "maxRisk": "LOW"
+      }
+    },
+    "invariants": {
+      "A1": {
+        "mentions": 2,
+        "critical": true
+      },
+      "A2": {
+        "mentions": 2,
+        "critical": true
+      },
+      "A3": {
+        "mentions": 1,
+        "critical": false
+      },
+      "A4": {
+        "mentions": 1,
+        "critical": false
+      },
+      "A5": {
+        "mentions": 1,
+        "critical": false
+      },
+      "A6": {
+        "mentions": 1,
+        "critical": false
+      },
+      "A7": {
+        "mentions": 1,
+        "critical": false
+      },
+      "A8": {
+        "mentions": 1,
+        "critical": false
+      },
+      "C1": {
+        "mentions": 2,
+        "critical": true
+      },
+      "C2": {
+        "mentions": 1,
+        "critical": false
+      },
+      "C3": {
+        "mentions": 1,
+        "critical": false
+      },
+      "C4": {
+        "mentions": 2,
+        "critical": true
+      },
+      "C5": {
+        "mentions": 1,
+        "critical": false
+      },
+      "C6": {
+        "mentions": 1,
+        "critical": false
+      },
+      "C7": {
+        "mentions": 1,
+        "critical": false
+      },
+      "F1": {
+        "mentions": 2,
+        "critical": true
+      },
+      "F2": {
+        "mentions": 2,
+        "critical": true
+      },
+      "F3": {
+        "mentions": 2,
+        "critical": true
+      },
+      "F4": {
+        "mentions": 1,
+        "critical": false
+      },
+      "F5": {
+        "mentions": 1,
+        "critical": false
+      },
+      "F6": {
+        "mentions": 2,
+        "critical": true
+      },
+      "F7": {
+        "mentions": 1,
+        "critical": false
+      },
+      "F8": {
+        "mentions": 2,
+        "critical": true
+      },
+      "M1": {
+        "mentions": 2,
+        "critical": true
+      },
+      "M2": {
+        "mentions": 1,
+        "critical": false
+      },
+      "M3": {
+        "mentions": 1,
+        "critical": false
+      },
+      "M4": {
+        "mentions": 1,
+        "critical": false
+      },
+      "P1": {
+        "mentions": 1,
+        "critical": false
+      },
+      "P2": {
+        "mentions": 1,
+        "critical": false
+      },
+      "P3": {
+        "mentions": 2,
+        "critical": true
+      },
+      "P4": {
+        "mentions": 1,
+        "critical": false
+      },
+      "P5": {
+        "mentions": 2,
+        "critical": true
+      },
+      "P6": {
+        "mentions": 1,
+        "critical": false
+      },
+      "S1": {
+        "mentions": 1,
+        "critical": false
+      },
+      "S2": {
+        "mentions": 1,
+        "critical": false
+      },
+      "S3": {
+        "mentions": 1,
+        "critical": false
+      },
+      "S4": {
+        "mentions": 1,
+        "critical": false
+      },
+      "X1": {
+        "mentions": 2,
+        "critical": true
+      },
+      "X2": {
+        "mentions": 2,
+        "critical": true
+      },
+      "X3": {
+        "mentions": 1,
+        "critical": false
+      },
+      "X4": {
+        "mentions": 2,
+        "critical": true
+      },
+      "X5": {
+        "mentions": 1,
+        "critical": false
+      }
+    },
+    "decisions": {
+      "APPROVED": 0,
+      "REVIEW_REQUIRED": 0,
+      "BLOCKED": 1
+    },
+    "averageRisk": 4,
+    "averageRiskLabel": "CRITICAL",
+    "guardianHealthRate": {
+      "healthy": 4,
+      "warning": 0,
+      "critical": 0
+    }
+  },
+  "unstableAreas": [
+    "Check **S4** (Resíduo legado TESTE_AGEND_/TESTE_PAY_): finding em 3/4 execuções (75%)",
+    "Entidade **Coupon**: 3 menção(ões) em decisões/checks",
+    "Decision Engine **BLOCKED** em 1/1 snapshot(s)",
+    "Arquivo sensível: `prisma/schema.prisma` (1 citação(ões), risco CRITICAL)",
+    "Arquivo sensível: `src/app/api/admin/agendamentos/reverter-cancelamento/route.ts` (1 citação(ões), risco CRITICAL)",
+    "Arquivo sensível: `src/app/api/admin/agendamentos/route.ts` (1 citação(ões), risco CRITICAL)"
+  ],
+  "architecturalRecommendations": [
+    "Finalizar migração de simulação (S4): vincular ou eliminar cupons legados TESTE_AGEND_/TESTE_PAY_ antes de remover helpers @legacy.",
+    "Alta frequência de BLOCKED: adotar PRs menores (split-to-prs) e rodar change-analyzer antes de abrir PR.",
+    "Divergência banco saudável vs diff CRITICAL: separar gate de dados (Guardian) do gate de merge (Decision Engine)."
+  ]
+}

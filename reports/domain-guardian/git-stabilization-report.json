@@ -1,0 +1,1472 @@
+{
+  "generatedAt": "2026-07-06T00:30:56.140Z",
+  "language": "pt-BR",
+  "role": "Senior Engineer — Sprint 1 Stabilization Audit",
+  "git": {
+    "branch": "main",
+    "head": "fd9ff6d",
+    "branches": [
+      "main (local)",
+      "origin/main",
+      "upstream/main"
+    ],
+    "modified": 77,
+    "untracked": 184,
+    "totalPending": 261,
+    "staged": 0,
+    "lastCommit": "fd9ff6d hardening completo sistema: cupons, webhook, idempotencia, sync e validações finais"
+  },
+  "blockedAnalysis": {
+    "status": "BLOCKED",
+    "rootCause": "O Decision Engine analisa o working tree inteiro (260 arquivos) como um único diff CRITICAL — não por PR. Enquanto código de negócio, schema e migrations coexistirem uncommitted com scripts Guardian, o motor permanece BLOCKED.",
+    "technicalReasons": [
+      "Risco CRITICAL no Change Analyzer (154 arquivos no snapshot decision.md; 260 no git atual)",
+      "59 arquivos HIGH/CRITICAL no escopo monolítico",
+      "prisma/schema.prisma alterado com Payment + Appointment simultaneamente",
+      "38 invariantes afetados no diff completo (A1, C1, F1-F8, X1, etc.)",
+      "Guardian HEALTHY no banco — bloqueio é de escopo de entrega, não de integridade atual"
+    ],
+    "unblockStrategy": "Isolar commits: stash do código de negócio, commitar apenas escopo do PR atual, rodar domain-decision-engine.ts, repetir. Nunca commitar tudo de uma vez."
+  },
+  "migrations": {
+    "inGitHead": 20,
+    "onDiskUntracked": 9,
+    "appliedLocally": 8,
+    "pendingLocally": 1,
+    "pendingMigration": "20260617120000_appointment_admin_archive",
+    "detail": "8 migrations já aplicadas no banco local. 1 pendente. As 9 pastas existem no disco mas NÃO estão no git HEAD (última commitada: 20260413120000_service_delivery_audio).",
+    "items": [
+      {
+        "id": "20260504200000_add_foto_position",
+        "inGitHead": false,
+        "appliedLocal": true
+      },
+      {
+        "id": "20260504213000_account_deletion_log",
+        "inGitHead": false,
+        "appliedLocal": true
+      },
+      {
+        "id": "20260511231500_user_plan_admin_inactive",
+        "inGitHead": false,
+        "appliedLocal": true
+      },
+      {
+        "id": "20260511234500_coupon_refund_tracking",
+        "inGitHead": false,
+        "appliedLocal": true
+      },
+      {
+        "id": "20260512030000_appointment_refund_confirmation",
+        "inGitHead": false,
+        "appliedLocal": true
+      },
+      {
+        "id": "20260512040000_user_plan_refund_tracking",
+        "inGitHead": false,
+        "appliedLocal": true
+      },
+      {
+        "id": "20260604210000_user_plan_user_hidden",
+        "inGitHead": false,
+        "appliedLocal": true
+      },
+      {
+        "id": "20260605120000_appointment_user_hidden",
+        "inGitHead": false,
+        "appliedLocal": true
+      },
+      {
+        "id": "20260617120000_appointment_admin_archive",
+        "inGitHead": false,
+        "appliedLocal": false
+      }
+    ]
+  },
+  "summary": {
+    "totalPendingFiles": 261,
+    "pr01Files": 93,
+    "pr01PlannedOnly": 10,
+    "commitableToday": 93,
+    "needsReview": 77,
+    "notInOriginalPlan": 6,
+    "plannedMappedFiles": 145
+  },
+  "firstCommit": {
+    "id": "C-01",
+    "message": "chore(guardian): add domain guardian checks and reports",
+    "files": [
+      "scripts/domain-change-analyzer.ts",
+      "scripts/domain-decision-engine.ts",
+      "scripts/domain-guardian-advisor.ts",
+      "scripts/domain-guardian-audit.ts",
+      "scripts/domain-guardian-diff.ts",
+      "scripts/domain-guardian-runner.ts",
+      "scripts/domain-issue-generator.ts",
+      "scripts/domain-memory-engine.ts",
+      "scripts/domain-pr-reviewer.ts",
+      "scripts/domain-review-engine.ts"
+    ],
+    "filesCount": 10,
+    "excluded": "Os outros 250 arquivos: src/app/** (negócio), prisma/, docs/, reports/, dashboard, agentes extras",
+    "prerequisite": "Stash ou branch sprint1/pr-01 — working tree deve conter APENAS os 10 scripts ao rodar decision-engine",
+    "afterCommit": "Rodar domain-guardian-runner.ts + domain-decision-engine.ts — esperado APPROVED/REVIEW_REQUIRED para escopo Guardian"
+  },
+  "pullRequests": [
+    {
+      "id": "PR-01",
+      "name": "Documentação e Guardian (baseline)",
+      "objective": "Estabelecer baseline de docs e verificação automática sem alterar runtime de negócio.",
+      "order": 1,
+      "risk": "Baixo",
+      "dependencies": [],
+      "filesPlanned": 10,
+      "filesPending": 93,
+      "commits": [
+        {
+          "id": "C-01",
+          "title": "Guardian core scripts",
+          "message": "chore(guardian): add domain guardian checks and reports",
+          "files": [
+            "scripts/domain-change-analyzer.ts",
+            "scripts/domain-decision-engine.ts",
+            "scripts/domain-guardian-advisor.ts",
+            "scripts/domain-guardian-audit.ts",
+            "scripts/domain-guardian-diff.ts",
+            "scripts/domain-guardian-runner.ts",
+            "scripts/domain-issue-generator.ts",
+            "scripts/domain-memory-engine.ts",
+            "scripts/domain-pr-reviewer.ts",
+            "scripts/domain-review-engine.ts"
+          ],
+          "risk": "Baixo",
+          "completionCriteria": [
+            "10 scripts no disco",
+            "npm run build passa",
+            "domain-guardian-runner.ts exit 0"
+          ],
+          "commitableToday": true,
+          "needsReview": false,
+          "filesPending": [
+            "scripts/domain-change-analyzer.ts",
+            "scripts/domain-decision-engine.ts",
+            "scripts/domain-guardian-advisor.ts",
+            "scripts/domain-guardian-audit.ts",
+            "scripts/domain-guardian-diff.ts",
+            "scripts/domain-guardian-runner.ts",
+            "scripts/domain-issue-generator.ts",
+            "scripts/domain-memory-engine.ts",
+            "scripts/domain-pr-reviewer.ts",
+            "scripts/domain-review-engine.ts"
+          ]
+        },
+        {
+          "id": "C-01b",
+          "title": "Documentação de domínio",
+          "message": "docs(domain): add domain map, invariants and ADR index",
+          "files": [
+            "docs/adr/README.md",
+            "docs/ai/appointment-archive-audit.md",
+            "docs/ai/domain-dependencies.md",
+            "docs/ai/domain-invariants.md",
+            "docs/ai/domain-map.md",
+            "docs/ai/domain-risks.md",
+            "docs/ai/github-pipeline.md",
+            "docs/ai/payment-lifecycle-audit.md"
+          ],
+          "risk": "Baixo",
+          "completionCriteria": [
+            "docs/ai/ completo",
+            "Invariantes documentados"
+          ],
+          "commitableToday": true,
+          "needsReview": false,
+          "filesPending": [
+            "docs/adr/README.md",
+            "docs/ai/appointment-archive-audit.md",
+            "docs/ai/domain-dependencies.md",
+            "docs/ai/domain-invariants.md",
+            "docs/ai/domain-map.md",
+            "docs/ai/domain-risks.md",
+            "docs/ai/github-pipeline.md",
+            "docs/ai/payment-lifecycle-audit.md"
+          ]
+        },
+        {
+          "id": "C-01c",
+          "title": "CI Guardian workflow",
+          "message": "ci(guardian): add domain-guardian github workflow",
+          "files": [
+            ".github/workflows/domain-guardian.yml"
+          ],
+          "risk": "Baixo",
+          "completionCriteria": [
+            "Workflow YAML válido"
+          ],
+          "commitableToday": true,
+          "needsReview": false,
+          "filesPending": [
+            ".github/workflows/domain-guardian.yml"
+          ]
+        },
+        {
+          "id": "C-01d",
+          "title": "Relatórios Guardian baseline",
+          "message": "chore(guardian): add baseline guardian reports and memory",
+          "files": [
+            "reports/domain-guardian/2026-06-23-01-07.json",
+            "reports/domain-guardian/2026-06-23-02-41.json",
+            "reports/domain-guardian/2026-06-23-03-09.json",
+            "reports/domain-guardian/2026-06-23-03-20.json",
+            "reports/domain-guardian/action-plan.md",
+            "reports/domain-guardian/advisor.md",
+            "reports/domain-guardian/architecture-agent.md",
+            "reports/domain-guardian/architecture-decisions.json",
+            "reports/domain-guardian/architecture-decisions.md",
+            "reports/domain-guardian/change-analysis.md",
+            "reports/domain-guardian/code-health.json",
+            "reports/domain-guardian/code-health.md",
+            "reports/domain-guardian/cto-report.json",
+            "reports/domain-guardian/cto-report.md",
+            "reports/domain-guardian/decision.md",
+            "reports/domain-guardian/design-plan.json",
+            "reports/domain-guardian/design-plan.md",
+            "reports/domain-guardian/engineering-backlog.json",
+            "reports/domain-guardian/engineering-backlog.md",
+            "reports/domain-guardian/evolution-report.json",
+            "reports/domain-guardian/evolution-report.md",
+            "reports/domain-guardian/execution-plan-EB-001.json",
+            "reports/domain-guardian/execution-plan-EB-001.md",
+            "reports/domain-guardian/execution-plan-EB-024.json",
+            "reports/domain-guardian/execution-plan-EB-024.md",
+            "reports/domain-guardian/execution-status.json",
+            "reports/domain-guardian/execution-status.md",
+            "reports/domain-guardian/implementation-plan.json",
+            "reports/domain-guardian/implementation-plan.md",
+            "reports/domain-guardian/issues.md",
+            "reports/domain-guardian/latest.json",
+            "reports/domain-guardian/memory.json",
+            "reports/domain-guardian/memory.md",
+            "reports/domain-guardian/pr-review.md",
+            "reports/domain-guardian/project-context.json",
+            "reports/domain-guardian/project-knowledge-graph.json",
+            "reports/domain-guardian/project-knowledge-graph.md",
+            "reports/domain-guardian/project-summary.md",
+            "reports/domain-guardian/refactor-report.json",
+            "reports/domain-guardian/refactor-report.md",
+            "reports/domain-guardian/release-report.json",
+            "reports/domain-guardian/release-report.md",
+            "reports/domain-guardian/review-checklist.md",
+            "reports/domain-guardian/stabilization-plan.json",
+            "reports/domain-guardian/stabilization-plan.md",
+            "reports/domain-guardian/summary.md"
+          ],
+          "risk": "Baixo",
+          "completionCriteria": [
+            "latest.json presente",
+            "memory.json presente"
+          ],
+          "commitableToday": true,
+          "needsReview": true,
+          "filesPending": [
+            "reports/domain-guardian/2026-06-23-01-07.json",
+            "reports/domain-guardian/2026-06-23-02-41.json",
+            "reports/domain-guardian/2026-06-23-03-09.json",
+            "reports/domain-guardian/2026-06-23-03-20.json",
+            "reports/domain-guardian/action-plan.md",
+            "reports/domain-guardian/advisor.md",
+            "reports/domain-guardian/architecture-agent.md",
+            "reports/domain-guardian/architecture-decisions.json",
+            "reports/domain-guardian/architecture-decisions.md",
+            "reports/domain-guardian/change-analysis.md",
+            "reports/domain-guardian/code-health.json",
+            "reports/domain-guardian/code-health.md",
+            "reports/domain-guardian/cto-report.json",
+            "reports/domain-guardian/cto-report.md",
+            "reports/domain-guardian/decision.md",
+            "reports/domain-guardian/design-plan.json",
+            "reports/domain-guardian/design-plan.md",
+            "reports/domain-guardian/engineering-backlog.json",
+            "reports/domain-guardian/engineering-backlog.md",
+            "reports/domain-guardian/evolution-report.json",
+            "reports/domain-guardian/evolution-report.md",
+            "reports/domain-guardian/execution-plan-EB-001.json",
+            "reports/domain-guardian/execution-plan-EB-001.md",
+            "reports/domain-guardian/execution-plan-EB-024.json",
+            "reports/domain-guardian/execution-plan-EB-024.md",
+            "reports/domain-guardian/execution-status.json",
+            "reports/domain-guardian/execution-status.md",
+            "reports/domain-guardian/implementation-plan.json",
+            "reports/domain-guardian/implementation-plan.md",
+            "reports/domain-guardian/issues.md",
+            "reports/domain-guardian/latest.json",
+            "reports/domain-guardian/memory.json",
+            "reports/domain-guardian/memory.md",
+            "reports/domain-guardian/pr-review.md",
+            "reports/domain-guardian/project-context.json",
+            "reports/domain-guardian/project-knowledge-graph.json",
+            "reports/domain-guardian/project-knowledge-graph.md",
+            "reports/domain-guardian/project-summary.md",
+            "reports/domain-guardian/refactor-report.json",
+            "reports/domain-guardian/refactor-report.md",
+            "reports/domain-guardian/release-report.json",
+            "reports/domain-guardian/release-report.md",
+            "reports/domain-guardian/review-checklist.md",
+            "reports/domain-guardian/stabilization-plan.json",
+            "reports/domain-guardian/stabilization-plan.md",
+            "reports/domain-guardian/summary.md"
+          ]
+        },
+        {
+          "id": "C-01e",
+          "title": "Engineering Dashboard",
+          "message": "feat(admin): add engineering dashboard at /admin/engenharia",
+          "files": [
+            "reports/domain-guardian/engineering-backlog.json",
+            "reports/domain-guardian/engineering-backlog.md",
+            "scripts/engineering-assistant.ts",
+            "src/app/admin/engenharia/page.tsx",
+            "src/app/api/admin/engenharia/reports/route.ts",
+            "src/app/lib/engineering-reports.ts",
+            "src/components/admin/engineering/ADRCard.tsx",
+            "src/components/admin/engineering/CtoCard.tsx",
+            "src/components/admin/engineering/DebtCard.tsx",
+            "src/components/admin/engineering/DecisionCard.tsx",
+            "src/components/admin/engineering/DeployCard.tsx",
+            "src/components/admin/engineering/EngineeringDashboard.tsx",
+            "src/components/admin/engineering/EngineeringOverviewCard.tsx",
+            "src/components/admin/engineering/EvolutionCard.tsx",
+            "src/components/admin/engineering/ExecutionCard.tsx",
+            "src/components/admin/engineering/GuardianStatusCard.tsx",
+            "src/components/admin/engineering/HealthCard.tsx",
+            "src/components/admin/engineering/HumanReportCard.tsx",
+            "src/components/admin/engineering/KnowledgeGraphCard.tsx",
+            "src/components/admin/engineering/RefactorCard.tsx",
+            "src/components/admin/engineering/RoadmapCard.tsx",
+            "src/components/admin/engineering/TimelineCard.tsx",
+            "src/components/admin/engineering/index.ts",
+            "src/components/admin/engineering/shared.tsx",
+            "src/components/admin/engineering/types.ts"
+          ],
+          "risk": "Baixo",
+          "completionCriteria": [
+            "npm run build",
+            "Dashboard renderiza"
+          ],
+          "commitableToday": true,
+          "needsReview": true,
+          "filesPending": [
+            "reports/domain-guardian/engineering-backlog.json",
+            "reports/domain-guardian/engineering-backlog.md",
+            "scripts/engineering-assistant.ts",
+            "src/app/admin/engenharia/page.tsx",
+            "src/app/api/admin/engenharia/reports/route.ts",
+            "src/app/lib/engineering-reports.ts",
+            "src/components/admin/engineering/ADRCard.tsx",
+            "src/components/admin/engineering/CtoCard.tsx",
+            "src/components/admin/engineering/DebtCard.tsx",
+            "src/components/admin/engineering/DecisionCard.tsx",
+            "src/components/admin/engineering/DeployCard.tsx",
+            "src/components/admin/engineering/EngineeringDashboard.tsx",
+            "src/components/admin/engineering/EngineeringOverviewCard.tsx",
+            "src/components/admin/engineering/EvolutionCard.tsx",
+            "src/components/admin/engineering/ExecutionCard.tsx",
+            "src/components/admin/engineering/GuardianStatusCard.tsx",
+            "src/components/admin/engineering/HealthCard.tsx",
+            "src/components/admin/engineering/HumanReportCard.tsx",
+            "src/components/admin/engineering/KnowledgeGraphCard.tsx",
+            "src/components/admin/engineering/RefactorCard.tsx",
+            "src/components/admin/engineering/RoadmapCard.tsx",
+            "src/components/admin/engineering/TimelineCard.tsx",
+            "src/components/admin/engineering/index.ts",
+            "src/components/admin/engineering/shared.tsx",
+            "src/components/admin/engineering/types.ts"
+          ]
+        },
+        {
+          "id": "C-01f",
+          "title": "Agentes de planejamento Sprint 1",
+          "message": "chore(agents): add sprint1 planning agents (read-only)",
+          "files": [
+            "scripts/code-health-agent.ts",
+            "scripts/execution-manager-agent.ts",
+            "scripts/implementation-executor-agent.ts",
+            "scripts/refactor-agent.ts",
+            "scripts/release-manager-agent.ts"
+          ],
+          "risk": "Baixo",
+          "completionCriteria": [
+            "Agentes executam sem erro"
+          ],
+          "commitableToday": true,
+          "needsReview": false,
+          "filesPending": [
+            "scripts/code-health-agent.ts",
+            "scripts/execution-manager-agent.ts",
+            "scripts/implementation-executor-agent.ts",
+            "scripts/refactor-agent.ts",
+            "scripts/release-manager-agent.ts"
+          ]
+        }
+      ],
+      "canOpenNow": true,
+      "canMergeNow": false,
+      "canDeployAfter": false,
+      "mergeCriteria": [
+        "Guardian exit 0",
+        "npm run build",
+        "Revisão humana aprovada",
+        "Decision engine não BLOCKED para escopo do PR"
+      ]
+    },
+    {
+      "id": "PR-02",
+      "name": "Schema e migrations",
+      "objective": "Aplicar estrutura de banco: arquivamento, hidden, refund tracking.",
+      "order": 2,
+      "risk": "Crítico",
+      "dependencies": [
+        "PR-01"
+      ],
+      "filesPlanned": 3,
+      "filesPending": 3,
+      "commits": [
+        {
+          "id": "C-02",
+          "title": "Schema e migrations",
+          "message": "feat(db): add schema migrations for archive and hidden fields",
+          "files": [
+            "prisma/schema.prisma",
+            "prisma/backfill_coupon_origin.sql",
+            "prisma/ensure_account_deletion_log.sql",
+            "prisma/reset_operational_data.sql",
+            "prisma/migrations/20260504200000_add_foto_position/migration.sql",
+            "prisma/migrations/20260504213000_account_deletion_log/migration.sql",
+            "prisma/migrations/20260511231500_user_plan_admin_inactive/migration.sql",
+            "prisma/migrations/20260511234500_coupon_refund_tracking/migration.sql",
+            "prisma/migrations/20260512030000_appointment_refund_confirmation/migration.sql",
+            "prisma/migrations/20260512040000_user_plan_refund_tracking/migration.sql",
+            "prisma/migrations/20260604210000_user_plan_user_hidden/migration.sql",
+            "prisma/migrations/20260605120000_appointment_user_hidden/migration.sql",
+            "prisma/migrations/20260617120000_appointment_admin_archive/migration.sql"
+          ],
+          "filesPending": [
+            "prisma/schema.prisma",
+            "prisma/backfill_coupon_origin.sql",
+            "prisma/ensure_account_deletion_log.sql",
+            "prisma/migrations/20260504200000_add_foto_position/migration.sql",
+            "prisma/migrations/20260504213000_account_deletion_log/migration.sql",
+            "prisma/migrations/20260511231500_user_plan_admin_inactive/migration.sql",
+            "prisma/migrations/20260511234500_coupon_refund_tracking/migration.sql",
+            "prisma/migrations/20260512030000_appointment_refund_confirmation/migration.sql",
+            "prisma/migrations/20260512040000_user_plan_refund_tracking/migration.sql",
+            "prisma/migrations/20260604210000_user_plan_user_hidden/migration.sql",
+            "prisma/migrations/20260605120000_appointment_user_hidden/migration.sql",
+            "prisma/migrations/20260617120000_appointment_admin_archive/migration.sql",
+            "prisma/reset_operational_data.sql"
+          ],
+          "risk": "Crítico",
+          "completionCriteria": [
+            "npx prisma migrate deploy (staging)",
+            "npx prisma generate",
+            "Guardian F1/F4/A8 OK"
+          ],
+          "commitableToday": false,
+          "needsReview": true
+        }
+      ],
+      "canOpenNow": false,
+      "canMergeNow": false,
+      "canDeployAfter": "staging-only",
+      "mergeCriteria": [
+        "Guardian exit 0",
+        "npm run build",
+        "Revisão humana aprovada",
+        "Testes sandbox Asaas",
+        "Decision engine não BLOCKED para escopo do PR"
+      ]
+    },
+    {
+      "id": "PR-03",
+      "name": "Pagamentos e webhook",
+      "objective": "Hardening idempotência, checkout e efeitos pós-pagamento.",
+      "order": 3,
+      "risk": "Crítico",
+      "dependencies": [
+        "PR-02"
+      ],
+      "filesPlanned": 24,
+      "filesPending": 25,
+      "commits": [
+        {
+          "id": "C-03",
+          "title": "Financeiro (parte 1)",
+          "message": "fix(payment): harden webhook idempotency and payment effects",
+          "files": [
+            "src/app/lib/agendamento-payment-coupons.ts",
+            "src/app/lib/asaas-agendamento-reconcile.ts",
+            "src/app/lib/payment-providers.ts",
+            "src/app/lib/process-payment-webhook.ts",
+            "src/app/lib/validate-coupon-checkout.ts",
+            "src/app/lib/admin-delete-payment.ts",
+            "src/app/lib/agendamento-payment-rules.ts",
+            "src/app/lib/appointment-refund-payment.ts",
+            "src/app/lib/asaas-agendamento-payment-effects.ts",
+            "src/app/lib/asaas-fetch.ts",
+            "src/app/lib/asaas-plano-payment-effects.ts",
+            "src/app/lib/payment-refund-status.ts",
+            "src/app/lib/plan-payment-simulation.ts",
+            "src/app/lib/symbolic-payment-resolve.ts",
+            "src/app/lib/symbolic-payment.ts"
+          ],
+          "filesPending": [
+            "src/app/lib/agendamento-payment-coupons.ts",
+            "src/app/lib/asaas-agendamento-reconcile.ts",
+            "src/app/lib/payment-providers.ts",
+            "src/app/lib/process-payment-webhook.ts",
+            "src/app/lib/validate-coupon-checkout.ts",
+            "src/app/lib/admin-delete-payment.ts",
+            "src/app/lib/agendamento-payment-rules.ts",
+            "src/app/lib/appointment-refund-payment.ts",
+            "src/app/lib/asaas-agendamento-payment-effects.ts",
+            "src/app/lib/asaas-fetch.ts",
+            "src/app/lib/asaas-plano-payment-effects.ts",
+            "src/app/lib/payment-refund-status.ts",
+            "src/app/lib/plan-payment-simulation.ts",
+            "src/app/lib/symbolic-payment-resolve.ts",
+            "src/app/lib/symbolic-payment.ts"
+          ],
+          "risk": "Crítico",
+          "completionCriteria": [
+            "Guardian exit 0",
+            "npm run build",
+            "Revisão humana aprovada",
+            "Testes sandbox Asaas",
+            "Decision engine não BLOCKED para escopo do PR"
+          ],
+          "commitableToday": false,
+          "needsReview": true
+        },
+        {
+          "id": "C-04",
+          "title": "Financeiro (parte 2)",
+          "message": "fix(payment): harden webhook idempotency and payment effects (part 2)",
+          "files": [
+            "src/app/api/admin/pagamentos/route.ts",
+            "src/app/api/admin/reprocessar-pagamento-teste/route.ts",
+            "src/app/api/asaas/checkout-agendamento/route.ts",
+            "src/app/api/asaas/checkout-carrinho/route.ts",
+            "src/app/api/asaas/checkout/route.ts",
+            "src/app/api/test-payment/route.ts",
+            "src/app/api/webhooks/asaas/route.ts"
+          ],
+          "filesPending": [
+            "src/app/api/admin/pagamentos/route.ts",
+            "src/app/api/admin/reprocessar-pagamento-teste/route.ts",
+            "src/app/api/asaas/checkout-agendamento/route.ts",
+            "src/app/api/asaas/checkout-carrinho/route.ts",
+            "src/app/api/asaas/checkout/route.ts",
+            "src/app/api/test-payment/route.ts",
+            "src/app/api/webhooks/asaas/route.ts"
+          ],
+          "risk": "Crítico",
+          "completionCriteria": [
+            "Guardian exit 0",
+            "npm run build",
+            "Revisão humana aprovada",
+            "Testes sandbox Asaas",
+            "Decision engine não BLOCKED para escopo do PR"
+          ],
+          "commitableToday": false,
+          "needsReview": true
+        },
+        {
+          "id": "C-05",
+          "title": "Financeiro (parte 3)",
+          "message": "fix(payment): harden webhook idempotency and payment effects (part 3)",
+          "files": [
+            "src/app/admin/pagamentos/page.tsx",
+            "src/app/api/admin/pagamentos/route.ts",
+            "src/app/api/admin/reprocessar-pagamento-teste/route.ts"
+          ],
+          "filesPending": [
+            "src/app/admin/pagamentos/page.tsx",
+            "src/app/api/admin/pagamentos/route.ts",
+            "src/app/api/admin/reprocessar-pagamento-teste/route.ts"
+          ],
+          "risk": "Crítico",
+          "completionCriteria": [
+            "Guardian exit 0",
+            "npm run build",
+            "Revisão humana aprovada",
+            "Testes sandbox Asaas",
+            "Decision engine não BLOCKED para escopo do PR"
+          ],
+          "commitableToday": false,
+          "needsReview": true
+        },
+        {
+          "id": "C-06",
+          "title": "Financeiro (parte 4)",
+          "message": "fix(payment): harden webhook idempotency and payment effects (part 4)",
+          "files": [
+            "scripts/inspect-payments.mjs"
+          ],
+          "filesPending": [
+            "scripts/inspect-payments.mjs"
+          ],
+          "risk": "Crítico",
+          "completionCriteria": [
+            "Guardian exit 0",
+            "npm run build",
+            "Revisão humana aprovada",
+            "Testes sandbox Asaas",
+            "Decision engine não BLOCKED para escopo do PR"
+          ],
+          "commitableToday": false,
+          "needsReview": true
+        },
+        {
+          "id": "PR-03-EXT",
+          "title": "Rotas/páginas fora do plano original",
+          "message": "feat: add orphan routes for PR-03",
+          "files": [
+            "src/app/api/admin/reprocessar-pagamento-plano-teste/route.ts"
+          ],
+          "filesPending": [
+            "src/app/api/admin/reprocessar-pagamento-plano-teste/route.ts"
+          ],
+          "risk": "Médio",
+          "completionCriteria": [
+            "Smoke endpoint",
+            "Guardian OK"
+          ],
+          "commitableToday": false,
+          "needsReview": true
+        }
+      ],
+      "canOpenNow": false,
+      "canMergeNow": false,
+      "canDeployAfter": "no",
+      "mergeCriteria": [
+        "Guardian exit 0",
+        "npm run build",
+        "Revisão humana aprovada",
+        "Testes sandbox Asaas",
+        "Decision engine não BLOCKED para escopo do PR"
+      ]
+    },
+    {
+      "id": "PR-04",
+      "name": "Cupons e ownership",
+      "objective": "Ownership, reembolso cupom, validação checkout.",
+      "order": 4,
+      "risk": "Alto",
+      "dependencies": [
+        "PR-03"
+      ],
+      "filesPlanned": 21,
+      "filesPending": 27,
+      "commits": [
+        {
+          "id": "C-07",
+          "title": "Coupon (parte 1)",
+          "message": "fix(coupon): preserve ownership and refund sync",
+          "files": [
+            "src/app/lib/coupon-booking-rules.ts",
+            "src/app/lib/coupon-release.ts",
+            "src/app/lib/coupon-stale-appointment.ts",
+            "src/app/lib/plan-coupons.ts",
+            "src/app/lib/admin-delete-coupon.ts",
+            "src/app/lib/appointment-plan-coupon.ts",
+            "src/app/lib/coupon-account-ownership.ts",
+            "src/app/lib/coupon-admin-sections.ts",
+            "src/app/lib/coupon-origin.ts",
+            "src/app/lib/coupon-refund.ts",
+            "src/app/lib/coupon-scheduling-rules.ts",
+            "src/app/lib/coupon-sections.ts",
+            "src/app/lib/coupon-visibility.ts",
+            "src/app/lib/refund-coupon.ts",
+            "src/app/lib/simulation-coupon-codes.ts",
+            "src/app/lib/simulation-coupon-user-link.ts",
+            "src/app/lib/simulation-coupon.ts"
+          ],
+          "filesPending": [
+            "src/app/lib/coupon-booking-rules.ts",
+            "src/app/lib/coupon-release.ts",
+            "src/app/lib/coupon-stale-appointment.ts",
+            "src/app/lib/plan-coupons.ts",
+            "src/app/lib/admin-delete-coupon.ts",
+            "src/app/lib/appointment-plan-coupon.ts",
+            "src/app/lib/coupon-account-ownership.ts",
+            "src/app/lib/coupon-admin-sections.ts",
+            "src/app/lib/coupon-origin.ts",
+            "src/app/lib/coupon-refund.ts",
+            "src/app/lib/coupon-scheduling-rules.ts",
+            "src/app/lib/coupon-sections.ts",
+            "src/app/lib/coupon-visibility.ts",
+            "src/app/lib/refund-coupon.ts",
+            "src/app/lib/simulation-coupon-codes.ts",
+            "src/app/lib/simulation-coupon-user-link.ts",
+            "src/app/lib/simulation-coupon.ts"
+          ],
+          "risk": "Alto",
+          "completionCriteria": [
+            "Guardian exit 0",
+            "npm run build",
+            "Revisão humana aprovada",
+            "Decision engine não BLOCKED para escopo do PR"
+          ],
+          "commitableToday": false,
+          "needsReview": true
+        },
+        {
+          "id": "C-08",
+          "title": "Coupon (parte 2)",
+          "message": "fix(coupon): preserve ownership and refund sync (part 2)",
+          "files": [
+            "src/app/api/agendamentos/com-cupom/route.ts",
+            "src/app/api/coupons/validate/route.ts"
+          ],
+          "filesPending": [
+            "src/app/api/agendamentos/com-cupom/route.ts",
+            "src/app/api/coupons/validate/route.ts"
+          ],
+          "risk": "Alto",
+          "completionCriteria": [
+            "Guardian exit 0",
+            "npm run build",
+            "Revisão humana aprovada",
+            "Decision engine não BLOCKED para escopo do PR"
+          ],
+          "commitableToday": false,
+          "needsReview": true
+        },
+        {
+          "id": "C-09",
+          "title": "Coupon (parte 3)",
+          "message": "fix(coupon): preserve ownership and refund sync (part 3)",
+          "files": [
+            "scripts/inspect-simulation-coupons.mjs",
+            "scripts/repair-coupon-ownership.mjs"
+          ],
+          "filesPending": [
+            "scripts/inspect-simulation-coupons.mjs",
+            "scripts/repair-coupon-ownership.mjs"
+          ],
+          "risk": "Alto",
+          "completionCriteria": [
+            "Guardian exit 0",
+            "npm run build",
+            "Revisão humana aprovada",
+            "Decision engine não BLOCKED para escopo do PR"
+          ],
+          "commitableToday": false,
+          "needsReview": true
+        },
+        {
+          "id": "PR-04-EXT",
+          "title": "Rotas/páginas fora do plano original",
+          "message": "feat: add orphan routes for PR-04",
+          "files": [
+            "src/app/api/admin/cupons/excluir-lote/route.ts",
+            "src/app/api/cupons/confirmar-reembolso/route.ts",
+            "src/app/api/cupons/excluir-usado/route.ts",
+            "src/app/api/cupons/solicitar-reembolso/route.ts",
+            "src/app/api/coupons/resgate/route.ts",
+            "src/app/agendamento/cupom/page.tsx"
+          ],
+          "filesPending": [
+            "src/app/api/admin/cupons/excluir-lote/route.ts",
+            "src/app/api/cupons/confirmar-reembolso/route.ts",
+            "src/app/api/cupons/excluir-usado/route.ts",
+            "src/app/api/cupons/solicitar-reembolso/route.ts",
+            "src/app/api/coupons/resgate/route.ts",
+            "src/app/agendamento/cupom/page.tsx"
+          ],
+          "risk": "Médio",
+          "completionCriteria": [
+            "Smoke endpoint",
+            "Guardian OK"
+          ],
+          "commitableToday": false,
+          "needsReview": true
+        }
+      ],
+      "canOpenNow": false,
+      "canMergeNow": false,
+      "canDeployAfter": "no",
+      "mergeCriteria": [
+        "Guardian exit 0",
+        "npm run build",
+        "Revisão humana aprovada",
+        "Decision engine não BLOCKED para escopo do PR"
+      ]
+    },
+    {
+      "id": "PR-05",
+      "name": "Agendamentos e arquivamento",
+      "objective": "Arquivamento admin, queries operacionais, disponibilidade.",
+      "order": 5,
+      "risk": "Alto",
+      "dependencies": [
+        "PR-02",
+        "PR-03"
+      ],
+      "filesPlanned": 13,
+      "filesPending": 17,
+      "commits": [
+        {
+          "id": "C-10",
+          "title": "Appointment",
+          "message": "feat(appointment): implement admin archive and operational filters",
+          "files": [
+            "src/app/admin/agendamentos/page.tsx",
+            "src/app/agendamento/page.tsx",
+            "src/app/api/admin/agendamentos/cancelar/route.ts",
+            "src/app/api/admin/agendamentos/reverter-cancelamento/route.ts",
+            "src/app/api/admin/agendamentos/route.ts",
+            "src/app/api/agendamentos/cancelar/route.ts",
+            "src/app/api/agendamentos/disponibilidade/route.ts",
+            "src/app/api/agendamentos/escolher-reembolso/route.ts",
+            "src/app/api/agendamentos/route.ts",
+            "src/app/lib/appointment-admin-archive.ts",
+            "src/app/lib/appointment-hidden.ts",
+            "src/app/lib/appointment-refund-value.ts",
+            "src/app/lib/purge-cancelled-appointment.ts"
+          ],
+          "filesPending": [
+            "src/app/admin/agendamentos/page.tsx",
+            "src/app/agendamento/page.tsx",
+            "src/app/api/admin/agendamentos/cancelar/route.ts",
+            "src/app/api/admin/agendamentos/reverter-cancelamento/route.ts",
+            "src/app/api/admin/agendamentos/route.ts",
+            "src/app/api/agendamentos/cancelar/route.ts",
+            "src/app/api/agendamentos/disponibilidade/route.ts",
+            "src/app/api/agendamentos/escolher-reembolso/route.ts",
+            "src/app/api/agendamentos/route.ts",
+            "src/app/lib/appointment-admin-archive.ts",
+            "src/app/lib/appointment-hidden.ts",
+            "src/app/lib/appointment-refund-value.ts",
+            "src/app/lib/purge-cancelled-appointment.ts"
+          ],
+          "risk": "Alto",
+          "completionCriteria": [
+            "Guardian exit 0",
+            "npm run build",
+            "Revisão humana aprovada",
+            "Decision engine não BLOCKED para escopo do PR"
+          ],
+          "commitableToday": false,
+          "needsReview": true
+        },
+        {
+          "id": "PR-05-EXT",
+          "title": "Rotas/páginas fora do plano original",
+          "message": "feat: add orphan routes for PR-05",
+          "files": [
+            "src/app/api/admin/agendamentos/archive/route.ts",
+            "src/app/api/admin/agendamentos/restore/route.ts",
+            "src/app/api/agendamentos/confirmar-reembolso/route.ts",
+            "src/app/api/agendamentos/excluir/route.ts"
+          ],
+          "filesPending": [
+            "src/app/api/admin/agendamentos/archive/route.ts",
+            "src/app/api/admin/agendamentos/restore/route.ts",
+            "src/app/api/agendamentos/confirmar-reembolso/route.ts",
+            "src/app/api/agendamentos/excluir/route.ts"
+          ],
+          "risk": "Médio",
+          "completionCriteria": [
+            "Smoke endpoint",
+            "Guardian OK"
+          ],
+          "commitableToday": false,
+          "needsReview": true
+        }
+      ],
+      "canOpenNow": false,
+      "canMergeNow": false,
+      "canDeployAfter": "no",
+      "mergeCriteria": [
+        "Guardian exit 0",
+        "npm run build",
+        "Revisão humana aprovada",
+        "Decision engine não BLOCKED para escopo do PR"
+      ]
+    },
+    {
+      "id": "PR-06",
+      "name": "Minha Conta e autenticação",
+      "objective": "UX cliente, login, meus-dados, ocultação usuário.",
+      "order": 6,
+      "risk": "Médio",
+      "dependencies": [
+        "PR-04",
+        "PR-05"
+      ],
+      "filesPlanned": 14,
+      "filesPending": 19,
+      "commits": [
+        {
+          "id": "C-11",
+          "title": "MinhaConta (parte 1)",
+          "message": "fix(account): stabilize account and meus-dados aggregation",
+          "files": [
+            "src/app/lib/auth.ts"
+          ],
+          "filesPending": [
+            "src/app/lib/auth.ts"
+          ],
+          "risk": "Médio",
+          "completionCriteria": [
+            "Guardian exit 0",
+            "npm run build",
+            "Revisão humana aprovada",
+            "Decision engine não BLOCKED para escopo do PR"
+          ],
+          "commitableToday": false,
+          "needsReview": true
+        },
+        {
+          "id": "C-12",
+          "title": "MinhaConta (parte 2)",
+          "message": "fix(account): stabilize account and meus-dados aggregation (part 2)",
+          "files": [
+            "src/app/api/conta/route.ts",
+            "src/app/api/conta/update/route.ts",
+            "src/app/api/esqueci-senha/route.ts",
+            "src/app/api/login/route.ts",
+            "src/app/api/meus-dados/route.ts",
+            "src/app/api/meus-dados/vincular-cupons-teste/route.ts"
+          ],
+          "filesPending": [
+            "src/app/api/conta/route.ts",
+            "src/app/api/conta/update/route.ts",
+            "src/app/api/esqueci-senha/route.ts",
+            "src/app/api/login/route.ts",
+            "src/app/api/meus-dados/route.ts",
+            "src/app/api/meus-dados/vincular-cupons-teste/route.ts"
+          ],
+          "risk": "Médio",
+          "completionCriteria": [
+            "Guardian exit 0",
+            "npm run build",
+            "Revisão humana aprovada",
+            "Decision engine não BLOCKED para escopo do PR"
+          ],
+          "commitableToday": false,
+          "needsReview": true
+        },
+        {
+          "id": "C-13",
+          "title": "MinhaConta (parte 3)",
+          "message": "fix(account): stabilize account and meus-dados aggregation (part 3)",
+          "files": [
+            "src/app/conta/page.tsx",
+            "src/app/context/AuthContext.tsx",
+            "src/app/esqueci-senha/page.tsx",
+            "src/app/login/page.tsx",
+            "src/app/minha-conta/page.tsx",
+            "src/app/registro/page.tsx"
+          ],
+          "filesPending": [
+            "src/app/conta/page.tsx",
+            "src/app/context/AuthContext.tsx",
+            "src/app/esqueci-senha/page.tsx",
+            "src/app/login/page.tsx",
+            "src/app/minha-conta/page.tsx",
+            "src/app/registro/page.tsx"
+          ],
+          "risk": "Médio",
+          "completionCriteria": [
+            "Guardian exit 0",
+            "npm run build",
+            "Revisão humana aprovada",
+            "Decision engine não BLOCKED para escopo do PR"
+          ],
+          "commitableToday": false,
+          "needsReview": true
+        },
+        {
+          "id": "C-14",
+          "title": "MinhaConta (parte 4)",
+          "message": "fix(account): stabilize account and meus-dados aggregation (part 4)",
+          "files": [
+            "src/app/middleware.ts"
+          ],
+          "filesPending": [
+            "src/app/middleware.ts"
+          ],
+          "risk": "Médio",
+          "completionCriteria": [
+            "Guardian exit 0",
+            "npm run build",
+            "Revisão humana aprovada",
+            "Decision engine não BLOCKED para escopo do PR"
+          ],
+          "commitableToday": false,
+          "needsReview": true
+        },
+        {
+          "id": "PR-06-EXT",
+          "title": "Rotas/páginas fora do plano original",
+          "message": "feat: add orphan routes for PR-06",
+          "files": [
+            "src/app/api/conta/alterar-senha/route.ts",
+            "src/app/api/conta/excluir/route.ts",
+            "src/app/api/conta/foto/route.ts",
+            "src/app/api/planos/confirmar-reembolso/route.ts",
+            "src/app/conta/alterar-senha/page.tsx"
+          ],
+          "filesPending": [
+            "src/app/api/conta/alterar-senha/route.ts",
+            "src/app/api/conta/excluir/route.ts",
+            "src/app/api/conta/foto/route.ts",
+            "src/app/api/planos/confirmar-reembolso/route.ts",
+            "src/app/conta/alterar-senha/page.tsx"
+          ],
+          "risk": "Médio",
+          "completionCriteria": [
+            "Smoke endpoint",
+            "Guardian OK"
+          ],
+          "commitableToday": false,
+          "needsReview": true
+        }
+      ],
+      "canOpenNow": false,
+      "canMergeNow": false,
+      "canDeployAfter": "no",
+      "mergeCriteria": [
+        "Guardian exit 0",
+        "npm run build",
+        "Revisão humana aprovada",
+        "Decision engine não BLOCKED para escopo do PR"
+      ]
+    },
+    {
+      "id": "PR-07",
+      "name": "Painel administrativo",
+      "objective": "UI admin, stats, ações arquivar/restaurar.",
+      "order": 7,
+      "risk": "Médio",
+      "dependencies": [
+        "PR-05"
+      ],
+      "filesPlanned": 10,
+      "filesPending": 11,
+      "commits": [
+        {
+          "id": "C-15",
+          "title": "Admin",
+          "message": "feat(admin): admin panel archive restore and stats",
+          "files": [
+            "src/app/api/admin/stats/detalhadas/route.ts",
+            "src/app/api/admin/stats/route.ts",
+            "src/app/admin/estatisticas/page.tsx",
+            "src/app/admin/layout.tsx",
+            "src/app/admin/page.tsx",
+            "src/app/admin/planos/page.tsx",
+            "src/app/admin/servicos-aceitos/page.tsx",
+            "src/app/admin/servicos-solicitados/page.tsx",
+            "src/app/admin/usuarios/page.tsx",
+            "src/app/lib/adminAccess.ts"
+          ],
+          "filesPending": [
+            "src/app/api/admin/stats/detalhadas/route.ts",
+            "src/app/api/admin/stats/route.ts",
+            "src/app/admin/estatisticas/page.tsx",
+            "src/app/admin/layout.tsx",
+            "src/app/admin/page.tsx",
+            "src/app/admin/planos/page.tsx",
+            "src/app/admin/servicos-aceitos/page.tsx",
+            "src/app/admin/servicos-solicitados/page.tsx",
+            "src/app/admin/usuarios/page.tsx",
+            "src/app/lib/adminAccess.ts"
+          ],
+          "risk": "Médio",
+          "completionCriteria": [
+            "Guardian exit 0",
+            "npm run build",
+            "Revisão humana aprovada",
+            "Decision engine não BLOCKED para escopo do PR"
+          ],
+          "commitableToday": false,
+          "needsReview": true
+        },
+        {
+          "id": "PR-07-EXT",
+          "title": "Rotas/páginas fora do plano original",
+          "message": "feat: add orphan routes for PR-07",
+          "files": [
+            "src/app/api/admin/servicos/entrega/route.ts"
+          ],
+          "filesPending": [
+            "src/app/api/admin/servicos/entrega/route.ts"
+          ],
+          "risk": "Médio",
+          "completionCriteria": [
+            "Smoke endpoint",
+            "Guardian OK"
+          ],
+          "commitableToday": false,
+          "needsReview": true
+        }
+      ],
+      "canOpenNow": false,
+      "canMergeNow": false,
+      "canDeployAfter": "no",
+      "mergeCriteria": [
+        "Guardian exit 0",
+        "npm run build",
+        "Revisão humana aprovada",
+        "Decision engine não BLOCKED para escopo do PR"
+      ]
+    },
+    {
+      "id": "PR-08",
+      "name": "Simulação admin",
+      "objective": "Pagamentos teste, cupons simbólicos, reset.",
+      "order": 8,
+      "risk": "Médio",
+      "dependencies": [
+        "PR-03"
+      ],
+      "filesPlanned": 2,
+      "filesPending": 3,
+      "commits": [
+        {
+          "id": "C-16",
+          "title": "Simulation",
+          "message": "refactor(simulation): isolate symbolic payments and legacy cleanup",
+          "files": [
+            "scripts/test-simulation-flags.mjs",
+            "src/app/lib/simulation-reset.ts"
+          ],
+          "filesPending": [
+            "scripts/test-simulation-flags.mjs",
+            "src/app/lib/simulation-reset.ts"
+          ],
+          "risk": "Médio",
+          "completionCriteria": [
+            "Guardian exit 0",
+            "npm run build",
+            "Revisão humana aprovada",
+            "Decision engine não BLOCKED para escopo do PR"
+          ],
+          "commitableToday": false,
+          "needsReview": true
+        },
+        {
+          "id": "PR-08-EXT",
+          "title": "Rotas/páginas fora do plano original",
+          "message": "feat: add orphan routes for PR-08",
+          "files": [
+            "src/app/api/admin/cupons/resetar-simulacao/route.ts"
+          ],
+          "filesPending": [
+            "src/app/api/admin/cupons/resetar-simulacao/route.ts"
+          ],
+          "risk": "Médio",
+          "completionCriteria": [
+            "Smoke endpoint",
+            "Guardian OK"
+          ],
+          "commitableToday": false,
+          "needsReview": true
+        }
+      ],
+      "canOpenNow": false,
+      "canMergeNow": false,
+      "canDeployAfter": "no",
+      "mergeCriteria": [
+        "Guardian exit 0",
+        "npm run build",
+        "Revisão humana aprovada",
+        "Decision engine não BLOCKED para escopo do PR"
+      ]
+    },
+    {
+      "id": "PR-09",
+      "name": "Agentes IA e infraestrutura",
+      "objective": "Pipeline de agentes, scripts utilitários, build e CI.",
+      "order": 9,
+      "risk": "Baixo",
+      "dependencies": [
+        "PR-01"
+      ],
+      "filesPlanned": 53,
+      "filesPending": 53,
+      "commits": [
+        {
+          "id": "C-17",
+          "title": "Arquitetura",
+          "message": "chore(agents): add read-only planning agents pipeline",
+          "files": [
+            "scripts/architecture-agent.ts",
+            "scripts/architecture-decision-agent.ts",
+            "scripts/cto-agent.ts",
+            "scripts/design-planner-agent.ts",
+            "scripts/evolution-agent.ts",
+            "scripts/human-report-agent.ts",
+            "scripts/implementation-planner-agent.ts",
+            "scripts/project-knowledge-graph-agent.ts",
+            "scripts/stabilization-planner.ts"
+          ],
+          "filesPending": [
+            "scripts/architecture-agent.ts",
+            "scripts/architecture-decision-agent.ts",
+            "scripts/cto-agent.ts",
+            "scripts/design-planner-agent.ts",
+            "scripts/evolution-agent.ts",
+            "scripts/human-report-agent.ts",
+            "scripts/implementation-planner-agent.ts",
+            "scripts/project-knowledge-graph-agent.ts",
+            "scripts/stabilization-planner.ts"
+          ],
+          "risk": "Baixo",
+          "completionCriteria": [
+            "Guardian exit 0",
+            "npm run build",
+            "Revisão humana aprovada",
+            "Decision engine não BLOCKED para escopo do PR"
+          ],
+          "commitableToday": false,
+          "needsReview": true
+        },
+        {
+          "id": "C-18",
+          "title": "Scripts",
+          "message": "chore(scripts): add utility scripts for inspection",
+          "files": [
+            "scripts/check-db.mjs",
+            "scripts/domain-architecture-planner.ts",
+            "scripts/reset-operational-data.mjs"
+          ],
+          "filesPending": [
+            "scripts/check-db.mjs",
+            "scripts/domain-architecture-planner.ts",
+            "scripts/reset-operational-data.mjs"
+          ],
+          "risk": "Baixo",
+          "completionCriteria": [
+            "Guardian exit 0",
+            "npm run build",
+            "Revisão humana aprovada",
+            "Decision engine não BLOCKED para escopo do PR"
+          ],
+          "commitableToday": false,
+          "needsReview": true
+        },
+        {
+          "id": "C-19",
+          "title": "Infraestrutura (parte 1)",
+          "message": "chore(infra): update build config and shared components",
+          "files": [
+            "src/app/lib/delivery-url-validation.ts",
+            "src/app/lib/sendEmail.ts",
+            "src/app/lib/service-catalog.ts",
+            "src/app/lib/validations.ts",
+            "src/app/lib/active-user-plan.ts",
+            "src/app/lib/avatarDisplayUrl.ts",
+            "src/app/lib/deleteUserAccount.ts",
+            "src/app/lib/delivery-audio-upload.ts",
+            "src/app/lib/plan-refund.ts",
+            "src/app/lib/prisma-errors.ts",
+            "src/app/lib/support-contact.ts",
+            "src/app/lib/user-feedback.ts",
+            "src/app/lib/user-plan-hidden.ts"
+          ],
+          "filesPending": [
+            "src/app/lib/delivery-url-validation.ts",
+            "src/app/lib/sendEmail.ts",
+            "src/app/lib/service-catalog.ts",
+            "src/app/lib/validations.ts",
+            "src/app/lib/active-user-plan.ts",
+            "src/app/lib/avatarDisplayUrl.ts",
+            "src/app/lib/deleteUserAccount.ts",
+            "src/app/lib/delivery-audio-upload.ts",
+            "src/app/lib/plan-refund.ts",
+            "src/app/lib/prisma-errors.ts",
+            "src/app/lib/support-contact.ts",
+            "src/app/lib/user-feedback.ts",
+            "src/app/lib/user-plan-hidden.ts"
+          ],
+          "risk": "Baixo",
+          "completionCriteria": [
+            "Guardian exit 0",
+            "npm run build",
+            "Revisão humana aprovada",
+            "Decision engine não BLOCKED para escopo do PR"
+          ],
+          "commitableToday": false,
+          "needsReview": true
+        },
+        {
+          "id": "C-20",
+          "title": "Infraestrutura (parte 2)",
+          "message": "chore(infra): update build config and shared components (part 2)",
+          "files": [
+            "src/app/api/admin/cupons/liberar/route.ts",
+            "src/app/api/admin/cupons/route.ts",
+            "src/app/api/admin/planos/excluir-cancelados/route.ts",
+            "src/app/api/admin/planos/route.ts",
+            "src/app/api/admin/servicos/route.ts",
+            "src/app/api/admin/usuarios/route.ts",
+            "src/app/api/cupons/renunciar/route.ts",
+            "src/app/api/me/route.ts",
+            "src/app/api/planos/cancelar/route.ts",
+            "src/app/api/planos/excluir/route.ts",
+            "src/app/api/planos/solicitar-reembolso/route.ts",
+            "src/app/api/trocar-senha/route.ts",
+            "src/app/api/verificar-codigo/route.ts"
+          ],
+          "filesPending": [
+            "src/app/api/admin/cupons/liberar/route.ts",
+            "src/app/api/admin/cupons/route.ts",
+            "src/app/api/admin/planos/excluir-cancelados/route.ts",
+            "src/app/api/admin/planos/route.ts",
+            "src/app/api/admin/servicos/route.ts",
+            "src/app/api/admin/usuarios/route.ts",
+            "src/app/api/cupons/renunciar/route.ts",
+            "src/app/api/me/route.ts",
+            "src/app/api/planos/cancelar/route.ts",
+            "src/app/api/planos/excluir/route.ts",
+            "src/app/api/planos/solicitar-reembolso/route.ts",
+            "src/app/api/trocar-senha/route.ts",
+            "src/app/api/verificar-codigo/route.ts"
+          ],
+          "risk": "Baixo",
+          "completionCriteria": [
+            "Guardian exit 0",
+            "npm run build",
+            "Revisão humana aprovada",
+            "Decision engine não BLOCKED para escopo do PR"
+          ],
+          "commitableToday": false,
+          "needsReview": true
+        },
+        {
+          "id": "C-21",
+          "title": "Infraestrutura (parte 3)",
+          "message": "chore(infra): update build config and shared components (part 3)",
+          "files": [
+            "src/app/admin/layout.tsx",
+            "src/app/carrinho/page.tsx",
+            "src/app/components/Header.tsx",
+            "src/app/layout.tsx",
+            "src/app/components/ConditionalBodyLayout.tsx",
+            "src/app/components/UserFeedbackDialog.tsx",
+            "src/app/admin/estatisticas/page.tsx",
+            "src/app/admin/page.tsx",
+            "src/app/admin/planos/page.tsx",
+            "src/app/admin/servicos-aceitos/page.tsx",
+            "src/app/admin/servicos-solicitados/page.tsx",
+            "src/app/admin/usuarios/page.tsx",
+            "src/app/api/admin/cupons/liberar/route.ts",
+            "src/app/api/admin/cupons/route.ts",
+            "src/app/api/admin/planos/excluir-cancelados/route.ts",
+            "src/app/api/admin/planos/route.ts",
+            "src/app/api/admin/servicos/route.ts",
+            "src/app/api/admin/usuarios/route.ts",
+            "src/app/planos/page.tsx"
+          ],
+          "filesPending": [
+            "src/app/admin/layout.tsx",
+            "src/app/carrinho/page.tsx",
+            "src/app/components/Header.tsx",
+            "src/app/layout.tsx",
+            "src/app/components/ConditionalBodyLayout.tsx",
+            "src/app/components/UserFeedbackDialog.tsx",
+            "src/app/admin/estatisticas/page.tsx",
+            "src/app/admin/page.tsx",
+            "src/app/admin/planos/page.tsx",
+            "src/app/admin/servicos-aceitos/page.tsx",
+            "src/app/admin/servicos-solicitados/page.tsx",
+            "src/app/admin/usuarios/page.tsx",
+            "src/app/api/admin/cupons/liberar/route.ts",
+            "src/app/api/admin/cupons/route.ts",
+            "src/app/api/admin/planos/excluir-cancelados/route.ts",
+            "src/app/api/admin/planos/route.ts",
+            "src/app/api/admin/servicos/route.ts",
+            "src/app/api/admin/usuarios/route.ts",
+            "src/app/planos/page.tsx"
+          ],
+          "risk": "Baixo",
+          "completionCriteria": [
+            "Guardian exit 0",
+            "npm run build",
+            "Revisão humana aprovada",
+            "Decision engine não BLOCKED para escopo do PR"
+          ],
+          "commitableToday": false,
+          "needsReview": true
+        },
+        {
+          "id": "C-22",
+          "title": "Infraestrutura (parte 4)",
+          "message": "chore(infra): update build config and shared components (part 4)",
+          "files": [
+            "src/app/globals.css",
+            "src/app/hooks/useUnreadChatCount.ts"
+          ],
+          "filesPending": [
+            "src/app/globals.css",
+            "src/app/hooks/useUnreadChatCount.ts"
+          ],
+          "risk": "Baixo",
+          "completionCriteria": [
+            "Guardian exit 0",
+            "npm run build",
+            "Revisão humana aprovada",
+            "Decision engine não BLOCKED para escopo do PR"
+          ],
+          "commitableToday": false,
+          "needsReview": true
+        }
+      ],
+      "canOpenNow": false,
+      "canMergeNow": false,
+      "canDeployAfter": "no",
+      "mergeCriteria": [
+        "Guardian exit 0",
+        "npm run build",
+        "Revisão humana aprovada",
+        "Decision engine não BLOCKED para escopo do PR"
+      ]
+    }
+  ],
+  "outOfPlan": [
+    "gitignore",
+    "public/uploads/avatars/.gitkeep",
+    "public/uploads/deliveries/.gitkeep",
+    "reports/human/project-report.json",
+    "reports/human/project-report.md",
+    "scripts/generate-git-stabilization-report.mjs"
+  ],
+  "incompleteChanges": [
+    "77 arquivos modified com lógica de negócio interdependente (financeiro + cupons + agendamentos)",
+    "16 rotas novas untracked não estavam no stabilization-plan original",
+    "Engineering Dashboard (23 arquivos) adicionado após o plano — alocado em PR-01",
+    "6 agentes extras (code-health, execution-manager, etc.) alocados em PR-01f",
+    "1 migration local não aplicada: appointment_admin_archive",
+    "9 migrations no disco mas fora do git — PR-02 incompleto até commit"
+  ],
+  "commitSequence": [
+    "C-01 (10 scripts Guardian)",
+    "C-01b (8 docs)",
+    "C-01c (1 CI workflow)",
+    "C-01d (46 reports)",
+    "C-01e (23 dashboard)",
+    "C-01f (5 agentes) → merge PR-01",
+    "C-02 (13 prisma) → merge PR-02 + migrate staging",
+    "C-03 → C-06 → merge PR-03",
+    "C-07 → C-09 + PR-04-EXT → merge PR-04",
+    "C-10 + PR-05-EXT → merge PR-05",
+    "C-11 → C-14 + PR-06-EXT → merge PR-06",
+    "C-15 + PR-07-EXT → merge PR-07",
+    "C-16 + PR-08-EXT → merge PR-08",
+    "C-17 → C-22 + uploads + human reports → merge PR-09"
+  ]
+}

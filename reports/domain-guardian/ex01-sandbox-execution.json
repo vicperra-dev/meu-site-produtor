@@ -1,0 +1,155 @@
+{
+  "reportId": "EX-01-sandbox-execution",
+  "mode": "EXECUCAO_CONTROLADA",
+  "generatedAt": "2026-07-10T08:05:00.000Z",
+  "language": "pt-BR",
+  "projectName": "THouse Rec",
+  "branch": "pr03-clean",
+  "head": "3f20ad0",
+  "basedOn": ["LE-01-launch-execution", "HL-01-final-homologation"],
+  "scope": "Fase F1 Sandbox — execução real local (sem produção)",
+  "veredito": "REPROVADA",
+  "vereditoMotivo": "Etapa 3 (ASAAS Sandbox) falhou: ASAAS_API_KEY é token de produção ($aact_prod_*). Execução interrompida conforme protocolo PARAR antes de subir app e smoke test com risco de chamadas Asaas produção.",
+  "stopRule": {
+    "triggered": true,
+    "etapa": 3,
+    "nome": "Verificar ASAAS Sandbox"
+  },
+  "failure": {
+    "etapa": 3,
+    "nome": "Verificar ASAAS Sandbox",
+    "erro": "ASAAS_API_KEY configurada como token de PRODUÇÃO ($aact_prod_*); ambiente detectado PRODUCTION; sandboxOk=false. ASAAS_WEBHOOK_ACCESS_TOKEN ausente.",
+    "causaProvavel": ".env/.env.local contém chave Asaas de produção em vez de sandbox. Código em payment-providers.ts roteia $aact_prod_* para https://www.asaas.com/api/v3 independente de NODE_ENV.",
+    "menorCorrecao": "Em .env.local: substituir ASAAS_API_KEY por token sandbox ($aact_ sem prefixo prod); definir ASAAS_WEBHOOK_ACCESS_TOKEN do painel sandbox; ajustar NEXT_PUBLIC_SITE_URL=http://localhost:3000 para F1 local.",
+    "impacto": "Checkout e qualquer chamada Asaas criariam cobranças em produção. Smoke test até checkout e homologação F1 bloqueados. Passos 6–8 não executados."
+  },
+  "steps": [
+    {
+      "ordem": 1,
+      "nome": "Verificar ambiente (.env)",
+      "status": "PASS_PARCIAL",
+      "evidencias": {
+        "arquivos": [".env presente", ".env.local presente"],
+        "variaveis": {
+          "DATABASE_URL": { "status": "OK", "provider": "local", "length": 70 },
+          "ASAAS_API_KEY": { "status": "OK_SET", "type": "PRODUCTION", "prefix": "$aact_prod_..." },
+          "NEXT_PUBLIC_SITE_URL": { "status": "OK", "value": "https://crazy-pans-own.loca.lt", "nota": "não é localhost:3000" },
+          "ASAAS_WEBHOOK_ACCESS_TOKEN": { "status": "MISSING" }
+        },
+        "script": "scripts/ex01-check-env.js",
+        "executedAt": "2026-07-10T07:52:00.000Z"
+      }
+    },
+    {
+      "ordem": 2,
+      "nome": "Verificar DATABASE_URL",
+      "status": "PASS",
+      "evidencias": {
+        "query": "SELECT 1",
+        "result": [{ "ok": 1 }],
+        "userCount": 2,
+        "script": "scripts/ex01-db-ping.js",
+        "executedAt": "2026-07-10T07:53:00.000Z"
+      }
+    },
+    {
+      "ordem": 3,
+      "nome": "Verificar ASAAS Sandbox",
+      "status": "FAIL",
+      "evidencias": {
+        "script": "scripts/ex01-asaas-verify.js",
+        "tokenPrefix": "$aact_prod_0...",
+        "environment": "PRODUCTION",
+        "apiUrl": "https://www.asaas.com/api/v3",
+        "sandboxOk": false,
+        "sandboxRequired": true,
+        "ping": {
+          "note": "Ping não conclusivo (TLS local); classificação por prefixo do token é determinística no código",
+          "tlsError": "unable to verify the first certificate"
+        },
+        "codeReference": "src/app/lib/payment-providers.ts AsaasProvider constructor — isProductionToken → www.asaas.com",
+        "executedAt": "2026-07-10T07:58:00.000Z"
+      }
+    },
+    {
+      "ordem": 4,
+      "nome": "Prisma Generate",
+      "status": "PASS",
+      "evidencias": {
+        "command": "npx prisma generate (também via npm run build)",
+        "prismaVersion": "5.19.0",
+        "output": "Generated Prisma Client to .\\node_modules\\@prisma\\client in 447ms",
+        "executedAt": "2026-07-10T07:51:00.000Z"
+      }
+    },
+    {
+      "ordem": 5,
+      "nome": "npm run build",
+      "status": "PASS",
+      "evidencias": {
+        "command": "npm run build",
+        "nextVersion": "16.1.6",
+        "compile": "Compiled successfully in 2.8min",
+        "typescript": "pass",
+        "exitCode": 0,
+        "elapsedMs": 302078,
+        "routesSample": ["/registro", "/login", "/minha-conta", "/carrinho", "/pagamentos", "/api/asaas/checkout-carrinho", "/api/webhooks/asaas"],
+        "executedAt": "2026-07-10T07:56:34.000Z"
+      }
+    },
+    {
+      "ordem": 6,
+      "nome": "Subir aplicação",
+      "status": "NOT_EXECUTED",
+      "motivo": "Bloqueado por PARAR na etapa 3 (risco produção Asaas em fluxo checkout)"
+    },
+    {
+      "ordem": 7,
+      "nome": "Smoke Test (Registro → Login → Minha Conta → Agendamento → Carrinho → Checkout até antes pagamento)",
+      "status": "NOT_EXECUTED",
+      "motivo": "Bloqueado por PARAR na etapa 3"
+    },
+    {
+      "ordem": 8,
+      "nome": "Registrar evidências (logs, prints, URLs, respostas)",
+      "status": "PARTIAL",
+      "motivo": "Evidências de build/env/DB registradas; smoke e prints de UI não coletados"
+    }
+  ],
+  "smokeTestMatrix": {
+    "executed": false,
+    "plannedFlow": [
+      "Registro",
+      "Login",
+      "Minha Conta",
+      "Agendamento",
+      "Carrinho",
+      "Checkout (até antes do pagamento)"
+    ],
+    "leMapping": {
+      "LE-F1-001": "FAIL_PARCIAL — DB local OK; ASAAS não sandbox",
+      "LE-F1-H01": "NOT_RUN",
+      "LE-F1-H03": "NOT_RUN",
+      "LE-F1-H04": "NOT_RUN",
+      "LE-F1-H05": "NOT_RUN",
+      "LE-F1-H08": "NOT_RUN"
+    }
+  },
+  "restricoesRespeitadas": {
+    "naoExecutarProducao": true,
+    "naoAlterarLogicaFinanceira": true,
+    "correcoesAplicadas": []
+  },
+  "proximosPassos": [
+    "Trocar ASAAS_API_KEY por sandbox em .env.local",
+    "Definir ASAAS_WEBHOOK_ACCESS_TOKEN sandbox",
+    "Definir NEXT_PUBLIC_SITE_URL=http://localhost:3000",
+    "Reexecutar EX-01 do passo 3 em diante",
+    "npm run dev → smoke test completo até checkout (sem concluir pagamento Asaas)"
+  ],
+  "artifacts": [
+    "scripts/ex01-check-env.js",
+    "scripts/ex01-db-ping.js",
+    "scripts/ex01-asaas-verify.js"
+  ]
+}

@@ -1,0 +1,867 @@
+{
+  "project": {
+    "name": "THouse",
+    "agentVersion": "1.0.0",
+    "generatedAt": "2026-07-05T19:48:47.705Z",
+    "root": "C:/Users/raulv/Documents/projetos/meu-site-produtor"
+  },
+  "domain": {
+    "docs": {
+      "domain-map.md": {
+        "path": "docs/ai/domain-map.md",
+        "loaded": true,
+        "sizeBytes": 14084
+      },
+      "domain-dependencies.md": {
+        "path": "docs/ai/domain-dependencies.md",
+        "loaded": true,
+        "sizeBytes": 9762
+      },
+      "domain-invariants.md": {
+        "path": "docs/ai/domain-invariants.md",
+        "loaded": true,
+        "sizeBytes": 8462
+      },
+      "domain-risks.md": {
+        "path": "docs/ai/domain-risks.md",
+        "loaded": true,
+        "sizeBytes": 10011
+      },
+      "payment-lifecycle-audit.md": {
+        "path": "docs/ai/payment-lifecycle-audit.md",
+        "loaded": true,
+        "sizeBytes": 23509
+      },
+      "appointment-archive-audit.md": {
+        "path": "docs/ai/appointment-archive-audit.md",
+        "loaded": true,
+        "sizeBytes": 24334
+      }
+    },
+    "docsLoaded": 6,
+    "docsTotal": 6,
+    "risksSummary": [
+      "### Tier 1 — diário (alerta imediato)",
+      "### Tier 2 — diário (relatório)",
+      "### Tier 3 — semanal",
+      "### Tier 4 — métricas",
+      "Idempotência webhook por `asaasId`",
+      "`canAdminDeletePayment` / `canAdminDeleteCoupon`",
+      "Admin DELETE agendamento/planos/excluir-cancelados/excluir-lote → **422**",
+      "`syncInboundAsaasRefund` (`PAYMENT_REFUNDED`)",
+      "`reconcileAppointmentWithServices`",
+      "`normalizeStaleCouponAppointmentLink`",
+      "Ocultação usuário sem delete físico",
+      "Sem Domain Guardian automatizado",
+      "Sem FK em vínculos financeiro-operacionais",
+      "Sem `adminArchivedAt`",
+      "Sem garbage collection de `PaymentMetadata`",
+      "Sem invariante automático “appointment pago → service existe”",
+      "`DELETE /api/admin/servicos` sem guard forte"
+    ]
+  },
+  "entities": [
+    {
+      "name": "Payment",
+      "source": "domain-map.md"
+    },
+    {
+      "name": "PaymentMetadata",
+      "source": "domain-map.md"
+    },
+    {
+      "name": "Appointment",
+      "source": "domain-map.md"
+    },
+    {
+      "name": "Coupon",
+      "source": "domain-map.md"
+    },
+    {
+      "name": "UserPlan",
+      "source": "domain-map.md"
+    },
+    {
+      "name": "Service",
+      "source": "domain-map.md"
+    },
+    {
+      "name": "User",
+      "source": "domain-map.md"
+    }
+  ],
+  "flows": [
+    "Checkout agendamento",
+    "Checkout plano",
+    "Reembolso",
+    "Remarcação (cupom)",
+    "Minha Conta (leitura)",
+    "PaymentMetadata → Payment",
+    "Payment → Appointment",
+    "Payment → Coupon",
+    "Payment → UserPlan",
+    "Appointment → Service",
+    "Appointment → Coupon (remarcação)",
+    "Coupon → Appointment (consumo)",
+    "UserPlan → Coupon",
+    "User → Payment / Appointment / UserPlan / Service",
+    "User → Coupon (assigned)"
+  ],
+  "invariants": {
+    "all": [
+      {
+        "id": "F1",
+        "description": "`Payment.asaasId` é único globalmente quando preenchido.",
+        "classification": "CRÍTICO",
+        "domain": "Financeiro"
+      },
+      {
+        "id": "F2",
+        "description": "`Payment.status = approved` com `asaasId` real implica cobrança existente no Asaas.",
+        "classification": "CRÍTICO",
+        "domain": "Financeiro"
+      },
+      {
+        "id": "F3",
+        "description": "Webhook `PAYMENT_RECEIVED` não deve criar segundo `Payment` para o mesmo `asaasId`.",
+        "classification": "CRÍTICO",
+        "domain": "Financeiro"
+      },
+      {
+        "id": "F4",
+        "description": "`Payment.type = agendamento` e `status = approved` deve ter `appointmentId` ou `appointmentIds` resolvíveis após efeitos pós-pagamento (`asaas-agendamento-payment-effects`, reconcile).",
+        "classification": "ALTO",
+        "domain": "Financeiro"
+      },
+      {
+        "id": "F5",
+        "description": "`Payment.type = plano` e `status = approved` deve ter `UserPlan` do mesmo usuário em janela temporal coerente (~48h de `createdAt`).",
+        "classification": "ALTO",
+        "domain": "Financeiro"
+      },
+      {
+        "id": "F6",
+        "description": "Reembolso outbound (`refundAsaasPayment`) deve usar `Payment.asaasId` do pagamento correto do agendamento, cupom ou plano.",
+        "classification": "CRÍTICO",
+        "domain": "Financeiro"
+      },
+      {
+        "id": "F7",
+        "description": "Webhook `PAYMENT_REFUNDED` deve sincronizar `refundAsaasStatus` apenas em entidades com `refundProcessedAt` já preenchido (Appointment, Coupon, UserPlan).",
+        "classification": "ALTO",
+        "domain": "Financeiro"
+      },
+      {
+        "id": "F8",
+        "description": "`Payment` approved com integração real (`asaasId` não simbólico) não deve ser excluído fisicamente; `canAdminDeletePayment` restringe delete a `pending`/`rejected`, simbólico órfão ou casos explícitos.",
+        "classification": "CRÍTICO",
+        "domain": "Financeiro"
+      },
+      {
+        "id": "M1",
+        "description": "Checkout deve criar `PaymentMetadata` **antes** do POST ao Asaas (payload completo; `externalReference` limitado a `userId`).",
+        "classification": "CRÍTICO",
+        "domain": "Financeiro"
+      },
+      {
+        "id": "M2",
+        "description": "`PaymentMetadata.asaasId` deve ser preenchido após sucesso do checkout Asaas.",
+        "classification": "ALTO",
+        "domain": "Financeiro"
+      },
+      {
+        "id": "M3",
+        "description": "Metadata deve estar válido (`expiresAt` não expirado) quando o webhook processa o pagamento (TTL ~24h).",
+        "classification": "ALTO",
+        "domain": "Financeiro"
+      },
+      {
+        "id": "M4",
+        "description": "`PaymentMetadata` é cache transitório; após `Payment.create` a fonte de verdade financeira é `Payment`, não metadata.",
+        "classification": "MÉDIO",
+        "domain": "Financeiro"
+      },
+      {
+        "id": "A1",
+        "description": "`Appointment.userId` sempre referencia `User` existente (FK com `onDelete: Cascade`).",
+        "classification": "CRÍTICO",
+        "domain": "Appointment"
+      },
+      {
+        "id": "A2",
+        "description": "Agendamento vinculado a `Payment` approved deve existir antes de iniciar reembolso direto (`escolher-reembolso`).",
+        "classification": "CRÍTICO",
+        "domain": "Appointment"
+      },
+      {
+        "id": "A3",
+        "description": "`cancelRefundOption = reembolso` implica `status` em `cancelado` ou `recusado`.",
+        "classification": "ALTO",
+        "domain": "Appointment"
+      },
+      {
+        "id": "A4",
+        "description": "`refundProcessedAt` preenchido implica `cancelRefundOption = reembolso`.",
+        "classification": "ALTO",
+        "domain": "Appointment"
+      },
+      {
+        "id": "A5",
+        "description": "Agendamento aceito/confirmado com cobrança real deve ter ≥1 `Service` com `appointmentId` (backfill admin existe; não é garantido automaticamente em todos os fluxos).",
+        "classification": "MÉDIO",
+        "domain": "Appointment"
+      },
+      {
+        "id": "A6",
+        "description": "`Appointment.status = concluido` com serviços ainda abertos é corrigido por `reconcileAppointmentWithServices` (rebaixa para `em_andamento` ou `aceito`).",
+        "classification": "MÉDIO",
+        "domain": "Appointment"
+      },
+      {
+        "id": "A7",
+        "description": "`userHiddenAt` altera apenas visibilidade na Minha Conta; não altera status financeiro nem `Payment`.",
+        "classification": "ALTO",
+        "domain": "Appointment"
+      },
+      {
+        "id": "A8",
+        "description": "Não deve haver dois agendamentos não cancelados e não arquivados no mesmo slot de horário; conflito verificado em checkout e `POST /api/agendamentos` (`status` ≠ `cancelado`; `adminArchivedAt` IS NULL).",
+        "classification": "ALTO",
+        "domain": "Appointment"
+      },
+      {
+        "id": "A9",
+        "description": "`adminArchivedAt` só em `concluido` / `cancelado` / `recusado` resolvido; não altera Minha Conta; `adminArchivedReason` obrigatória (mín. 3 caracteres).",
+        "classification": "ALTO",
+        "domain": "Appointment"
+      },
+      {
+        "id": "C1",
+        "description": "`Coupon.code` é único globalmente.",
+        "classification": "CRÍTICO",
+        "domain": "Coupon"
+      },
+      {
+        "id": "C2",
+        "description": "Cupom `used = true` deve ter rastreabilidade: `usedBy` e/ou `appointmentId` e/ou consumo resolvível via `paymentId` / `userPlanId`.",
+        "classification": "ALTO",
+        "domain": "Coupon"
+      },
+      {
+        "id": "C3",
+        "description": "Cupom `couponType = reembolso` ativo ligado a `Appointment.refundCouponId` deve pertencer ao mesmo `userId` do agendamento origem.",
+        "classification": "ALTO",
+        "domain": "Coupon"
+      },
+      {
+        "id": "C4",
+        "description": "Cupom com `userPlanId` deve pertencer ao `UserPlan.userId` (FK `userPlanId` → `UserPlan`).",
+        "classification": "CRÍTICO",
+        "domain": "Coupon"
+      },
+      {
+        "id": "C5",
+        "description": "Cupom de plano não deve ser utilizável quando o plano está cancelado, inativado pelo admin ou em fluxo de reembolso (`isPlanCouponBlockedByPlanRefund`, `getPlanCouponUsageBlockMessage`).",
+        "classification": "ALTO",
+        "domain": "Coupon"
+      },
+      {
+        "id": "C6",
+        "description": "`userRemovedAt` oculta cupom na Minha Conta; registro permanece no admin e em estatísticas.",
+        "classification": "MÉDIO",
+        "domain": "Coupon"
+      },
+      {
+        "id": "C7",
+        "description": "Cupons de simulação (`TESTE_`, pagamento simbólico R$ 5, `isSimulationCoupon`) devem permanecer isoláveis de cupons de produção.",
+        "classification": "MÉDIO",
+        "domain": "Coupon"
+      },
+      {
+        "id": "P1",
+        "description": "`UserPlan.status = active` implica plano vigente (não `cancelled` sem transição; `adminInactiveAt` inativa operacionalmente).",
+        "classification": "ALTO",
+        "domain": "UserPlan"
+      },
+      {
+        "id": "P2",
+        "description": "Plano recém-criado deve ter gerado cupons de serviço conforme catálogo do plano (`plan-coupons.ts`). Plano ativo com todos os cupons usados é válido; invariante é sobre geração inicial, não sobre cupons restantes.",
+        "classification": "ALTO",
+        "domain": "UserPlan"
+      },
+      {
+        "id": "P3",
+        "description": "`refundProcessedAt` implica `refundRequestedAt` e bloqueio de cupons não usados para reembolso (`lockUnusedPlanCouponsForRefund`).",
+        "classification": "CRÍTICO",
+        "domain": "UserPlan"
+      },
+      {
+        "id": "P4",
+        "description": "`adminInactiveAt` bloqueia cupons não usados na Minha Conta do usuário.",
+        "classification": "ALTO",
+        "domain": "UserPlan"
+      },
+      {
+        "id": "P5",
+        "description": "`UserPlan` com cupons usados ou reembolso em trilha não deve ser excluído fisicamente (admin DELETE bloqueado 422).",
+        "classification": "CRÍTICO",
+        "domain": "UserPlan"
+      },
+      {
+        "id": "P6",
+        "description": "`Subscription.asaasSubscriptionId` deve estar coerente com ciclo de vida do plano (cancelamento no Asaas ao inativar/reembolsar).",
+        "classification": "ALTO",
+        "domain": "UserPlan"
+      },
+      {
+        "id": "X1",
+        "description": "Mesmo `userId` em `Payment`, `Appointment` e `Coupon` de um único fluxo de negócio (ownership via `coupon-account-ownership`, `couponBelongsToUser`).",
+        "classification": "CRÍTICO",
+        "domain": "Cross-domain"
+      },
+      {
+        "id": "X2",
+        "description": "Tríade remarcação: `Appointment.refundCouponId` → `Coupon.id` → mesmo `userId` do agendamento origem.",
+        "classification": "CRÍTICO",
+        "domain": "Cross-domain"
+      },
+      {
+        "id": "X3",
+        "description": "Carrinho: `Payment.appointmentIds` deve ser subconjunto dos `Appointment` criados no mesmo processamento de webhook/payment-effects.",
+        "classification": "ALTO",
+        "domain": "Cross-domain"
+      },
+      {
+        "id": "X4",
+        "description": "Exclusão física admin de entidades históricas (agendamento, plano, lote cupons) bloqueada (422); purge via `purge-cancelled-appointment` sem caller ativo.",
+        "classification": "CRÍTICO",
+        "domain": "Cross-domain"
+      },
+      {
+        "id": "X5",
+        "description": "Artefatos de simulação (R$ 5, `resetSimulationArtifacts`) não devem apagar ou corromper registros de produção.",
+        "classification": "MÉDIO",
+        "domain": "Cross-domain"
+      }
+    ],
+    "critical": [
+      "F1",
+      "F2",
+      "F3",
+      "F6",
+      "F8",
+      "M1",
+      "A1",
+      "A2",
+      "C1",
+      "C4",
+      "P3",
+      "P5",
+      "X1",
+      "X2",
+      "X4"
+    ],
+    "byDomain": {
+      "Financeiro": [
+        "F1",
+        "F2",
+        "F3",
+        "F4",
+        "F5",
+        "F6",
+        "F7",
+        "F8",
+        "M1",
+        "M2",
+        "M3",
+        "M4"
+      ],
+      "Appointment": [
+        "A1",
+        "A2",
+        "A3",
+        "A4",
+        "A5",
+        "A6",
+        "A7",
+        "A8",
+        "A9"
+      ],
+      "Coupon": [
+        "C1",
+        "C2",
+        "C3",
+        "C4",
+        "C5",
+        "C6",
+        "C7"
+      ],
+      "UserPlan": [
+        "P1",
+        "P2",
+        "P3",
+        "P4",
+        "P5",
+        "P6"
+      ],
+      "Cross-domain": [
+        "X1",
+        "X2",
+        "X3",
+        "X4",
+        "X5"
+      ]
+    }
+  },
+  "guardian": {
+    "loaded": true,
+    "generatedAt": "2026-06-23T06:20:24.360Z",
+    "status": "HEALTHY",
+    "errors": 0,
+    "warnings": 0,
+    "info": 1,
+    "checksTotal": 13,
+    "checks": [
+      {
+        "code": "F1",
+        "severity": "OK",
+        "scanned": 0,
+        "errorCount": 0,
+        "warningCount": 0,
+        "infoCount": 0,
+        "findingsCount": 0
+      },
+      {
+        "code": "F4",
+        "severity": "OK",
+        "scanned": 0,
+        "errorCount": 0,
+        "warningCount": 0,
+        "infoCount": 0,
+        "findingsCount": 0
+      },
+      {
+        "code": "A5",
+        "severity": "OK",
+        "scanned": 1,
+        "errorCount": 0,
+        "warningCount": 0,
+        "infoCount": 0,
+        "findingsCount": 0
+      },
+      {
+        "code": "A8",
+        "severity": "OK",
+        "scanned": 1,
+        "errorCount": 0,
+        "warningCount": 0,
+        "infoCount": 0,
+        "findingsCount": 0
+      },
+      {
+        "code": "C1",
+        "severity": "OK",
+        "scanned": 1,
+        "errorCount": 0,
+        "warningCount": 0,
+        "infoCount": 0,
+        "findingsCount": 0
+      },
+      {
+        "code": "C2",
+        "severity": "OK",
+        "scanned": 0,
+        "errorCount": 0,
+        "warningCount": 0,
+        "infoCount": 0,
+        "findingsCount": 0
+      },
+      {
+        "code": "P2",
+        "severity": "OK",
+        "scanned": 0,
+        "errorCount": 0,
+        "warningCount": 0,
+        "infoCount": 0,
+        "findingsCount": 0
+      },
+      {
+        "code": "X1",
+        "severity": "OK",
+        "scanned": 0,
+        "errorCount": 0,
+        "warningCount": 0,
+        "infoCount": 0,
+        "findingsCount": 0
+      },
+      {
+        "code": "X2",
+        "severity": "OK",
+        "scanned": 0,
+        "errorCount": 0,
+        "warningCount": 0,
+        "infoCount": 0,
+        "findingsCount": 0
+      },
+      {
+        "code": "S1",
+        "severity": "OK",
+        "scanned": 0,
+        "errorCount": 0,
+        "warningCount": 0,
+        "infoCount": 0,
+        "findingsCount": 0
+      },
+      {
+        "code": "S2",
+        "severity": "OK",
+        "scanned": 0,
+        "errorCount": 0,
+        "warningCount": 0,
+        "infoCount": 0,
+        "findingsCount": 0
+      },
+      {
+        "code": "S3",
+        "severity": "OK",
+        "scanned": 0,
+        "errorCount": 0,
+        "warningCount": 0,
+        "infoCount": 0,
+        "findingsCount": 0
+      },
+      {
+        "code": "S4",
+        "severity": "INFO",
+        "scanned": 0,
+        "errorCount": 0,
+        "warningCount": 0,
+        "infoCount": 1,
+        "findingsCount": 1
+      }
+    ],
+    "activeFindings": [
+      "S4: Legado no banco: 0 cupom(ns) TESTE_AGEND_*, 0 cupom(ns) TESTE_PAY_*"
+    ]
+  },
+  "advisor": {
+    "loaded": true,
+    "status": "HEALTHY",
+    "path": "reports/domain-guardian/advisor.md"
+  },
+  "decision": {
+    "loaded": true,
+    "decision": "BLOCKED",
+    "risk": "CRITICAL",
+    "branch": "main",
+    "head": "fd9ff6d",
+    "entitiesAffected": [
+      "Appointment",
+      "Coupon",
+      "Payment",
+      "PaymentMetadata",
+      "Service",
+      "User",
+      "UserPlan",
+      "Aceite / recusa / conclusão admin",
+      "Aceite/recusa admin",
+      "Autenticação e autorização",
+      "Checkout",
+      "Checkout (agendamento e plano)",
+      "Checkout agendamento",
+      "Checkout plano",
+      "Checkout → criação pós-pagamento",
+      "Classificação simbólica (A1: `symbolicAgendamento`, `symbolicPlano`, `isTestPayment`)",
+      "Conflito de horário (agenda)",
+      "Criação pós-checkout agendamento",
+      "Documentação / tooling",
+      "Entrega de áudio",
+      "Exclusão de conta (LGPD)",
+      "Geração pós-pagamento (agendamento/plano)",
+      "… e mais 25 fluxo(s)"
+    ],
+    "criticalInvariantsAffected": [],
+    "path": "reports/domain-guardian/decision.md"
+  },
+  "memory": {
+    "loaded": true,
+    "lastUpdated": "2026-06-23T07:54:44.220Z",
+    "totalGuardianRuns": 4,
+    "totalDecisionSnapshots": 1,
+    "unstableAreas": [
+      "Check **S4** (Resíduo legado TESTE_AGEND_/TESTE_PAY_): finding em 3/4 execuções (75%)",
+      "Entidade **Coupon**: 3 menção(ões) em decisões/checks",
+      "Decision Engine **BLOCKED** em 1/1 snapshot(s)",
+      "Arquivo sensível: `prisma/schema.prisma` (1 citação(ões), risco CRITICAL)",
+      "Arquivo sensível: `src/app/api/admin/agendamentos/reverter-cancelamento/route.ts` (1 citação(ões), risco CRITICAL)",
+      "Arquivo sensível: `src/app/api/admin/agendamentos/route.ts` (1 citação(ões), risco CRITICAL)"
+    ],
+    "path": "reports/domain-guardian/memory.json"
+  },
+  "issues": {
+    "loaded": true,
+    "issueCount": 0,
+    "path": "reports/domain-guardian/issues.md"
+  },
+  "currentChanges": {
+    "modified": [
+      ".gitignore",
+      "package.json",
+      "prisma/schema.prisma",
+      "src/app/admin/agendamentos/page.tsx",
+      "src/app/admin/estatisticas/page.tsx",
+      "src/app/admin/layout.tsx",
+      "src/app/admin/pagamentos/page.tsx",
+      "src/app/admin/page.tsx",
+      "src/app/admin/planos/page.tsx",
+      "src/app/admin/servicos-aceitos/page.tsx",
+      "src/app/admin/servicos-solicitados/page.tsx",
+      "src/app/admin/usuarios/page.tsx",
+      "src/app/agendamento/page.tsx",
+      "src/app/api/admin/agendamentos/cancelar/route.ts",
+      "src/app/api/admin/agendamentos/reverter-cancelamento/route.ts",
+      "src/app/api/admin/agendamentos/route.ts",
+      "src/app/api/admin/cupons/liberar/route.ts",
+      "src/app/api/admin/cupons/route.ts",
+      "src/app/api/admin/pagamentos/route.ts",
+      "src/app/api/admin/planos/excluir-cancelados/route.ts",
+      "src/app/api/admin/planos/route.ts",
+      "src/app/api/admin/reprocessar-pagamento-teste/route.ts",
+      "src/app/api/admin/servicos/route.ts",
+      "src/app/api/admin/stats/detalhadas/route.ts",
+      "src/app/api/admin/stats/route.ts",
+      "src/app/api/admin/usuarios/route.ts",
+      "src/app/api/agendamentos/cancelar/route.ts",
+      "src/app/api/agendamentos/com-cupom/route.ts",
+      "src/app/api/agendamentos/disponibilidade/route.ts",
+      "src/app/api/agendamentos/escolher-reembolso/route.ts",
+      "src/app/api/agendamentos/route.ts",
+      "src/app/api/asaas/checkout-agendamento/route.ts",
+      "src/app/api/asaas/checkout-carrinho/route.ts",
+      "src/app/api/asaas/checkout/route.ts",
+      "src/app/api/conta/route.ts",
+      "src/app/api/conta/update/route.ts",
+      "src/app/api/coupons/validate/route.ts",
+      "src/app/api/cupons/renunciar/route.ts",
+      "src/app/api/esqueci-senha/route.ts",
+      "src/app/api/login/route.ts",
+      "src/app/api/me/route.ts",
+      "src/app/api/meus-dados/route.ts",
+      "src/app/api/meus-dados/vincular-cupons-teste/route.ts",
+      "src/app/api/planos/cancelar/route.ts",
+      "src/app/api/planos/excluir/route.ts",
+      "src/app/api/planos/solicitar-reembolso/route.ts",
+      "src/app/api/test-payment/route.ts",
+      "src/app/api/trocar-senha/route.ts",
+      "src/app/api/verificar-codigo/route.ts",
+      "src/app/api/webhooks/asaas/route.ts",
+      "src/app/carrinho/page.tsx",
+      "src/app/components/Header.tsx",
+      "src/app/conta/page.tsx",
+      "src/app/context/AuthContext.tsx",
+      "src/app/esqueci-senha/page.tsx",
+      "src/app/globals.css",
+      "src/app/hooks/useUnreadChatCount.ts",
+      "src/app/layout.tsx",
+      "src/app/lib/agendamento-payment-coupons.ts",
+      "src/app/lib/asaas-agendamento-reconcile.ts",
+      "src/app/lib/auth.ts",
+      "src/app/lib/coupon-booking-rules.ts",
+      "src/app/lib/coupon-release.ts",
+      "src/app/lib/coupon-stale-appointment.ts",
+      "src/app/lib/delivery-url-validation.ts",
+      "src/app/lib/payment-providers.ts",
+      "src/app/lib/plan-coupons.ts",
+      "src/app/lib/process-payment-webhook.ts",
+      "src/app/lib/sendEmail.ts",
+      "src/app/lib/service-catalog.ts",
+      "src/app/lib/validate-coupon-checkout.ts",
+      "src/app/lib/validations.ts",
+      "src/app/login/page.tsx",
+      "src/app/middleware.ts",
+      "src/app/minha-conta/page.tsx",
+      "src/app/planos/page.tsx",
+      "src/app/registro/page.tsx"
+    ],
+    "added": [],
+    "deleted": [],
+    "renamed": [],
+    "untracked": [
+      ".github/",
+      "docs/",
+      "prisma/backfill_coupon_origin.sql",
+      "prisma/ensure_account_deletion_log.sql",
+      "prisma/migrations/20260504200000_add_foto_position/",
+      "prisma/migrations/20260504213000_account_deletion_log/",
+      "prisma/migrations/20260511231500_user_plan_admin_inactive/",
+      "prisma/migrations/20260511234500_coupon_refund_tracking/",
+      "prisma/migrations/20260512030000_appointment_refund_confirmation/",
+      "prisma/migrations/20260512040000_user_plan_refund_tracking/",
+      "prisma/migrations/20260604210000_user_plan_user_hidden/",
+      "prisma/migrations/20260605120000_appointment_user_hidden/",
+      "prisma/migrations/20260617120000_appointment_admin_archive/",
+      "prisma/reset_operational_data.sql",
+      "public/uploads/",
+      "reports/",
+      "scripts/architecture-agent.ts",
+      "scripts/check-db.mjs",
+      "scripts/domain-architecture-planner.ts",
+      "scripts/domain-change-analyzer.ts",
+      "scripts/domain-decision-engine.ts",
+      "scripts/domain-guardian-advisor.ts",
+      "scripts/domain-guardian-audit.ts",
+      "scripts/domain-guardian-diff.ts",
+      "scripts/domain-guardian-runner.ts",
+      "scripts/domain-issue-generator.ts",
+      "scripts/domain-memory-engine.ts",
+      "scripts/domain-pr-reviewer.ts",
+      "scripts/domain-review-engine.ts",
+      "scripts/inspect-payments.mjs",
+      "scripts/inspect-simulation-coupons.mjs",
+      "scripts/repair-coupon-ownership.mjs",
+      "scripts/reset-operational-data.mjs",
+      "scripts/test-simulation-flags.mjs",
+      "src/app/agendamento/cupom/",
+      "src/app/api/admin/agendamentos/archive/",
+      "src/app/api/admin/agendamentos/restore/",
+      "src/app/api/admin/cupons/excluir-lote/",
+      "src/app/api/admin/cupons/resetar-simulacao/",
+      "src/app/api/admin/reprocessar-pagamento-plano-teste/",
+      "src/app/api/admin/servicos/entrega/",
+      "src/app/api/agendamentos/confirmar-reembolso/",
+      "src/app/api/agendamentos/excluir/",
+      "src/app/api/conta/alterar-senha/",
+      "src/app/api/conta/excluir/",
+      "src/app/api/conta/foto/",
+      "src/app/api/coupons/resgate/",
+      "src/app/api/cupons/confirmar-reembolso/",
+      "src/app/api/cupons/excluir-usado/",
+      "src/app/api/cupons/solicitar-reembolso/",
+      "src/app/api/planos/confirmar-reembolso/",
+      "src/app/components/ConditionalBodyLayout.tsx",
+      "src/app/components/UserFeedbackDialog.tsx",
+      "src/app/conta/alterar-senha/",
+      "src/app/lib/active-user-plan.ts",
+      "src/app/lib/admin-delete-coupon.ts",
+      "src/app/lib/admin-delete-payment.ts",
+      "src/app/lib/adminAccess.ts",
+      "src/app/lib/agendamento-payment-rules.ts",
+      "src/app/lib/appointment-admin-archive.ts",
+      "src/app/lib/appointment-hidden.ts",
+      "src/app/lib/appointment-plan-coupon.ts",
+      "src/app/lib/appointment-refund-payment.ts",
+      "src/app/lib/appointment-refund-value.ts",
+      "src/app/lib/asaas-agendamento-payment-effects.ts",
+      "src/app/lib/asaas-fetch.ts",
+      "src/app/lib/asaas-plano-payment-effects.ts",
+      "src/app/lib/avatarDisplayUrl.ts",
+      "src/app/lib/coupon-account-ownership.ts",
+      "src/app/lib/coupon-admin-sections.ts",
+      "src/app/lib/coupon-origin.ts",
+      "src/app/lib/coupon-refund.ts",
+      "src/app/lib/coupon-scheduling-rules.ts",
+      "src/app/lib/coupon-sections.ts",
+      "src/app/lib/coupon-visibility.ts",
+      "src/app/lib/deleteUserAccount.ts",
+      "src/app/lib/delivery-audio-upload.ts",
+      "src/app/lib/payment-refund-status.ts",
+      "src/app/lib/plan-payment-simulation.ts",
+      "src/app/lib/plan-refund.ts",
+      "src/app/lib/prisma-errors.ts",
+      "src/app/lib/purge-cancelled-appointment.ts",
+      "src/app/lib/refund-coupon.ts",
+      "src/app/lib/simulation-coupon-codes.ts",
+      "src/app/lib/simulation-coupon-user-link.ts",
+      "src/app/lib/simulation-coupon.ts",
+      "src/app/lib/simulation-reset.ts",
+      "src/app/lib/support-contact.ts",
+      "src/app/lib/symbolic-payment-resolve.ts",
+      "src/app/lib/symbolic-payment.ts",
+      "src/app/lib/user-feedback.ts",
+      "src/app/lib/user-plan-hidden.ts"
+    ],
+    "total": 169,
+    "riskLevel": "CRITICAL",
+    "entitiesAffected": [
+      "Appointment",
+      "Coupon",
+      "Payment",
+      "PaymentMetadata",
+      "Service",
+      "User",
+      "UserPlan",
+      "Aceite / recusa / conclusão admin",
+      "Aceite/recusa admin",
+      "Autenticação e autorização",
+      "Checkout",
+      "Checkout (agendamento e plano)",
+      "Checkout agendamento",
+      "Checkout plano",
+      "Checkout → criação pós-pagamento",
+      "Classificação simbólica (A1: `symbolicAgendamento`, `symbolicPlano`, `isTestPayment`)",
+      "Conflito de horário (agenda)",
+      "Criação pós-checkout agendamento",
+      "Documentação / tooling",
+      "Entrega de áudio",
+      "Exclusão de conta (LGPD)",
+      "Geração pós-pagamento (agendamento/plano)",
+      "… e mais 25 fluxo(s)"
+    ],
+    "flowsAffected": [],
+    "highRiskFiles": []
+  },
+  "git": {
+    "branch": "main",
+    "head": "fd9ff6d",
+    "lastCommit": {
+      "hash": "fd9ff6d55b8727164c8394422decd26cb47734a5",
+      "author": "Victor Pereira <tremv03021@gmail.com>",
+      "date": "Mon May 4 08:07:33 2026 -0300",
+      "message": "hardening completo sistema: cupons, webhook, idempotencia, sync e validações finais"
+    },
+    "isClean": false
+  },
+  "knowledgeIndex": {
+    "architecture": 100,
+    "financial": 100,
+    "appointment": 99,
+    "coupons": 100,
+    "webhook": 100,
+    "guardian": 100,
+    "payment": 100,
+    "simulation": 100,
+    "overall": 100
+  },
+  "meta": {
+    "filesRead": [
+      "docs/ai/domain-map.md",
+      "docs/ai/domain-dependencies.md",
+      "docs/ai/domain-invariants.md",
+      "docs/ai/domain-risks.md",
+      "docs/ai/payment-lifecycle-audit.md",
+      "docs/ai/appointment-archive-audit.md",
+      "reports/domain-guardian/latest.json",
+      "reports/domain-guardian/memory.json",
+      "reports/domain-guardian/advisor.md",
+      "reports/domain-guardian/action-plan.md",
+      "reports/domain-guardian/decision.md",
+      "reports/domain-guardian/change-analysis.md",
+      "reports/domain-guardian/review-checklist.md",
+      "reports/domain-guardian/pr-review.md",
+      "reports/domain-guardian/issues.md"
+    ],
+    "filesWritten": [
+      "reports/domain-guardian/project-context.json",
+      "reports/domain-guardian/project-summary.md",
+      "reports/domain-guardian/architecture-agent.md"
+    ],
+    "limitations": [
+      "Não analisa conteúdo de código-fonte — apenas docs, relatórios e Git.",
+      "Parsing de markdown é heurístico; campos podem estar incompletos se o formato mudar.",
+      "Não executa Guardian audit nem Decision Engine — consome snapshots existentes.",
+      "Índice de conhecimento é informativo, não mede cobertura de testes.",
+      "Não valida se migration foi aplicada no banco.",
+      "change-analysis pode estar desatualizado em relação ao working tree atual."
+    ]
+  }
+}

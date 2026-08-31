@@ -1,15 +1,34 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { useAuth } from "../context/AuthContext";
+/**
+ * Login — GO-03E: Design System (AuthShell + Field/Input/Button).
+ * Lógica de autenticação inalterada (useAuth.login).
+ */
 
-export default function LoginPage() {
+import { useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
+import { useAuth } from "../context/AuthContext";
+import { resolvePostLoginRedirect } from "@/app/lib/safe-redirect";
+import {
+  AuthShell,
+  Button,
+  Callout,
+  Field,
+  Input,
+  LinkButton,
+  LoadingBlock,
+  COPY,
+} from "@/components/design-system";
+
+function LoginForm() {
   const { login } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
+  const [mostrarSenha, setMostrarSenha] = useState(false);
   const [erro, setErro] = useState("");
   const [carregando, setCarregando] = useState(false);
 
@@ -19,7 +38,6 @@ export default function LoginPage() {
     setCarregando(true);
 
     const ok = await login(email, senha);
-
     setCarregando(false);
 
     if (!ok) {
@@ -27,65 +45,85 @@ export default function LoginPage() {
       return;
     }
 
-    router.push("/conta");
+    // GO-04A.3 RC-04: apenas paths internos seguros
+    const redirectTo = resolvePostLoginRedirect(searchParams);
+    router.push(redirectTo);
   }
 
   return (
-    <main className="mx-auto max-w-md px-6 py-12 text-zinc-100">
-      <h1 className="mb-2 text-2xl font-semibold">
-        Entrar na THouse Rec
-      </h1>
+    <form onSubmit={handleSubmit} className="space-y-3">
+      <Field label="Email">
+        <Input
+          type="email"
+          required
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="voce@exemplo.com"
+          autoComplete="email"
+        />
+      </Field>
 
-      <p className="mb-6 text-sm text-zinc-400">
-        Acesse sua conta para acompanhar agendamentos, planos e serviços.
-      </p>
-
-      <form
-        onSubmit={handleSubmit}
-        className="space-y-4 rounded-2xl border border-red-700/40 bg-zinc-950 p-6"
-      >
-        <div className="space-y-1">
-          <label className="text-xs text-zinc-300">Email</label>
-          <input
-            type="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm outline-none focus:border-red-500"
-            placeholder="voce@exemplo.com"
-          />
-        </div>
-
-        <div className="space-y-1">
-          <label className="text-xs text-zinc-300">Senha</label>
-          <input
-            type="password"
+      <Field label="Senha">
+        <div className="relative">
+          <Input
+            type={mostrarSenha ? "text" : "password"}
             required
             value={senha}
             onChange={(e) => setSenha(e.target.value)}
-            className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm outline-none focus:border-red-500"
             placeholder="Sua senha"
+            autoComplete="current-password"
+            className="pr-10"
           />
+          <button
+            type="button"
+            onClick={() => setMostrarSenha(!mostrarSenha)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-200 transition-colors"
+            aria-label={mostrarSenha ? "Ocultar senha" : "Mostrar senha"}
+          >
+            <span className="text-xs font-medium">{mostrarSenha ? "Ocultar" : "Mostrar"}</span>
+          </button>
         </div>
+        <div className="flex justify-end mt-1.5">
+          <Link
+            href="/esqueci-senha"
+            className="text-xs text-zinc-400 hover:text-red-400 underline underline-offset-2"
+          >
+            Esqueci a senha
+          </Link>
+        </div>
+      </Field>
 
-        {erro && (
-          <p className="rounded bg-red-950/40 px-3 py-2 text-xs text-red-400">
-            {erro}
-          </p>
-        )}
+      {erro && (
+        <Callout intent="error" title="Não foi possível entrar">
+          {erro}
+        </Callout>
+      )}
 
-        <button
-          type="submit"
-          disabled={carregando}
-          className={`mt-2 w-full rounded-full px-4 py-2 text-sm font-semibold transition ${
-            carregando
-              ? "cursor-wait bg-zinc-800 text-zinc-500"
-              : "bg-red-600 text-white hover:bg-red-500"
-          }`}
-        >
-          {carregando ? "Entrando..." : "Entrar"}
-        </button>
-      </form>
-    </main>
+      <Button type="submit" variant="primary" fullWidth size="md" loading={carregando}>
+        {carregando ? "Entrando…" : COPY.actions.signIn}
+      </Button>
+    </form>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <AuthShell
+      title="Entrar na THouse Rec"
+      subtitle="Acesse sua conta para acompanhar agendamentos, planos e serviços."
+      backgroundImage="/login-bg.png.png"
+      footer={
+        <div className="text-center space-y-3">
+          <p className="text-sm text-zinc-400">Não possui uma conta?</p>
+          <LinkButton href="/registro" variant="primary" size="md">
+            {COPY.actions.createAccount}
+          </LinkButton>
+        </div>
+      }
+    >
+      <Suspense fallback={<LoadingBlock label="Carregando formulário…" />}>
+        <LoginForm />
+      </Suspense>
+    </AuthShell>
   );
 }

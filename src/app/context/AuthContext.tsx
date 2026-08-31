@@ -21,15 +21,21 @@ export interface User {
 
 
 export interface RegistroPayload {
+  nomeCompleto: string;
   nomeArtistico: string;
+  nomeSocial?: string | null;
   email: string;
   senha: string;
   telefone: string;
+  cpf: string;
   pais: string;
   estado: string;
   cidade: string;
   bairro: string;
   dataNascimento: string;
+  sexo?: string | null;
+  genero?: string | null;
+  generoOutro?: string | null;
   estilosMusicais?: string | null;
   nacionalidade?: string | null;
 }
@@ -38,7 +44,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: (email: string, senha: string) => Promise<boolean>;
-  registro: (payload: RegistroPayload) => Promise<boolean>;
+  registro: (payload: RegistroPayload) => Promise<{ ok: boolean; error?: string }>;
   logout: () => Promise<void>;
   refresh: () => Promise<void>;
 }
@@ -114,7 +120,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   /* --------------------------------------
      📝 REGISTRO
   -------------------------------------- */
-  async function registro(payload: RegistroPayload): Promise<boolean> {
+  async function registro(payload: RegistroPayload): Promise<{ ok: boolean; error?: string }> {
     try {
       const r = await fetch("/api/registro", {
         method: "POST",
@@ -123,13 +129,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         body: JSON.stringify(payload),
       });
 
-      if (!r.ok) return false;
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok) {
+        return { ok: false, error: data.error || "Não foi possível registrar." };
+      }
 
       await refresh();
-      return true;
+      return { ok: true };
     } catch (err) {
       console.error("Erro no registro:", err);
-      return false;
+      return { ok: false, error: "Erro de conexão ao registrar." };
     }
   }
 
@@ -142,8 +151,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         method: "POST",
         credentials: "include",
       });
+    } catch (err) {
+      console.error("Erro no logout:", err);
     } finally {
       setUser(null);
+      // Forçar refresh da página para limpar qualquer estado
+      window.location.href = "/";
     }
   }
 

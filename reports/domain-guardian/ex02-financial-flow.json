@@ -1,0 +1,130 @@
+{
+  "reportId": "EX-02-financial-flow",
+  "mode": "EXECUCAO_CONTROLADA",
+  "generatedAt": "2026-07-10T22:15:00.000Z",
+  "language": "pt-BR",
+  "projectName": "THouse Rec",
+  "branch": "pr03-clean",
+  "head": "3f20ad0",
+  "basedOn": ["EX-01-local-validation", "ENV-01-environment-validation", "OPS-01-runbook"],
+  "scope": "Fluxo financeiro completo MVP sandbox — pagamento → webhook → Payment/Appointment/Service → Minha Conta/Admin",
+  "veredito": "APROVADO",
+  "aprovacoes": {
+    "fluxoFinanceiro": true,
+    "webhook": true,
+    "effects": true,
+    "appointment": true,
+    "service": true,
+    "minhaConta": true,
+    "admin": true
+  },
+  "launchConfidenceScore": {
+    "antes": 74,
+    "depois": 86,
+    "delta": 12,
+    "metodologia": "Base OP-01 pós-EX-01 (74%); +8% webhook+effects validados; +4% Appointment/Service automáticos; alinhado HL-01 F1 completa (~82%) com gap local-only webhook replay"
+  },
+  "correcaoMinimaAplicada": {
+    "arquivo": "src/app/api/webhooks/asaas/route.ts",
+    "descricao": "Reordenar branch: processar tipo carrinho antes de agendamento/isAgendamentoDesc",
+    "motivo": "Descrição 'Carrinho THouse Rec - 1 agendamento(s)' acionava handler de agendamento único em vez de processCarrinhoPaymentEffects",
+    "tipo": "bugfix-roteamento-webhook",
+    "commit": false
+  },
+  "pagamento": {
+    "asaasId": "pay_o7t2umh7fecupg7r",
+    "initPoint": "https://sandbox.asaas.com/i/o7t2umh7fecupg7r",
+    "statusAsaas": "RECEIVED_IN_CASH",
+    "valor": 40,
+    "paymentDbId": "5df4f5c8-c87f-4a9f-8feb-2f2904ea31e8",
+    "paymentMetadataId": "1746c284-c15c-49b5-9ebf-b48bf432dfe4",
+    "userId": "840be10d-e227-4bc9-9522-3282fe987ced",
+    "userEmail": "ex01-1783718270772@homolog.test"
+  },
+  "steps": [
+    {
+      "ordem": 1,
+      "nome": "initPoint Sandbox",
+      "status": "PASS",
+      "evidencia": { "initPoint": "https://sandbox.asaas.com/i/o7t2umh7fecupg7r" }
+    },
+    {
+      "ordem": 2,
+      "nome": "Concluir pagamento Sandbox",
+      "status": "PASS",
+      "evidencia": {
+        "metodo": "POST /payments/{id}/receiveInCash (API sandbox)",
+        "status": "RECEIVED_IN_CASH"
+      }
+    },
+    {
+      "ordem": 3,
+      "nome": "Webhook",
+      "status": "PASS",
+      "evidencia": {
+        "modo": "replay_canonico_localhost",
+        "POST /api/webhooks/asaas": 200,
+        "event": "PAYMENT_RECEIVED",
+        "paymentStatusReplay": "RECEIVED"
+      }
+    },
+    {
+      "ordem": 4,
+      "nome": "Payment + Appointment + Service",
+      "status": "PASS",
+      "evidencia": {
+        "payment": { "id": "5df4f5c8-c87f-4a9f-8feb-2f2904ea31e8", "status": "approved", "asaasId": "pay_o7t2umh7fecupg7r" },
+        "appointment": { "id": 32, "status": "pendente", "data": "2026-09-20T14:00:00.000Z" },
+        "service": { "id": "19b74812-07d3-4f7f-ac9d-fff2718a474f", "status": "pendente", "nome": "Sessão" },
+        "coupon": { "aplicavel": false, "count": 0, "nota": "Fluxo sessão com data/hora — Appointment direto, sem cupom" }
+      }
+    },
+    {
+      "ordem": "4b",
+      "nome": "Idempotência",
+      "status": "PASS",
+      "evidencia": {
+        "segundoWebhook": "sem duplicação",
+        "payments": 1,
+        "appointments": 1,
+        "services": 1
+      }
+    },
+    {
+      "ordem": 5,
+      "nome": "Minha Conta",
+      "status": "PASS",
+      "evidencia": {
+        "GET /api/meus-dados": 200,
+        "GET /minha-conta": 200,
+        "agendamentosVisiveis": 1,
+        "status": "pendente"
+      }
+    },
+    {
+      "ordem": 6,
+      "nome": "Admin",
+      "status": "PASS",
+      "evidencia": {
+        "pagamentoApproved": true,
+        "agendamentoPendente": true,
+        "validacao": "Prisma + dados admin (vicperra@gmail.com ADMIN)"
+      }
+    }
+  ],
+  "validacoes": {
+    "effectsUmaVez": true,
+    "semAppointmentDuplicado": true,
+    "semPaymentDuplicado": true,
+    "semServiceDuplicado": true,
+    "paymentMetadataConsumido": true,
+    "paymentMetadataAsaasId": "pay_o7t2umh7fecupg7r"
+  },
+  "tentativaAnterior": {
+    "status": "FAIL",
+    "etapa": 4,
+    "causa": "Webhook roteava carrinho para processAgendamentoPaymentEffects por isAgendamentoDesc na descrição",
+    "resolucao": "Reordenação branch + reset payment órfão + replay"
+  },
+  "ferramentas": ["scripts/ex02-financial-flow.js", "scripts/ex02-reset-payment.js"]
+}

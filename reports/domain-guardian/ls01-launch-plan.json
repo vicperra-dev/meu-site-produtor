@@ -1,0 +1,450 @@
+{
+  "reportId": "LS-01-launch-plan",
+  "mode": "READ_ONLY",
+  "generatedAt": "2026-07-10T06:45:00.000Z",
+  "language": "pt-BR",
+  "projectName": "THouse Rec",
+  "branch": "pr03-clean",
+  "head": "3f20ad0",
+  "scope": "MVP comercial — agendamento avulso via Asaas",
+  "launchDay": 10,
+  "totalCalendarDays": 10,
+  "consolidatedFrom": [
+    "RL-01/RL-02/RL-03 — Release Candidate",
+    "QE-01/02/03 — Quality Engineering",
+    "GL-01/GL-02 — Go Live",
+    "PRD-01 — Production Readiness",
+    "OPS-01 — Operational Runbook",
+    "E2E-01/02 — Customer Journey & Hardening"
+  ],
+  "executiveSummary": {
+    "currentState": "RC PR-03 fechada (RL-03); GL-01 B1 commitado (3f20ad0); bloqueadores de código para agendamento avulso resolvidos; gates operacionais Asaas/Neon pendentes.",
+    "launchScope": "Agendamento avulso pago — checkout-carrinho → webhook canônico → Minha Conta. Planos fora do escopo até commit GL-01 B2.",
+    "criticalPath": "Backup Neon → migrate deploy → Preview smoke sandbox → envs produção → deploy → 1º pagamento prod → 1º cliente",
+    "goNoGoAuthority": "Proprietário THouse + Engenheiro responsável"
+  },
+  "sourceVerdicts": {
+    "releaseCandidate": {
+      "report": "RL-03-release-closed",
+      "verdict": "FECHADA",
+      "build": "PASSOU",
+      "note": "Build 138 páginas; HEAD evoluiu para 3f20ad0 pós-RL-03"
+    },
+    "qualityEngineering": {
+      "report": "QE-03-go-live-gate",
+      "verdictPreGL01": "NÃO GO (2 bloqueadores P0)",
+      "verdictPosGL01MVP": "GO condicional — 0 bloqueadores código para agendamento avulso",
+      "operationalGates": 5
+    },
+    "goLive": {
+      "GL01": "B1 OK commitado; B2 planos OK local não commitado",
+      "GL02": "24 itens checklist operacional; 17 obrigatórios MVP"
+    },
+    "productionReadiness": {
+      "report": "PRD-01",
+      "verdict": "Condicional — checklist H1 obrigatória",
+      "weakestArea": "Operação (monitoramento)"
+    },
+    "operationalRunbook": {
+      "report": "OPS-01",
+      "procedures": 17,
+      "criticalNotes": 3
+    }
+  },
+  "schedule": [
+    {
+      "day": 1,
+      "titulo": "Kickoff e validação Release Candidate",
+      "objetivo": "Confirmar que o código deployável está congelado e a RC PR-03 é a base do lançamento.",
+      "responsavel": "Engenheiro + Proprietário",
+      "preRequisitos": ["Branch pr03-clean acessível", "Acesso repositório e Vercel"],
+      "criterioAprovacao": "Commit 3f20ad0 confirmado como baseline; RL-03 build PASSOU revalidado; escopo MVP avulso assinado",
+      "tempoEstimado": "3–4 h",
+      "riscos": ["Deploy acidental de commit errado", "Inclusão de GL-01 B2 não commitado sem decisão"],
+      "tarefas": {
+        "tecnicas": [
+          "git log -1 → confirmar 3f20ad0",
+          "npm run build local",
+          "npx tsc --noEmit",
+          "Revisar CI Domain Guardian último run"
+        ],
+        "operacionais": [
+          "Reunião kickoff: escopo MVP, data alvo Dia 10",
+          "Documentar decisão: planos FORA do escopo de lançamento"
+        ],
+        "manuais": [
+          "Proprietário aprovar escopo e data",
+          "Imprimir/salvar OPS-01 runbook acessível"
+        ],
+        "automatizaveis": [
+          "npm run build",
+          "Domain Guardian CI on push"
+        ]
+      },
+      "refs": ["RL-03", "GL-01"]
+    },
+    {
+      "day": 2,
+      "titulo": "Quality Engineering — fechamento de gates",
+      "objetivo": "Fechar gates QE para fluxo agendamento avulso e registrar riscos residuais aceitos.",
+      "responsavel": "Engenheiro (QE)",
+      "preRequisitos": ["Dia 1 aprovado", "Relatórios QE-03, E2E-01, E2E-02 lidos"],
+      "criterioAprovacao": "Fluxo 2 (compra serviço) marcado GO; Fluxo 3 (planos) explicitamente OUT OF SCOPE; lista riscos P1 assinada",
+      "tempoEstimado": "4–5 h",
+      "riscos": ["Subestimar legado financeiro ~40%", "Ignorar metadata fallback webhook"],
+      "tarefas": {
+        "tecnicas": [
+          "Revalidar caminho: agendamento → carrinho → checkout-carrinho → webhooks/asaas",
+          "Mapear rotas legado NÃO no caminho feliz (process-payment-webhook, mercadopago)"
+        ],
+        "operacionais": [
+          "Registrar gates operacionais QE-03 (5 itens Asaas)",
+          "Aceitar riscos 🟡 E2E-01 como não bloqueantes para MVP"
+        ],
+        "manuais": [
+          "Checklist QE: registro auto-login (GL-01 B1) verificado no código",
+          "Go/No-Go documentado"
+        ],
+        "automatizaveis": [
+          "domain-guardian-runner.ts (se DATABASE_URL staging disponível)"
+        ]
+      },
+      "refs": ["QE-03", "E2E-01", "E2E-02"]
+    },
+    {
+      "day": 3,
+      "titulo": "Production Readiness — inventário e pré-requisitos",
+      "objetivo": "Completar inventário de envs, infra e gaps PRD-01 antes de tocar produção.",
+      "responsavel": "Engenheiro / DevOps",
+      "preRequisitos": ["Dia 2 aprovado", "Acesso Vercel e Neon"],
+      "criterioAprovacao": "Tabela envs obrigatórias preenchida; PITR/snapshot Neon confirmado; PRE_LANCAMENTO_CHECKLIST revisado",
+      "tempoEstimado": "3–4 h",
+      "riscos": ["Env faltando descoberta só no Dia 8", "Sem PITR — restore impossível"],
+      "tarefas": {
+        "tecnicas": [
+          "Inventariar envs: DATABASE_URL, ASAAS_*, NEXT_PUBLIC_SITE_URL, CRON_SECRET, SUPPORT_EMAIL*",
+          "Verificar prisma migrate status local vs produção"
+        ],
+        "operacionais": [
+          "Neon: confirmar PITR ou política de snapshot",
+          "Vercel: criar projeto/env slots se necessário"
+        ],
+        "manuais": [
+          "Credenciais Asaas produção e sandbox reunidas",
+          "Domínio final definido (URL pública)"
+        ],
+        "automatizaveis": [
+          "release-manager-agent.ts (relatório readiness)"
+        ]
+      },
+      "refs": ["PRD-01", "GL-02 §3"]
+    },
+    {
+      "day": 4,
+      "titulo": "Infraestrutura — banco staging e backup",
+      "objetivo": "Preparar banco, backup e migration em ambiente não-produção.",
+      "responsavel": "Engenheiro / DevOps",
+      "preRequisitos": ["Dia 3 aprovado", "DATABASE_URL staging ou branch Neon dev"],
+      "criterioAprovacao": "migrate deploy OK em staging; snapshot Neon criado; backup timestamp registrado",
+      "tempoEstimado": "2–3 h",
+      "riscos": ["Migration falha por drift schema", "Backup não feito antes de migrate prod"],
+      "tarefas": {
+        "tecnicas": [
+          "npx prisma migrate deploy (staging)",
+          "npx prisma generate",
+          "Smoke query: User, Payment, Appointment tables"
+        ],
+        "operacionais": [
+          "OPS P10: snapshot Neon staging/prod",
+          "Registrar timestamp backup na planilha de lançamento"
+        ],
+        "manuais": [
+          "Neon Console: criar snapshot manual",
+          "Anotar connection string staging"
+        ],
+        "automatizaveis": [
+          "prisma migrate deploy (scriptável)",
+          "Neon API snapshot (futuro DevOS)"
+        ]
+      },
+      "refs": ["OPS P10", "OPS P11", "GL-02 GL-04/GL-05"]
+    },
+    {
+      "day": 5,
+      "titulo": "Deploy Preview + Asaas Sandbox",
+      "objetivo": "Publicar preview Vercel e conectar webhook Asaas sandbox.",
+      "responsavel": "Engenheiro",
+      "preRequisitos": ["Dia 4 aprovado", "ASAAS_API_KEY sandbox", "Preview URL Vercel"],
+      "criterioAprovacao": "Preview acessível HTTPS; webhook sandbox registrado; evento teste recebido nos logs",
+      "tempoEstimado": "3–4 h",
+      "riscos": ["URL preview muda a cada deploy — atualizar webhook", "Token webhook mismatch"],
+      "tarefas": {
+        "tecnicas": [
+          "Deploy Preview branch pr03-clean",
+          "Configurar envs Preview: DATABASE_URL staging, ASAAS sandbox, NEXT_PUBLIC_SITE_URL=preview URL",
+          "Testar GET /api/webhooks/asaas não aplicável — POST evento teste"
+        ],
+        "operacionais": [
+          "Asaas sandbox → webhook URL preview + token",
+          "GL-02 itens 9–11"
+        ],
+        "manuais": [
+          "Painel Asaas: cadastrar URL e token",
+          "Copiar token para Vercel Preview env"
+        ],
+        "automatizaveis": [
+          "Vercel preview deploy (git push)",
+          "Build CI"
+        ]
+      },
+      "refs": ["GL-02 GL-09–11", "OPS P04"]
+    },
+    {
+      "day": 6,
+      "titulo": "Smoke E2E Sandbox (Quality Gate)",
+      "objetivo": "Executar jornada completa do cliente em sandbox antes de produção.",
+      "responsavel": "Engenheiro + Proprietário (tester)",
+      "preRequisitos": ["Dia 5 aprovado", "Preview estável"],
+      "criterioAprovacao": "GL-14 PASS: registro → agendamento → carrinho → pagamento sandbox → Payment + Appointment em Minha Conta; logs webhook sem skippedReason crítico",
+      "tempoEstimado": "4–6 h",
+      "riscos": ["Falso positivo se metadata carrinho incompleto", "CPF teste inválido bloqueia checkout"],
+      "tarefas": {
+        "tecnicas": [
+          "Executar fluxo E2E-01 passos 1–10 em preview",
+          "Verificar banco: Payment approved, Appointment pendente, PaymentMetadata tipo carrinho",
+          "Logs: [CarrinhoEffects:webhook] sucesso"
+        ],
+        "operacionais": [
+          "GL-15: revisar logs Vercel pós-smoke",
+          "Documentar asaasId e appointmentId do teste"
+        ],
+        "manuais": [
+          "Tester humano completa formulário carrinho (CPF, endereço)",
+          "Pagamento sandbox no Asaas (PIX/cartão teste)"
+        ],
+        "automatizaveis": [
+          "Futuro: E2E Playwright (não existe hoje)"
+        ]
+      },
+      "refs": ["QE-03 Fluxo 2", "E2E-01", "GL-02 GL-12–13"]
+    },
+    {
+      "day": 7,
+      "titulo": "Configuração Produção — envs e Asaas",
+      "objetivo": "Configurar ambiente de produção sem ainda abrir tráfego público.",
+      "responsavel": "Engenheiro / DevOps",
+      "preRequisitos": ["Dia 6 smoke PASS", "Domínio produção definido"],
+      "criterioAprovacao": "Todas envs GL-02 obrigatórias em Vercel Production; webhook prod registrado; domínio aprovado Asaas",
+      "tempoEstimado": "3–4 h",
+      "riscos": ["Chave sandbox em produção por engano", "NEXT_PUBLIC_SITE_URL com http ou domínio errado"],
+      "tarefas": {
+        "tecnicas": [
+          "Vercel Production envs: DATABASE_URL prod, ASAAS_API_KEY $aact_prod_*, ASAAS_WEBHOOK_ACCESS_TOKEN, NEXT_PUBLIC_SITE_URL https",
+          "CRON_SECRET, SUPPORT_EMAIL*",
+          "Validar prefixo chave prod"
+        ],
+        "operacionais": [
+          "Asaas prod: webhook https://{dominio}/api/webhooks/asaas",
+          "Domínio cadastrado painel Asaas",
+          "GL-02 itens 14–17"
+        ],
+        "manuais": [
+          "Painel Asaas produção — aprovar domínio",
+          "Gerar CRON_SECRET (openssl rand -hex 32)"
+        ],
+        "automatizaveis": [
+          "Verificação prefixo $aact_prod_ (script)"
+        ]
+      },
+      "refs": ["PRD-01 CFG*", "GL-02", "PRE_LANCAMENTO_CHECKLIST"]
+    },
+    {
+      "day": 8,
+      "titulo": "Deploy Produção + migrate + backup final",
+      "objetivo": "Publicar versão em produção com banco migrado e ponto de restore.",
+      "responsavel": "Engenheiro / DevOps",
+      "preRequisitos": ["Dia 7 aprovado", "Janela de deploy acordada"],
+      "criterioAprovacao": "OPS P01 completo; migrate deploy prod OK; snapshot pré-deploy; site HTTPS respondendo; commit hash registrado",
+      "tempoEstimado": "2–4 h",
+      "riscos": ["Migration em prod sem backup", "Deploy com env incompleta"],
+      "tarefas": {
+        "tecnicas": [
+          "OPS P10: snapshot Neon produção IMEDIATAMENTE antes migrate",
+          "npx prisma migrate deploy (produção)",
+          "Promote/deploy Production Vercel",
+          "Smoke técnico: /, /login, /api/me (401 esperado)"
+        ],
+        "operacionais": [
+          "Registrar commit 3f20ad0 deployado",
+          "Modo manutenção OFF (se estava ativo)"
+        ],
+        "manuais": [
+          "Confirmar backup timestamp",
+          "Proprietário ciente: produção no ar mas sem divulgação"
+        ],
+        "automatizaveis": [
+          "Vercel deploy hook",
+          "prisma migrate deploy"
+        ]
+      },
+      "refs": ["OPS P01", "OPS P02", "GL-02 GL-18"]
+    },
+    {
+      "day": 9,
+      "titulo": "Validação produção — primeiro pagamento real",
+      "objetivo": "Provar cadeia real money antes do primeiro cliente externo (OPS P15).",
+      "responsavel": "Proprietário + Engenheiro",
+      "preRequisitos": ["Dia 8 deploy OK", "Conta teste controlada"],
+      "criterioAprovacao": "Pagamento real mínimo RECEIVED/CONFIRMED; Payment + Appointment no banco; /minha-conta e /admin/agendamentos OK; runbook replay documentado",
+      "tempoEstimado": "2–3 h",
+      "riscos": ["Primeiro pagamento real falha — atraso lançamento", "Webhook token inválido em prod"],
+      "tarefas": {
+        "tecnicas": [
+          "OPS P15: fluxo completo conta teste em PROD",
+          "Verificar logs [Asaas Webhook] PAYMENT_RECEIVED",
+          "Testar curl replay canônico com asaas-access-token (documentar)"
+        ],
+        "operacionais": [
+          "OPS P16 prep: definir plantão H+0 a H+24",
+          "GL-16: runbook órfão acessível",
+          "GL-17: texto comunicação 1º cliente"
+        ],
+        "manuais": [
+          "Pagamento real com valor mínimo",
+          "Proprietário valida experiência como cliente"
+        ],
+        "automatizaveis": [
+          "Consulta verificar?paymentId= pós-pagamento"
+        ]
+      },
+      "refs": ["OPS P15", "OPS P08", "GL-02 GL-19–20"]
+    },
+    {
+      "day": 10,
+      "titulo": "LANÇAMENTO — Go Live",
+      "objetivo": "Abrir para primeiro cliente real e iniciar operação assistida.",
+      "responsavel": "Proprietário (negócio) + Engenheiro (plantão) + Admin (operação)",
+      "preRequisitos": ["Dia 9 primeiro pagamento PASS", "Canal suporte ativo", "Runbook OPS acessível"],
+      "criterioAprovacao": "1º cliente externo completa compra OU proprietário declara lançamento controlado com suporte; zero incidente P0 nas primeiras 4h; plantão 24h ativo",
+      "tempoEstimado": "Dia inteiro (plantão ~4h efetivas)",
+      "riscos": ["Ticket 'paguei e não apareceu'", "Sobrecarga admin aceitar agendamentos", "Webhook falha pós-smoke"],
+      "tarefas": {
+        "tecnicas": [
+          "H+0: confirmar produção estável",
+          "H+1, H+4: OPS P16 logs webhook + checkout",
+          "Responder incidentes via OPS P04/P07/P08"
+        ],
+        "operacionais": [
+          "Liberar link/divulgação controlada 1º cliente",
+          "Admin monitora /admin/pagamentos e /admin/agendamentos",
+          "Aceitar agendamento pendente do cliente teste/Dia 9 se aplicável"
+        ],
+        "manuais": [
+          "Comunicação pessoal com 1º cliente (lançamento controlado)",
+          "Suporte WhatsApp/email de prontidão",
+          "Registrar feedback do cliente"
+        ],
+        "automatizaveis": [
+          "Checks log Vercel agendados (futuro DevOS)"
+        ]
+      },
+      "refs": ["GL-02 GL-24", "OPS P16", "PRD-01"]
+    }
+  ],
+  "postLaunch": {
+    "primeiraSemana": {
+      "days": "11–17",
+      "objetivo": "Estabilizar MVP e fechar gaps operacionais (OPS P17)",
+      "marcos": [
+        "Dia 11–13: monitoramento diário OPS P14",
+        "Dia 14: retrospectiva parcial — pagamentos órfãos, tickets",
+        "Dia 17: retrospectiva semanal + decisão H2 hardening"
+      ]
+    },
+    "primeiroMes": {
+      "days": "18–40",
+      "objetivo": "Confirmar sustentabilidade operacional antes de escalar divulgação",
+      "marcos": [
+        "Semana 2: configurar crons se pendente; backup Neon semanal",
+        "Semana 3: avaliar GL-01 B2 commit (planos) ou manter escopo avulso",
+        "Semana 4: revisar ASAAS_API_KEY; testar replay webhook sandbox",
+        "Dia 30: relatório métricas — conversão carrinho, tickets, uptime"
+      ]
+    }
+  },
+  "checklists": {
+    "lancamento": [
+      "□ RC validada — commit 3f20ad0 baseline (Dia 1)",
+      "□ QE gate GO para agendamento avulso; planos OUT OF SCOPE (Dia 2)",
+      "□ PRD-01 envs inventariadas (Dia 3)",
+      "□ Backup Neon + migrate staging (Dia 4)",
+      "□ Preview + webhook sandbox (Dia 5)",
+      "□ Smoke E2E sandbox PASS (Dia 6)",
+      "□ Envs produção + Asaas prod configurados (Dia 7)",
+      "□ Backup pré-deploy + migrate prod + deploy prod (Dia 8)",
+      "□ Primeiro pagamento real PASS (Dia 9)",
+      "□ Runbook OPS acessível; plantão definido (Dia 9)",
+      "□ Go Live Dia 10 — 1º cliente + suporte ativo"
+    ],
+    "posLancamento": [
+      "□ H+1: logs webhook e checkout sem erro crítico",
+      "□ H+4: zero pagamentos órfãos em /admin/pagamentos",
+      "□ H+24: relatório Dia 1 — pagamentos, appointments, tickets",
+      "□ Cliente informado sobre status pendente pós-pagamento (normal)",
+      "□ Incidentes registrados com asaasId e resolução",
+      "□ Nenhuma alteração de env nas 24h salvo incidente P0"
+    ],
+    "primeiraSemana": [
+      "□ Monitoramento diário OPS P14 (7 dias)",
+      "□ Revisar taxa abandono carrinho",
+      "□ Documentar procedimento replay webhook testado",
+      "□ CRON_SECRET + crons configurados se pendente",
+      "□ Backup Neon verificado",
+      "□ Retrospectiva Dia 7: incidentes, tempo resolução, NPS 1º cliente",
+      "□ Decisão: implementar H1 UX (polling, redirect) ou manter suporte manual"
+    ],
+    "primeiroMes": [
+      "□ Monitoramento semanal Domain Guardian",
+      "□ Backup Neon semanal (4 snapshots)",
+      "□ Zero incidentes P0 não resolvidos em < 4h",
+      "□ Revisar validade ASAAS_API_KEY",
+      "□ Avaliar escopo planos (GL-01 B2 commit)",
+      "□ Avaliar alertas webhook (GL-20 / H2)",
+      "□ Relatório Dia 30: receita, conversão, tickets, uptime",
+      "□ Decisão escalar divulgação ou manter lançamento controlado"
+    ]
+  },
+  "taskSummary": {
+    "tecnicas": 28,
+    "operacionais": 22,
+    "manuais": 18,
+    "automatizaveis": 14,
+    "nota": "Contagem aproximada de tarefas únicas nos 10 dias; muitas tarefas manuais concentram-se em Dias 6, 9 e 10"
+  },
+  "probability": {
+    "pergunta": "Se esse plano for seguido exatamente, qual a probabilidade do THouse Rec entrar em produção com sucesso?",
+    "definicaoSucesso": "Deploy produção estável + migrate OK + 1º pagamento real validado + 1º cliente externo completa compra na primeira semana sem perda financeira irrecuperável",
+    "percentual": 74,
+    "faixa": { "min": 70, "max": 78 },
+    "justificativa": [
+      "Plano consolida gates já auditados (QE, PRD, GL, OPS) em sequência com smoke antes de prod",
+      "GL-01 B1 commitado remove bloqueador P0 registro",
+      "Escopo restrito a avulso elimina bloqueador planos (GL-01 B2)",
+      "Dia 9 (pagamento real) e Dia 10 (cliente) concentram risco residual",
+      "Monitoramento 🔴 permanece — falhas pós-smoke dependem de plantão humano",
+      "Síntese: PRD-01 ~75% + GL-02 ~70% compra autônoma + margem para 'sucesso operacional' completo"
+    ],
+    "cenarios": {
+      "deployTecnicoSucesso": 88,
+      "primeiroClienteSemTicketCritico": 70,
+      "primeiraSemanaSemIncidenteP0": 65,
+      "planoCompletoSucessoDefinido": 74
+    },
+    "seNaoSeguirPlano": 45
+  },
+  "decisionLog": {
+    "escopoExcluido": ["Planos/assinaturas até GL-01 B2 commit", "Mercado Pago", "InfinityPay", "Loja"],
+    "hardeningPosLaunch": ["H-MC-01 redirect minha-conta", "H-MC-02 polling pós-pagamento", "H-WH-02 alertas webhook"],
+    "rollbackTrigger": "Bug financeiro reproduzível ou perda de pagamentos > 1 cliente"
+  }
+}

@@ -1,0 +1,86 @@
+{
+  "reportId": "PROD-01-production-merge",
+  "mode": "RELEASE_MANAGER",
+  "generatedAt": "2026-07-11T22:15:00.000Z",
+  "language": "pt-BR",
+  "fase1_preMerge": {
+    "veredito": "APROVADO",
+    "checks": {
+      "originPr03CleanSincronizada": { "ok": true, "sha": "f8820474c927f685387f5bee9d479d7a4d7ab233" },
+      "originMainAtualizada": { "ok": true, "shaAntes": "fd9ff6d55b8727164c8394422decd26cb47734a5" },
+      "githubActionsPr03Clean": { "ok": true, "runId": 29140096152, "conclusion": "success", "head": "f882047" },
+      "ultimoCommitRC": { "ok": true, "sha": "f882047", "mensagem": "ci: make optional StudioOS-only workflow steps" },
+      "commitsPendentesObrigatorios": { "ok": true, "nota": "Nenhum commit RC adicional além de f882047" }
+    },
+    "observacoes": [
+      "Status GitHub combined: Vercel meu-site-produtor-1.3 success; projeto legado meu-site-produtor canceled (padrão histórico)",
+      "Alterações locais não commitadas (carrinho/pagamentos) stashed — fora do merge"
+    ]
+  },
+  "fase2_merge": {
+    "executado": true,
+    "metodo": "git merge origin/pr03-clean --no-ff",
+    "mergeCommit": "7057b13d5e7e7947a8eb3fa32ae116773cf6706a",
+    "mensagem": "merge: integrate Release Candidate pr03-clean (f882047) into main",
+    "pushOriginMain": true,
+    "rcConteudoPreservado": "f882047 integrado via merge commit"
+  },
+  "fase3_deploy": {
+    "vercelProductionIniciado": "SIM",
+    "projetoAtivo": "meu-site-produtor-1.3",
+    "deploymentId": 5407746993,
+    "commit": "7057b13d5e7e7947a8eb3fa32ae116773cf6706a",
+    "rcCommitIncluido": "f882047",
+    "status": "success",
+    "urlDeployment": "https://meu-site-produtor-13-ripg6w8cz-rauls-projects-6bf8a8b0.vercel.app",
+    "aliasProduction": "https://meu-site-produtor-13.vercel.app",
+    "projetoLegado": {
+      "nome": "meu-site-produtor",
+      "deploymentId": 5407739021,
+      "status": "inactive",
+      "descricao": "Canceled from the Vercel Dashboard"
+    }
+  },
+  "fase4_producaoEnv": {
+    "verificavelRemotamente": "PARCIAL",
+    "itens": {
+      "DATABASE_URL": "NÃO VERIFICÁVEL",
+      "ASAAS_API_KEY": "OK",
+      "ASAAS_WEBHOOK_ACCESS_TOKEN": "NÃO VERIFICÁVEL",
+      "NEXT_PUBLIC_SITE_URL": "PENDENTE"
+    },
+    "evidencia": {
+      "asaasApiKey": "api/pagamentos/debug → apiKeyConfigured:true, apiKeyType:produção",
+      "nextPublicSiteUrl": "api/pagamentos/debug → siteUrl:http://localhost:3000 (incorreto para Production)"
+    }
+  },
+  "fase5_migrations": {
+    "executadoProduction": false,
+    "motivo": "DATABASE_URL local aponta para localhost; URL Neon Production não disponível neste ambiente",
+    "localMigrateStatus": "29 migrations — up to date (banco local apenas)",
+    "acaoNecessaria": "Executar prisma migrate deploy com DATABASE_URL Production Neon"
+  },
+  "fase6_goLiveCheck": {
+    "sistemaProntoParaSmokeTest": "NÃO",
+    "bloqueadoresReais": [
+      "NEXT_PUBLIC_SITE_URL Production ausente ou incorreta (localhost:3000 no deploy ativo)",
+      "prisma migrate deploy no banco Production Neon não executado nesta sessão",
+      "ASAAS_WEBHOOK_ACCESS_TOKEN Production não verificável",
+      "Webhook Asaas produção (www.asaas.com) não confirmado"
+    ]
+  },
+  "melhoriasFuturas": [
+    "Desativar ou desconectar projeto Vercel legado meu-site-produtor (deploys cancelados)",
+    "Migration formal UserPlan.refundProcessedAt",
+    "Trim em NEXT_PUBLIC_SITE_URL no código (newline já causou incidente Preview)"
+  ],
+  "veredito": "MERGE_CONCLUIDO_DEPLOY_PRODUCTION_PARCIAL",
+  "proximosPassos": [
+    "Vercel Production → NEXT_PUBLIC_SITE_URL = https://meu-site-produtor-13.vercel.app (sem newline)",
+    "Vercel Production → confirmar ASAAS_WEBHOOK_ACCESS_TOKEN",
+    "prisma migrate deploy com DATABASE_URL Neon Production",
+    "Asaas www → webhook produção",
+    "Redeploy Production",
+    "Smoke Test Production"
+  ]
+}

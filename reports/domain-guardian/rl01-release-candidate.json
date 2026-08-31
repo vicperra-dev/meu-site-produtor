@@ -1,0 +1,147 @@
+{
+  "reportId": "RL-01-release-candidate",
+  "mode": "EXECUÇÃO_CONTROLADA",
+  "generatedAt": "2026-07-10T01:50:00.000Z",
+  "language": "pt-BR",
+  "projectName": "THouse",
+  "objective": "Criar primeira Release Candidate (pr03-clean) conforme plano SI-02a/b/c",
+  "answers": {
+    "branchCreated": {
+      "answer": true,
+      "branch": "pr03-clean",
+      "base": "main @ fd9ff6d",
+      "head": "8c8627dd78e416c09f7bf0ca40f00ffb3e3098a9"
+    },
+    "cherryPicksExecuted": {
+      "answer": true,
+      "total": 22,
+      "PR-01": 8,
+      "PR-02": 6,
+      "PR-03": 8,
+      "allSucceeded": true
+    },
+    "conflicts": {
+      "answer": false,
+      "count": 0,
+      "details": []
+    },
+    "build": {
+      "answer": false,
+      "exitCode": 1,
+      "prismaGenerate": { "exitCode": 0 },
+      "errors": [
+        {
+          "file": "src/app/lib/agendamento-payment-coupons.ts",
+          "line": 4,
+          "message": "Export expandAgendamentoItemToCouponTypes doesn't exist in target module @/app/lib/service-catalog"
+        },
+        {
+          "file": "src/app/lib/agendamento-payment-rules.ts",
+          "line": 1,
+          "message": "Export isMultiCouponAgendamentoPackageId doesn't exist in target module @/app/lib/service-catalog"
+        }
+      ]
+    },
+    "canStartRl02Guardian": {
+      "answer": false,
+      "answerText": "NÃO",
+      "reason": "npm run build exit 1 — 2 erros de export ausente em service-catalog.ts"
+    }
+  },
+  "executionLog": {
+    "step1_workingTree": {
+      "hadWip": true,
+      "action": "git stash push -u -m 'RL-01-WIP-and-fix-build-bundle'",
+      "stashRef": "stash@{0}",
+      "stashHash": "bffb7f05becf458d2bffa3391da79ebfb743401a",
+      "sourceBranch": "sprint1/pr-01-guardian"
+    },
+    "step2_branch": {
+      "action": "git checkout main && git checkout -b pr03-clean",
+      "result": "pr03-clean criada a partir de main"
+    },
+    "step3_pr01CherryPicks": {
+      "commits": [
+        "31d033d", "25db147", "b153082", "163b582", "db1ab55", "fb2f414", "41fe010", "7be8d60"
+      ],
+      "result": "8/8 OK"
+    },
+    "step4_pr02CherryPicks": {
+      "commits": [
+        "ef91f89", "c443e7c", "678a60d", "f5e659a", "0879985", "7ef5e9d"
+      ],
+      "result": "6/6 OK"
+    },
+    "step5_pr03CherryPicks": {
+      "commits": [
+        "31eb245", "e161f7a", "705cfa1", "de16e71", "20a2ab2", "ce9decd", "bcc995a", "cf4b2e7"
+      ],
+      "result": "8/8 OK"
+    },
+    "step6_fixBuildBundle": {
+      "action": "Restauração seletiva do stash (ST-01a + SI-01)",
+      "commit": {
+        "hash": "8c8627d",
+        "message": "fix(build): PR-03 self-contained bundle (ST-01a scripts + SI-01 gates)",
+        "filesChanged": 19
+      },
+      "included": {
+        "st01a": [
+          "scripts/code-health-agent.ts",
+          "scripts/domain-pr-reviewer.ts",
+          "scripts/domain-review-engine.ts",
+          "scripts/engineering-assistant.ts"
+        ],
+        "si01_new": [
+          "src/app/lib/checkout-coupon-gates.ts",
+          "src/app/lib/appointment-operational-filter.ts",
+          "src/app/lib/checkout-active-plan-gate.ts",
+          "src/app/lib/payment-simulation-coupon-gate.ts",
+          "src/app/lib/coupon-origin.ts",
+          "src/app/lib/plan-coupons.ts"
+        ],
+        "si01_modified": [
+          "src/app/lib/validate-coupon-checkout.ts",
+          "src/app/lib/admin-delete-payment.ts",
+          "src/app/lib/asaas-agendamento-payment-effects.ts",
+          "src/app/lib/asaas-agendamento-reconcile.ts",
+          "src/app/lib/asaas-carrinho-payment-effects.ts",
+          "src/app/lib/asaas-plano-payment-effects.ts",
+          "src/app/api/asaas/checkout/route.ts",
+          "src/app/api/asaas/checkout-agendamento/route.ts",
+          "src/app/api/asaas/checkout-carrinho/route.ts"
+        ]
+      },
+      "restoreNotes": [
+        "Arquivos untracked SI-01 restaurados de stash@{0}^3",
+        "plan-coupons.ts restaurado de stash@{0} (tracked WIP)"
+      ]
+    },
+    "step7_prismaGenerate": {
+      "command": "npx prisma generate",
+      "exitCode": 0
+    },
+    "step8_build": {
+      "command": "npm run build",
+      "exitCode": 1,
+      "autoFixApplied": false
+    }
+  },
+  "branchSummary": {
+    "name": "pr03-clean",
+    "commitsFromMain": 23,
+    "cherryPicks": 22,
+    "fixBuildCommits": 1,
+    "headShort": "8c8627d"
+  },
+  "verdict": {
+    "releaseCandidateCreated": false,
+    "releaseCandidateBlockedBy": "build failure — service-catalog.ts missing exports required by PR-03 payment modules",
+    "nextStep": "Resolver exports ausentes em service-catalog.ts antes de RL-02 (Guardian)"
+  },
+  "sourcesConsulted": [
+    "reports/domain-guardian/si02b-clean-branch-plan.json (transcript)",
+    "reports/domain-guardian/si02a-clean-branch-validation.json",
+    "reports/domain-guardian/si02c-full-extraction-simulation.json"
+  ]
+}

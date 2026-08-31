@@ -1,0 +1,1349 @@
+{
+  "reportId": "GO-02-release-assembly",
+  "generatedAt": "2026-07-15T21:40:24.850Z",
+  "language": "pt-BR",
+  "projectName": "THouse",
+  "version": "1.0.0-rc",
+  "mode": "ASSEMBLY_ONLY",
+  "confidencePercent": 92,
+  "inventory": {
+    "releaseBranch": "backup-pre-formatacao",
+    "head": "0baf8cec7f32a9c3eda086dbd74794da5aad80f7",
+    "mainHead": "7057b13d5e7e7947a8eb3fa32ae116773cf6706a",
+    "productionUrl": "https://www.thouse-rec.com.br",
+    "commitsAhead": 15
+  },
+  "cleanup": [
+    {
+      "path": "reports/domain-guardian/ec01-discovery-audit-latest.json",
+      "reason": "artefato de execução temporário"
+    },
+    {
+      "path": "reports/domain-guardian/ec01-execution-audit-latest.json",
+      "reason": "artefato de execução temporário"
+    },
+    {
+      "path": "reports/domain-guardian/ec01-knowledge-graph-audit-latest.json",
+      "reason": "artefato de execução temporário"
+    },
+    {
+      "path": "reports/domain-guardian/ec01-regression-audit-latest.json",
+      "reason": "artefato de execução temporário"
+    },
+    {
+      "path": "reports/domain-guardian/sim01-last-run.json",
+      "reason": "artefato de execução temporário"
+    },
+    {
+      "path": "reports/domain-guardian/sim01-simulation-audit-latest.json",
+      "reason": "artefato de execução temporário"
+    },
+    {
+      "path": "reports/domain-guardian/sim02-last-run.json",
+      "reason": "artefato de execução temporário"
+    },
+    {
+      "path": "reports/domain-guardian/sync01a-synchronization-audit-latest.json",
+      "reason": "artefato de execução temporário"
+    }
+  ],
+  "manifest": {
+    "version": "1.0.0-rc",
+    "releaseBranch": "backup-pre-formatacao",
+    "productionBranch": "main",
+    "generatedAt": "2026-07-15T21:40:24.845Z",
+    "commitsIncluded": [
+      "0baf8ce docs(release): prepare go-live orchestration and operational checklist",
+      "a6670ff test(rc): certify security permissions and concurrency",
+      "e32fdba test(rc): certify administration and operations workflow",
+      "2171e83 test(rc): certify complete customer journey",
+      "f355143 fix(golive): finalize production readiness and critical business validation",
+      "8a613c5 feat(ph01): product hardening and business validation",
+      "0e4e259 refactor(core): introduce unified execution core platform (EC-01)",
+      "67dcc81 feat(sim): implement official domain simulation engine (SIM-01)",
+      "36f3824 feat(sync): implement realtime domain synchronization engine (SYNC-01A)",
+      "362d347 test(te02): implement business validation suite batch 1",
+      "b8e1d8e refactor(workflow): consolidate official state machine (HS-03B)",
+      "7e89aff refactor(domain): consolidate operational domain (HS-03A)",
+      "7238fc7 feat(test-engine): implement core scenario runner (TE-01B)",
+      "3089b49 refactor(service): consolidate Service as operational authority (HS-02B)",
+      "53d9c97 backup: HS-01 antes da formatação do computador"
+    ],
+    "commitCount": 15,
+    "migrations": [
+      {
+        "id": "20251214015926_init",
+        "path": "prisma/migrations/20251214015926_init/migration.sql"
+      },
+      {
+        "id": "20251214021241_add_session",
+        "path": "prisma/migrations/20251214021241_add_session/migration.sql"
+      },
+      {
+        "id": "20260106232017_add_admin_features",
+        "path": "prisma/migrations/20260106232017_add_admin_features/migration.sql"
+      },
+      {
+        "id": "20260108020521_add_admin_features",
+        "path": "prisma/migrations/20260108020521_add_admin_features/migration.sql"
+      },
+      {
+        "id": "20260114184955_add_blocked_time_slots",
+        "path": "prisma/migrations/20260114184955_add_blocked_time_slots/migration.sql"
+      },
+      {
+        "id": "20260114204330_add_user_profile_fields",
+        "path": "prisma/migrations/20260114204330_add_user_profile_fields/migration.sql"
+      },
+      {
+        "id": "20260114223138_add_maintenance_mode",
+        "path": "prisma/migrations/20260114223138_add_maintenance_mode/migration.sql"
+      },
+      {
+        "id": "20260115002408_add_cpf_cep",
+        "path": "prisma/migrations/20260115002408_add_cpf_cep/migration.sql"
+      },
+      {
+        "id": "20260115021438_add_ativo_to_blocked_slots",
+        "path": "prisma/migrations/20260115021438_add_ativo_to_blocked_slots/migration.sql"
+      },
+      {
+        "id": "20260115062332_add_payment_method_to_payments",
+        "path": "prisma/migrations/20260115062332_add_payment_method_to_payments/migration.sql"
+      },
+      {
+        "id": "20260127191715_add_password_reset_code",
+        "path": "prisma/migrations/20260127191715_add_password_reset_code/migration.sql"
+      },
+      {
+        "id": "20260127221632_add_nome_completo",
+        "path": "prisma/migrations/20260127221632_add_nome_completo/migration.sql"
+      },
+      {
+        "id": "20260128000000_add_payment_metadata",
+        "path": "prisma/migrations/20260128000000_add_payment_metadata/migration.sql"
+      },
+      {
+        "id": "20260204000000_add_last_read_at_to_chat_session",
+        "path": "prisma/migrations/20260204000000_add_last_read_at_to_chat_session/migration.sql"
+      },
+      {
+        "id": "20260204000001_add_read_at_to_user_question",
+        "path": "prisma/migrations/20260204000001_add_read_at_to_user_question/migration.sql"
+      },
+      {
+        "id": "20260308180000_add_appointment_cancel_and_read_fields",
+        "path": "prisma/migrations/20260308180000_add_appointment_cancel_and_read_fields/migration.sql"
+      },
+      {
+        "id": "20260310120000_add_payment_appointment_ids",
+        "path": "prisma/migrations/20260310120000_add_payment_appointment_ids/migration.sql"
+      },
+      {
+        "id": "20260314000000_add_coupon_payment_and_assigned_user",
+        "path": "prisma/migrations/20260314000000_add_coupon_payment_and_assigned_user/migration.sql"
+      },
+      {
+        "id": "20260315000000_ensure_appointment_cancel_columns",
+        "path": "prisma/migrations/20260315000000_ensure_appointment_cancel_columns/migration.sql"
+      },
+      {
+        "id": "20260413120000_service_delivery_audio",
+        "path": "prisma/migrations/20260413120000_service_delivery_audio/migration.sql"
+      },
+      {
+        "id": "20260504200000_add_foto_position",
+        "path": "prisma/migrations/20260504200000_add_foto_position/migration.sql"
+      },
+      {
+        "id": "20260504213000_account_deletion_log",
+        "path": "prisma/migrations/20260504213000_account_deletion_log/migration.sql"
+      },
+      {
+        "id": "20260511231500_user_plan_admin_inactive",
+        "path": "prisma/migrations/20260511231500_user_plan_admin_inactive/migration.sql"
+      },
+      {
+        "id": "20260511234500_coupon_refund_tracking",
+        "path": "prisma/migrations/20260511234500_coupon_refund_tracking/migration.sql"
+      },
+      {
+        "id": "20260512030000_appointment_refund_confirmation",
+        "path": "prisma/migrations/20260512030000_appointment_refund_confirmation/migration.sql"
+      },
+      {
+        "id": "20260512040000_user_plan_refund_tracking",
+        "path": "prisma/migrations/20260512040000_user_plan_refund_tracking/migration.sql"
+      },
+      {
+        "id": "20260604210000_user_plan_user_hidden",
+        "path": "prisma/migrations/20260604210000_user_plan_user_hidden/migration.sql"
+      },
+      {
+        "id": "20260605120000_appointment_user_hidden",
+        "path": "prisma/migrations/20260605120000_appointment_user_hidden/migration.sql"
+      },
+      {
+        "id": "20260617120000_appointment_admin_archive",
+        "path": "prisma/migrations/20260617120000_appointment_admin_archive/migration.sql"
+      },
+      {
+        "id": "20260712120000_hs01_cpf_unique_service_appointment",
+        "path": "prisma/migrations/20260712120000_hs01_cpf_unique_service_appointment/migration.sql"
+      },
+      {
+        "id": "20260713210000_hs03b_domain_transition_log",
+        "path": "prisma/migrations/20260713210000_hs03b_domain_transition_log/migration.sql"
+      },
+      {
+        "id": "20260713220000_hs03b_domain_transition_history",
+        "path": "prisma/migrations/20260713220000_hs03b_domain_transition_history/migration.sql"
+      },
+      {
+        "id": "20260714220000_sync01a_synchronization_event",
+        "path": "prisma/migrations/20260714220000_sync01a_synchronization_event/migration.sql"
+      }
+    ],
+    "migrationCount": 33,
+    "scripts": [
+      {
+        "name": "dev",
+        "npm": "npm run dev"
+      },
+      {
+        "name": "build",
+        "npm": "npm run build"
+      },
+      {
+        "name": "start",
+        "npm": "npm run start"
+      },
+      {
+        "name": "lint",
+        "npm": "npm run lint"
+      },
+      {
+        "name": "postinstall",
+        "npm": "npm run postinstall"
+      },
+      {
+        "name": "seed",
+        "npm": "npm run seed"
+      },
+      {
+        "name": "te:list",
+        "npm": "npm run te:list"
+      },
+      {
+        "name": "te:run",
+        "npm": "npm run te:run"
+      },
+      {
+        "name": "te:suite:te02a",
+        "npm": "npm run te:suite:te02a"
+      },
+      {
+        "name": "te:suite:sync01a",
+        "npm": "npm run te:suite:sync01a"
+      },
+      {
+        "name": "te:suite:ph01",
+        "npm": "npm run te:suite:ph01"
+      },
+      {
+        "name": "te:suite:rc01",
+        "npm": "npm run te:suite:rc01"
+      },
+      {
+        "name": "rc:certify",
+        "npm": "npm run rc:certify"
+      },
+      {
+        "name": "rc02:certify",
+        "npm": "npm run rc02:certify"
+      },
+      {
+        "name": "rc03:certify",
+        "npm": "npm run rc03:certify"
+      },
+      {
+        "name": "rc04:certify",
+        "npm": "npm run rc04:certify"
+      },
+      {
+        "name": "te:suite:rc02",
+        "npm": "npm run te:suite:rc02"
+      },
+      {
+        "name": "te:suite:rc03",
+        "npm": "npm run te:suite:rc03"
+      },
+      {
+        "name": "domain:audit",
+        "npm": "npm run domain:audit"
+      },
+      {
+        "name": "workflow:audit",
+        "npm": "npm run workflow:audit"
+      },
+      {
+        "name": "workflow:smoke",
+        "npm": "npm run workflow:smoke"
+      },
+      {
+        "name": "sync:audit",
+        "npm": "npm run sync:audit"
+      },
+      {
+        "name": "sim:list",
+        "npm": "npm run sim:list"
+      },
+      {
+        "name": "sim:run",
+        "npm": "npm run sim:run"
+      },
+      {
+        "name": "sim:batch",
+        "npm": "npm run sim:batch"
+      },
+      {
+        "name": "sim:cleanup",
+        "npm": "npm run sim:cleanup"
+      },
+      {
+        "name": "sim:report",
+        "npm": "npm run sim:report"
+      },
+      {
+        "name": "sim:audit",
+        "npm": "npm run sim:audit"
+      },
+      {
+        "name": "sim:watch",
+        "npm": "npm run sim:watch"
+      },
+      {
+        "name": "sim:batch:sim02",
+        "npm": "npm run sim:batch:sim02"
+      },
+      {
+        "name": "exec:audit",
+        "npm": "npm run exec:audit"
+      },
+      {
+        "name": "graph:audit",
+        "npm": "npm run graph:audit"
+      },
+      {
+        "name": "discovery:audit",
+        "npm": "npm run discovery:audit"
+      },
+      {
+        "name": "regression:audit",
+        "npm": "npm run regression:audit"
+      },
+      {
+        "name": "golive:cleanup",
+        "npm": "npm run golive:cleanup"
+      },
+      {
+        "name": "launch01:reset",
+        "npm": "npm run launch01:reset"
+      },
+      {
+        "name": "launch01:certify",
+        "npm": "npm run launch01:certify"
+      },
+      {
+        "name": "go01:orchestrate",
+        "npm": "npm run go01:orchestrate"
+      },
+      {
+        "name": "go02:assemble",
+        "npm": "npm run go02:assemble"
+      },
+      {
+        "name": "migrate:postgresql",
+        "npm": "npm run migrate:postgresql"
+      }
+    ],
+    "dependencies": {
+      "runtime": [
+        "@prisma/client",
+        "bcrypt",
+        "bcryptjs",
+        "mercadopago",
+        "next",
+        "nodemailer",
+        "openai",
+        "prisma",
+        "react",
+        "react-dom",
+        "recharts",
+        "zod"
+      ]
+    },
+    "requiredEnv": [
+      "DATABASE_URL",
+      "ASAAS_API_KEY",
+      "ASAAS_WEBHOOK_ACCESS_TOKEN",
+      "NEXT_PUBLIC_SITE_URL",
+      "GMAIL_USER",
+      "GMAIL_APP_PASSWORD",
+      "SESSION_SECRET",
+      "GO_LIVE_MAINTENANCE_MODE"
+    ],
+    "breakingChanges": [
+      "User.cpf agora @unique — duplicatas existentes bloqueiam migration HS-01",
+      "Coupon.couponType canônico expandido (plano|agendamento|reembolso|desconto|remarcacao|test|bonus)",
+      "Novas tabelas DomainTransitionHistory e SynchronizationEvent",
+      "launch01:reset exige confirmações explícitas (--confirm-local/preview/production)",
+      "GO_LIVE_MAINTENANCE_MODE bloqueia cadastro/compra/agendamento para não-admin"
+    ],
+    "fixes": [
+      "GL-01 auto-login pós-registro",
+      "HS-01 Service.appointmentId FK + CPF unique",
+      "HS-03B state machine + DomainTransitionHistory",
+      "SYNC-01A outbox SynchronizationEvent",
+      "RC-01/02/03 jornada, admin e segurança certificados",
+      "GO-01 orquestração go-live + modo manutenção"
+    ],
+    "features": [
+      "Test Engine (TE-01B/02A)",
+      "Simulation Engine (SIM-01/02)",
+      "Synchronization Engine (SYNC-01A)",
+      "Execution Core (EC-01)",
+      "Domain audits + certification pipeline (RC-01…04)",
+      "Launch reset com preservação ADMIN"
+    ],
+    "pending": [
+      "Push origin/main (15 commits locais)",
+      "Deploy Vercel Production",
+      "prisma migrate deploy em Neon",
+      "Reset homolog produção (triple-confirm)",
+      "Pagamento real smoke em produção",
+      "SMTP smoke test",
+      "GO_LIVE_MAINTENANCE_MODE ativar/desativar no deploy"
+    ],
+    "finalDocumentation": [
+      "go01-release-orchestration.md",
+      "go01-release-orchestration.json",
+      "go02-release-assembly.md",
+      "go02-release-assembly.json",
+      "rc01-customer-certification.md",
+      "rc02-administration-certification.md",
+      "rc03-security-certification.md",
+      "rc04-production-certification.md",
+      "launch01-final-readiness.md",
+      "e2e01-customer-journey.md",
+      "e2e02-hardening-plan.md",
+      "te01c-official-test-catalog.md"
+    ]
+  },
+  "releaseDiff": {
+    "modified": [
+      "package.json",
+      "prisma/schema.prisma",
+      "src/app/admin/agendamentos/page.tsx",
+      "src/app/admin/estatisticas/page.tsx",
+      "src/app/admin/pagamentos/page.tsx",
+      "src/app/admin/page.tsx",
+      "src/app/admin/planos/page.tsx",
+      "src/app/admin/servicos-aceitos/page.tsx",
+      "src/app/admin/servicos-solicitados/page.tsx",
+      "src/app/admin/servicos/page.tsx",
+      "src/app/agendamento/page.tsx",
+      "src/app/api/admin/agendamentos/cancelar/route.ts",
+      "src/app/api/admin/agendamentos/reverter-cancelamento/route.ts",
+      "src/app/api/admin/agendamentos/route.ts",
+      "src/app/api/admin/servicos/route.ts",
+      "src/app/api/admin/stats/detalhadas/route.ts",
+      "src/app/api/admin/stats/graficos/route.ts",
+      "src/app/api/agendamentos/cancelar/route.ts",
+      "src/app/api/agendamentos/com-cupom/route.ts",
+      "src/app/api/agendamentos/disponibilidade/route.ts",
+      "src/app/api/agendamentos/escolher-reembolso/route.ts",
+      "src/app/api/agendamentos/route.ts",
+      "src/app/api/asaas/checkout-agendamento/route.ts",
+      "src/app/api/asaas/checkout-carrinho/route.ts",
+      "src/app/api/asaas/checkout/route.ts",
+      "src/app/api/carrinho-checkout/route.ts",
+      "src/app/api/conta/update/route.ts",
+      "src/app/api/coupons/validate/route.ts",
+      "src/app/api/infinitypay/checkout-agendamento/route.ts",
+      "src/app/api/mercadopago/checkout-agendamento/route.ts",
+      "src/app/api/mercadopago/checkout/route.ts",
+      "src/app/api/meus-dados/route.ts",
+      "src/app/api/meus-dados/vincular-cupons-teste/route.ts",
+      "src/app/api/pagamentos/route.ts",
+      "src/app/api/planos/cancelar/route.ts",
+      "src/app/api/registro/route.ts",
+      "src/app/api/test-payment/route.ts",
+      "src/app/api/webhooks/asaas/route.ts",
+      "src/app/context/AuthContext.tsx",
+      "src/app/hooks/useUnreadAppointmentCount.ts",
+      "src/app/hooks/useUnreadPlanCount.ts",
+      "src/app/layout.tsx",
+      "src/app/lib/agendamento-payment-coupons.ts",
+      "src/app/lib/appointment-refund-payment.ts",
+      "src/app/lib/appointment-service-sync.ts",
+      "src/app/lib/asaas-agendamento-payment-effects.ts",
+      "src/app/lib/asaas-agendamento-reconcile.ts",
+      "src/app/lib/asaas-carrinho-payment-effects.ts",
+      "src/app/lib/checkout-coupon-gates.ts",
+      "src/app/lib/coupon-booking-rules.ts",
+      "src/app/lib/coupon-origin.ts",
+      "src/app/lib/coupon-selection.ts",
+      "src/app/lib/coupon-stale-appointment.ts",
+      "src/app/lib/payment-providers.ts",
+      "src/app/lib/payment-simulation-coupon-gate.ts",
+      "src/app/lib/plan-coupons.ts",
+      "src/app/lib/process-payment-webhook.ts",
+      "src/app/lib/service-catalog.ts",
+      "src/app/lib/symbolic-payment.ts",
+      "src/app/lib/validate-coupon-checkout.ts",
+      "src/app/lib/validations.ts",
+      "src/app/manutencao/page.tsx",
+      "src/app/middleware.ts",
+      "src/app/minha-conta/page.tsx",
+      "src/app/pagamentos/sucesso/page.tsx",
+      "src/app/registro/page.tsx"
+    ],
+    "added": [
+      "prisma/migrations/20260712120000_hs01_cpf_unique_service_appointment/migration.sql",
+      "prisma/migrations/20260713210000_hs03b_domain_transition_log/migration.sql",
+      "prisma/migrations/20260714220000_sync01a_synchronization_event/migration.sql",
+      "public/uploads/avatars/6fad51b2-e79c-4ed3-bfd3-684cdc15cd4f.png",
+      "public/uploads/deliveries/b4195c7f-0c8c-4f69-9695-8c550d7e17f5.wav",
+      "reports/domain-guardian/e2e01-customer-journey.json",
+      "reports/domain-guardian/e2e01-customer-journey.md",
+      "reports/domain-guardian/e2e02-hardening-plan.json",
+      "reports/domain-guardian/e2e02-hardening-plan.md",
+      "reports/domain-guardian/ec01-discovery-audit-latest.json",
+      "reports/domain-guardian/ec01-execution-audit-latest.json",
+      "reports/domain-guardian/ec01-execution-core-foundation.json",
+      "reports/domain-guardian/ec01-execution-core-foundation.md",
+      "reports/domain-guardian/ec01-knowledge-graph-audit-latest.json",
+      "reports/domain-guardian/ec01-regression-audit-latest.json",
+      "reports/domain-guardian/gl01-go-live-readiness.json",
+      "reports/domain-guardian/gl01-go-live-readiness.md",
+      "reports/domain-guardian/gl01-golive-fixes.json",
+      "reports/domain-guardian/gl01-golive-fixes.md",
+      "reports/domain-guardian/gl02-operational-checklist.json",
+      "reports/domain-guardian/gl02-operational-checklist.md",
+      "reports/domain-guardian/go01-infrastructure-closeout.json",
+      "reports/domain-guardian/go01-infrastructure-closeout.md",
+      "reports/domain-guardian/go01-release-orchestration.json",
+      "reports/domain-guardian/go01-release-orchestration.md",
+      "reports/domain-guardian/go02-infrastructure-execution-plan.json",
+      "reports/domain-guardian/go02-infrastructure-execution-plan.md",
+      "reports/domain-guardian/go04-production-path-report.json",
+      "reports/domain-guardian/go04-production-path-report.md",
+      "reports/domain-guardian/go04-release-readiness.json",
+      "reports/domain-guardian/go04-release-readiness.md",
+      "reports/domain-guardian/hl01-final-homologation.json",
+      "reports/domain-guardian/hl01-final-homologation.md",
+      "reports/domain-guardian/hs01-hardening.json",
+      "reports/domain-guardian/hs01-hardening.md",
+      "reports/domain-guardian/hs02a-service-domain-map.json",
+      "reports/domain-guardian/hs02a-service-domain-map.md",
+      "reports/domain-guardian/hs02b-service-authority.json",
+      "reports/domain-guardian/hs02b-service-authority.md",
+      "reports/domain-guardian/hs03a-domain-consolidation.json",
+      "reports/domain-guardian/hs03a-domain-consolidation.md",
+      "reports/domain-guardian/hs03b-workflow-state-machine.json",
+      "reports/domain-guardian/hs03b-workflow-state-machine.md",
+      "reports/domain-guardian/le01-launch-execution.json",
+      "reports/domain-guardian/le01-launch-execution.md",
+      "reports/domain-guardian/ls01-launch-plan.json",
+      "reports/domain-guardian/ls01-launch-plan.md",
+      "reports/domain-guardian/ops01-runbook.json",
+      "reports/domain-guardian/ops01-runbook.md",
+      "reports/domain-guardian/ph01-product-hardening.json",
+      "reports/domain-guardian/ph01-product-hardening.md",
+      "reports/domain-guardian/prd01-production-readiness.json",
+      "reports/domain-guardian/prd01-production-readiness.md",
+      "reports/domain-guardian/prod01-production-merge.json",
+      "reports/domain-guardian/prod01-production-merge.md",
+      "reports/domain-guardian/prod02-production-finalization.json",
+      "reports/domain-guardian/prod02-production-finalization.md",
+      "reports/domain-guardian/pv00-vercel-inventory.json",
+      "reports/domain-guardian/pv00-vercel-inventory.md",
+      "reports/domain-guardian/pv01-release-publish.json",
+      "reports/domain-guardian/pv01-release-publish.md",
+      "reports/domain-guardian/pv01a-guardian-diagnosis.json",
+      "reports/domain-guardian/pv01a-guardian-diagnosis.md",
+      "reports/domain-guardian/pv02-preview-validation.json",
+      "reports/domain-guardian/pv02-preview-validation.md",
+      "reports/domain-guardian/pv02a-preview-alignment.json",
+      "reports/domain-guardian/pv02a-preview-alignment.md",
+      "reports/domain-guardian/qe01-user-journey.json",
+      "reports/domain-guardian/qe01-user-journey.md",
+      "reports/domain-guardian/qe01a-auth-flow.json",
+      "reports/domain-guardian/qe01a-auth-flow.md",
+      "reports/domain-guardian/qe01b-auto-login.json",
+      "reports/domain-guardian/qe01b-auto-login.md",
+      "reports/domain-guardian/qe02-service-purchase.json",
+      "reports/domain-guardian/qe02-service-purchase.md",
+      "reports/domain-guardian/qe02a-legacy-financial.json",
+      "reports/domain-guardian/qe02a-legacy-financial.md",
+      "reports/domain-guardian/qe02b-legacy-removal-plan.json",
+      "reports/domain-guardian/qe02b-legacy-removal-plan.md",
+      "reports/domain-guardian/qe03-go-live-gate.json",
+      "reports/domain-guardian/qe03-go-live-gate.md",
+      "reports/domain-guardian/rc01-customer-certification.json",
+      "reports/domain-guardian/rc01-customer-certification.md",
+      "reports/domain-guardian/rc02-administration-certification.json",
+      "reports/domain-guardian/rc02-administration-certification.md",
+      "reports/domain-guardian/rc02-ci-update.json",
+      "reports/domain-guardian/rc02-ci-update.md",
+      "reports/domain-guardian/rc03-security-certification.json",
+      "reports/domain-guardian/rc03-security-certification.md",
+      "reports/domain-guardian/rc03-workflow-finalization.json",
+      "reports/domain-guardian/rc03-workflow-finalization.md",
+      "reports/domain-guardian/rc04-ci-publish.json",
+      "reports/domain-guardian/rc04-ci-publish.md",
+      "reports/domain-guardian/rl01-release-candidate.json",
+      "reports/domain-guardian/rl01-release-candidate.md",
+      "reports/domain-guardian/rl01a-build-fix.json",
+      "reports/domain-guardian/rl01a-build-fix.md",
+      "reports/domain-guardian/rl01b-build-fix.json",
+      "reports/domain-guardian/rl01b-build-fix.md",
+      "reports/domain-guardian/rl02-release-validation.json",
+      "reports/domain-guardian/rl02-release-validation.md",
+      "reports/domain-guardian/rl03-release-closed.json",
+      "reports/domain-guardian/rl03-release-closed.md",
+      "reports/domain-guardian/sim-watch-last-run.json",
+      "reports/domain-guardian/sim01-domain-simulation-engine.json",
+      "reports/domain-guardian/sim01-domain-simulation-engine.md",
+      "reports/domain-guardian/sim01-last-run.json",
+      "reports/domain-guardian/sim01-simulation-audit-latest.json",
+      "reports/domain-guardian/sim02-execution-core-migration.json",
+      "reports/domain-guardian/sim02-execution-core-migration.md",
+      "reports/domain-guardian/sim02-last-run.json",
+      "reports/domain-guardian/sync01a-realtime-domain-engine.json",
+      "reports/domain-guardian/sync01a-realtime-domain-engine.md",
+      "reports/domain-guardian/sync01a-synchronization-audit-latest.json",
+      "reports/domain-guardian/te01a-test-engine-architecture.json",
+      "reports/domain-guardian/te01a-test-engine-architecture.md",
+      "reports/domain-guardian/te01b-test-engine-core.json",
+      "reports/domain-guardian/te01b-test-engine-core.md",
+      "reports/domain-guardian/te02a-business-validation-suite.json",
+      "reports/domain-guardian/te02a-business-validation-suite.md",
+      "scripts/cleanup-test-users.js",
+      "scripts/discovery-audit.ts",
+      "scripts/domain-audit.ts",
+      "scripts/execution-audit.ts",
+      "scripts/go01-orchestrate.ts",
+      "scripts/golive-cleanup.ts",
+      "scripts/hs01-data-integrity-audit.js",
+      "scripts/knowledge-graph-audit.ts",
+      "scripts/launch01-reset.ts",
+      "scripts/rc01-certify.ts",
+      "scripts/rc02-certify.ts",
+      "scripts/rc03-certify.ts",
+      "scripts/regression-audit.ts",
+      "scripts/sim-run.ts",
+      "scripts/sim-watch.ts",
+      "scripts/simulation-audit.ts",
+      "scripts/synchronization-audit.ts",
+      "scripts/te-run.ts",
+      "scripts/workflow-audit.ts",
+      "scripts/workflow-smoke.ts",
+      "src/app/api/execution/run/route.ts",
+      "src/app/api/simulation/report/route.ts",
+      "src/app/api/sync/events/route.ts",
+      "src/app/hooks/useDomainRefresh.ts",
+      "src/app/hooks/useDomainSubscription.ts",
+      "src/app/hooks/useRealtimeEntity.ts",
+      "src/app/hooks/useWorkflowAction.ts",
+      "src/app/hooks/useWorkflowUpdates.ts",
+      "src/app/lib/app-data-events.ts",
+      "src/app/lib/birth-date-validation.ts",
+      "src/app/lib/checkout-calculation.ts",
+      "src/app/lib/cpf-validation.ts",
+      "src/app/lib/domain/coupon-types.ts",
+      "src/app/lib/domain/domain-service.ts",
+      "src/app/lib/domain/graph/index.ts",
+      "src/app/lib/domain/graph/nodes.ts",
+      "src/app/lib/domain/graph/queries.ts",
+      "src/app/lib/domain/graph/types.ts",
+      "src/app/lib/domain/index.ts",
+      "src/app/lib/domain/state-machine/effects.ts",
+      "src/app/lib/domain/state-machine/events.ts",
+      "src/app/lib/domain/state-machine/guards.ts",
+      "src/app/lib/domain/state-machine/history.ts",
+      "src/app/lib/domain/state-machine/index.ts",
+      "src/app/lib/domain/state-machine/transition.ts",
+      "src/app/lib/domain/state-machine/types.ts",
+      "src/app/lib/domain/statuses.ts",
+      "src/app/lib/domain/workflow.ts",
+      "src/app/lib/ensure-appointment-services.ts",
+      "src/app/lib/execution/cleanup.ts",
+      "src/app/lib/execution/context.ts",
+      "src/app/lib/execution/core.ts",
+      "src/app/lib/execution/discovery.ts",
+      "src/app/lib/execution/history.ts",
+      "src/app/lib/execution/hooks.ts",
+      "src/app/lib/execution/impact.ts",
+      "src/app/lib/execution/index.ts",
+      "src/app/lib/execution/observer.ts",
+      "src/app/lib/execution/permissions.ts",
+      "src/app/lib/execution/pipeline.ts",
+      "src/app/lib/execution/registry.ts",
+      "src/app/lib/execution/report.ts",
+      "src/app/lib/execution/result.ts",
+      "src/app/lib/execution/runner.ts",
+      "src/app/lib/execution/session.ts",
+      "src/app/lib/execution/studio-template.ts",
+      "src/app/lib/execution/types.ts",
+      "src/app/lib/go-live-maintenance.ts",
+      "src/app/lib/launch/reset-validation.ts",
+      "src/app/lib/launch/reset.ts",
+      "src/app/lib/launch/safety.ts",
+      "src/app/lib/service-authority.ts",
+      "src/app/lib/simulation/assertions.ts",
+      "src/app/lib/simulation/cleanup.ts",
+      "src/app/lib/simulation/hooks.ts",
+      "src/app/lib/simulation/index.ts",
+      "src/app/lib/simulation/permissions.ts",
+      "src/app/lib/simulation/pipeline.ts",
+      "src/app/lib/simulation/registry.ts",
+      "src/app/lib/simulation/report.ts",
+      "src/app/lib/simulation/runner.ts",
+      "src/app/lib/simulation/scenarios/sim01-batch.ts",
+      "src/app/lib/simulation/session.ts",
+      "src/app/lib/simulation/types.ts",
+      "src/app/lib/synchronization/DomainSyncProvider.tsx",
+      "src/app/lib/synchronization/engine.ts",
+      "src/app/lib/synchronization/hub.ts",
+      "src/app/lib/synchronization/index.ts",
+      "src/app/lib/synchronization/lifecycle.ts",
+      "src/app/lib/synchronization/observer.ts",
+      "src/app/lib/synchronization/polling-inventory.ts",
+      "src/app/lib/synchronization/routing.ts",
+      "src/app/lib/synchronization/types.ts",
+      "src/app/lib/test-engine/assert-engine.ts",
+      "src/app/lib/test-engine/execution-report.ts",
+      "src/app/lib/test-engine/index.ts",
+      "src/app/lib/test-engine/permissions.ts",
+      "src/app/lib/test-engine/pipeline-adapter.ts",
+      "src/app/lib/test-engine/scenario-registry.ts",
+      "src/app/lib/test-engine/scenario-runner.ts",
+      "src/app/lib/test-engine/scenarios/ph01-batch.ts",
+      "src/app/lib/test-engine/scenarios/rc01-batch.ts",
+      "src/app/lib/test-engine/scenarios/rc02-batch.ts",
+      "src/app/lib/test-engine/scenarios/rc03-batch.ts",
+      "src/app/lib/test-engine/scenarios/stubs.ts",
+      "src/app/lib/test-engine/scenarios/sync01a-batch.ts",
+      "src/app/lib/test-engine/scenarios/te-s01-compra-simples.ts",
+      "src/app/lib/test-engine/scenarios/te02a-batch1.ts",
+      "src/app/lib/test-engine/te02a-helpers.ts",
+      "src/app/lib/test-engine/types.ts"
+    ],
+    "deleted": [],
+    "renamed": [],
+    "summary": {
+      "modified": 66,
+      "added": 230,
+      "deleted": 0,
+      "renamed": 0
+    }
+  },
+  "migrationCheck": [
+    {
+      "name": "migration-count",
+      "ok": true,
+      "detail": "33 migrations"
+    },
+    {
+      "name": "migration-20260712120000_hs01_cpf_unique_service_appointment",
+      "ok": true,
+      "detail": "presente"
+    },
+    {
+      "name": "migration-20260713210000_hs03b_domain_transition_log",
+      "ok": true,
+      "detail": "presente"
+    },
+    {
+      "name": "migration-20260713220000_hs03b_domain_transition_history",
+      "ok": true,
+      "detail": "presente"
+    },
+    {
+      "name": "migration-20260714220000_sync01a_synchronization_event",
+      "ok": true,
+      "detail": "presente"
+    },
+    {
+      "name": "migration-chronological-order",
+      "ok": true,
+      "detail": "ordem lexicográfica OK"
+    },
+    {
+      "name": "migration-sql-20251214",
+      "ok": true,
+      "detail": "OK"
+    },
+    {
+      "name": "migration-sql-20251214",
+      "ok": true,
+      "detail": "OK"
+    },
+    {
+      "name": "migration-sql-20260106",
+      "ok": true,
+      "detail": "OK"
+    },
+    {
+      "name": "migration-sql-20260108",
+      "ok": true,
+      "detail": "OK"
+    },
+    {
+      "name": "migration-sql-20260114",
+      "ok": true,
+      "detail": "OK"
+    },
+    {
+      "name": "migration-sql-20260114",
+      "ok": true,
+      "detail": "OK"
+    },
+    {
+      "name": "migration-sql-20260114",
+      "ok": true,
+      "detail": "OK"
+    },
+    {
+      "name": "migration-sql-20260115",
+      "ok": true,
+      "detail": "OK"
+    },
+    {
+      "name": "migration-sql-20260115",
+      "ok": true,
+      "detail": "OK"
+    },
+    {
+      "name": "migration-sql-20260115",
+      "ok": true,
+      "detail": "OK"
+    },
+    {
+      "name": "migration-sql-20260127",
+      "ok": true,
+      "detail": "OK"
+    },
+    {
+      "name": "migration-sql-20260127",
+      "ok": true,
+      "detail": "OK"
+    },
+    {
+      "name": "migration-sql-20260128",
+      "ok": true,
+      "detail": "OK"
+    },
+    {
+      "name": "migration-sql-20260204",
+      "ok": true,
+      "detail": "OK"
+    },
+    {
+      "name": "migration-sql-20260204",
+      "ok": true,
+      "detail": "OK"
+    },
+    {
+      "name": "migration-sql-20260308",
+      "ok": true,
+      "detail": "OK"
+    },
+    {
+      "name": "migration-sql-20260310",
+      "ok": true,
+      "detail": "OK"
+    },
+    {
+      "name": "migration-sql-20260314",
+      "ok": true,
+      "detail": "OK"
+    },
+    {
+      "name": "migration-sql-20260315",
+      "ok": true,
+      "detail": "OK"
+    },
+    {
+      "name": "migration-sql-20260413",
+      "ok": true,
+      "detail": "OK"
+    },
+    {
+      "name": "migration-sql-20260504",
+      "ok": true,
+      "detail": "OK"
+    },
+    {
+      "name": "migration-sql-20260504",
+      "ok": true,
+      "detail": "OK"
+    },
+    {
+      "name": "migration-sql-20260511",
+      "ok": true,
+      "detail": "OK"
+    },
+    {
+      "name": "migration-sql-20260511",
+      "ok": true,
+      "detail": "OK"
+    },
+    {
+      "name": "migration-sql-20260512",
+      "ok": true,
+      "detail": "OK"
+    },
+    {
+      "name": "migration-sql-20260512",
+      "ok": true,
+      "detail": "OK"
+    },
+    {
+      "name": "migration-sql-20260604",
+      "ok": true,
+      "detail": "OK"
+    },
+    {
+      "name": "migration-sql-20260605",
+      "ok": true,
+      "detail": "OK"
+    },
+    {
+      "name": "migration-sql-20260617",
+      "ok": true,
+      "detail": "OK"
+    },
+    {
+      "name": "migration-sql-20260712",
+      "ok": true,
+      "detail": "OK"
+    },
+    {
+      "name": "migration-sql-20260713",
+      "ok": true,
+      "detail": "OK"
+    },
+    {
+      "name": "migration-sql-20260713",
+      "ok": true,
+      "detail": "OK"
+    },
+    {
+      "name": "migration-sql-20260714",
+      "ok": true,
+      "detail": "OK"
+    },
+    {
+      "name": "migration-rollback-note",
+      "ok": true,
+      "detail": "Rollback = Neon PITR restore; prisma migrate não suporta down automático"
+    }
+  ],
+  "packageCheck": [
+    {
+      "name": "npm-script-dev",
+      "ok": true,
+      "detail": "definido"
+    },
+    {
+      "name": "npm-script-build",
+      "ok": true,
+      "detail": "definido"
+    },
+    {
+      "name": "npm-script-start",
+      "ok": true,
+      "detail": "definido"
+    },
+    {
+      "name": "npm-script-lint",
+      "ok": true,
+      "detail": "definido"
+    },
+    {
+      "name": "npm-script-postinstall",
+      "ok": true,
+      "detail": "definido"
+    },
+    {
+      "name": "npm-script-seed",
+      "ok": true,
+      "detail": "definido"
+    },
+    {
+      "name": "npm-script-te:list",
+      "ok": true,
+      "detail": "definido"
+    },
+    {
+      "name": "npm-script-te:run",
+      "ok": true,
+      "detail": "definido"
+    },
+    {
+      "name": "npm-script-te:suite:te02a",
+      "ok": true,
+      "detail": "definido"
+    },
+    {
+      "name": "npm-script-te:suite:sync01a",
+      "ok": true,
+      "detail": "definido"
+    },
+    {
+      "name": "npm-script-te:suite:ph01",
+      "ok": true,
+      "detail": "definido"
+    },
+    {
+      "name": "npm-script-te:suite:rc01",
+      "ok": true,
+      "detail": "definido"
+    },
+    {
+      "name": "npm-script-rc:certify",
+      "ok": true,
+      "detail": "definido"
+    },
+    {
+      "name": "npm-script-rc02:certify",
+      "ok": true,
+      "detail": "definido"
+    },
+    {
+      "name": "npm-script-rc03:certify",
+      "ok": true,
+      "detail": "definido"
+    },
+    {
+      "name": "npm-script-rc04:certify",
+      "ok": true,
+      "detail": "definido"
+    },
+    {
+      "name": "npm-script-te:suite:rc02",
+      "ok": true,
+      "detail": "definido"
+    },
+    {
+      "name": "npm-script-te:suite:rc03",
+      "ok": true,
+      "detail": "definido"
+    },
+    {
+      "name": "npm-script-domain:audit",
+      "ok": true,
+      "detail": "definido"
+    },
+    {
+      "name": "npm-script-workflow:audit",
+      "ok": true,
+      "detail": "definido"
+    },
+    {
+      "name": "npm-script-workflow:smoke",
+      "ok": true,
+      "detail": "definido"
+    },
+    {
+      "name": "npm-script-sync:audit",
+      "ok": true,
+      "detail": "definido"
+    },
+    {
+      "name": "npm-script-sim:list",
+      "ok": true,
+      "detail": "definido"
+    },
+    {
+      "name": "npm-script-sim:run",
+      "ok": true,
+      "detail": "definido"
+    },
+    {
+      "name": "npm-script-sim:batch",
+      "ok": true,
+      "detail": "definido"
+    },
+    {
+      "name": "npm-script-sim:cleanup",
+      "ok": true,
+      "detail": "definido"
+    },
+    {
+      "name": "npm-script-sim:report",
+      "ok": true,
+      "detail": "definido"
+    },
+    {
+      "name": "npm-script-sim:audit",
+      "ok": true,
+      "detail": "definido"
+    },
+    {
+      "name": "npm-script-sim:watch",
+      "ok": true,
+      "detail": "definido"
+    },
+    {
+      "name": "npm-script-sim:batch:sim02",
+      "ok": true,
+      "detail": "definido"
+    },
+    {
+      "name": "npm-script-exec:audit",
+      "ok": true,
+      "detail": "definido"
+    },
+    {
+      "name": "npm-script-graph:audit",
+      "ok": true,
+      "detail": "definido"
+    },
+    {
+      "name": "npm-script-discovery:audit",
+      "ok": true,
+      "detail": "definido"
+    },
+    {
+      "name": "npm-script-regression:audit",
+      "ok": true,
+      "detail": "definido"
+    },
+    {
+      "name": "npm-script-golive:cleanup",
+      "ok": true,
+      "detail": "definido"
+    },
+    {
+      "name": "npm-script-launch01:reset",
+      "ok": true,
+      "detail": "definido"
+    },
+    {
+      "name": "npm-script-launch01:certify",
+      "ok": true,
+      "detail": "definido"
+    },
+    {
+      "name": "npm-script-go01:orchestrate",
+      "ok": true,
+      "detail": "definido"
+    },
+    {
+      "name": "npm-script-go02:assemble",
+      "ok": true,
+      "detail": "definido"
+    },
+    {
+      "name": "npm-script-migrate:postgresql",
+      "ok": true,
+      "detail": "definido"
+    },
+    {
+      "name": "script-file-te-run.ts",
+      "ok": true,
+      "detail": "existe"
+    },
+    {
+      "name": "script-file-rc01-certify.ts",
+      "ok": true,
+      "detail": "existe"
+    },
+    {
+      "name": "script-file-rc02-certify.ts",
+      "ok": true,
+      "detail": "existe"
+    },
+    {
+      "name": "script-file-rc03-certify.ts",
+      "ok": true,
+      "detail": "existe"
+    },
+    {
+      "name": "script-file-rc04-certify.ts",
+      "ok": true,
+      "detail": "existe"
+    },
+    {
+      "name": "script-file-domain-audit.ts",
+      "ok": true,
+      "detail": "existe"
+    },
+    {
+      "name": "script-file-workflow-audit.ts",
+      "ok": true,
+      "detail": "existe"
+    },
+    {
+      "name": "script-file-workflow-smoke.ts",
+      "ok": true,
+      "detail": "existe"
+    },
+    {
+      "name": "script-file-synchronization-audit.ts",
+      "ok": true,
+      "detail": "existe"
+    },
+    {
+      "name": "script-file-sim-run.ts",
+      "ok": true,
+      "detail": "existe"
+    },
+    {
+      "name": "script-file-simulation-audit.ts",
+      "ok": true,
+      "detail": "existe"
+    },
+    {
+      "name": "script-file-sim-watch.ts",
+      "ok": true,
+      "detail": "existe"
+    },
+    {
+      "name": "script-file-execution-audit.ts",
+      "ok": true,
+      "detail": "existe"
+    },
+    {
+      "name": "script-file-knowledge-graph-audit.ts",
+      "ok": true,
+      "detail": "existe"
+    },
+    {
+      "name": "script-file-discovery-audit.ts",
+      "ok": true,
+      "detail": "existe"
+    },
+    {
+      "name": "script-file-regression-audit.ts",
+      "ok": true,
+      "detail": "existe"
+    },
+    {
+      "name": "script-file-golive-cleanup.ts",
+      "ok": true,
+      "detail": "existe"
+    },
+    {
+      "name": "script-file-launch01-reset.ts",
+      "ok": true,
+      "detail": "existe"
+    },
+    {
+      "name": "script-file-launch01-certify.ts",
+      "ok": true,
+      "detail": "existe"
+    },
+    {
+      "name": "script-file-go01-orchestrate.ts",
+      "ok": true,
+      "detail": "existe"
+    },
+    {
+      "name": "script-file-go02-assemble.ts",
+      "ok": true,
+      "detail": "existe"
+    },
+    {
+      "name": "script-file-migrar-para-postgresql-v2.js",
+      "ok": true,
+      "detail": "existe"
+    },
+    {
+      "name": "deps-prisma",
+      "ok": true,
+      "detail": "@prisma/client"
+    },
+    {
+      "name": "deps-next",
+      "ok": true,
+      "detail": "next"
+    }
+  ],
+  "gates": {
+    "allPass": true,
+    "results": [
+      {
+        "name": "typescript",
+        "ok": true
+      },
+      {
+        "name": "prisma-validate",
+        "ok": true
+      },
+      {
+        "name": "build",
+        "ok": true
+      },
+      {
+        "name": "workflow-smoke",
+        "ok": true
+      },
+      {
+        "name": "domain-audit",
+        "ok": true
+      },
+      {
+        "name": "workflow-audit",
+        "ok": true
+      },
+      {
+        "name": "sync-audit",
+        "ok": true
+      },
+      {
+        "name": "sim-audit",
+        "ok": true
+      },
+      {
+        "name": "exec-audit",
+        "ok": true
+      },
+      {
+        "name": "graph-audit",
+        "ok": true
+      },
+      {
+        "name": "discovery-audit",
+        "ok": true
+      },
+      {
+        "name": "sim-batch",
+        "ok": true
+      },
+      {
+        "name": "sim-batch-sim02",
+        "ok": true
+      },
+      {
+        "name": "regression-audit",
+        "ok": true
+      }
+    ]
+  },
+  "readiness": {
+    "ready": true,
+    "verdict": "APROVADO — candidata v1.0",
+    "justification": "Todos os gates técnicos (TypeScript, build, Prisma, auditorias) passaram. A branch consolida 15 commits de hardening, certificação RC e GO-01. Pendências restantes são operacionais (push, deploy, pagamento real, reset produção) documentadas em GO-01 — não bloqueiam substituição técnica da main após revisão humana."
+  },
+  "constraints": {
+    "noMerge": true,
+    "noPush": true,
+    "noDeploy": true,
+    "noNewFeatures": true
+  }
+}

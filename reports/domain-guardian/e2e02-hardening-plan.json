@@ -1,0 +1,292 @@
+{
+  "reportId": "E2E-02-hardening-plan",
+  "mode": "READ_ONLY",
+  "generatedAt": "2026-07-10T05:45:00.000Z",
+  "language": "pt-BR",
+  "projectName": "THouse",
+  "branch": "pr03-clean",
+  "head": "3f20ad0",
+  "basedOn": "E2E-01-customer-journey",
+  "objective": "Transformar todos os status 🟡 da E2E-01 em 🟢",
+  "baselineProbability": {
+    "coreSteps1to10": 52,
+    "fullSteps1to15": 38
+  },
+  "targetProbabilityAfterAllSprints": {
+    "coreSteps1to10": 92,
+    "fullSteps1to15": 85
+  },
+  "probabilityAfterH1": {
+    "coreSteps1to10": 78,
+    "fullSteps1to15": 58,
+    "justification": "H1 resolve infra webhook, feedback pós-pagamento e navegação pós-registro — maiores causas de ticket. Admin, cupom PR-04 e reembolso avançado permanecem 🟡 até H2/H3."
+  },
+  "items": [
+    {
+      "id": "H-MC-01",
+      "etapaE2E01": 4,
+      "nome": "Minha Conta (navegação pós-registro)",
+      "statusAtual": "🟡",
+      "statusAlvo": "🟢",
+      "porQueAmarelo": "Após registro o usuário é enviado para /conta (perfil), não /minha-conta (painel operacional). Quem não explora o menu não encontra agendamentos e pagamentos.",
+      "tipoProblema": ["UX"],
+      "menorCorrecao": "Alterar redirect pós-registro de /conta para /minha-conta (ou /minha-conta?welcome=1 com banner de boas-vindas).",
+      "tempoEstimado": "1–2 horas",
+      "risco": "Baixo",
+      "bloqueiaProducao": "NÃO",
+      "sprint": "H1"
+    },
+    {
+      "id": "H-MC-02",
+      "etapaE2E01": 10,
+      "nome": "Minha Conta (pós-pagamento)",
+      "statusAtual": "🟡",
+      "statusAlvo": "🟢",
+      "porQueAmarelo": "Agendamento só aparece após webhook processar. Se webhook atrasa ou falha, cliente vê conta vazia após pagar — interpreta como bug.",
+      "tipoProblema": ["Código", "Infraestrutura", "UX"],
+      "menorCorrecao": "Na página de sucesso: polling em /api/pagamentos/verificar (ou meus-dados) por até 60s com mensagem 'Processando seu pagamento…'; ao detectar Payment+Appointment, redirect automático para /minha-conta com toast de confirmação.",
+      "tempoEstimado": "4–6 horas",
+      "risco": "Médio",
+      "bloqueiaProducao": "SIM",
+      "sprint": "H1",
+      "dependencias": ["H-WH-01", "H-WH-02"]
+    },
+    {
+      "id": "H-CK-01",
+      "etapaE2E01": 8,
+      "nome": "Checkout",
+      "statusAtual": "🟡",
+      "statusAlvo": "🟢",
+      "porQueAmarelo": "Formulário longo (CPF, endereço, termos); erros Asaas (domínio, token, CPF ausente) exibidos como alert genérico; usuário pode abandonar no meio.",
+      "tipoProblema": ["UX", "Configuração", "Código"],
+      "menorCorrecao": "H1: checklist env Asaas + mensagens de erro mapeadas (domínio, token, CPF). H2: pré-preencher CPF/endereço do perfil no carrinho; link 'Completar perfil' se CPF vazio antes do checkout.",
+      "tempoEstimado": "H1: 2h (config + copy) · H2: 4h (UX pré-fill)",
+      "risco": "Baixo",
+      "bloqueiaProducao": "NÃO",
+      "sprint": "H1",
+      "notaH1": "Configuração operacional; H2 fecha UX"
+    },
+    {
+      "id": "H-WH-01",
+      "etapaE2E01": 9,
+      "nome": "Webhook (infraestrutura)",
+      "statusAtual": "🟡",
+      "statusAlvo": "🟢",
+      "porQueAmarelo": "Etapa invisível ao cliente; depende de URL pública, token, domínio Asaas e fila do provedor. Falha = pagamento sem efeitos no sistema.",
+      "tipoProblema": ["Infraestrutura", "Configuração", "Operação"],
+      "menorCorrecao": "Registrar webhook em produção: ASAAS_WEBHOOK_ACCESS_TOKEN, URL https://{dominio}/api/webhooks/asaas, NEXT_PUBLIC_SITE_URL correto, domínio no painel Asaas. Testar com pagamento sandbox e confirmar Payment+Appointment no banco.",
+      "tempoEstimado": "2–4 horas (operação)",
+      "risco": "Alto",
+      "bloqueiaProducao": "SIM",
+      "sprint": "H1"
+    },
+    {
+      "id": "H-WH-02",
+      "etapaE2E01": 9,
+      "nome": "Webhook (resiliência código)",
+      "statusAtual": "🟡",
+      "statusAlvo": "🟢",
+      "porQueAmarelo": "Webhook sempre retorna 200 mesmo com erro interno; falhas silenciosas; metadata fallback pode associar pagamento errado.",
+      "tipoProblema": ["Código", "Operação"],
+      "menorCorrecao": "H2: logging estruturado + alerta (email/Slack) em falha de efeitos; H2: reduzir cascata loadMetadataForPayment; H1: monitorar logs Asaas webhook no deploy.",
+      "tempoEstimado": "H2: 1–2 dias",
+      "risco": "Médio",
+      "bloqueiaProducao": "NÃO",
+      "sprint": "H2"
+    },
+    {
+      "id": "H-AD-01",
+      "etapaE2E01": 11,
+      "nome": "Admin",
+      "statusAtual": "🟡",
+      "statusAlvo": "🟢",
+      "porQueAmarelo": "Cliente fica em status 'pendente' sem saber prazo; depende de admin aceitar manualmente; UI de teste admin retorna 410.",
+      "tipoProblema": ["UX", "Operação", "Código"],
+      "menorCorrecao": "H2: em Minha Conta exibir badge 'Aguardando confirmação da THouse (até 24h)' + email ao admin em novo agendamento pago. H3: fila/notificação push admin.",
+      "tempoEstimado": "H2: 6–8 horas",
+      "risco": "Baixo",
+      "bloqueiaProducao": "NÃO",
+      "sprint": "H2"
+    },
+    {
+      "id": "H-EN-01",
+      "etapaE2E01": 12,
+      "nome": "Entrega",
+      "statusAtual": "🟡",
+      "statusAlvo": "🟢",
+      "porQueAmarelo": "Entrega é presencial no estúdio; sistema só reflete status aceito/confirmado sem marco claro de 'serviço realizado' para o cliente.",
+      "tipoProblema": ["UX", "Operação"],
+      "menorCorrecao": "H2: quando admin marca agendamento como confirmado/realizado, email ao cliente com resumo (data, hora, serviços). H3: status 'concluído' visível em Minha Conta com histórico.",
+      "tempoEstimado": "H2: 4h · H3: 1 dia",
+      "risco": "Baixo",
+      "bloqueiaProducao": "NÃO",
+      "sprint": "H2"
+    },
+    {
+      "id": "H-CP-01",
+      "etapaE2E01": 13,
+      "nome": "Cupom",
+      "statusAtual": "🟡",
+      "statusAlvo": "🟢",
+      "porQueAmarelo": "Regras distintas (plano, reembolso, 100%, TESTE_ legado); vincular-cupons-teste shim; ownership incompleto até PR-04.",
+      "tipoProblema": ["Código", "UX"],
+      "menorCorrecao": "H2: mensagens de validação mais claras no agendamento ('cupom de plano só para X'). H3: merge PR-04 (simulation-coupon, ownership) e remover shim vincular-cupons-teste.",
+      "tempoEstimado": "H2: 4h · H3: 3–5 dias (PR-04)",
+      "risco": "Médio",
+      "bloqueiaProducao": "NÃO",
+      "sprint": "H2",
+      "nota": "Cupom 100% já funciona; amarelo é confusão, não bloqueio"
+    },
+    {
+      "id": "H-RF-01",
+      "etapaE2E01": 14,
+      "nome": "Reembolso",
+      "statusAtual": "🟡",
+      "statusAlvo": "🟢",
+      "porQueAmarelo": "Fluxo reativo (só após admin cancelar); heurísticas para achar pagamento Asaas; mensagem 'entre em contato' em edge cases.",
+      "tipoProblema": ["Código", "UX", "Operação"],
+      "menorCorrecao": "H2: em Minha Conta, card explícito 'Escolha reembolso ou cupom' quando agendamento cancelado com opção pendente. H3: simplificar resolvedor de pagamento; guia in-app passo a passo.",
+      "tempoEstimado": "H2: 6h · H3: 2 dias",
+      "risco": "Médio",
+      "bloqueiaProducao": "NÃO",
+      "sprint": "H2"
+    }
+  ],
+  "sprints": {
+    "H1": {
+      "nome": "Sprint H1 — Obrigatório antes do deploy",
+      "objetivo": "Eliminar causas #1 de ticket: webhook ausente e 'paguei e não apareceu'",
+      "duracaoEstimada": "2–3 dias úteis",
+      "itens": [
+        {
+          "id": "H-WH-01",
+          "titulo": "Configurar webhook Asaas em produção",
+          "tipo": "Configuração + Operação",
+          "bloqueiaProducao": true
+        },
+        {
+          "id": "H-MC-02",
+          "titulo": "Polling + feedback na página de sucesso",
+          "tipo": "Código + UX",
+          "bloqueiaProducao": true
+        },
+        {
+          "id": "H-MC-01",
+          "titulo": "Redirect pós-registro → /minha-conta",
+          "tipo": "UX",
+          "bloqueiaProducao": false
+        },
+        {
+          "id": "H-CK-01",
+          "titulo": "Checklist env Asaas + mensagens de erro checkout",
+          "tipo": "Configuração",
+          "bloqueiaProducao": false
+        },
+        {
+          "id": "H-OP-01",
+          "titulo": "Smoke test E2E sandbox (registro → pagamento → minha-conta)",
+          "tipo": "Operação",
+          "bloqueiaProducao": true
+        },
+        {
+          "id": "H-OP-02",
+          "titulo": "Commitar GL-01 B2 (fluxo planos) se planos no escopo",
+          "tipo": "Código",
+          "bloqueiaProducao": false,
+          "condicional": true
+        }
+      ],
+      "etapasVerdesAposH1": [4, 8, 9, 10],
+      "etapasAindaAmarelas": [11, 12, 13, 14]
+    },
+    "H2": {
+      "nome": "Sprint H2 — Importante após deploy",
+      "objetivo": "Fechar UX operacional, resiliência webhook e comunicação cliente-admin",
+      "duracaoEstimada": "1–2 semanas",
+      "itens": [
+        {
+          "id": "H-WH-02",
+          "titulo": "Logging/alertas webhook + tighten metadata fallback",
+          "tipo": "Código + Operação"
+        },
+        {
+          "id": "H-CK-01b",
+          "titulo": "Pré-preenchimento perfil no carrinho + erros Asaas amigáveis",
+          "tipo": "UX + Código"
+        },
+        {
+          "id": "H-AD-01",
+          "titulo": "SLA visível ao cliente + notificação admin novo agendamento",
+          "tipo": "UX + Operação"
+        },
+        {
+          "id": "H-EN-01",
+          "titulo": "Email confirmação pós-aceite admin",
+          "tipo": "Operação + UX"
+        },
+        {
+          "id": "H-CP-01",
+          "titulo": "Copy clara validação cupom",
+          "tipo": "UX"
+        },
+        {
+          "id": "H-RF-01",
+          "titulo": "Card reembolso proativo em Minha Conta",
+          "tipo": "UX"
+        }
+      ],
+      "etapasVerdesAposH2": [11, 12, 13, 14],
+      "probabilityEstimate": { "core": 88, "full": 78 }
+    },
+    "H3": {
+      "nome": "Sprint H3 — Evoluções",
+      "objetivo": "Consolidação PR-04, tracking entrega, reembolso robusto",
+      "duracaoEstimada": "2–4 semanas",
+      "itens": [
+        {
+          "id": "H-CP-02",
+          "titulo": "PR-04 cupons e ownership (remover shims TESTE_)",
+          "tipo": "Código"
+        },
+        {
+          "id": "H-EN-02",
+          "titulo": "Status 'concluído' e histórico de entrega em Minha Conta",
+          "tipo": "UX + Código"
+        },
+        {
+          "id": "H-RF-02",
+          "titulo": "Simplificar resolvedor pagamento reembolso + guia in-app",
+          "tipo": "Código"
+        },
+        {
+          "id": "H-AD-02",
+          "titulo": "Fila admin / notificações tempo real",
+          "tipo": "Operação + Código"
+        },
+        {
+          "id": "H-CK-02",
+          "titulo": "Carrinho server-side opcional (persistência cross-device)",
+          "tipo": "Código",
+          "opcional": true
+        }
+      ],
+      "probabilityEstimate": { "core": 92, "full": 85 }
+    }
+  },
+  "matrizTipoProblema": {
+    "Minha Conta": ["UX", "Código", "Infraestrutura"],
+    "Checkout": ["UX", "Configuração", "Código"],
+    "Webhook": ["Infraestrutura", "Configuração", "Código", "Operação"],
+    "Admin": ["UX", "Operação", "Código"],
+    "Entrega": ["UX", "Operação"],
+    "Cupom": ["Código", "UX"],
+    "Reembolso": ["Código", "UX", "Operação"]
+  },
+  "verdict": {
+    "aposH1Core": 78,
+    "aposH1Full": 58,
+    "aposH2Full": 78,
+    "aposH3Full": 85,
+    "mensagem": "H1 sobe a jornada core de 52% para ~78%; jornada completa 15 etapas sobe de 38% para ~58% porque admin/entrega/cupom/reembolso exigem H2."
+  }
+}

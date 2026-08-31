@@ -1,0 +1,557 @@
+{
+  "agentVersion": "1.0.0",
+  "generatedAt": "2026-07-05T22:12:48.869Z",
+  "language": "pt-BR",
+  "summary": {
+    "projectName": "THouse",
+    "headline": "Code Health 34/100 (E) · estável",
+    "executiveSummary": "O THouse tem Code Health Score 34/100 (grade E). Dívida técnica crítico (100/100). 210 arquivos, 46.308 linhas, 101 APIs. Módulos mais saudáveis: Webhook, Guardian. Módulos críticos: Financeiro, Appointment. Tendência geral: estável. Guardian: HEALTHY. Congelar Financeiro/Webhook até estabilização; Guardian e Infraestrutura podem evoluir.",
+    "codeHealthScore": 34,
+    "grade": "E",
+    "trend": "estável",
+    "filesTotal": 210,
+    "linesTotal": 46308
+  },
+  "overallHealth": {
+    "score": 34,
+    "grade": "E",
+    "trend": "estável",
+    "trendDetail": "Baseline inicial — reexecute após mudanças para medir evolução"
+  },
+  "scores": {
+    "arquitetura": 100,
+    "qualidade": 8,
+    "organizacao": 30,
+    "modularizacao": 0,
+    "acoplamento": 96,
+    "legibilidade": 0,
+    "escalabilidade": 98,
+    "manutenibilidade": 0,
+    "overall": 34,
+    "grade": "E"
+  },
+  "modules": [
+    {
+      "id": "Financeiro",
+      "name": "Financeiro",
+      "healthScore": 5,
+      "fileCount": 43,
+      "lines": 4182,
+      "avgFileSize": 97,
+      "complexity": 84,
+      "duplications": 17,
+      "legacyCode": 8,
+      "technicalDebt": 100,
+      "coupling": 0,
+      "criticalFiles": [
+        "src/app/api/webhooks/asaas/route.ts",
+        "src/app/api/asaas/checkout-agendamento/route.ts",
+        "src/app/lib/process-payment-webhook.ts",
+        "src/app/api/admin/reprocessar-pagamento-teste/route.ts",
+        "src/app/api/infinitypay/checkout-agendamento/route.ts"
+      ],
+      "grade": "E",
+      "trend": "estável",
+      "recommendation": "congelar",
+      "recommendationReason": "Domínio crítico — congelar até Sprint 1 de estabilização concluir"
+    },
+    {
+      "id": "Appointment",
+      "name": "Appointment",
+      "healthScore": 5,
+      "fileCount": 25,
+      "lines": 6524,
+      "avgFileSize": 261,
+      "complexity": 136,
+      "duplications": 16,
+      "legacyCode": 30,
+      "technicalDebt": 100,
+      "coupling": 1,
+      "criticalFiles": [
+        "src/app/agendamento/page.tsx",
+        "src/app/api/admin/agendamentos/route.ts",
+        "src/app/admin/controle-agendamento/page.tsx",
+        "src/app/admin/agendamentos/page.tsx",
+        "src/app/api/agendamentos/route.ts"
+      ],
+      "grade": "E",
+      "trend": "estável",
+      "recommendation": "congelar",
+      "recommendationReason": "Domínio crítico — congelar até Sprint 1 de estabilização concluir"
+    },
+    {
+      "id": "Coupon",
+      "name": "Coupon",
+      "healthScore": 62,
+      "fileCount": 12,
+      "lines": 515,
+      "avgFileSize": 43,
+      "complexity": 107,
+      "duplications": 1,
+      "legacyCode": 6,
+      "technicalDebt": 34,
+      "coupling": 1,
+      "criticalFiles": [
+        "src/app/api/agendamentos/com-cupom/route.ts",
+        "src/app/lib/coupon-stale-appointment.ts",
+        "src/app/api/coupons/validate/route.ts",
+        "src/app/api/admin/coupons/generate/route.ts",
+        "src/app/lib/plan-coupons.ts"
+      ],
+      "grade": "D",
+      "trend": "estável",
+      "recommendation": "monitorar",
+      "recommendationReason": "Estável — evoluir com cautela e Guardian"
+    },
+    {
+      "id": "MinhaConta",
+      "name": "Minha Conta",
+      "healthScore": 30,
+      "fileCount": 6,
+      "lines": 3962,
+      "avgFileSize": 660,
+      "complexity": 263,
+      "duplications": 2,
+      "legacyCode": 20,
+      "technicalDebt": 61,
+      "coupling": 1,
+      "criticalFiles": [
+        "src/app/api/meus-dados/route.ts",
+        "src/app/conta/page.tsx",
+        "src/app/minha-conta/page.tsx",
+        "src/app/api/conta/route.ts",
+        "src/app/api/conta/update/route.ts"
+      ],
+      "grade": "E",
+      "trend": "estável",
+      "recommendation": "refatorar",
+      "recommendationReason": "Health score baixo e dívida técnica elevada"
+    },
+    {
+      "id": "Webhook",
+      "name": "Webhook",
+      "healthScore": 97,
+      "fileCount": 3,
+      "lines": 1307,
+      "avgFileSize": 436,
+      "complexity": 129,
+      "duplications": 5,
+      "legacyCode": 4,
+      "technicalDebt": 1,
+      "coupling": 0,
+      "criticalFiles": [
+        "src/app/api/webhooks/mercadopago/route.ts"
+      ],
+      "grade": "A+",
+      "trend": "estável",
+      "recommendation": "monitorar",
+      "recommendationReason": "Estável — evoluir com cautela e Guardian"
+    },
+    {
+      "id": "Admin",
+      "name": "Admin",
+      "healthScore": 22,
+      "fileCount": 19,
+      "lines": 8068,
+      "avgFileSize": 425,
+      "complexity": 96,
+      "duplications": 1,
+      "legacyCode": 26,
+      "technicalDebt": 81,
+      "coupling": 0,
+      "criticalFiles": [
+        "src/app/admin/manutencao/page.tsx",
+        "src/app/admin/chats-gerais/page.tsx",
+        "src/app/admin/estatisticas/page.tsx",
+        "src/app/admin/planos/page.tsx",
+        "src/app/admin/chat/page.tsx"
+      ],
+      "grade": "E",
+      "trend": "estável",
+      "recommendation": "refatorar",
+      "recommendationReason": "Health score baixo e dívida técnica elevada"
+    },
+    {
+      "id": "Guardian",
+      "name": "Guardian",
+      "healthScore": 95,
+      "fileCount": 0,
+      "lines": 0,
+      "avgFileSize": 0,
+      "complexity": 0,
+      "duplications": 0,
+      "legacyCode": 0,
+      "technicalDebt": 0,
+      "coupling": 0,
+      "criticalFiles": [],
+      "grade": "A+",
+      "trend": "estável",
+      "recommendation": "evoluir",
+      "recommendationReason": "Saúde adequada para novas funcionalidades de baixo risco"
+    },
+    {
+      "id": "Scripts",
+      "name": "Scripts",
+      "healthScore": 36,
+      "fileCount": 15,
+      "lines": 1131,
+      "avgFileSize": 75,
+      "complexity": 56,
+      "duplications": 6,
+      "legacyCode": 30,
+      "technicalDebt": 52,
+      "coupling": 0,
+      "criticalFiles": [
+        "scripts/verificar-todos-usuarios-local.js",
+        "scripts/migrar-todas-faqs-producao.js",
+        "scripts/verificar-dados-usuario-producao.js",
+        "scripts/verificar-usuarios-producao.js",
+        "scripts/verificar-e-migrar-dados-local.js"
+      ],
+      "grade": "E",
+      "trend": "estável",
+      "recommendation": "refatorar",
+      "recommendationReason": "Health score baixo e dívida técnica elevada"
+    },
+    {
+      "id": "Infraestrutura",
+      "name": "Infraestrutura",
+      "healthScore": 5,
+      "fileCount": 30,
+      "lines": 9817,
+      "avgFileSize": 327,
+      "complexity": 83,
+      "duplications": 25,
+      "legacyCode": 34,
+      "technicalDebt": 100,
+      "coupling": 0,
+      "criticalFiles": [
+        "src/app/middleware.ts",
+        "src/app/api/asaas/checkout-agendamento/route.ts",
+        "src/app/api/asaas/checkout-carrinho/route.ts",
+        "src/app/api/webhooks/asaas/route.ts",
+        "src/app/lib/process-payment-webhook.ts"
+      ],
+      "grade": "E",
+      "trend": "estável",
+      "recommendation": "refatorar",
+      "recommendationReason": "Health score baixo e dívida técnica elevada"
+    }
+  ],
+  "ranking": {
+    "healthiest": [
+      {
+        "rank": 1,
+        "module": "Webhook",
+        "score": 97,
+        "grade": "A+"
+      },
+      {
+        "rank": 2,
+        "module": "Guardian",
+        "score": 95,
+        "grade": "A+"
+      },
+      {
+        "rank": 3,
+        "module": "Coupon",
+        "score": 62,
+        "grade": "D"
+      },
+      {
+        "rank": 4,
+        "module": "Scripts",
+        "score": 36,
+        "grade": "E"
+      },
+      {
+        "rank": 5,
+        "module": "Minha Conta",
+        "score": 30,
+        "grade": "E"
+      },
+      {
+        "rank": 6,
+        "module": "Admin",
+        "score": 22,
+        "grade": "E"
+      },
+      {
+        "rank": 7,
+        "module": "Financeiro",
+        "score": 5,
+        "grade": "E"
+      },
+      {
+        "rank": 8,
+        "module": "Appointment",
+        "score": 5,
+        "grade": "E"
+      },
+      {
+        "rank": 9,
+        "module": "Infraestrutura",
+        "score": 5,
+        "grade": "E"
+      }
+    ],
+    "critical": [
+      {
+        "rank": 1,
+        "module": "Financeiro",
+        "score": 5,
+        "grade": "E",
+        "reason": "Domínio crítico — congelar até Sprint 1 de estabilização concluir"
+      },
+      {
+        "rank": 2,
+        "module": "Appointment",
+        "score": 5,
+        "grade": "E",
+        "reason": "Domínio crítico — congelar até Sprint 1 de estabilização concluir"
+      },
+      {
+        "rank": 3,
+        "module": "Infraestrutura",
+        "score": 5,
+        "grade": "E",
+        "reason": "Health score baixo e dívida técnica elevada"
+      },
+      {
+        "rank": 4,
+        "module": "Admin",
+        "score": 22,
+        "grade": "E",
+        "reason": "Health score baixo e dívida técnica elevada"
+      },
+      {
+        "rank": 5,
+        "module": "Minha Conta",
+        "score": 30,
+        "grade": "E",
+        "reason": "Health score baixo e dívida técnica elevada"
+      },
+      {
+        "rank": 6,
+        "module": "Scripts",
+        "score": 36,
+        "grade": "E",
+        "reason": "Health score baixo e dívida técnica elevada"
+      },
+      {
+        "rank": 7,
+        "module": "Coupon",
+        "score": 62,
+        "grade": "D",
+        "reason": "Estável — evoluir com cautela e Guardian"
+      },
+      {
+        "rank": 8,
+        "module": "Guardian",
+        "score": 95,
+        "grade": "A+",
+        "reason": "Saúde adequada para novas funcionalidades de baixo risco"
+      },
+      {
+        "rank": 9,
+        "module": "Webhook",
+        "score": 97,
+        "grade": "A+",
+        "reason": "Estável — evoluir com cautela e Guardian"
+      }
+    ]
+  },
+  "criticalModules": [
+    "Financeiro",
+    "Appointment",
+    "Infraestrutura",
+    "Admin",
+    "Minha Conta",
+    "Scripts"
+  ],
+  "healthyModules": [
+    "Webhook",
+    "Guardian"
+  ],
+  "technicalDebt": {
+    "overall": 100,
+    "level": "Crítico",
+    "byModule": {
+      "Financeiro": 100,
+      "Appointment": 100,
+      "Coupon": 34,
+      "MinhaConta": 61,
+      "Webhook": 1,
+      "Admin": 81,
+      "Guardian": 0,
+      "Scripts": 52,
+      "Infraestrutura": 100
+    }
+  },
+  "coupling": {
+    "score": 96,
+    "circularDependencies": 0,
+    "highImportFiles": 2
+  },
+  "complexity": {
+    "score": 0,
+    "avgCyclomatic": 96,
+    "largeFiles": 21,
+    "largeFunctions": 85
+  },
+  "growth": {
+    "mostImproved": null,
+    "mostDeclined": {
+      "module": "Financeiro",
+      "reason": "Domínio crítico — congelar até Sprint 1 de estabilização concluir"
+    },
+    "deservesRefactor": [
+      "Minha Conta",
+      "Admin",
+      "Scripts",
+      "Infraestrutura"
+    ],
+    "deservesFreeze": [
+      "Financeiro",
+      "Appointment"
+    ],
+    "canReceiveFeatures": [
+      "Guardian"
+    ]
+  },
+  "recommendations": [
+    "Executar code-health-agent.ts após cada sprint para medir evolução",
+    "Manter Guardian HEALTHY antes de refatorar domínios Financeiro/Webhook",
+    "Priorizar divisão de arquivos monolíticos (21 arquivos > 500 linhas)",
+    "Coupon e Minha Conta têm health intermediário — refatorar após estabilização",
+    "Guardian e Infraestrutura são candidatos seguros para novos agentes e tooling",
+    "Decision BLOCKED — não misturar refatoração com deploy pendente"
+  ],
+  "roadmap": {
+    "shortTerm": [
+      "Baseline code-health registrado",
+      "Quick wins do refactor-report (imports mortos, legacy documentado)",
+      "Monitorar módulos Financeiro e Appointment sem alterar regras"
+    ],
+    "mediumTerm": [
+      "Dividir agendamento/page.tsx e minha-conta/page.tsx",
+      "Centralizar queries Prisma duplicadas",
+      "Extrair hooks useUnread* compartilhados"
+    ],
+    "longTerm": [
+      "Repository layer para Payment e Appointment",
+      "Reduzir dívida técnica abaixo de 60/100",
+      "Alcançar Code Health Score B (80+) pós-deploy produção"
+    ]
+  },
+  "metrics": {
+    "totalLines": 46308,
+    "totalFiles": 210,
+    "apis": 101,
+    "libs": 29,
+    "components": 11,
+    "hooks": 5,
+    "scripts": 15,
+    "entities": 7,
+    "flows": 59,
+    "issuesTotal": 464,
+    "duplications": 15,
+    "legacyMarkers": 147
+  },
+  "timeline": {
+    "snapshots": [
+      {
+        "generatedAt": "2026-07-05T22:12:48.867Z",
+        "codeHealthScore": 34,
+        "grade": "E",
+        "technicalDebt": 100,
+        "modules": {
+          "Financeiro": 5,
+          "Appointment": 5,
+          "Coupon": 62,
+          "MinhaConta": 30,
+          "Webhook": 97,
+          "Admin": 22,
+          "Guardian": 95,
+          "Scripts": 36,
+          "Infraestrutura": 5
+        }
+      }
+    ],
+    "guardianTrend": "estável",
+    "guardianRuns": 4
+  },
+  "context": {
+    "sourcesConsulted": [
+      {
+        "path": "reports/domain-guardian/refactor-report.json",
+        "loaded": true
+      },
+      {
+        "path": "reports/domain-guardian/project-context.json",
+        "loaded": true
+      },
+      {
+        "path": "reports/domain-guardian/project-knowledge-graph.json",
+        "loaded": true
+      },
+      {
+        "path": "reports/domain-guardian/memory.json",
+        "loaded": true
+      },
+      {
+        "path": "reports/domain-guardian/latest.json",
+        "loaded": true
+      },
+      {
+        "path": "reports/domain-guardian/execution-status.json",
+        "loaded": true
+      },
+      {
+        "path": "reports/domain-guardian/evolution-report.json",
+        "loaded": true
+      },
+      {
+        "path": "reports/domain-guardian/architecture-decisions.json",
+        "loaded": true
+      },
+      {
+        "path": "reports/domain-guardian/change-analysis.md",
+        "loaded": true
+      },
+      {
+        "path": "reports/domain-guardian/decision.md",
+        "loaded": true
+      },
+      {
+        "path": "reports/domain-guardian/action-plan.md",
+        "loaded": true
+      },
+      {
+        "path": "docs/ai/domain-map.md",
+        "loaded": true
+      },
+      {
+        "path": "docs/ai/domain-dependencies.md",
+        "loaded": true
+      },
+      {
+        "path": "docs/ai/domain-invariants.md",
+        "loaded": true
+      },
+      {
+        "path": "git ls-files",
+        "loaded": true
+      }
+    ],
+    "refactorReportAt": "2026-07-05T22:06:03.875Z"
+  },
+  "limitations": [
+    "Depende de refactor-report.json — executar refactor-agent.ts antes",
+    "Tendências por módulo requerem execuções anteriores de code-health-agent.ts",
+    "memory.json usado apenas para tendência Guardian, não métricas de código",
+    "Health score é heurístico — não mede bugs ou cobertura de testes",
+    "Módulos podem sobrepor arquivos (ex.: Webhook ⊂ Financeiro)",
+    "Primeira execução registra baseline; comparativos a partir da segunda"
+  ]
+}

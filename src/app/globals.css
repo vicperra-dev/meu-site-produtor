@@ -1,29 +1,202 @@
 @import "tailwindcss";
 
-/* Tema fixo DARK */
+/* =========================
+   VARIÁVEIS GLOBAIS (layout compacto = produção)
+   Mobile: 14px. Desktop (lg+): 20px — textos e boxes iguais ao site local em todas as páginas.
+========================= */
 :root {
-  --background: #000000;
   --foreground: #f5f5f5;
+  --header-h: 60px;
+  font-size: 14px;
+}
+@media (min-width: 1024px) {
+  :root {
+    font-size: 20px;
+  }
+}
 
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+/* =========================
+   FUNDO GLOBAL COM TEXTURA
+========================= */
+html {
+  overflow-x: hidden;
+  width: 100%;
 }
 
 body {
-  background: var(--background);
+  min-height: 100vh;
+  width: 100%;
+  overflow-x: hidden;
+
+  /* fallback */
+  background-color: #606060;
+
+  /* textura */
+  background-image: url("/Textures/layout-estudio.png");
+  background-repeat: repeat;
+  background-size: auto;
+  background-attachment: fixed;
+
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
   margin: 0;
   padding: 0;
+  padding-top: var(--header-h); /* Espaço para o header fixo (compacto) */
 }
 
-/* Links mantêm a cor do texto por padrão */
+/* Admin / manutenção: sem Header do site → sem padding reservado nem textura do body.
+   `body:has([data-admin-shell])` cobre o SSR do AdminLayout; `.admin-shell` cobre /manutencao. */
+html.admin-shell,
+html:has([data-admin-shell]),
+body.admin-shell,
+body:has([data-admin-shell]) {
+  background-color: #09090b; /* zinc-950 */
+  background-image: none;
+  background-attachment: scroll;
+}
+
+body.admin-shell,
+body:has([data-admin-shell]) {
+  padding-top: 0;
+}
+
+/* =========================
+   LINKS
+========================= */
 a {
   color: inherit;
   text-decoration: none;
 }
 
-/* Remove highlight azul feio ao clicar no mobile */
+/* =========================
+   ANIMAÇÕES
+========================= */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slide-in-right {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.3s ease-out;
+}
+
+/* =========================
+   ACESSIBILIDADE / MOBILE
+========================= */
 *:focus {
   outline: none;
 }
+
+/* Desabilitar botão nativo de mostrar senha do navegador */
+input[type="password"]::-webkit-credentials-auto-fill-button,
+input[type="password"]::-webkit-strong-password-auto-fill-button,
+input[type="password"]::-webkit-inner-spin-button,
+input[type="password"]::-webkit-outer-spin-button {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  -webkit-appearance: none !important;
+  appearance: none !important;
+}
+
+/* Para Edge/IE */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* Para Firefox - desabilitar autocomplete visual */
+input[type="password"] {
+  -moz-appearance: textfield;
+}
+
+/* Garantir que não apareça botão nativo em nenhum navegador */
+input[type="password"]::placeholder {
+  -webkit-text-security: none;
+  text-security: none;
+}
+
+/* =========================
+   SCROLLBAR CUSTOMIZADA (CHAT)
+========================= */
+/* Webkit (Chrome, Safari, Edge) */
+.chat-scroll::-webkit-scrollbar {
+  width: 12px;
+}
+
+.chat-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.chat-scroll::-webkit-scrollbar-thumb {
+  background: rgba(239, 68, 68, 0.3);
+  border-radius: 4px;
+  border: 1px solid rgba(239, 68, 68, 0.5);
+}
+
+.chat-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(239, 68, 68, 0.5);
+  border-color: rgba(239, 68, 68, 0.7);
+}
+
+/* Firefox */
+.chat-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(239, 68, 68, 0.3) transparent;
+}
+
+/* =========================
+   HERO — tamanhos alinhados ao site local só no desktop (sem alterar mobile)
+========================= */
+@media (min-width: 1024px) {
+  .hero-title {
+    font-size: clamp(4rem, 11vw, 7.5rem) !important;
+  }
+  .hero-services {
+    font-size: clamp(1.15rem, 2.9vw, 1.5rem) !important;
+  }
+  .hero-tagline {
+    font-size: min(1.5rem, 2.6vw) !important;
+  }
+}
+
+/* =========================
+   IMAGENS DE FUNDO RESPONSIVAS
+   Desktop: mantém posição definida por cada página
+   Mobile: centraliza e ajusta para melhor encaixe
+========================= */
+.page-bg-image {
+  background-size: var(--page-bg-size, cover);
+  background-position: var(--page-bg-position, center center);
+}
+@media (max-width: 767px) {
+  .page-bg-image {
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
+  }
+  /* FAQ mobile: desloca imagem para esquerda para enquadrar lupa com interrogação */
+  .page-bg-image-faq {
+    background-position: 25% center;
+  }
+}
+

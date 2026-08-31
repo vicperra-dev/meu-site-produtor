@@ -1,0 +1,94 @@
+{
+  "reportId": "PV-01a-guardian-diagnosis",
+  "mode": "READ_ONLY",
+  "generatedAt": "2026-07-11T04:00:00.000Z",
+  "language": "pt-BR",
+  "projectName": "THouse Rec",
+  "branch": "pr03-clean",
+  "head": "bfc5c38",
+  "basedOn": ["PV-01-release-publish", ".github/workflows/domain-guardian.yml"],
+  "restricoes": {
+    "alteracaoCodigo": false,
+    "novosCommits": false,
+    "alteracaoWorkflows": false
+  },
+  "respostas": {
+    "1_comandoExit9": {
+      "step": "4. Domain Decision Engine (gate)",
+      "comando": "node --experimental-strip-types scripts/domain-decision-engine.ts",
+      "workflowFile": ".github/workflows/domain-guardian.yml",
+      "linhaAproximada": 52,
+      "nota": "Primeiro passo do pipeline Guardian que executa `node --experimental-strip-types` sem `|| true`, após `npm ci` e `npx prisma generate` (que não usam essa flag)."
+    },
+    "2_significadoExit9": {
+      "classificacao": "erro_real",
+      "naoEGateProposital": true,
+      "explicacao": "Exit code 9 é código do runtime Node.js para **Invalid Argument** (opção CLI desconhecida ou inválida). O gate intencional do Decision Engine usa **exit 1** quando a decisão é BLOCKED — documentado em `scripts/domain-decision-engine.ts` linha 16.",
+      "causaRaiz": "Incompatibilidade Node 20 (workflow) com flag `--experimental-strip-types` (suporte nativo a partir de Node ~22.6 / estável em 22.18+). O Node 20 rejeita a flag antes de executar qualquer script TypeScript.",
+      "evidencia": [
+        "Workflow fixa `node-version: \"20\"` (domain-guardian.yml:30)",
+        "Todos os passos 1–5 invocam `node --experimental-strip-types`",
+        "Documentação Node.js: exit 9 = Invalid Argument",
+        "CLI Node 20.x não lista `--experimental-strip-types`",
+        "Nenhum script do repositório define `process.exitCode = 9`"
+      ]
+    },
+    "3_deployAfetado": "NAO",
+    "4_bloqueioEscopo": "apenas_governanca",
+    "5_menorCorrecao": {
+      "prioridade": "P0",
+      "acao": "Alterar `node-version` no workflow de `\"20\"` para `\"22\"` ou `\"24\"` (versões com suporte a type stripping nativo).",
+      "alternativa": "Remover `--experimental-strip-types` e executar via `npx tsx scripts/...` (requer devDependency).",
+      "arquivo": ".github/workflows/domain-guardian.yml",
+      "diffSugerido": "node-version: \"22\""
+    }
+  },
+  "analiseWorkflow": {
+    "trigger": ["push", "pull_request", "workflow_dispatch"],
+    "job": "Governança de domínio",
+    "stepsComMascaraFalha": [
+      {
+        "step": "1. Domain Guardian Runner",
+        "comando": "domain-guardian-runner.ts + advisor.ts",
+        "mascara": "|| true",
+        "efeito": "Exit 9 nos passos 1–3 é ignorado; relatórios podem não ser gerados no CI"
+      },
+      {
+        "step": "2. Domain Change Analyzer",
+        "mascara": "|| true"
+      },
+      {
+        "step": "3. Domain Review Engine",
+        "mascara": "|| true"
+      }
+    ],
+    "stepsSemMascara": [
+      {
+        "step": "4. Domain Decision Engine (gate)",
+        "falhaJob": true,
+        "exitEsperadoGate": 1,
+        "exitObservado": 9
+      },
+      {
+        "step": "5. Domain Architecture Planner",
+        "falhaJob": true,
+        "notaSecundaria": "Script `scripts/domain-architecture-planner.ts` ausente em `origin/pr03-clean` — após corrigir Node, este passo falharia com exit 1 (MODULE_NOT_FOUND) se o passo 4 passar."
+      }
+    ]
+  },
+  "exitCodesReferencia": {
+    "node9": "Invalid Argument — opção CLI desconhecida",
+    "decisionEngine1": "BLOCKED — gate de domínio intencional",
+    "decisionEngine0": "APPROVED ou REVIEW_REQUIRED",
+    "moduleNotFound1": "Arquivo de script inexistente"
+  },
+  "vercelPreview": {
+    "status": "sucesso_independente",
+    "motivo": "Vercel executa build Next.js (`npm run build`) em pipeline separado do GitHub Actions Domain Guardian. Falha do workflow de governança não cancela nem reverte Preview Deployment."
+  },
+  "veredito": "DIAGNOSTICADO",
+  "launchConfidenceScore": {
+    "atual": 88,
+    "nota": "Preview OK; CI de governança com incompatibilidade de runtime — não indica defeito na RC"
+  }
+}

@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "User" ADD COLUMN "cep" TEXT;
+ALTER TABLE "User" ADD COLUMN "cpf" TEXT;

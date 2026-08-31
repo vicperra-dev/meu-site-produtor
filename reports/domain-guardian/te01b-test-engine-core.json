@@ -1,0 +1,62 @@
+{
+  "reportId": "TE-01B-test-engine-core",
+  "generatedAt": "2026-07-13T23:10:00.000Z",
+  "language": "pt-BR",
+  "commitMessage": "feat(test-engine): implement core scenario runner (TE-01B)",
+  "noUi": true,
+  "noPublicRoutes": true,
+  "components": {
+    "scenarioRunner": "src/app/lib/test-engine/scenario-runner.ts",
+    "scenarioRegistry": "src/app/lib/test-engine/scenario-registry.ts",
+    "pipelineAdapter": "src/app/lib/test-engine/pipeline-adapter.ts",
+    "assertEngine": "src/app/lib/test-engine/assert-engine.ts",
+    "executionReport": "src/app/lib/test-engine/execution-report.ts",
+    "permissions": "src/app/lib/test-engine/permissions.ts",
+    "cli": "scripts/te-run.ts"
+  },
+  "asserts": [
+    "assertPayment",
+    "assertAppointment",
+    "assertService",
+    "assertCoupon",
+    "assertDashboard",
+    "assertMinhaConta"
+  ],
+  "scenarios": {
+    "implemented": ["TE-S01"],
+    "stubs": [
+      "TE-S02",
+      "TE-S03",
+      "TE-S04",
+      "TE-S05",
+      "TE-S06",
+      "TE-S07",
+      "TE-S08",
+      "TE-S09",
+      "TE-S10",
+      "TE-S11",
+      "TE-S12",
+      "TE-S13"
+    ]
+  },
+  "pipelineReuse": [
+    "processPaymentWebhook",
+    "PaymentMetadata create shape = checkout-agendamento",
+    "ensureServicesForAppointment"
+  ],
+  "permissions": {
+    "production": "disabled",
+    "preview": "TEST_ENGINE_ENABLED=1 + admin|cliSecret",
+    "localDev": "admin|cliSecret|localWarning"
+  },
+  "validation": {
+    "typescript": "PASS",
+    "prismaValidate": "PASS",
+    "build": "PASS",
+    "teS01Smoke": "PASS"
+  },
+  "npmScripts": {
+    "te:list": "npx tsx scripts/te-run.ts --list",
+    "te:run": "npx tsx scripts/te-run.ts"
+  }
+}

@@ -1,6 +1,6 @@
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 generator client {
@@ -8,25 +8,87 @@ generator client {
 }
 
 model User {
-  id              String   @id @default(uuid())
+  id              String    @id @default(uuid())
+  nomeCompleto    String
   nomeArtistico   String
-  email           String   @unique
+  nomeSocial      String?
+  email           String    @unique
   senha           String
   telefone        String
   pais            String
   estado          String
   cidade          String
   bairro          String
+  cep             String?
+  cpf             String?   @unique
   dataNascimento  DateTime
+  sexo            String?
+  genero          String?
+  generoOutro     String?
   estilosMusicais String?
   nacionalidade   String?
   foto            String?
-  role            String   @default("USER")
+  fotoPosX        Int       @default(50)
+  fotoPosY        Int       @default(50)
+  role            String    @default("USER")
+  blocked         Boolean   @default(false)
+  blockedAt       DateTime?
+  blockedReason   String?
 
-  appointments Appointment[]
+  appointments    Appointment[]
+  sessions        Session[]
+  loginLogs       LoginLog[]
+  payments        Payment[]
+  userPlans       UserPlan[]
+  subscriptions   Subscription[]
+  services        Service[]
+  serviceOrders   ServiceOrder[]
+  chatSessions    ChatSession[]
+  adminChats      ChatSession[]  @relation("AdminChat")
+  faqQuestions    UserQuestion[]
+  assignedCoupons Coupon[]       @relation("AssignedCoupons") // Cupons associados manualmente pelo admin à Minha Conta
+  notifications   UserNotification[]
+  createdPartnershipCoupons Coupon[] @relation("PartnershipCouponCreator")
 
-  createdAt DateTime  @default(now())
-  Session   Session[]
+  createdAt DateTime @default(now())
+
+  @@index([email])
+  @@index([role])
+  @@index([blocked])
+}
+
+/// GO-H12 — Central de notificações da conta (persistente, lida/não lida).
+model UserNotification {
+  id            String    @id @default(cuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// appointment_accepted | service_started | service_completed | appointment_rejected | appointment_cancelled | files_available
+  type          String
+  title         String
+  message       String
+  actionLabel   String?
+  actionHref    String?
+  appointmentId Int?
+  serviceId     String?
+  /// Chave estável anti-duplicata (ex.: service_completed:apt:12:svc:uuid)
+  dedupeKey     String    @unique
+  readAt        DateTime?
+  createdAt     DateTime  @default(now())
+  metadata      String    @default("{}")
+
+  @@index([userId, createdAt])
+  @@index([userId, readAt])
+  @@index([appointmentId])
+  @@index([type])
+}
+
+// Registo apenas estatístico quando o utilizador apaga a própria conta (sem dados pessoais).
+model AccountDeletionLog {
+  id               String   @id @default(uuid())
+  deletedAt        DateTime @default(now())
+  accountCreatedAt DateTime
+
+  @@index([deletedAt])
 }
 
 model Session {
@@ -38,18 +100,43 @@ model Session {
   expiresAt DateTime
 
   @@index([userId])
+  @@index([expiresAt])
 }
 
 model Appointment {
-  id             Int      @id @default(autoincrement())
-  userId         String
-  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  data           DateTime
-  duracaoMinutos Int
-  tipo           String
-  observacoes    String?
-  status         String   @default("pendente")
-  createdAt      DateTime @default(now())
+  id                    Int       @id @default(autoincrement())
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  data                  DateTime
+  duracaoMinutos        Int
+  tipo                  String
+  observacoes           String?
+  status                String    @default("pendente")
+  blocked               Boolean   @default(false)
+  blockedAt             DateTime?
+  blockedReason         String?
+  readAt                DateTime? // Quando o usuário visualizou o agendamento confirmado
+  cancelReason          String? // Justificativa do cancelamento (admin)
+  cancelledAt           DateTime? // Data do cancelamento
+  cancelRefundOption    String? // "reembolso" | "cupom" após usuário escolher
+  refundProcessedAt     DateTime? // Quando reembolso direto foi processado
+  refundAsaasStatus     String?
+  refundUserConfirmedAt DateTime?
+  refundUserDisputedAt  DateTime?
+  refundCouponId        String? // ID do cupom gerado se opção cupom
+  userHiddenAt          DateTime? // Quando o usuário removeu da Minha Conta (mantém no admin)
+  adminArchivedAt       DateTime? // Arquivamento administrativo (soft-delete; preserva histórico)
+  adminArchivedReason   String? // Justificativa do arquivamento admin
+  createdAt             DateTime  @default(now())
+
+  services Service[]
+  serviceOrders ServiceOrder[]
+
+  @@index([userId])
+  @@index([data])
+  @@index([status])
+  @@index([blocked])
+  @@index([adminArchivedAt])
 }
 
 model FAQ {
@@ -61,15 +148,433 @@ model FAQ {
   updatedAt DateTime @updatedAt
 
   userQuestions UserQuestion[]
+
+  @@index([question])
+  @@index([createdAt])
 }
 
 model UserQuestion {
-  id        String   @id @default(cuid())
-  question  String
-  userName  String?
-  userEmail String?
-  createdAt DateTime @default(now())
+  id            String    @id @default(cuid())
+  question      String
+  userName      String?
+  userEmail     String?
+  userId        String? // ID do usuário se estiver logado
+  user          User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  blocked       Boolean   @default(false)
+  blockedReason String? // Motivo da recusa
+  status        String    @default("pendente") // "pendente", "respondida", "publicada"
+  answer        String? // Resposta do admin
+  answeredAt    DateTime?
+  answeredBy    String? // ID do admin que respondeu
+  readAt        DateTime? // Quando o usuário leu a resposta
+  published     Boolean   @default(false) // Se foi publicado no FAQ público
+  createdAt     DateTime  @default(now())
 
   faqId String?
   faq   FAQ?    @relation(fields: [faqId], references: [id])
+
+  @@index([userId])
+  @@index([status])
+  @@index([published])
+  @@index([createdAt])
+}
+
+model LoginLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ipAddress String
+  userAgent String
+  success   Boolean
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model Payment {
+  id                String   @id @default(uuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mercadopagoId     String?  @unique
+  asaasId           String?  @unique // ID do pagamento no Asaas (legado; Asaas dual-write até v1.1)
+  /// Gateway canônico: ASAAS | SIMULATION | MERCADOPAGO | …
+  provider          String?
+  /// ID do pagamento no gateway (canônico; Simulation NÃO usa asaasId)
+  providerPaymentId String?  @unique
+  amount            Float
+  currency          String   @default("BRL")
+  status            String   @default("pending")
+  type              String
+  paymentMethod     String? // Método de pagamento selecionado pelo usuário
+  planId            String?
+  serviceId         String?
+  appointmentId     Int? // ID do agendamento associado (para prevenir fraudes); em compras com carrinho, primeiro agendamento
+  appointmentIds    Json? // IDs de todos os agendamentos (carrinho); array de inteiros
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  coupons           Coupon[] // Cupons gerados por este pagamento (ex.: teste sem agendamento prévio)
+  serviceOrders     ServiceOrder[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([mercadopagoId])
+  @@index([asaasId])
+  @@index([provider])
+  @@index([providerPaymentId])
+  @@index([appointmentId])
+}
+
+// Armazenar metadata completo de pagamentos antes de criar no gateway
+// Isso permite passar apenas userId no externalReference (limite de 100 caracteres do Asaas)
+model PaymentMetadata {
+  id        String   @id @default(uuid())
+  userId    String // userId usado como externalReference no Asaas
+  metadata  String   @default("{}") // JSON stringificado com todos os dados
+  asaasId   String?  @unique // ID do pagamento no Asaas (preenchido após criação)
+  createdAt DateTime @default(now())
+  expiresAt DateTime // Limpar após 24 horas se não usado
+
+  @@index([userId])
+  @@index([asaasId])
+  @@index([expiresAt])
+}
+
+model UserPlan {
+  id                    String        @id @default(uuid())
+  userId                String
+  user                  User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  planId                String
+  planName              String
+  modo                  String
+  amount                Float
+  status                String        @default("active")
+  startDate             DateTime      @default(now())
+  endDate               DateTime?
+  /// GO-H10B — início do ciclo mensal de benefícios atualmente vigente.
+  lastBenefitCycleAt    DateTime?
+  readAt                DateTime? // Quando o usuário visualizou o plano confirmado
+  refundRequestedAt     DateTime? // Quando o usuário solicitou reembolso do plano
+  refundProcessedAt     DateTime? // Quando o estorno foi registrado no Asaas
+  refundAmount          Float? // Valor estornado (proporcional aos cupons não usados)
+  refundAsaasStatus     String? // Status do estorno no Asaas
+  refundUserConfirmedAt DateTime? // Usuário confirmou recebimento do estorno
+  refundUserDisputedAt  DateTime? // Usuário informou que não recebeu o estorno
+  adminInactiveAt       DateTime? // Quando o admin inativou o plano
+  adminInactiveReason   String? // Justificativa exibida ao usuário na Minha Conta
+  userHiddenAt          DateTime? // Quando o usuário removeu o plano da Minha Conta (mantém registro no admin)
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+  subscription          Subscription? // Assinatura recorrente associada
+  coupons               Coupon[] // Cupons gerados por este plano
+
+  @@index([userId])
+  @@index([status])
+  @@index([planId])
+}
+
+model Subscription {
+  id                  String    @id @default(uuid())
+  userId              String
+  user                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userPlanId          String    @unique
+  userPlan            UserPlan  @relation(fields: [userPlanId], references: [id], onDelete: Cascade)
+  asaasSubscriptionId String?   @unique // ID da assinatura no Asaas
+  paymentMethod       String // "pix", "cartao_credito", "cartao_debito", "boleto"
+  billingDay          Int // Dia do mês para cobrança (1-28)
+  /// GO-H10C: active | pending | cancelled | expired | delinquent | suspended
+  status              String    @default("active")
+  nextBillingDate     DateTime // Próxima data de cobrança
+  lastBillingDate     DateTime? // Última data de cobrança realizada
+  /// Ciclos mensais de benefício restantes (plano anual após o 1º ciclo).
+  cyclesRemaining     Int?
+  failureCount        Int       @default(0)
+  lastFailureAt       DateTime?
+  gracePeriodEndsAt   DateTime?
+  rootPaymentId       String? // Payment inicial que originou a assinatura
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([nextBillingDate])
+  @@index([asaasSubscriptionId])
+}
+
+model Service {
+  id                  String       @id @default(uuid())
+  userId              String
+  user                User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  appointmentId       Int?
+  appointment         Appointment? @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+  tipo                String
+  description         String?
+  status              String       @default("pendente") // pendente | aceito | em_andamento | recusado | cancelado | concluido
+  acceptedAt          DateTime?
+  startedAt           DateTime? // cronômetro operacional (somente sessao/captacao)
+  completedAt         DateTime? // congelamento do cronômetro na conclusão
+  actualDurationSeconds Int? // duração real congelada (completedAt - startedAt)
+  contractedDurationSeconds Int? // snapshot da duração contratada na conclusão
+  overtimeBasePriceCents Int? // snapshot do preço/hora do catálogo na conclusão
+  suggestedOvertimeAmountCents Int? // adicional sugerido congelado (não é cobrança)
+  deliveryAudioUrl    String? // Path/URL canônica do arquivo entregue (upload; não colar URL externa)
+  deliveryAudioFormat String? // "wav" | "mp3" | "zip"
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+  coupons             Coupon[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([tipo])
+  @@index([appointmentId])
+  @@index([startedAt])
+  @@index([completedAt])
+}
+
+model ChatSession {
+  id             String        @id @default(uuid())
+  userId         String
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status         String        @default("open")
+  humanRequested Boolean       @default(false)
+  adminAccepted  Boolean       @default(false)
+  adminId        String?
+  admin          User?         @relation("AdminChat", fields: [adminId], references: [id])
+  lastReadAt     DateTime? // Última vez que o usuário leu as mensagens
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  messages       ChatMessage[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([humanRequested])
+  @@index([adminAccepted])
+}
+
+model ChatMessage {
+  id            String      @id @default(uuid())
+  chatSessionId String
+  chatSession   ChatSession @relation(fields: [chatSessionId], references: [id], onDelete: Cascade)
+  senderType    String
+  content       String
+  createdAt     DateTime    @default(now())
+
+  @@index([chatSessionId])
+  @@index([createdAt])
+}
+
+model BlockedTimeSlot {
+  id        String   @id @default(cuid())
+  data      String
+  hora      String
+  ativo     Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  @@unique([data, hora])
+  @@index([data])
+  @@index([ativo])
+}
+
+model SiteSettings {
+  id              String   @id @default("main")
+  maintenanceMode Boolean  @default(false)
+  updatedAt       DateTime @updatedAt
+}
+
+model PasswordResetCode {
+  id        String   @id @default(uuid())
+  email     String
+  code      String
+  used      Boolean  @default(false)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([email])
+  @@index([code])
+  @@index([expiresAt])
+  @@index([used])
+}
+
+model Coupon {
+  id                    String    @id @default(uuid())
+  code                  String    @unique
+  couponType            String    @default("plano") // canônico persistido: plano|agendamento|reembolso|desconto|remarcacao|test|bonus (ver domain/coupon-types)
+  /// GO-H8: servico | producao | reembolso | plano | desconto (persistido; não inferir na UI)
+  couponCategory        String?
+  discountType          String // "percent", "fixed" ou "service"
+  discountValue         Float // Valor do desconto (percentual ou fixo) ou ID do serviço
+  serviceType           String? // Tipo de serviço quando discountType = "service" (ex: "sessao", "captacao", "mix", etc.)
+  serviceId             String? // OP-02A: vínculo Coupon → Service (preenchido no resgate)
+  service               Service?  @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+  minValue              Float? // Valor mínimo do pedido para usar o cupom
+  maxDiscount           Float? // Desconto máximo (para cupons percentuais)
+  used                  Boolean   @default(false)
+  usedAt                DateTime?
+  usedBy                String? // userId que usou o cupom
+  /// Agendamento ao qual o cupom está vinculado após resgate (ou legado).
+  appointmentId         Int?
+  /// GO-H8: agendamento que originou o cupom (cancelamento) — imutável após criação.
+  originAppointmentId   Int?
+  /// GO-H8: Pedido Raiz (Payment original da compra comercial).
+  rootPaymentId         String?
+  /// GO-H8: cupom anterior na cadeia de remarcações.
+  parentCouponId        String?
+  /// GO-H8: motivo do cancelamento que gerou este cupom (quando REBOOK).
+  cancelReason          String?
+  userPlanId            String? // ID do plano que gerou este cupom (para cupons de plano)
+  userPlan              UserPlan? @relation(fields: [userPlanId], references: [id], onDelete: Cascade)
+  paymentId             String? // ID do pagamento que gerou este cupom (ex.: teste sem agendamento prévio)
+  payment               Payment?  @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+  assignedUserId        String? // Associado manualmente pelo admin à Minha Conta deste usuário
+  assignedUser          User?     @relation("AssignedCoupons", fields: [assignedUserId], references: [id], onDelete: SetNull)
+  expiresAt             DateTime?
+  refundRequestedAt     DateTime?
+  refundProcessedAt     DateTime?
+  refundAmount          Float?
+  refundAsaasStatus     String?
+  refundUserConfirmedAt DateTime?
+  refundUserDisputedAt  DateTime?
+  userRemovedAt         DateTime?
+  createdAt             DateTime  @default(now())
+  /// Usos máximos. 1 = legado (um uso). null = ilimitado até expiresAt.
+  maxUses               Int?
+  useCount              Int       @default(0)
+  /// JSON array de IDs CHECKOUT_CATALOG. null ou [] = todos os SKUs STUDIO.
+  applicableServiceTypes String?
+  /// STUDIO | SHOPPING | EVENT | ALL — nesta versão apenas STUDIO é aplicado no checkout.
+  applicableDomain      String    @default("STUDIO")
+  createdByAdminId      String?
+  createdByAdmin        User?     @relation("PartnershipCouponCreator", fields: [createdByAdminId], references: [id], onDelete: SetNull)
+  adminNote             String?
+  isActive              Boolean   @default(true)
+
+  @@index([code])
+  @@index([used])
+  @@index([expiresAt])
+  @@index([usedBy])
+  @@index([userPlanId])
+  @@index([couponType])
+  @@index([couponCategory])
+  @@index([appointmentId])
+  @@index([originAppointmentId])
+  @@index([rootPaymentId])
+  @@index([parentCouponId])
+  @@index([paymentId])
+  @@index([assignedUserId])
+  @@index([serviceId])
+  @@index([isActive])
+  @@index([createdByAdminId])
+  serviceOrder ServiceOrder?
+}
+
+/// Analytics first-party de visitação (sem IP, fingerprint ou query string).
+model PageView {
+  id             String   @id @default(cuid())
+  visitorId      String
+  visitSessionId String
+  userId         String?
+  path           String
+  /// WEB | APP
+  source         String   @default("WEB")
+  createdAt      DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([visitorId, createdAt])
+  @@index([path, createdAt])
+  @@index([visitSessionId])
+  @@index([userId, createdAt])
+  @@index([source, createdAt])
+}
+
+/// GO-H5 — Ordem de Serviço (entidade operacional central).
+/// Produto comercial → decomposição → Ordens → agendamento / cupom → execução → entrega.
+model ServiceOrder {
+  id               String   @id @default(cuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// Tipo atômico: sessao, captacao, mix, master, beat1…
+  serviceType      String
+  /// Produto comercial de origem (mix_master, producao_completa, sessao…)
+  commercialSource String?
+  /// awaiting_schedule | solicitation | reserved | execution | delivery | completed | cancelled
+  phase            String   @default("awaiting_schedule")
+  paymentId        String?
+  payment          Payment? @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+  couponId         String?  @unique
+  coupon           Coupon?  @relation(fields: [couponId], references: [id], onDelete: SetNull)
+  appointmentId    Int?
+  appointment      Appointment? @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+  dependsOnOrderId String?
+  sequenceIndex    Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([userId])
+  @@index([paymentId])
+  @@index([serviceType])
+  @@index([phase])
+  @@index([appointmentId])
+  @@index([commercialSource])
+}
+
+/// HS-03B — Histórico oficial de transições da State Machine (StudioOS-ready).
+model DomainTransitionHistory {
+  id        String   @id @default(cuid())
+  entity    String
+  entityId  String
+  fromStatus String
+  toStatus   String
+  eventName String
+  actorType String?
+  actorId   String?
+  reason    String?
+  metadata  String   @default("{}")
+  createdAt DateTime @default(now())
+
+  @@index([entity, entityId])
+  @@index([eventName])
+  @@index([createdAt])
+}
+
+/// SYNC-01A — Outbox persistido do Synchronization Engine (SSE + cursor replay).
+model SynchronizationEvent {
+  id          String   @id @default(cuid())
+  /// Cursor monotônico (snowflake-like / bigint) para replay ordenado.
+  cursor      BigInt   @unique @default(autoincrement())
+  name        String
+  entity      String
+  entityId    String
+  fromStatus  String?
+  toStatus    String?
+  /// user | admin | public | all
+  scope       String   @default("user")
+  /// userId dono (quando scope=user); null para público/admin.
+  userId      String?
+  /// Superfícies JSON: ["minha-conta","agenda",...]
+  surfaces    String   @default("[]")
+  /// state-machine | lifecycle | client-signal | recovery
+  source      String   @default("state-machine")
+  /// Payload sanitizado (sem PII sensível).
+  payload     String   @default("{}")
+  occurredAt  DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  @@index([cursor])
+  @@index([occurredAt])
+  @@index([userId, cursor])
+  @@index([scope, cursor])
+  @@index([name])
+  @@index([entity, entityId])
+}
+
+/// GO-06E — Persistência de runs Homologation (sem filesystem no serverless).
+model HomologationRunRecord {
+  id        String   @id
+  payload   String
+  ok        Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([createdAt])
+  @@index([ok])
 }

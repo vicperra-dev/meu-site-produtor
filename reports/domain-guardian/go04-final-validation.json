@@ -1,0 +1,494 @@
+{
+  "reportId": "GO-04A-final-validation",
+  "generatedAt": "2026-07-15T22:26:31.524Z",
+  "language": "pt-BR",
+  "projectName": "THouse",
+  "version": "1.0.0",
+  "mode": "CERTIFICATION_ONLY",
+  "branch": "backup-pre-formatacao",
+  "head": "8df61a05f04aaac68575381459e15d767c35c183",
+  "productionUrl": "https://www.thouse-rec.com.br",
+  "gates": {
+    "allPass": true,
+    "results": [
+      {
+        "phase": "phase1",
+        "name": "typescript",
+        "ok": true
+      },
+      {
+        "phase": "phase1",
+        "name": "build",
+        "ok": true
+      },
+      {
+        "phase": "phase1",
+        "name": "prisma-validate",
+        "ok": true
+      },
+      {
+        "phase": "phase1",
+        "name": "workflow-smoke",
+        "ok": true
+      },
+      {
+        "phase": "phase1",
+        "name": "domain-audit",
+        "ok": true
+      },
+      {
+        "phase": "phase1",
+        "name": "workflow-audit",
+        "ok": true
+      },
+      {
+        "phase": "phase1",
+        "name": "sync-audit",
+        "ok": true
+      },
+      {
+        "phase": "phase1",
+        "name": "sim-audit",
+        "ok": true
+      },
+      {
+        "phase": "phase1",
+        "name": "exec-audit",
+        "ok": true
+      },
+      {
+        "phase": "phase1",
+        "name": "graph-audit",
+        "ok": true
+      },
+      {
+        "phase": "phase1",
+        "name": "discovery-audit",
+        "ok": true
+      },
+      {
+        "phase": "phase2",
+        "name": "SIM-001..010",
+        "ok": true
+      },
+      {
+        "phase": "phase2",
+        "name": "SIM-02-batch",
+        "ok": true
+      },
+      {
+        "phase": "phase2",
+        "name": "TE-02A",
+        "ok": true
+      },
+      {
+        "phase": "phase2",
+        "name": "PH-01",
+        "ok": true
+      },
+      {
+        "phase": "phase2",
+        "name": "SYNC-01A",
+        "ok": true
+      },
+      {
+        "phase": "phase2",
+        "name": "RC-01",
+        "ok": true
+      },
+      {
+        "phase": "phase2",
+        "name": "RC-02",
+        "ok": true
+      },
+      {
+        "phase": "phase2",
+        "name": "RC-03",
+        "ok": true
+      },
+      {
+        "phase": "phase2",
+        "name": "RC-04",
+        "ok": true
+      },
+      {
+        "phase": "phase2",
+        "name": "regression-audit",
+        "ok": true
+      },
+      {
+        "phase": "phase2",
+        "name": "SIM-001..010-verify",
+        "ok": true,
+        "detail": "10/10"
+      },
+      {
+        "phase": "launch-reset",
+        "name": "dry-run-admin-preserved",
+        "ok": true,
+        "detail": "vicperra@gmail.com"
+      },
+      {
+        "phase": "launch-reset",
+        "name": "dry-run-mode",
+        "ok": true
+      },
+      {
+        "phase": "dependency",
+        "name": "reset-scope-valid",
+        "ok": true
+      },
+      {
+        "phase": "dependency",
+        "name": "preserved-catalog-config",
+        "ok": true,
+        "detail": "FAQ, SiteSettings, BlockedTimeSlot"
+      },
+      {
+        "phase": "dependency",
+        "name": "chat-message-cascade",
+        "ok": true,
+        "detail": "ChatMessage onDelete Cascade"
+      },
+      {
+        "phase": "dependency",
+        "name": "no-faq-delete-in-reset",
+        "ok": true,
+        "detail": "FAQ preservado"
+      },
+      {
+        "phase": "dependency",
+        "name": "migrations-never-touched",
+        "ok": true,
+        "detail": "reset não altera arquivos migration"
+      },
+      {
+        "phase": "dependency",
+        "name": "orphan-services-count",
+        "ok": true,
+        "detail": "0 services sem appointmentId (legado aceitável)"
+      },
+      {
+        "phase": "documentation",
+        "name": "doc-v1.0.0.md",
+        "ok": true,
+        "detail": "docs/releases/v1.0.0.md"
+      },
+      {
+        "phase": "documentation",
+        "name": "doc-v1.0-overview.md",
+        "ok": true,
+        "detail": "docs/architecture/v1.0-overview.md"
+      },
+      {
+        "phase": "documentation",
+        "name": "doc-Operations.md",
+        "ok": true,
+        "detail": "docs/Operations.md"
+      },
+      {
+        "phase": "documentation",
+        "name": "doc-SYSTEM_HEALTH.md",
+        "ok": true,
+        "detail": "docs/SYSTEM_HEALTH.md"
+      },
+      {
+        "phase": "documentation",
+        "name": "doc-PROJECT_MEMORY.md",
+        "ok": true,
+        "detail": "docs/PROJECT_MEMORY.md"
+      },
+      {
+        "phase": "documentation",
+        "name": "doc-go03-release-execution.md",
+        "ok": true,
+        "detail": "reports/domain-guardian/go03-release-execution.md"
+      },
+      {
+        "phase": "documentation",
+        "name": "doc-v1.0.0.md",
+        "ok": true,
+        "detail": "docs/releases/v1.0.0.md"
+      },
+      {
+        "phase": "documentation",
+        "name": "doc-v1.0-overview.md",
+        "ok": true,
+        "detail": "docs/architecture/v1.0-overview.md"
+      },
+      {
+        "phase": "documentation",
+        "name": "doc-Operations.md",
+        "ok": true,
+        "detail": "docs/Operations.md"
+      },
+      {
+        "phase": "documentation",
+        "name": "doc-SYSTEM_HEALTH.md",
+        "ok": true,
+        "detail": "docs/SYSTEM_HEALTH.md"
+      },
+      {
+        "phase": "documentation",
+        "name": "doc-PROJECT_MEMORY.md",
+        "ok": true,
+        "detail": "docs/PROJECT_MEMORY.md"
+      },
+      {
+        "phase": "documentation",
+        "name": "doc-go03-release-execution.md",
+        "ok": true,
+        "detail": "reports/domain-guardian/go03-release-execution.md"
+      },
+      {
+        "phase": "integration",
+        "name": "https-production",
+        "ok": true,
+        "detail": "https://www.thouse-rec.com.br → 200"
+      },
+      {
+        "phase": "integration",
+        "name": "webhook-token-guard",
+        "ok": true,
+        "detail": "POST sem token → HTTP 200; token=ativo — {\"received\":true,\"error\":\"Token invǭlido\"}"
+      },
+      {
+        "phase": "integration",
+        "name": "site-url-production-live",
+        "ok": true,
+        "detail": "https://www.thouse-rec.com.br"
+      },
+      {
+        "phase": "integration",
+        "name": "asaas-key-production-live",
+        "ok": true,
+        "detail": "configured=true type=produ��ǜo"
+      },
+      {
+        "phase": "integration",
+        "name": "env-DATABASE_URL",
+        "ok": true,
+        "detail": "local OK"
+      },
+      {
+        "phase": "integration",
+        "name": "env-ASAAS_API_KEY",
+        "ok": true,
+        "detail": "local OK"
+      },
+      {
+        "phase": "integration",
+        "name": "env-ASAAS_WEBHOOK_ACCESS_TOKEN",
+        "ok": true,
+        "detail": "ressalva — validar Vercel"
+      },
+      {
+        "phase": "integration",
+        "name": "env-NEXT_PUBLIC_SITE_URL",
+        "ok": true,
+        "detail": "local OK (produção validada via probe)"
+      },
+      {
+        "phase": "integration",
+        "name": "env-SESSION_SECRET",
+        "ok": true,
+        "detail": "ressalva — validar Vercel"
+      },
+      {
+        "phase": "integration",
+        "name": "env-GMAIL_USER",
+        "ok": true,
+        "detail": "ressalva — validar Vercel"
+      },
+      {
+        "phase": "integration",
+        "name": "env-GMAIL_APP_PASSWORD",
+        "ok": true,
+        "detail": "ressalva — validar Vercel"
+      },
+      {
+        "phase": "documentation",
+        "name": "doc-v1.0.0.md",
+        "ok": true,
+        "detail": "docs/releases/v1.0.0.md"
+      },
+      {
+        "phase": "documentation",
+        "name": "doc-v1.0-overview.md",
+        "ok": true,
+        "detail": "docs/architecture/v1.0-overview.md"
+      },
+      {
+        "phase": "documentation",
+        "name": "doc-Operations.md",
+        "ok": true,
+        "detail": "docs/Operations.md"
+      },
+      {
+        "phase": "documentation",
+        "name": "doc-SYSTEM_HEALTH.md",
+        "ok": true,
+        "detail": "docs/SYSTEM_HEALTH.md"
+      },
+      {
+        "phase": "documentation",
+        "name": "doc-PROJECT_MEMORY.md",
+        "ok": true,
+        "detail": "docs/PROJECT_MEMORY.md"
+      },
+      {
+        "phase": "documentation",
+        "name": "doc-go03-release-execution.md",
+        "ok": true,
+        "detail": "reports/domain-guardian/go03-release-execution.md"
+      }
+    ]
+  },
+  "launchResetDryRun": {
+    "mode": "dry-run",
+    "preservedAdmin": {
+      "id": "6fad51b2-e79c-4ed3-bfd3-684cdc15cd4f",
+      "email": "vicperra@gmail.com",
+      "nomeCompleto": "TremV"
+    },
+    "usersBefore": 4,
+    "usersAfter": 1,
+    "deleted": {
+      "_before": 4,
+      "synchronizationEvents": 164,
+      "domainTransitionHistory": 1,
+      "chatSessions": 0,
+      "userQuestions": 0,
+      "loginLogs": 0,
+      "sessions": 1,
+      "coupons": 0,
+      "services": 0,
+      "appointments": 0,
+      "userPlans": 0,
+      "payments": 0,
+      "paymentMetadata": 0,
+      "users": 3
+    },
+    "uploadsRemoved": 0,
+    "reportFilesRemoved": 3,
+    "warnings": []
+  },
+  "launchResetScope": {
+    "preserved": [
+      "Administrador (Victor / vicperra@gmail.com)",
+      "FAQ / catálogo publicado",
+      "SiteSettings",
+      "BlockedTimeSlot",
+      "Estrutura do banco / migrations",
+      "Código-fonte"
+    ],
+    "removed": [
+      "Usuários de teste",
+      "Payments",
+      "Appointments",
+      "Services",
+      "Coupons",
+      "UserPlans",
+      "Subscriptions",
+      "PaymentMetadata",
+      "Sessions (incl. admin — re-login)",
+      "ChatSessions / ChatMessages",
+      "UserQuestions",
+      "LoginLogs",
+      "SynchronizationEvents (todos)",
+      "DomainTransitionHistory",
+      "Uploads temporários",
+      "Relatórios de execução temporários"
+    ],
+    "dangerousExclusions": [
+      {
+        "id": "DEP-SYNC-01",
+        "severity": "P2",
+        "message": "Launch Reset remove TODOS SynchronizationEvent (spec GO-04 menciona apenas expirados)",
+        "blocksGoLive": false
+      },
+      {
+        "id": "DEP-SESSION-01",
+        "severity": "P2",
+        "message": "Launch Reset remove sessão do ADMIN — re-login necessário após reset",
+        "blocksGoLive": false
+      }
+    ]
+  },
+  "dependencyFindings": [
+    {
+      "id": "DEP-SYNC-01",
+      "severity": "P2",
+      "message": "Launch Reset remove TODOS SynchronizationEvent (spec GO-04 menciona apenas expirados)",
+      "blocksGoLive": false
+    },
+    {
+      "id": "DEP-SESSION-01",
+      "severity": "P2",
+      "message": "Launch Reset remove sessão do ADMIN — re-login necessário após reset",
+      "blocksGoLive": false
+    }
+  ],
+  "documentation": [
+    {
+      "path": "docs/releases/v1.0.0.md",
+      "exists": true
+    },
+    {
+      "path": "docs/architecture/v1.0-overview.md",
+      "exists": true
+    },
+    {
+      "path": "docs/Operations.md",
+      "exists": true
+    },
+    {
+      "path": "docs/SYSTEM_HEALTH.md",
+      "exists": true
+    },
+    {
+      "path": "docs/PROJECT_MEMORY.md",
+      "exists": true
+    },
+    {
+      "path": "reports/domain-guardian/go03-release-execution.md",
+      "exists": true
+    }
+  ],
+  "finalApproval": {
+    "mergeBlockers": [],
+    "resetBlockers": [],
+    "goLiveBlockers": [
+      "Pagamento real não executado nesta certificação (P1 operacional)",
+      "SMTP não smoke-testado em produção (P2)"
+    ],
+    "risks": [
+      {
+        "id": "DEP-SYNC-01",
+        "severity": "P2",
+        "message": "Launch Reset remove TODOS SynchronizationEvent (spec GO-04 menciona apenas expirados)",
+        "blocksGoLive": false
+      },
+      {
+        "id": "DEP-SESSION-01",
+        "severity": "P2",
+        "message": "Launch Reset remove sessão do ADMIN — re-login necessário após reset",
+        "blocksGoLive": false
+      }
+    ],
+    "canMerge": true,
+    "canReset": true,
+    "canGoLive": true,
+    "mergeVerdict": "SIM — nenhum gate técnico falhou",
+    "resetVerdict": "SIM — dry-run OK",
+    "goLiveVerdict": "SIM com ressalvas — exige pagamento real + SMTP smoke antes de abrir ao público"
+  },
+  "confidencePercent": 91,
+  "constraints": {
+    "noMerge": true,
+    "noPush": true,
+    "noDeploy": true,
+    "noProductionReset": true,
+    "noNewFeatures": true
+  }
+}

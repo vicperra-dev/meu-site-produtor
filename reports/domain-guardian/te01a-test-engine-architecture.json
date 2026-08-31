@@ -1,0 +1,252 @@
+{
+  "reportId": "TE-01A-test-engine-architecture",
+  "mode": "READ_ONLY",
+  "roles": ["STAFF_SOFTWARE_ENGINEER", "SOFTWARE_ARCHITECT", "QA_AUTOMATION_ENGINEER", "DOMAIN_GUARDIAN"],
+  "generatedAt": "2026-07-13T22:55:00.000Z",
+  "language": "pt-BR",
+  "constraints": {
+    "codeChanged": false,
+    "commitsCreated": false,
+    "migrationsCreated": false,
+    "implementation": false
+  },
+  "premise": {
+    "noParallelFlow": true,
+    "statement": "Toda simulação deve reutilizar o pipeline oficial; pagamento simulado ≡ efeitos do webhook Asaas via processPaymentWebhook / POST /api/webhooks/asaas / process*PaymentEffects"
+  },
+  "basedOn": [
+    "ADR-010",
+    "HS-02A",
+    "HS-02B",
+    "symbolic-payment.ts",
+    "process-payment-webhook.ts",
+    "webhooks/asaas/route.ts",
+    "ex01-local-smoke.js",
+    "ex02-financial-flow.js"
+  ],
+  "officialPipeline": [
+    "registro",
+    "login",
+    "checkoutAsaas (+ optional symbolic)",
+    "webhook PAYMENT_RECEIVED",
+    "Payment approved",
+    "process*PaymentEffects",
+    "Appointment",
+    "Service",
+    "admin accept",
+    "em_andamento",
+    "entrega concluido",
+    "cupons",
+    "meus-dados / Minha Conta",
+    "dashboard stats"
+  ],
+  "1_existingEvents": {
+    "asaasWebhook": [
+      "PAYMENT_RECEIVED",
+      "PAYMENT_REFUNDED",
+      "PAYMENT_CREATED",
+      "PAYMENT_OVERDUE",
+      "PAYMENT_DELETED",
+      "other PAYMENT_* (ignored safely)"
+    ],
+    "domainImplicit": [
+      "UserRegistered",
+      "UserLoggedIn",
+      "CheckoutStarted",
+      "PaymentApproved",
+      "AppointmentCreated",
+      "ServicesEnsured",
+      "AppointmentAccepted",
+      "ServiceStarted",
+      "ServiceDelivered",
+      "AppointmentCancelled",
+      "PlanActivated",
+      "CouponIssued",
+      "CouponUsed",
+      "CouponReleased"
+    ],
+    "uiOnly": [
+      "thouse:data-changed",
+      "appointment-updated",
+      "plan-updated",
+      "faq-updated",
+      "chat-updated"
+    ]
+  },
+  "2_desiredContractEvents": [
+    "Payment.Approved",
+    "Webhook.Processed",
+    "Webhook.DuplicateIgnored",
+    "Appointment.RequestCreated",
+    "Service.WorkCreated",
+    "Service.Accepted",
+    "Service.InProgress",
+    "Service.Completed",
+    "Coupon.Issued",
+    "Coupon.Redeemed",
+    "Coupon.Released",
+    "Refund.Requested",
+    "Refund.Settled",
+    "Account.Snapshot",
+    "Ops.DashboardSnapshot"
+  ],
+  "3_injectionPoint": {
+    "recommended": "After PaymentMetadata (and optional pending Payment) written by checkout-equivalent writers → dispatch canonical webhook via processPaymentWebhook or POST /api/webhooks/asaas",
+    "acceptableExisting": "admin reprocessar-* calling process*PaymentEffects directly",
+    "forbidden": [
+      "Direct prisma Appointment/Service/Coupon create bypassing effects",
+      "Parallel simulation domain reimplementation"
+    ],
+    "ranking": [
+      { "point": "webhook canonical after metadata", "score": "BEST" },
+      { "point": "before webhook (real Asaas sandbox charge)", "score": "OK_SMOKE" },
+      { "point": "effects direct", "score": "ACCEPTABLE_ADMIN" },
+      { "point": "custom event bus reimplementing domain", "score": "REJECT" }
+    ]
+  },
+  "4_eventBus": {
+    "requiredInV1": false,
+    "rationale": "processPaymentWebhook already orchestrates financial confirmation; UI CustomEvents are not domain bus",
+    "v1Dispatcher": "Official Pipeline Adapter wrapping processPaymentWebhook",
+    "future": "Optional typed bus inside StudioOS QA Center for telemetry"
+  },
+  "5_simulatable": {
+    "registro": true,
+    "login": true,
+    "pagamento": true,
+    "webhook": true,
+    "appointment": true,
+    "service": true,
+    "admin": true,
+    "entrega": true,
+    "reembolso": true,
+    "cupom": true,
+    "dashboard": true,
+    "analytics": true,
+    "nota": "Sempre via APIs/handlers oficiais"
+  },
+  "6_mustRemainReal": [
+    "auth session requireAdmin",
+    "canUseSymbolicSimulation / TE gates",
+    "Prisma persistence",
+    "Zod validations",
+    "webhook token in production",
+    "delivery URL validation",
+    "domain guardian invariants",
+    "optional future binary upload storage"
+  ],
+  "7_architecture": {
+    "layers": [
+      "TestEngineFacade",
+      "ScenarioRunner",
+      "OfficialPipelineAdapter (= EventDispatcher)",
+      "RealDomainHandlers",
+      "AssertionReporter"
+    ],
+    "diagram": "Test Engine → Scenario Runner → Event Dispatcher (Adapter) → Domain Events contracts → Sistema real → Assertions"
+  },
+  "8_officialScenarios": [
+    { "id": "TE-S01", "name": "Compra simples" },
+    { "id": "TE-S02", "name": "Compra carrinho" },
+    { "id": "TE-S03", "name": "Compra cancelada" },
+    { "id": "TE-S04", "name": "Pagamento recusado / não confirmado" },
+    { "id": "TE-S05", "name": "Webhook duplicado" },
+    { "id": "TE-S06", "name": "Cupom" },
+    { "id": "TE-S07", "name": "Reembolso" },
+    { "id": "TE-S08", "name": "Entrega" },
+    { "id": "TE-S09", "name": "Cliente completo" },
+    { "id": "TE-S10", "name": "Administrador completo" },
+    { "id": "TE-S11", "name": "Fluxo completo" },
+    { "id": "TE-S12", "name": "Metadata expirada / órfão" },
+    { "id": "TE-S13", "name": "Aceite sem Service prévio (ensure)" }
+  ],
+  "9_permissions": {
+    "localhost": { "ui": "ADMIN_ONLY_RECOMMENDED", "cli": true, "userCommon": false },
+    "development": { "ui": "ADMIN_ONLY", "cli": true, "userCommon": false },
+    "preview": { "ui": "ADMIN + TEST_ENGINE_ENABLED", "cli": "CI_SECRET", "userCommon": false },
+    "production": { "ui": "BLOCKED_DEFAULT", "cli": false, "userCommon": false, "emergency": "ADMIN + TEST_ENGINE_ENABLED + audit" }
+  },
+  "10_security": [
+    "requireAdmin always for TE APIs",
+    "TEST_ENGINE_ENABLED flag",
+    "symbolic metadata + TESTE_ coupons isolation",
+    "block when prod domain without flag",
+    "audit log of scenario runs",
+    "cleanup-test-users after suites",
+    "close localhost any-user symbolic gap for TE surface"
+  ],
+  "11_performanceReuse": {
+    "reuse": [
+      "processPaymentWebhook",
+      "processAgendamentoPaymentEffects",
+      "processCarrinhoPaymentEffects",
+      "processPlanoPaymentEffects",
+      "ensureServicesForAppointment",
+      "admin PATCH routes",
+      "meus-dados",
+      "stats APIs"
+    ],
+    "doNotDuplicate": [
+      "manual prisma appointment/service creates",
+      "parallel status engines",
+      "parallel stats calculators"
+    ]
+  },
+  "12_equivalenceBlockers": [
+    {
+      "id": "DUAL_WEBHOOK_PATH",
+      "detail": "webhooks/asaas/route vs process-payment-webhook not line-identical",
+      "mitigation": "TE always enter via processPaymentWebhook; later unify route"
+    },
+    {
+      "id": "ASAAS_CHARGE_DEPENDENCY",
+      "detail": "symbolic checkout still hits Asaas R$5",
+      "mitigation": "WEBHOOK_ONLY mode writing metadata then synthetic webhook"
+    },
+    {
+      "id": "METADATA_TTL",
+      "detail": "PaymentMetadata expiresAt ~24h",
+      "mitigation": "long TTL in fixtures"
+    },
+    {
+      "id": "LEGACY_AMOUNT_5",
+      "detail": "classification fallback amount===5",
+      "mitigation": "require symbolic flags in TE"
+    },
+    {
+      "id": "PARTIAL_SERVICES",
+      "detail": "createServicesIfMissing skips partial counts",
+      "mitigation": "scenario TE-S13 + assert"
+    },
+    {
+      "id": "EMAILS_AND_PROBE",
+      "detail": "emails and delivery URL probe flaky",
+      "mitigation": "sendEmails:false; probe off"
+    },
+    {
+      "id": "LOCAL_GATE_GAP",
+      "detail": "canUseSymbolicSimulation true for any user on localhost",
+      "mitigation": "TE APIs require ADMIN always"
+    }
+  ],
+  "13_roadmap": [
+    { "id": "TE-01A", "status": "DONE_DOCS", "deliverable": "architecture reports" },
+    { "id": "TE-01B", "status": "NEXT", "deliverable": "Official Pipeline Adapter + security harden" },
+    { "id": "TE-01C", "status": "PLANNED", "deliverable": "CLI runner S01-S05" },
+    { "id": "TE-01D", "status": "PLANNED", "deliverable": "Admin UI localhost" },
+    { "id": "TE-02", "status": "PLANNED", "deliverable": "S06-S11 + cleanup" },
+    { "id": "TE-03", "status": "PLANNED", "deliverable": "Preview CI smoke gate" },
+    {
+      "id": "StudioOS",
+      "status": "FUTURE",
+      "deliverable": "QA Center → full sims → regression → smoke → release validation"
+    }
+  ],
+  "executiveRecommendation": [
+    "Do not implement Event Bus in v1",
+    "Inject at canonical webhook boundary",
+    "Reuse 100% of payment effects and admin transitions",
+    "Harden permissions before any UI",
+    "No code until TE-01B approved"
+  ]
+}

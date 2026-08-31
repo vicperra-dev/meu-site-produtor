@@ -1,0 +1,65 @@
+{
+  "reportId": "RL-03-release-closed",
+  "mode": "IMPLEMENTAÇÃO_CONTROLADA",
+  "generatedAt": "2026-07-10T02:50:00.000Z",
+  "language": "pt-BR",
+  "projectName": "THouse",
+  "branch": "pr03-clean",
+  "commit": {
+    "hash": "66a8e5c8b515631775f30b2d36403421b6528ea7",
+    "short": "66a8e5c",
+    "message": "fix(build): restore service catalog helpers",
+    "filesChanged": 1,
+    "file": "src/app/lib/service-catalog.ts",
+    "linesAdded": 65
+  },
+  "head": {
+    "hash": "66a8e5c8b515631775f30b2d36403421b6528ea7",
+    "short": "66a8e5c",
+    "message": "fix(build): restore service catalog helpers",
+    "commitsFromMain": 24
+  },
+  "prismaGenerate": {
+    "command": "npx prisma generate",
+    "exitCode": 0,
+    "verdict": "OK"
+  },
+  "build": {
+    "command": "npm run build",
+    "exitCode": 0,
+    "verdict": "PASSOU",
+    "staticPages": 138,
+    "note": ".next limpo antes do build"
+  },
+  "gitStatus": {
+    "mandatoryModified": false,
+    "porcelain": [
+      "?? public/uploads/",
+      "?? reports/domain-guardian/rl01-release-candidate.json",
+      "?? reports/domain-guardian/rl01-release-candidate.md",
+      "?? reports/domain-guardian/rl01a-build-fix.json",
+      "?? reports/domain-guardian/rl01a-build-fix.md",
+      "?? reports/domain-guardian/rl01b-build-fix.json",
+      "?? reports/domain-guardian/rl01b-build-fix.md",
+      "?? reports/domain-guardian/rl02-release-validation.json",
+      "?? reports/domain-guardian/rl02-release-validation.md"
+    ],
+    "note": "Sem arquivos obrigatórios modified; apenas untracked não bloqueantes (reports RL + uploads)"
+  },
+  "releaseCandidate": {
+    "verdict": "FECHADA",
+    "blockersResolved": [
+      "service-catalog.ts commitado (RL-01a)",
+      "build reproduzível a partir do HEAD",
+      "nenhum arquivo obrigatório do bundle/SI-01 pendente"
+    ]
+  },
+  "constraintsRespected": {
+    "onlyServiceCatalogStaged": true,
+    "noArchitectureChange": true,
+    "noBusinessRuleChange": true,
+    "noPrismaChange": true,
+    "noDatabaseChange": true,
+    "noApiChange": true
+  }
+}

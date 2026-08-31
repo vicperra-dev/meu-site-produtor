@@ -1,0 +1,529 @@
+{
+  "reportId": "GL-02-operational-checklist",
+  "mode": "READ_ONLY",
+  "generatedAt": "2026-07-10T06:15:00.000Z",
+  "language": "pt-BR",
+  "projectName": "THouse Rec",
+  "branch": "pr03-clean",
+  "head": "3f20ad0",
+  "scope": "MVP comercial — agendamento avulso via Asaas (checkout-carrinho → webhook → efeitos modulares)",
+  "excludedFromScope": [
+    "Planos / assinaturas",
+    "Mercado Pago",
+    "InfinityPay",
+    "Loja / shopping"
+  ],
+  "basedOn": [
+    "PRD-01-production-readiness",
+    "PRE_LANCAMENTO_CHECKLIST.md",
+    "Código-fonte HEAD 3f20ad0",
+    "package.json",
+    "prisma/schema.prisma"
+  ],
+  "audit": {
+    "1_banco_de_dados": {
+      "emoji": "🟡",
+      "items": {
+        "DATABASE_URL": {
+          "emoji": "🟡",
+          "status": "Obrigatória; definida no host (Neon/Vercel). Não versionada no repo.",
+          "evidencia": "prisma/schema.prisma → env(DATABASE_URL)"
+        },
+        "prisma_generate": {
+          "emoji": "🟢",
+          "status": "Automático no build e postinstall.",
+          "evidencia": "package.json: \"build\": \"prisma generate && next build\", \"postinstall\": \"prisma generate\""
+        },
+        "prisma_migrate_deploy": {
+          "emoji": "🟡",
+          "status": "30 migrations versionadas; passo manual obrigatório antes do 1º cliente.",
+          "evidencia": "prisma/migrations/*; CI Domain Guardian usa generate, não migrate deploy",
+          "comando": "npx prisma migrate deploy"
+        },
+        "backup_obrigatorio": {
+          "emoji": "🔴",
+          "status": "Não automatizado no código/CI. Obrigatório operacionalmente (Neon snapshot/PITR).",
+          "evidencia": "Mencionado em stabilization-plan e release-manager-agent; sem script no repo"
+        },
+        "rollback_possivel": {
+          "emoji": "🟡",
+          "status": "Redeploy commit anterior (Vercel) + restore Neon se migration falhar. Sem runbook versionado.",
+          "evidencia": "README genérico; sem procedimento documentado no repositório"
+        }
+      }
+    },
+    "2_asaas": {
+      "emoji": "🟡",
+      "items": {
+        "sandbox": {
+          "emoji": "🟢",
+          "status": "Automático quando NODE_ENV !== production ou chave não-prod.",
+          "evidencia": "checkout-carrinho/route.ts IS_TEST; payment-providers.ts URL sandbox"
+        },
+        "producao": {
+          "emoji": "🟡",
+          "status": "Requer chave $aact_prod_* + NODE_ENV=production no host.",
+          "evidencia": "getAsaasApiKey(), asaas-get-payment.ts prefixo prod"
+        },
+        "ASAAS_API_KEY": {
+          "emoji": "🟡",
+          "status": "Obrigatória; checkout retorna 500 com mensagem clara se ausente.",
+          "evidencia": "src/app/lib/env.ts, checkout-carrinho/route.ts"
+        },
+        "ASAAS_WEBHOOK_ACCESS_TOKEN": {
+          "emoji": "🟡",
+          "status": "Obrigatória em produção; validação via header asaas-access-token.",
+          "evidencia": "webhooks/asaas/route.ts L35-51"
+        },
+        "webhook_url": {
+          "emoji": "🟡",
+          "status": "Canônica: https://{dominio}/api/webhooks/asaas",
+          "evidencia": "PRE_LANCAMENTO_CHECKLIST.md §2"
+        },
+        "dominio_cadastrado": {
+          "emoji": "🟡",
+          "status": "Deve estar aprovado no painel Asaas para callbacks de checkout.",
+          "evidencia": "payment-providers.ts erro ambiente inválido"
+        },
+        "eventos_necessarios": {
+          "emoji": "🟢",
+          "status": "PAYMENT_RECEIVED (status RECEIVED|CONFIRMED) processa efeitos; PAYMENT_REFUNDED sincroniza reembolso.",
+          "evidencia": "webhooks/asaas/route.ts L27-31, L110, L268-274",
+          "eventos_mvp": [
+            "PAYMENT_RECEIVED + RECEIVED",
+            "PAYMENT_RECEIVED + CONFIRMED",
+            "PAYMENT_REFUNDED"
+          ],
+          "eventos_opcionais": [
+            "PAYMENT_CREATED",
+            "PAYMENT_OVERDUE",
+            "PAYMENT_DELETED"
+          ]
+        }
+      }
+    },
+    "3_variaveis_ambiente": {
+      "obrigatorias_mvp": [
+        {
+          "nome": "DATABASE_URL",
+          "uso": "Conexão PostgreSQL (Prisma)"
+        },
+        {
+          "nome": "ASAAS_API_KEY",
+          "uso": "Checkout carrinho e consultas Asaas ($aact_prod_* em produção)"
+        },
+        {
+          "nome": "ASAAS_WEBHOOK_ACCESS_TOKEN",
+          "uso": "Autenticação do webhook Asaas"
+        },
+        {
+          "nome": "NEXT_PUBLIC_SITE_URL",
+          "uso": "backUrls checkout, links em emails, chamadas internas ao webhook"
+        }
+      ],
+      "obrigatorias_operacao": [
+        {
+          "nome": "CRON_SECRET",
+          "uso": "Proteção GET /api/cron/limpar-chats-antigos e renovar-planos",
+          "nota_mvp": "Não bloqueia compra avulsa; obrigatória para operação saudável"
+        }
+      ],
+      "recomendadas": [
+        {
+          "nome": "SUPPORT_EMAIL",
+          "uso": "SMTP remetente (confirmações, FAQ, chat humano)"
+        },
+        {
+          "nome": "SUPPORT_EMAIL_PASSWORD",
+          "uso": "Senha SMTP"
+        },
+        {
+          "nome": "SUPPORT_DEST_EMAIL",
+          "uso": "Destino notificações admin; default thouse.rec.tremv@gmail.com"
+        },
+        {
+          "nome": "PAYMENT_PROCESS_SECRET",
+          "uso": "Automação processar-direto sem login admin"
+        }
+      ],
+      "opcionais": [
+        {
+          "nome": "DELIVERY_AUDIO_URL_PROBE",
+          "uso": "Probe de URL de entrega no admin serviços (=1 ou true)"
+        },
+        {
+          "nome": "OPENAI_API_KEY",
+          "uso": "Chat com IA — fora do MVP de compra"
+        }
+      ],
+      "descontinuadas_mvp": [
+        {
+          "nome": "MERCADOPAGO_ACCESS_TOKEN",
+          "motivo": "Fluxo legado; MVP usa apenas Asaas checkout-carrinho"
+        },
+        {
+          "nome": "MP_INTEGRATOR_ID",
+          "motivo": "Mercado Pago legado"
+        },
+        {
+          "nome": "INFINITYPAY_API_KEY",
+          "motivo": "Provedor alternativo não usado no MVP"
+        },
+        {
+          "nome": "NEXTAUTH_SECRET",
+          "motivo": "Documentado em RELATORIO_E_ROADMAP mas sessão custom (cookie session_id + Prisma Session)"
+        }
+      ],
+      "nao_utilizadas_ou_perigosas": [
+        {
+          "nome": "ASAAS_SKIP_TLS_VERIFY",
+          "motivo": "Desabilita TLS em dev; ignorado em production"
+        },
+        {
+          "nome": "NODE_TLS_REJECT_UNAUTHORIZED",
+          "motivo": "Setado por asaas-fetch em dev; perigoso se vazar para prod"
+        }
+      ],
+      "automaticas_host": [
+        "NODE_ENV",
+        "VERCEL"
+      ]
+    },
+    "4_deploy": {
+      "emoji": "🟡",
+      "items": {
+        "npm_run_build": {
+          "emoji": "🟢",
+          "status": "Passou após GL-01 (tsc + next build).",
+          "evidencia": "gl01-golive-fixes.json"
+        },
+        "prisma_generate": {
+          "emoji": "🟢",
+          "status": "Incluso em build e postinstall.",
+          "evidencia": "package.json"
+        },
+        "next_build": {
+          "emoji": "🟢",
+          "status": "Next.js 16.1.6; 138 páginas estáticas (RL-03).",
+          "evidencia": "rl03-release-closed.json"
+        },
+        "variaveis": {
+          "emoji": "🟡",
+          "status": "PRE_LANCAMENTO_CHECKLIST.md parcial; sem .env.example versionado."
+        },
+        "dominio": {
+          "emoji": "🟡",
+          "status": "Configurar no Vercel + painel Asaas; não verificável no repo."
+        },
+        "https": {
+          "emoji": "🟢",
+          "status": "Vercel fornece HTTPS; cookie secure=true em production.",
+          "evidencia": "auth.ts secure: NODE_ENV === production"
+        }
+      }
+    },
+    "5_monitoramento": {
+      "emoji": "🔴",
+      "existe": {
+        "logs": {
+          "existe": true,
+          "tipo": "console.log/error no código; Vercel Runtime Logs",
+          "emoji": "🟡"
+        },
+        "alertas": {
+          "existe": false,
+          "emoji": "🔴"
+        },
+        "auditoria": {
+          "existe": false,
+          "emoji": "🔴",
+          "nota": "LoginLog no banco; sem trilha de auditoria de ações admin centralizada"
+        },
+        "recovery": {
+          "existe": false,
+          "emoji": "🔴",
+          "nota": "Rotas admin debug/reprocessar existem; sem playbook versionado"
+        },
+        "runbook": {
+          "existe": false,
+          "emoji": "🔴"
+        }
+      },
+      "falta": [
+        "Ferramenta de APM/erros (Sentry, Datadog, etc.)",
+        "Alerta automático em falha de efeitos de webhook (webhook sempre retorna 200)",
+        "Log estruturado com correlationId / paymentId",
+        "Health check endpoint dedicado",
+        "Runbook versionado: pagamento órfão, rollback deploy, restore Neon",
+        "Dashboard operacional (métricas webhook, taxa de falha checkout)",
+        "Vercel Log Drain ou integração de alertas",
+        "Procedimento de recovery documentado para admin (quando usar processar-direto vs reprocessar)"
+      ]
+    },
+    "6_seguranca": {
+      "emoji": "🟡",
+      "items": {
+        "cookies": {
+          "emoji": "🟢",
+          "detalhe": "session_id httpOnly, sameSite lax, secure em prod, TTL 7d"
+        },
+        "headers": {
+          "emoji": "🟢",
+          "detalhe": "X-Frame-Options SAMEORIGIN; CSP em next.config.ts (unsafe-inline/eval para YouTube)"
+        },
+        "session": {
+          "emoji": "🟢",
+          "detalhe": "Prisma Session + cookie; expiração validada"
+        },
+        "admin": {
+          "emoji": "🟡",
+          "detalhe": "requireAdmin + bypass email hardcoded; debug rotas protegidas"
+        },
+        "cross_user": {
+          "emoji": "🟢",
+          "detalhe": "requireAuth + filtros userId nas APIs de usuário"
+        },
+        "lgpd": {
+          "emoji": "🟡",
+          "detalhe": "/termos-contratos, aceite no carrinho, contato LGPD; sem API automática de exclusão/exportação (AccountDeletionLog no schema sem fluxo UI)"
+        },
+        "rate_limit": {
+          "emoji": "🔴",
+          "detalhe": "Nenhum rate limiting em login, registro ou APIs públicas"
+        },
+        "uploads": {
+          "emoji": "🟢",
+          "detalhe": "MVP não usa upload de arquivo em API; entrega via URL externa (deliveryAudioUrl); public/uploads/ local não faz parte do fluxo de compra"
+        },
+        "segredos_expostos": {
+          "emoji": "🟡",
+          "detalhe": "Webhook loga primeiros 500 chars do body; registro loga payload; test-payment loga API key length em dev"
+        }
+      }
+    },
+    "7_operacao_admin": {
+      "scope": "Capacidades do administrador para operar MVP agendamento avulso",
+      "capacidades": {
+        "receber_pagamento": {
+          "resposta": "SIM",
+          "detalhe": "Automático via webhook PAYMENT_RECEIVED; admin visualiza em /admin/pagamentos"
+        },
+        "visualizar_pedido": {
+          "resposta": "SIM",
+          "detalhe": "/admin/pagamentos — lista com usuário, valor, asaasId, cupom"
+        },
+        "visualizar_agendamento": {
+          "resposta": "SIM",
+          "detalhe": "/admin/agendamentos — pagamento e cupom associados"
+        },
+        "alterar_status": {
+          "resposta": "SIM",
+          "detalhe": "PATCH /api/admin/agendamentos (aceitar/recusar/concluir/em_andamento); PATCH /api/admin/servicos"
+        },
+        "enviar_entrega": {
+          "resposta": "PARCIAL",
+          "detalhe": "PATCH servicos com deliveryAudioUrl (URL externa validada); sem upload de arquivo; UI admin/servicos limitada a status"
+        },
+        "liberar_cupom": {
+          "resposta": "PARCIAL",
+          "detalhe": "Webhook gera cupons automaticamente; associar-usuario via API admin; release em cancelamento; sem botão único 'liberar' na UI principal"
+        },
+        "reprocessar": {
+          "resposta": "PARCIAL",
+          "detalhe": "UI admin: reprocessar pagamentos simbólicos; pagamentos reais: processar-direto (admin logado) ou debug/processar-ultimo-pagamento"
+        },
+        "excluir_pagamento_simbólico": {
+          "resposta": "SIM",
+          "detalhe": "canAdminDeletePayment + DELETE /api/admin/pagamentos; bloqueia pagamentos reais com asaasId"
+        }
+      }
+    }
+  },
+  "goLiveChecklist": {
+    "description": "Ordem cronológica — MVP agendamento avulso Asaas",
+    "items": [
+      {
+        "ordem": 1,
+        "fase": "Pré-deploy",
+        "item": "□ Confirmar commit deployável: 3f20ad0 (GL-01 B1 auto-login)",
+        "obrigatorio": true
+      },
+      {
+        "ordem": 2,
+        "fase": "Pré-deploy",
+        "item": "□ Backup / snapshot Neon (ou confirmar PITR ativo)",
+        "obrigatorio": true
+      },
+      {
+        "ordem": 3,
+        "fase": "Pré-deploy",
+        "item": "□ npm run build local ou CI verde",
+        "obrigatorio": true
+      },
+      {
+        "ordem": 4,
+        "fase": "Banco",
+        "item": "□ Configurar DATABASE_URL no Vercel (produção)",
+        "obrigatorio": true
+      },
+      {
+        "ordem": 5,
+        "fase": "Banco",
+        "item": "□ npx prisma migrate deploy no banco de produção",
+        "obrigatorio": true
+      },
+      {
+        "ordem": 6,
+        "fase": "Env",
+        "item": "□ Configurar NEXT_PUBLIC_SITE_URL (https://dominio-final)",
+        "obrigatorio": true
+      },
+      {
+        "ordem": 7,
+        "fase": "Env",
+        "item": "□ Configurar SUPPORT_EMAIL + SUPPORT_EMAIL_PASSWORD",
+        "obrigatorio": false,
+        "nota": "Recomendado — emails falham silenciosamente sem"
+      },
+      {
+        "ordem": 8,
+        "fase": "Env",
+        "item": "□ Configurar CRON_SECRET + agendar crons (limpar-chats, renovar-planos)",
+        "obrigatorio": false,
+        "nota": "Operação; não bloqueia 1ª compra"
+      },
+      {
+        "ordem": 9,
+        "fase": "Deploy",
+        "item": "□ Deploy Preview (Vercel) com variáveis de staging/sandbox",
+        "obrigatorio": true
+      },
+      {
+        "ordem": 10,
+        "fase": "Asaas Sandbox",
+        "item": "□ ASAAS_API_KEY sandbox no Preview",
+        "obrigatorio": true
+      },
+      {
+        "ordem": 11,
+        "fase": "Asaas Sandbox",
+        "item": "□ Webhook sandbox → https://{preview}/api/webhooks/asaas + token",
+        "obrigatorio": true
+      },
+      {
+        "ordem": 12,
+        "fase": "Smoke",
+        "item": "□ Smoke Preview: registro → agendamento → carrinho → pagamento sandbox",
+        "obrigatorio": true
+      },
+      {
+        "ordem": 13,
+        "fase": "Smoke",
+        "item": "□ Confirmar no banco: Payment approved + Appointment pendente + metadata",
+        "obrigatorio": true
+      },
+      {
+        "ordem": 14,
+        "fase": "Asaas Produção",
+        "item": "□ ASAAS_API_KEY produção ($aact_prod_*) no Vercel Production",
+        "obrigatorio": true
+      },
+      {
+        "ordem": 15,
+        "fase": "Asaas Produção",
+        "item": "□ ASAAS_WEBHOOK_ACCESS_TOKEN produção = token painel Asaas",
+        "obrigatorio": true
+      },
+      {
+        "ordem": 16,
+        "fase": "Asaas Produção",
+        "item": "□ Webhook produção → https://{dominio}/api/webhooks/asaas",
+        "obrigatorio": true
+      },
+      {
+        "ordem": 17,
+        "fase": "Asaas Produção",
+        "item": "□ Domínio cadastrado e aprovado no painel Asaas",
+        "obrigatorio": true
+      },
+      {
+        "ordem": 18,
+        "fase": "Deploy",
+        "item": "□ Deploy Production (merge/push branch pr03-clean)",
+        "obrigatorio": true
+      },
+      {
+        "ordem": 19,
+        "fase": "Smoke Produção",
+        "item": "□ Primeiro pagamento sandbox em produção (valor mínimo) — validar webhook nos logs",
+        "obrigatorio": true
+      },
+      {
+        "ordem": 20,
+        "fase": "Smoke Produção",
+        "item": "□ Primeiro pagamento real (valor simbólico ou primeiro cliente) — confirmar Minha Conta",
+        "obrigatorio": true
+      },
+      {
+        "ordem": 21,
+        "fase": "Operação",
+        "item": "□ Documentar runbook: pagamento órfão → processar-direto / admin debug",
+        "obrigatorio": true
+      },
+      {
+        "ordem": 22,
+        "fase": "Operação",
+        "item": "□ Monitorar logs Vercel 24h (webhook, checkout, erros 5xx)",
+        "obrigatorio": true
+      },
+      {
+        "ordem": 23,
+        "fase": "Operação",
+        "item": "□ Monitorar 7 dias — tickets, pagamentos sem Appointment, taxa de abandono carrinho",
+        "obrigatorio": true
+      },
+      {
+        "ordem": 24,
+        "fase": "Go Live",
+        "item": "□ Liberar para primeiro cliente real (com canal de suporte informado)",
+        "obrigatorio": true
+      }
+    ]
+  },
+  "probability": {
+    "pergunta": "Se a checklist for seguida exatamente, qual a probabilidade do primeiro cliente conseguir comprar um serviço sem intervenção humana?",
+    "definicao": "Fluxo completo autônomo: registro → agendamento → carrinho → checkout Asaas → pagamento confirmado → agendamento visível em Minha Conta. Sem suporte, sem admin acionando processar-direto, sem correção manual de webhook.",
+    "percentual": 70,
+    "faixa": {
+      "min": 66,
+      "max": 74
+    },
+    "justificativa": [
+      "Checklist elimina falhas P0 de config (webhook, URL, migrate, chave prod)",
+      "Smoke E2E reduz risco de deploy quebrado",
+      "GL-01 B1 commitado resolve auto-login pós-registro",
+      "Resíduo: polling pós-pagamento não confirma Appointment (cliente pode achar que falhou e desistir)",
+      "Resíduo: formulário longo + CPF obrigatório → abandono sem intervenção mas também sem sucesso",
+      "Resíduo: webhook sempre 200 — falha pós-smoke ainda possível (sem alerta)",
+      "Resíduo: emails opcionais — compra funciona sem SMTP mas UX pior",
+      "Agendamento criado como pendente — compra conclui; aceite admin é pós-compra (não conta como intervenção na compra)"
+    ],
+    "comparativo": {
+      "sem_checklist": 52,
+      "com_checklist_obrigatoria": 70,
+      "com_checklist_mais_h1_ux": 78,
+      "fonte_baseline": "E2E-01-customer-journey"
+    }
+  },
+  "scoresSummary": {
+    "areas": {
+      "banco_de_dados": "🟡",
+      "asaas": "🟡",
+      "variaveis_ambiente": "🟡",
+      "deploy": "🟡",
+      "monitoramento": "🔴",
+      "seguranca": "🟡",
+      "operacao_admin": "🟢"
+    }
+  }
+}

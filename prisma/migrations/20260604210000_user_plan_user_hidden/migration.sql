@@ -1,0 +1,1 @@
+ALTER TABLE "UserPlan" ADD COLUMN "userHiddenAt" TIMESTAMP(3);

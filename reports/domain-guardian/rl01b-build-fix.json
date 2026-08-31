@@ -1,0 +1,79 @@
+{
+  "reportId": "RL-01b-build-fix",
+  "mode": "IMPLEMENTAÇÃO_CONTROLADA",
+  "generatedAt": "2026-07-10T02:25:00.000Z",
+  "language": "pt-BR",
+  "projectName": "THouse",
+  "branch": "pr03-clean",
+  "errorTarget": "Cannot find module '../../../src/app/agendamento/cupom/page.js'",
+  "answers": {
+    "1_whoImports": {
+      "answer": "Next.js gerado — não é import de código-fonte da aplicação",
+      "importers": [
+        {
+          "file": ".next/dev/types/validator.ts",
+          "line": 215,
+          "statement": "const handler = {} as typeof import(\"../../../src/app/agendamento/cupom/page.js\")"
+        }
+      ],
+      "note": "Arquivo gerado pelo type-check do Next.js App Router a partir de cache dev stale"
+    },
+    "2_belongsToPr03": {
+      "answer": false,
+      "detail": "PR-04+ WIP. A página src/app/agendamento/cupom/page.tsx nunca foi commitada; existia apenas como untracked no stash (re-export de ../page)."
+    },
+    "3_existsInStash": {
+      "answer": true,
+      "location": "stash@{0}^3 (untracked)",
+      "path": "src/app/agendamento/cupom/page.tsx",
+      "content": "export { default } from \"../page\";"
+    },
+    "4_existsInSprint": {
+      "answer": false,
+      "detail": "Não no HEAD commitado sprint1/pr-01-guardian (cf4b2e7). Apenas no WIP do stash."
+    },
+    "5_importOrFileNeeded": {
+      "answer": "neither",
+      "detail": "Nenhum arquivo src/ do PR-03 referencia /agendamento/cupom. minha-conta usa /agendamento?cupom= (query param). O erro era cache .next/dev de sessão dev anterior com a página WIP presente. O arquivo não precisa existir na RC PR-03."
+    },
+    "6_correctionApplied": {
+      "type": "stale_cache_removal",
+      "action": "Remove-Item -Recurse -Force .next",
+      "importAdjusted": false,
+      "fileRestored": false,
+      "rationale": "Restaurar a página traria artefato PR-04+ desnecessário. Limpar .next elimina a rota fantasma /agendamento/cupom do validator gerado."
+    },
+    "7_build": {
+      "command": "npm run build",
+      "exitCode": 0,
+      "verdict": "PASSOU"
+    },
+    "errorResolved": {
+      "answer": true
+    }
+  },
+  "buildResult": {
+    "verdict": "PASSOU",
+    "exitCode": 0,
+    "phases": {
+      "compile": "OK",
+      "typescript": "OK",
+      "staticGeneration": "OK (138 pages)"
+    },
+    "routeAgendamentoCupomPresent": false,
+    "newErrors": []
+  },
+  "constraintsRespected": {
+    "noArchitectureChange": true,
+    "noBusinessRuleChange": true,
+    "noDatabaseChange": true,
+    "noPrismaChange": true,
+    "noApiChange": true,
+    "noWebhookChange": true,
+    "noCheckoutChange": true,
+    "noSourceFileModified": true
+  },
+  "relatedUncommitted": {
+    "note": "RL-01a alterou src/app/lib/service-catalog.ts (ainda não commitado); RL-01b não modificou código-fonte."
+  }
+}

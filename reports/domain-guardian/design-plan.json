@@ -1,0 +1,395 @@
+{
+  "agentVersion": "1.0.0",
+  "generatedAt": "2026-07-05T19:55:02.011Z",
+  "request": {
+    "path": "design-request-test.md",
+    "title": "Adicionar arquivamento administrativo de pagamentos",
+    "body": "Implementar soft-delete admin em Payment com adminArchivedAt e adminArchivedReason.\nPreservar histórico financeiro e Minha Conta inalterada.",
+    "summary": "Implementar soft-delete admin em Payment com adminArchivedAt e adminArchivedReason."
+  },
+  "classification": {
+    "primary": "Feature",
+    "scores": {
+      "Feature": 2,
+      "Bug": 0,
+      "Refactor": 0,
+      "Migration": 0,
+      "Performance": 0,
+      "Security": 0,
+      "Infrastructure": 1,
+      "Documentation": 0
+    },
+    "rationale": "Palavras-chave indicam Feature (score 2)."
+  },
+  "entities": [
+    "Payment",
+    "Appointment",
+    "User"
+  ],
+  "flows": [
+    "Checkout (agendamento e plano)",
+    "Webhook Asaas",
+    "Reembolso (outbound e inbound)",
+    "Remarcação (resolução de pagamento origem)",
+    "Simulação admin (`symbolicAgendamento`, `symbolicPlano`)",
+    "Minha Conta (listagem de pagamentos)",
+    "Checkout agendamento",
+    "Checkout plano",
+    "Reembolso",
+    "Checkout → criação pós-pagamento",
+    "Aceite/recusa admin",
+    "Reembolso direto ou cupom de remarcação",
+    "Ocultação Minha Conta (`userHiddenAt`)",
+    "Conflito de horário (agenda)",
+    "Remarcação (cupom)",
+    "Autenticação e autorização",
+    "Minha Conta (agregação de todas as entidades)",
+    "Ownership de cupons e agendamentos",
+    "Exclusão de conta (LGPD)",
+    "Simulação admin (`canUseSymbolicSimulation`)",
+    "Minha Conta (leitura)",
+    "Autenticação"
+  ],
+  "invariants": [
+    "A1",
+    "A2",
+    "A3",
+    "A4",
+    "A5",
+    "A6",
+    "A7",
+    "A8",
+    "A9",
+    "C4",
+    "F1",
+    "F2",
+    "F3",
+    "F4",
+    "F5",
+    "F6",
+    "F7",
+    "F8",
+    "X1",
+    "X2",
+    "X3",
+    "X4",
+    "X5"
+  ],
+  "guardianChecks": [
+    "A5",
+    "A8",
+    "A9",
+    "C1",
+    "F1",
+    "F4",
+    "S1",
+    "S3",
+    "X1",
+    "X2"
+  ],
+  "impactMatrix": [
+    {
+      "entity": "Payment",
+      "impact": "Alteração financeira — webhook, checkout ou histórico",
+      "risk": "Crítico",
+      "probableFiles": [
+        "src/app/lib/process-payment-webhook.ts",
+        "src/app/api/webhooks/asaas/route.ts",
+        "src/app/lib/asaas-agendamento-payment-effects.ts",
+        "src/app/lib/asaas-plano-payment-effects.ts",
+        "src/app/lib/asaas-agendamento-reconcile.ts",
+        "src/app/lib/appointment-refund-payment.ts",
+        "src/app/lib/symbolic-payment.ts",
+        "src/app/lib/admin-delete-payment.ts",
+        "src/app/api/asaas/checkout-agendamento/route.ts",
+        "src/app/api/admin/pagamentos/route.ts",
+        "prisma/schema.prisma"
+      ],
+      "flows": [
+        "Checkout (agendamento e plano)",
+        "Webhook Asaas",
+        "Reembolso (outbound e inbound)",
+        "Remarcação (resolução de pagamento origem)",
+        "Simulação admin (`symbolicAgendamento`, `symbolicPlano`)",
+        "Minha Conta (listagem de pagamentos)",
+        "Checkout agendamento",
+        "Checkout plano"
+      ]
+    },
+    {
+      "entity": "Appointment",
+      "impact": "Alteração operacional — agenda, reembolso ou visibilidade",
+      "risk": "Alto",
+      "probableFiles": [
+        "src/app/lib/asaas-agendamento-payment-effects.ts",
+        "src/app/lib/appointment-hidden.ts",
+        "src/app/lib/appointment-refund-payment.ts",
+        "src/app/lib/appointment-refund-value.ts",
+        "src/app/lib/appointment-service-sync.ts",
+        "src/app/api/agendamentos/route.ts",
+        "src/app/api/agendamentos/escolher-reembolso/route.ts",
+        "src/app/api/asaas/checkout-agendamento/route.ts",
+        "src/app/lib/appointment-admin-archive.ts",
+        "src/app/api/admin/agendamentos/route.ts",
+        "prisma/schema.prisma"
+      ],
+      "flows": [
+        "Checkout → criação pós-pagamento",
+        "Aceite/recusa admin",
+        "Reembolso direto ou cupom de remarcação",
+        "Ocultação Minha Conta (`userHiddenAt`)",
+        "Conflito de horário (agenda)",
+        "Checkout agendamento",
+        "Reembolso",
+        "Remarcação (cupom)"
+      ]
+    },
+    {
+      "entity": "User",
+      "impact": "Impacto em User e fluxos dependentes",
+      "risk": "Médio",
+      "probableFiles": [
+        "src/app/lib/auth.ts",
+        "src/app/lib/adminAccess.ts",
+        "src/app/lib/coupon-account-ownership.ts",
+        "src/app/api/meus-dados/route.ts",
+        "src/app/api/auth/",
+        "src/app/api/conta/route.ts"
+      ],
+      "flows": [
+        "Autenticação e autorização",
+        "Minha Conta (agregação de todas as entidades)",
+        "Ownership de cupons e agendamentos",
+        "Exclusão de conta (LGPD)",
+        "Simulação admin (`canUseSymbolicSimulation`)",
+        "Minha Conta (leitura)",
+        "Autenticação"
+      ]
+    }
+  ],
+  "implementationPhases": [
+    {
+      "id": "phase-1",
+      "title": "Backend / Regras de domínio",
+      "objective": "Implementar lógica de negócio e guards sem alterar contratos existentes inadvertidamente.",
+      "files": [
+        "src/app/lib/process-payment-webhook.ts",
+        "src/app/api/webhooks/asaas/route.ts",
+        "src/app/lib/asaas-agendamento-payment-effects.ts",
+        "src/app/lib/asaas-plano-payment-effects.ts",
+        "src/app/lib/asaas-agendamento-reconcile.ts",
+        "src/app/lib/appointment-refund-payment.ts",
+        "src/app/lib/symbolic-payment.ts",
+        "src/app/lib/admin-delete-payment.ts",
+        "src/app/api/asaas/checkout-agendamento/route.ts",
+        "src/app/api/admin/pagamentos/route.ts",
+        "src/app/lib/appointment-hidden.ts",
+        "src/app/lib/appointment-refund-value.ts",
+        "src/app/lib/appointment-service-sync.ts",
+        "src/app/api/agendamentos/route.ts",
+        "src/app/api/agendamentos/escolher-reembolso/route.ts"
+      ],
+      "dependencies": [],
+      "prerequisites": [
+        "ProjectContext e design-plan revisados"
+      ],
+      "completionCriteria": [
+        "Endpoints novos ou PATCH documentados",
+        "Regras de bloqueio alinhadas à auditoria",
+        "Nenhum purge físico onde soft-archive é esperado"
+      ]
+    },
+    {
+      "id": "phase-2",
+      "title": "Webhook / Efeitos pós-pagamento",
+      "objective": "Garantir idempotência e efeitos colaterais consistentes.",
+      "files": [
+        "src/app/api/webhooks/asaas/route.ts",
+        "src/app/lib/asaas-agendamento-payment-effects.ts",
+        "src/app/lib/asaas-agendamento-reconcile.ts"
+      ],
+      "dependencies": [
+        "Fase Backend"
+      ],
+      "prerequisites": [
+        "F1/F3/F4 validados no plano"
+      ],
+      "completionCriteria": [
+        "PAYMENT_RECEIVED idempotente por asaasId",
+        "Efeitos de agendamento executados após Payment.create",
+        "Reconcile cobre retries"
+      ]
+    },
+    {
+      "id": "phase-3",
+      "title": "Admin UI",
+      "objective": "Expor operações administrativas com confirmação e justificativa.",
+      "files": [
+        "src/app/api/admin/pagamentos/route.ts",
+        "src/app/api/admin/agendamentos/route.ts"
+      ],
+      "dependencies": [
+        "Fase Backend com APIs estáveis"
+      ],
+      "prerequisites": [],
+      "completionCriteria": [
+        "Ações destrutivas substituídas por soft-archive quando aplicável",
+        "Filtros e restauração testados manualmente"
+      ]
+    },
+    {
+      "id": "phase-4",
+      "title": "Minha Conta (se aplicável)",
+      "objective": "Avaliar impacto em visibilidade do usuário — preferir ortogonalidade com admin.",
+      "files": [
+        "src/app/api/meus-dados/route.ts",
+        "src/app/lib/appointment-hidden.ts"
+      ],
+      "dependencies": [
+        "Fase Backend"
+      ],
+      "prerequisites": [
+        "Confirmar que adminArchivedAt não filtra Minha Conta"
+      ],
+      "completionCriteria": [
+        "Comportamento de userHiddenAt preservado",
+        "Fluxos de reembolso intactos"
+      ]
+    },
+    {
+      "id": "phase-5",
+      "title": "Domain Guardian",
+      "objective": "Atualizar checks e documentação de invariantes.",
+      "files": [
+        "scripts/domain-guardian-audit.ts",
+        "docs/ai/domain-invariants.md",
+        "scripts/domain-guardian-advisor.ts"
+      ],
+      "dependencies": [
+        "Fases de implementação estáveis"
+      ],
+      "prerequisites": [],
+      "completionCriteria": [
+        "Novos invariantes documentados (se houver)",
+        "Checks A5/A8/A9/F4 atualizados conforme plano",
+        "domain-guardian-runner.ts sem errors"
+      ]
+    },
+    {
+      "id": "phase-6",
+      "title": "Validação",
+      "objective": "Smoke, funcional, Guardian e regressão antes de merge.",
+      "files": [
+        "reports/domain-guardian/"
+      ],
+      "dependencies": [
+        "Todas as fases anteriores"
+      ],
+      "prerequisites": [
+        "design-plan.json arquivado neste run"
+      ],
+      "completionCriteria": [
+        "Checklist de validação executado",
+        "Decision Engine reavaliado",
+        "Architecture Agent reexecutado"
+      ]
+    }
+  ],
+  "riskAnalysis": {
+    "overall": "Crítico",
+    "items": [
+      {
+        "level": "Crítico",
+        "title": "Domínio financeiro",
+        "justification": "Payment e webhook Asaas são Tier 1 — falhas causam cobrança sem artefato ou duplicidade (F1/F4)."
+      },
+      {
+        "level": "Crítico",
+        "title": "Invariantes críticos no escopo",
+        "justification": "Invariantes: F1, F2, F3, F4, F5, F6, F7, F8, X1, X2, X3, X4, X5."
+      },
+      {
+        "level": "Alto",
+        "title": "Decision Engine BLOCKED",
+        "justification": "Há diff CRITICAL em andamento — novo trabalho aumenta escopo de merge."
+      }
+    ]
+  },
+  "validationPlan": {
+    "smokeTests": [
+      "Aplicação inicia sem erro (`npm run build`)",
+      "Prisma generate após migration (se houver)",
+      "Login admin e usuário de teste"
+    ],
+    "functionalTests": [
+      "Checkout agendamento e plano em sandbox Asaas",
+      "Webhook PAYMENT_RECEIVED idempotente",
+      "Listagem admin de pagamentos",
+      "Conflito de horário no checkout",
+      "Cancelamento + escolher reembolso/cupom",
+      "Arquivar/restaurar no admin (se aplicável)"
+    ],
+    "guardianTests": [
+      "node --experimental-strip-types scripts/domain-guardian-runner.ts",
+      "Verificar check A5 sem novos findings",
+      "Verificar check A8 sem novos findings",
+      "Verificar check A9 sem novos findings",
+      "Verificar check C1 sem novos findings",
+      "Verificar check F1 sem novos findings",
+      "Verificar check F4 sem novos findings",
+      "Verificar check S1 sem novos findings",
+      "Verificar check S3 sem novos findings",
+      "Verificar check X1 sem novos findings",
+      "Verificar check X2 sem novos findings",
+      "node --experimental-strip-types scripts/domain-decision-engine.ts"
+    ],
+    "regressionTests": [
+      "meus-dados: listagem agendamentos/cupons/planos",
+      "Admin stats sem divergência abrupta",
+      "Reprocessar pagamento teste admin"
+    ]
+  },
+  "implementationChecklist": [
+    "Revisar design-plan.md com stakeholder antes de codar",
+    "Confirmar que solicitação não viola invariantes críticos listados",
+    "Executar Architecture Agent para baseline atualizado",
+    "Classificação Feature — escopo alinhado",
+    "Validar impacto em F1/F4 e idempotência webhook",
+    "Não deletar Payment approved com asaasId real",
+    "Separar adminArchivedAt de userHiddenAt (ortogonalidade A7)",
+    "Atualizar todas as queries de conflito de horário",
+    "[Backend / Regras de domínio] Endpoints novos ou PATCH documentados",
+    "[Webhook / Efeitos pós-pagamento] PAYMENT_RECEIVED idempotente por asaasId",
+    "[Admin UI] Ações destrutivas substituídas por soft-archive quando aplicável",
+    "[Minha Conta (se aplicável)] Comportamento de userHiddenAt preservado",
+    "[Domain Guardian] Novos invariantes documentados (se houver)",
+    "[Validação] Checklist de validação executado",
+    "Reexecutar Design Planner Agent após mudança de escopo",
+    "Anexar design-plan.json ao PR"
+  ],
+  "context": {
+    "projectContextLoaded": true,
+    "decisionStatus": "BLOCKED",
+    "changeRisk": "CRITICAL",
+    "guardianStatus": "HEALTHY",
+    "sourcesConsulted": [
+      "design-request-test.md",
+      "reports/domain-guardian/project-context.json",
+      "reports/domain-guardian/decision.md",
+      "reports/domain-guardian/change-analysis.md",
+      "reports/domain-guardian/review-checklist.md",
+      "reports/domain-guardian/action-plan.md",
+      "docs/ai/domain-map.md",
+      "docs/ai/domain-dependencies.md",
+      "docs/ai/domain-invariants.md"
+    ]
+  },
+  "limitations": [
+    "Descoberta de entidades/fluxos é heurística por palavras-chave — revisar manualmente.",
+    "Não analisa código-fonte nem AST — arquivos prováveis vêm do domain-map.",
+    "Não substitui revisão humana nem Decision Engine.",
+    "Não gera estimativas de esforço ou diagramas.",
+    "Uma solicitação por execução (design-request.md).",
+    "Não valida viabilidade técnica de integrações externas (ex.: Stripe)."
+  ]
+}

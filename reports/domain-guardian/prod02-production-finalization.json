@@ -1,0 +1,79 @@
+{
+  "reportId": "PROD-02-production-finalization",
+  "mode": "RELEASE_ENGINEER",
+  "generatedAt": "2026-07-11T22:30:00.000Z",
+  "language": "pt-BR",
+  "productionUrl": "https://meu-site-produtor-13.vercel.app",
+  "mergeCommit": "7057b13",
+  "rcCommit": "f882047",
+  "bloqueadores": {
+    "1_nextPublicSiteUrl": {
+      "status": "PENDENTE",
+      "valorAtualNoDeploy": "http://localhost:3000",
+      "valorEsperado": "https://meu-site-produtor-13.vercel.app",
+      "hasNewline": false,
+      "hasLocalhost": true,
+      "redeployAposCorrecao": "OBRIGATORIO",
+      "acaoUsuario": "Vercel → meu-site-produtor-1.3 → Settings → Environment Variables → Production → NEXT_PUBLIC_SITE_URL"
+    },
+    "2_asaasWebhookAccessToken": {
+      "status": "PENDENTE",
+      "evidencia": "POST /api/webhooks/asaas → {\"error\":\"Webhook não configurado\"}"
+    },
+    "3_databaseUrlProduction": {
+      "status": "OK_FUNCIONAL",
+      "urlExibida": false,
+      "migrateDeployExecutadoNestaSessao": false,
+      "evidencia": "Registro + /api/meus-dados 200 em Production — banco remoto operacional",
+      "nota": "migrate deploy não reexecutado (URL Production indisponível localmente); schema aparenta alinhado"
+    },
+    "4_asaasProducao": {
+      "status": "PENDENTE",
+      "verificavelPainel": false,
+      "urlEsperada": "https://meu-site-produtor-13.vercel.app/api/webhooks/asaas",
+      "acaoUsuario": "www.asaas.com → Webhooks → URL + token idêntico ao Vercel Production"
+    },
+    "5_redeployProduction": {
+      "status": "PENDENTE_NOVO",
+      "ultimoDeployment": {
+        "deploymentId": 5407746993,
+        "commit": "7057b13d5e7e7947a8eb3fa32ae116773cf6706a",
+        "status": "success",
+        "created": "2026-07-11T22:13:38Z",
+        "projeto": "meu-site-produtor-1.3"
+      },
+      "nota": "Deploy RC ativo; redeploy necessário após corrigir env vars"
+    },
+    "6_smokeTestProduction": {
+      "status": "PASS",
+      "url": "https://meu-site-produtor-13.vercel.app",
+      "etapas": {
+        "home": 200,
+        "registro": 200,
+        "autoLogin": true,
+        "minhaConta": 200,
+        "apiMeusDados": 200
+      },
+      "semPagamento": true
+    }
+  },
+  "productionProntaParaPagamentoReal": "NAO",
+  "bloqueadoresReais": [
+    "NEXT_PUBLIC_SITE_URL Production = localhost:3000 (checkout/callback quebrará)",
+    "ASAAS_WEBHOOK_ACCESS_TOKEN ausente em Production",
+    "Webhook www.asaas.com não confirmado",
+    "Redeploy Production após corrigir env vars"
+  ],
+  "acoesUsuarioOrdem": [
+    "Vercel Production: NEXT_PUBLIC_SITE_URL = https://meu-site-produtor-13.vercel.app (sem newline)",
+    "Vercel Production: ASAAS_WEBHOOK_ACCESS_TOKEN = token www.asaas.com",
+    "www.asaas.com: webhook → /api/webhooks/asaas com mesmo token",
+    "Redeploy Production",
+    "Validar /api/pagamentos/debug → siteUrl HTTPS correto",
+    "Validar webhook sem token → Token inválido (não 'não configurado')"
+  ],
+  "melhoriasFuturas": [
+    "Confirmar prisma migrate deploy no Neon Production com URL do painel",
+    "Desativar projeto Vercel legado meu-site-produtor"
+  ]
+}

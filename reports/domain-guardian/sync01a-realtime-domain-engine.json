@@ -1,0 +1,188 @@
+{
+  "sprint": "SYNC-01A",
+  "title": "Real-Time Domain Synchronization Engine",
+  "generatedAt": "2026-07-15T01:38:00.000Z",
+  "branch": "backup-pre-formatacao",
+  "commitMessage": "feat(sync): implement realtime domain synchronization engine (SYNC-01A)",
+  "transport": "sse_outbox",
+  "architecture": [
+    "Transition",
+    "StateMachine",
+    "DomainEvent",
+    "SynchronizationEvent",
+    "InProcessHub",
+    "SSE",
+    "DomainSyncProvider",
+    "ReactSurfaces"
+  ],
+  "filesCreated": [
+    "prisma/migrations/20260714220000_sync01a_synchronization_event/migration.sql",
+    "src/app/lib/synchronization/types.ts",
+    "src/app/lib/synchronization/routing.ts",
+    "src/app/lib/synchronization/hub.ts",
+    "src/app/lib/synchronization/engine.ts",
+    "src/app/lib/synchronization/lifecycle.ts",
+    "src/app/lib/synchronization/observer.ts",
+    "src/app/lib/synchronization/polling-inventory.ts",
+    "src/app/lib/synchronization/DomainSyncProvider.tsx",
+    "src/app/lib/synchronization/index.ts",
+    "src/app/api/sync/events/route.ts",
+    "src/app/hooks/useDomainSubscription.ts",
+    "src/app/hooks/useDomainRefresh.ts",
+    "src/app/hooks/useWorkflowUpdates.ts",
+    "src/app/hooks/useRealtimeEntity.ts",
+    "src/app/hooks/useWorkflowAction.ts",
+    "src/app/lib/test-engine/scenarios/sync01a-batch.ts",
+    "scripts/synchronization-audit.ts",
+    "reports/domain-guardian/sync01a-realtime-domain-engine.md",
+    "reports/domain-guardian/sync01a-realtime-domain-engine.json"
+  ],
+  "filesChanged": [
+    "prisma/schema.prisma",
+    "package.json",
+    "scripts/te-run.ts",
+    "src/app/layout.tsx",
+    "src/app/lib/app-data-events.ts",
+    "src/app/lib/domain/state-machine/transition.ts",
+    "src/app/lib/process-payment-webhook.ts",
+    "src/app/lib/asaas-agendamento-payment-effects.ts",
+    "src/app/lib/asaas-carrinho-payment-effects.ts",
+    "src/app/api/agendamentos/route.ts",
+    "src/app/api/agendamentos/com-cupom/route.ts",
+    "src/app/api/agendamentos/disponibilidade/route.ts",
+    "src/app/api/planos/cancelar/route.ts",
+    "src/app/minha-conta/page.tsx",
+    "src/app/agendamento/page.tsx",
+    "src/app/admin/page.tsx",
+    "src/app/admin/agendamentos/page.tsx",
+    "src/app/admin/servicos-aceitos/page.tsx",
+    "src/app/admin/servicos-solicitados/page.tsx",
+    "src/app/admin/pagamentos/page.tsx",
+    "src/app/admin/planos/page.tsx",
+    "src/app/admin/estatisticas/page.tsx",
+    "src/app/hooks/useUnreadAppointmentCount.ts",
+    "src/app/hooks/useUnreadPlanCount.ts",
+    "src/app/lib/test-engine/types.ts",
+    "src/app/lib/test-engine/index.ts",
+    "src/app/lib/test-engine/scenario-registry.ts"
+  ],
+  "subscribers": [
+    "minha-conta",
+    "dashboard",
+    "servicos-gerais",
+    "servicos-selecionados",
+    "pagamentos",
+    "cupons",
+    "planos",
+    "agenda",
+    "admin-agendamentos",
+    "estatisticas"
+  ],
+  "eventsUsed": [
+    "AppointmentReserved",
+    "AppointmentAccepted",
+    "AppointmentRejected",
+    "AppointmentCancelled",
+    "AppointmentRebooked",
+    "AppointmentStarted",
+    "AppointmentCompleted",
+    "ServiceAccepted",
+    "ServiceStarted",
+    "ServiceDelivered",
+    "ServiceCompleted",
+    "ServiceCancelled",
+    "ServiceRejected",
+    "PaymentReceived",
+    "PaymentConfirmed",
+    "PaymentRefunded",
+    "CouponGenerated",
+    "CouponConsumed",
+    "CouponExpired",
+    "CouponCancelled",
+    "PlanCancelled",
+    "PlanRenewed",
+    "SyncSignal",
+    "DomainTransition"
+  ],
+  "pollingRemoved": [
+    { "file": "src/app/minha-conta/page.tsx", "intervalMs": 30000 },
+    { "file": "src/app/admin/servicos-aceitos/page.tsx", "intervalMs": 30000 },
+    { "file": "src/app/admin/servicos-solicitados/page.tsx", "intervalMs": 30000 },
+    { "file": "src/app/admin/estatisticas/page.tsx", "intervalMs": 45000 },
+    { "file": "src/app/admin/planos/page.tsx", "intervalMs": 60000 },
+    { "file": "src/app/hooks/useUnreadAppointmentCount.ts", "intervalMs": 60000 },
+    { "file": "src/app/hooks/useUnreadPlanCount.ts", "intervalMs": 60000 }
+  ],
+  "pollingKept": [
+    { "file": "src/app/chat/page.tsx", "classification": "necessario", "reason": "chat fora escopo" },
+    { "file": "src/app/faq/page.tsx", "classification": "necessario", "reason": "faq fora escopo" },
+    { "file": "src/app/pagamentos/sucesso/page.tsx", "classification": "necessario", "reason": "retry financeiro" },
+    { "file": "src/app/hooks/useIntelligentRefresh.ts", "classification": "fallback", "reason": "agenda 5min" },
+    { "file": "src/app/hooks/useUnreadFaqCount.ts", "classification": "necessario", "reason": "faq" },
+    { "file": "src/app/hooks/useUnreadChatCount.ts", "classification": "necessario", "reason": "chat" }
+  ],
+  "fallbacks": [
+    "SSE heartbeat 15s",
+    "Outbox tail 4s cross-instance",
+    "Client recovery poll 15s when disconnected",
+    "visibilitychange recovery fetch",
+    "BroadcastChannel cross-tab",
+    "useIntelligentRefresh agenda 5min"
+  ],
+  "risks": [
+    {
+      "id": "RISK-SYNC-01",
+      "severity": "medium",
+      "description": "SSE longevity on Vercel serverless",
+      "mitigation": "heartbeat + reconnect + JSON poll recovery + outbox tail"
+    },
+    {
+      "id": "RISK-SYNC-02",
+      "severity": "medium",
+      "description": "Plan lifecycle still outside WorkflowEntity graph",
+      "mitigation": "lifecycle emitPlanCancelled/Renewed through Sync Engine"
+    },
+    {
+      "id": "RISK-SYNC-03",
+      "severity": "low",
+      "description": "Cross-instance delivery latency bounded by outbox tail interval",
+      "mitigation": "4s tail; cursor replay on reconnect"
+    }
+  ],
+  "coverage": {
+    "surfacesRequired": 9,
+    "surfacesImplemented": 9,
+    "routedEvents": 24,
+    "syncScenarios": { "total": 7, "passed": 7, "failed": 0 },
+    "te02aRegression": { "total": 21, "passed": 21, "failed": 0 }
+  },
+  "validation": {
+    "typescript": "PASS",
+    "prisma": "PASS",
+    "build": "PASS",
+    "domainAudit": "PASS",
+    "workflowAudit": "PASS",
+    "workflowSmoke": "PASS",
+    "synchronizationAudit": "PASS",
+    "syncSuite": "PASS",
+    "te02aRegression": "PASS"
+  },
+  "bugsFixed": [
+    {
+      "id": "BUG-SYNC-01A-001",
+      "description": "disponibilidade mostrava slot livre com appointment pendente; alinhado a status not cancelado",
+      "file": "src/app/api/agendamentos/disponibilidade/route.ts"
+    },
+    {
+      "id": "BUG-SYNC-01A-002",
+      "description": "window.location.reload removido da agenda pós cupom",
+      "file": "src/app/agendamento/page.tsx"
+    }
+  ],
+  "pendencias": [],
+  "simCompatibility": {
+    "SIM-01": "hooks sourceTag prepared — not implemented",
+    "SIM-02": "observer/scenario hooks prepared — not implemented",
+    "SIM-03": "configureSyncSimulation(clock) prepared — not implemented"
+  }
+}

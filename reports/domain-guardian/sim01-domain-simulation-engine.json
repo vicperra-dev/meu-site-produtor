@@ -1,0 +1,148 @@
+{
+  "reportId": "SIM-01-domain-simulation-engine",
+  "generatedAt": "2026-07-15T02:05:00.000Z",
+  "branch": "backup-pre-formatacao",
+  "verdict": "PASS",
+  "gates": {
+    "typescript": "PASS",
+    "prisma": "PASS",
+    "build": "PASS",
+    "domainAudit": "PASS",
+    "workflowAudit": "PASS",
+    "synchronizationAudit": "PASS",
+    "simulationAudit": "PASS",
+    "simBatch": "10/10 PASS",
+    "te02aRegression": "21/21 PASS",
+    "sync01aRegression": "7/7 PASS"
+  },
+  "pipeline": [
+    "Simulation",
+    "ScenarioRunner",
+    "OfficialPipelineAdapter",
+    "Workflow",
+    "StateMachine",
+    "DomainEvents",
+    "SynchronizationEngine",
+    "Assertions"
+  ],
+  "modules": [
+    "Simulation Registry",
+    "Simulation Runner",
+    "Simulation Context",
+    "Simulation Session",
+    "Simulation Report",
+    "Simulation Cleanup",
+    "Simulation Assertions",
+    "Simulation Hooks"
+  ],
+  "filesCreated": [
+    "src/app/lib/simulation/types.ts",
+    "src/app/lib/simulation/permissions.ts",
+    "src/app/lib/simulation/pipeline.ts",
+    "src/app/lib/simulation/assertions.ts",
+    "src/app/lib/simulation/cleanup.ts",
+    "src/app/lib/simulation/hooks.ts",
+    "src/app/lib/simulation/session.ts",
+    "src/app/lib/simulation/report.ts",
+    "src/app/lib/simulation/registry.ts",
+    "src/app/lib/simulation/runner.ts",
+    "src/app/lib/simulation/scenarios/sim01-batch.ts",
+    "src/app/lib/simulation/index.ts",
+    "scripts/sim-run.ts",
+    "scripts/simulation-audit.ts",
+    "src/app/api/simulation/report/route.ts"
+  ],
+  "filesModified": [
+    "package.json",
+    "src/app/lib/test-engine/index.ts"
+  ],
+  "cliCommands": {
+    "sim:list": "npm run sim:list",
+    "sim:run": "npm run sim:run -- --id SIM-001",
+    "sim:batch": "npm run sim:batch",
+    "sim:cleanup": "npm run sim:cleanup -- --email user@homolog.test",
+    "sim:report": "npm run sim:report",
+    "sim:audit": "npm run sim:audit"
+  },
+  "scenarios": [
+    { "id": "SIM-001", "name": "Pagamento aprovado", "result": "pass", "durationMs": 11192 },
+    { "id": "SIM-002", "name": "Pagamento recusado", "result": "pass", "durationMs": 556 },
+    { "id": "SIM-003", "name": "Pagamento duplicado", "result": "pass", "durationMs": 15843 },
+    { "id": "SIM-004", "name": "Sessão completa", "result": "pass", "durationMs": 10005 },
+    { "id": "SIM-005", "name": "Plano Bronze", "result": "pass", "durationMs": 6844 },
+    { "id": "SIM-006", "name": "Cupom Serviço", "result": "pass", "durationMs": 7843 },
+    { "id": "SIM-007", "name": "Cupom Desconto", "result": "pass", "durationMs": 344 },
+    { "id": "SIM-008", "name": "Reembolso financeiro", "result": "pass", "durationMs": 7776 },
+    { "id": "SIM-009", "name": "Cancelamento após aceite", "result": "pass", "durationMs": 11058 },
+    { "id": "SIM-010", "name": "Remarcação", "result": "pass", "durationMs": 8882 }
+  ],
+  "summary": {
+    "total": 10,
+    "passed": 10,
+    "failed": 0,
+    "errors": 0,
+    "avgDurationMs": 8206,
+    "totalBatchDurationMs": 82117
+  },
+  "assertions": [
+    "assertPayment",
+    "assertAppointment",
+    "assertService",
+    "assertCoupon",
+    "assertDashboard",
+    "assertStatistics",
+    "assertAgenda",
+    "assertMinhaConta",
+    "assertSynchronization",
+    "assertWorkflow",
+    "assertStateMachine"
+  ],
+  "eventsProduced": [
+    "PaymentConfirmed",
+    "AppointmentReserved",
+    "ServiceCompleted",
+    "PaymentRefunded",
+    "AppointmentCancelled",
+    "AppointmentRebooked",
+    "PlanCancelled"
+  ],
+  "surfacesValidated": [
+    "minha-conta",
+    "dashboard",
+    "admin-agendamentos",
+    "agenda",
+    "servicos-gerais",
+    "servicos-selecionados",
+    "pagamentos",
+    "estatisticas",
+    "planos",
+    "cupons"
+  ],
+  "cleanup": {
+    "policy": "cleanupTeUserArtifacts após cada cenário (@homolog.test only)",
+    "perSession": true
+  },
+  "qaCenterPrep": {
+    "apiRoute": "/api/simulation/report",
+    "executionReport": "reports/domain-guardian/sim01-last-run.json",
+    "progress": "SimulationReport.progress[]",
+    "eventStream": "SyncEnvelope[] em SimulationSession.eventsProduced"
+  },
+  "te02bPrep": {
+    "consumer": "src/app/lib/test-engine/index.ts re-exporta runSimulation, runAllSimulations",
+    "rule": "TE executa, SIM produz — sem duplicar cenários"
+  },
+  "limitations": [
+    "Execução bloqueada em production; preview exige SIM_ENGINE_ENABLED=1",
+    "Cupons de desconto (SIM-007) usam prisma.coupon.create para setup — não é pipeline de pagamento",
+    "API POST reservada para QA Center (SIM-02); CLI é o executor oficial",
+    "Slots únicos por cenário (simSlot) — suites paralelas podem colidir se horários coincidirem"
+  ],
+  "nextSteps": [
+    "SIM-02: QA Center UI consumindo Simulation API",
+    "TE-02B: Test Engine delegando cenários ao Simulation Engine",
+    "Expandir cenários: pagamento pendente/expirado, webhook fora de ordem, upgrade/downgrade plano",
+    "SIM_ENGINE_CLI_SECRET em CI para gate explícito"
+  ],
+  "lastRunRef": "reports/domain-guardian/sim01-last-run.json"
+}

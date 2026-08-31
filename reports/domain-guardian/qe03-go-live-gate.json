@@ -1,0 +1,282 @@
+{
+  "reportId": "QE-03-go-live-gate",
+  "mode": "READ_ONLY",
+  "generatedAt": "2026-07-10T05:30:00.000Z",
+  "language": "pt-BR",
+  "projectName": "THouse",
+  "branch": "pr03-clean",
+  "head": "66a8e5c",
+  "scope": "Núcleo PR-03 — Asaas checkout-carrinho + webhook + efeitos modulares",
+  "deploymentBaseline": {
+    "commit": "66a8e5c",
+    "note": "Avaliação primária sobre o que está commitado e seria deployado"
+  },
+  "workingTreeNote": {
+    "uncommittedFix": "QE-01b auto-login (auth.ts, login/route.ts, registro/route.ts)",
+    "impact": "Corrige bloqueador Fluxo 1 se incluído no deploy; não está no HEAD"
+  },
+  "verdict": {
+    "goLiveReady": false,
+    "emoji": "🔴",
+    "bloqueadoresReais": {
+      "headCommit": 2,
+      "detalhe": [
+        "B1: Registro não cria sessão (HEAD 66a8e5c)",
+        "B2: Compra de plano inacessível na UI (planos → /pagamentos → /carrinho perde params)"
+      ],
+      "comQE01bCommitado": 1,
+      "detalheComMitigacao": "Resta B2 (plano) se planos estiverem no escopo de lançamento",
+      "agendamentoApenas": "Com QE-01b commitado e planos ocultos/desabilitados na UI: 0 bloqueadores de código; permanecem pré-requisitos operacionais Asaas"
+    }
+  },
+  "operationalGates": [
+    "ASAAS_API_KEY configurada",
+    "ASAAS_WEBHOOK_ACCESS_TOKEN em produção",
+    "URL pública do webhook registrada no Asaas",
+    "NEXT_PUBLIC_SITE_URL correto (backUrls checkout)",
+    "Domínio configurado no painel Asaas"
+  ],
+  "flows": [
+    {
+      "id": 1,
+      "nome": "Registro → Login → Minha Conta",
+      "status": "REPROVADO",
+      "emoji": "🔴",
+      "bloqueiaDeploy": true,
+      "prioridade": "P0",
+      "existe": true,
+      "completo": false,
+      "legadoInterfere": false,
+      "perdaFinanceira": false,
+      "perdaDados": false,
+      "vazamentoDados": false,
+      "bloqueiaProducao": true,
+      "evidencia": {
+        "head": "POST /api/registro retorna user JSON sem createUserSession; registro/page.tsx → /conta; /conta exige user → bounce /login",
+        "wip": "Working tree tem createUserSession em registro (QE-01b, não commitado)"
+      },
+      "path": "registro/page.tsx → POST /api/registro → /conta → (sem sessão) → /login → POST /api/login → minha-conta"
+    },
+    {
+      "id": 2,
+      "nome": "Compra de Serviço (agendamento avulso)",
+      "status": "ATENCAO",
+      "emoji": "🟡",
+      "bloqueiaDeploy": false,
+      "prioridade": "P1",
+      "existe": true,
+      "completo": true,
+      "legadoInterfere": true,
+      "perdaFinanceira": true,
+      "perdaDados": true,
+      "vazamentoDados": false,
+      "bloqueiaProducao": false,
+      "evidencia": {
+        "path": "agendamento → sessionStorage carrinho → carrinho/page.tsx → POST /api/asaas/checkout-carrinho → Asaas → POST /api/webhooks/asaas → processCarrinhoPaymentEffects → Appointment + Coupon → minha-conta",
+        "gaps": [
+          "loadMetadataForPayment fallbacks agressivos podem associar metadata errado",
+          "process-payment-webhook paralelo não usado pelo webhook prod",
+          "Webhook sempre 200 — falhas silenciosas exigem monitoramento"
+        ],
+        "ok": [
+          "PaymentMetadata antes do checkout",
+          "Idempotência Payment.asaasId",
+          "Efeitos carrinho PR-03",
+          "Cupom 100% via com-cupom sem Payment"
+        ]
+      }
+    },
+    {
+      "id": 3,
+      "nome": "Compra de Plano",
+      "status": "REPROVADO",
+      "emoji": "🔴",
+      "bloqueiaDeploy": true,
+      "prioridade": "P0",
+      "existe": false,
+      "completo": false,
+      "legadoInterfere": true,
+      "perdaFinanceira": false,
+      "perdaDados": false,
+      "vazamentoDados": false,
+      "bloqueiaProducao": true,
+      "evidencia": {
+        "ui": "planos/page.tsx → /pagamentos?planId&modo → pagamentos/page.tsx router.replace('/carrinho') sem query",
+        "api": "POST /api/asaas/checkout implementado mas sem consumidor UI",
+        "fallback": "processar-plano-apos-pagamento compensa webhook localhost apenas"
+      },
+      "notaEscopo": "Bloqueia deploy apenas se venda de planos estiver no escopo do lançamento"
+    },
+    {
+      "id": 4,
+      "nome": "Uso de Cupom",
+      "status": "ATENCAO",
+      "emoji": "🟡",
+      "bloqueiaDeploy": false,
+      "prioridade": "P2",
+      "existe": true,
+      "completo": true,
+      "legadoInterfere": true,
+      "perdaFinanceira": false,
+      "perdaDados": false,
+      "vazamentoDados": false,
+      "bloqueiaProducao": false,
+      "evidencia": {
+        "path": "POST /api/coupons/validate → agendamento UI; cupom 100% → POST /api/agendamentos/com-cupom; pós-pagamento → agendamento-payment-coupons",
+        "gaps": [
+          "TESTE_/R$5 legado em symbolic-payment",
+          "Ownership cupom incompleto até PR-04",
+          "vincular-cupons-teste shim em minha-conta"
+        ]
+      }
+    },
+    {
+      "id": 5,
+      "nome": "Reembolso",
+      "status": "ATENCAO",
+      "emoji": "🟡",
+      "bloqueiaDeploy": false,
+      "prioridade": "P2",
+      "existe": true,
+      "completo": true,
+      "legadoInterfere": true,
+      "perdaFinanceira": true,
+      "perdaDados": false,
+      "vazamentoDados": false,
+      "bloqueiaProducao": false,
+      "evidencia": {
+        "paths": [
+          "Admin cancela → usuário escolhe em POST /api/agendamentos/escolher-reembolso",
+          "Usuário cancela → POST /api/agendamentos/cancelar (refundAsaasPayment)",
+          "Plano cancelado → POST /api/planos/solicitar-reembolso",
+          "Webhook PAYMENT_REFUNDED sincroniza refundAsaasStatus"
+        ],
+        "gaps": [
+          "appointment-refund-payment resolvedor complexo com fallbacks",
+          "escolher-reembolso busca pagamento Asaas por heurística se payment ausente",
+          "Risco financeiro em edge cases de pagamento não encontrado"
+        ]
+      }
+    },
+    {
+      "id": 6,
+      "nome": "Administração",
+      "status": "ATENCAO",
+      "emoji": "🟡",
+      "bloqueiaDeploy": false,
+      "prioridade": "P2",
+      "existe": true,
+      "completo": true,
+      "legadoInterfere": true,
+      "perdaFinanceira": false,
+      "perdaDados": false,
+      "vazamentoDados": false,
+      "bloqueiaProducao": false,
+      "evidencia": {
+        "ui": "admin/layout.tsx — gate client-side role ADMIN ou email hardcoded",
+        "api": "requireAdmin() server-side nas rotas /api/admin/*",
+        "gaps": [
+          "UI test-payment em agendamento/planos retorna 410",
+          "reprocessar-pagamento-teste é caminho QA legado",
+          "Rotas pagamentos/processar-manual sem UI (scripts)"
+        ]
+      }
+    },
+    {
+      "id": 7,
+      "nome": "Segurança",
+      "status": "ATENCAO",
+      "emoji": "🟡",
+      "bloqueiaDeploy": false,
+      "prioridade": "P1",
+      "existe": true,
+      "completo": true,
+      "legadoInterfere": false,
+      "perdaFinanceira": false,
+      "perdaDados": false,
+      "vazamentoDados": false,
+      "bloqueiaProducao": false,
+      "evidencia": {
+        "sessao": "Cookie session_id httpOnly + Prisma Session 7d; logout limpa sessão",
+        "isolamento": "requireAuth() + filtros userId em meus-dados, agendamentos, pagamentos",
+        "admin": "requireAdmin() server-side; email hardcoded thouse.rec.tremv@gmail.com",
+        "gaps": [
+          "Páginas usuário sem middleware server-side (só client redirect)",
+          "Webhook Asaas sem token em prod loga erro mas retorna 200",
+          "Admin layout protegido só no cliente"
+        ]
+      }
+    },
+    {
+      "id": 8,
+      "nome": "Persistência",
+      "status": "ATENCAO",
+      "emoji": "🟡",
+      "bloqueiaDeploy": false,
+      "prioridade": "P1",
+      "existe": true,
+      "completo": true,
+      "legadoInterfere": true,
+      "perdaFinanceira": false,
+      "perdaDados": true,
+      "vazamentoDados": false,
+      "bloqueiaProducao": false,
+      "evidencia": {
+        "models": ["Payment", "PaymentMetadata", "Appointment", "Coupon", "UserPlan"],
+        "ok": [
+          "Payment.asaasId idempotência no webhook",
+          "PaymentMetadata criado no checkout com asaasId update",
+          "Coupon idempotente por paymentId (Serializable)",
+          "UserPlan via asaas-plano-payment-effects"
+        ],
+        "gaps": [
+          "Duplicate webhook path reconcile sem re-run effects se 1ª execução falhou parcialmente",
+          "Metadata fallback pode persistir vínculo errado",
+          "mercadopagoId legado em schema/queries"
+        ]
+      }
+    }
+  ],
+  "summaryTable": [
+    { "fluxo": "1 — Registro → Login → Minha Conta", "status": "🔴 REPROVADO", "bloqueiaDeploy": "SIM", "prioridade": "P0" },
+    { "fluxo": "2 — Compra de Serviço", "status": "🟡 ATENÇÃO", "bloqueiaDeploy": "NÃO", "prioridade": "P1" },
+    { "fluxo": "3 — Compra de Plano", "status": "🔴 REPROVADO", "bloqueiaDeploy": "SIM*", "prioridade": "P0" },
+    { "fluxo": "4 — Uso de Cupom", "status": "🟡 ATENÇÃO", "bloqueiaDeploy": "NÃO", "prioridade": "P2" },
+    { "fluxo": "5 — Reembolso", "status": "🟡 ATENÇÃO", "bloqueiaDeploy": "NÃO", "prioridade": "P2" },
+    { "fluxo": "6 — Administração", "status": "🟡 ATENÇÃO", "bloqueiaDeploy": "NÃO", "prioridade": "P2" },
+    { "fluxo": "7 — Segurança", "status": "🟡 ATENÇÃO", "bloqueiaDeploy": "NÃO", "prioridade": "P1" },
+    { "fluxo": "8 — Persistência", "status": "🟡 ATENÇÃO", "bloqueiaDeploy": "NÃO", "prioridade": "P1" }
+  ],
+  "acoesPreGoLive": [
+    {
+      "prioridade": "P0",
+      "acao": "Commitar e deployar QE-01b (createUserSession no registro)",
+      "desbloqueia": "Fluxo 1"
+    },
+    {
+      "prioridade": "P0",
+      "acao": "Reconectar UI de planos a POST /api/asaas/checkout OU desabilitar venda de planos no lançamento",
+      "desbloqueia": "Fluxo 3"
+    },
+    {
+      "prioridade": "P1",
+      "acao": "Configurar webhook Asaas + token + monitoramento de logs",
+      "desbloqueia": "Fluxo 2 operacional"
+    },
+    {
+      "prioridade": "P1",
+      "acao": "Smoke test E2E: registro → carrinho → pagamento sandbox → minha-conta",
+      "desbloqueia": "Confiança Fluxo 2"
+    },
+    {
+      "prioridade": "P2",
+      "acao": "PR-04 cupons/ownership antes de escalar uso intensivo de cupons",
+      "desbloqueia": "Fluxo 4 robustez"
+    }
+  ],
+  "cenariosLancamento": {
+    "fullProduct": { "bloqueadores": 2, "veredito": "NÃO GO" },
+    "agendamentoOnlyComQE01b": { "bloqueadores": 0, "veredito": "GO condicional — requer gates operacionais Asaas" },
+    "headSemWIP": { "bloqueadores": 2, "veredito": "NÃO GO" }
+  }
+}

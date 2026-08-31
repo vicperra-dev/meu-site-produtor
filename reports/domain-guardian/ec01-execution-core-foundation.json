@@ -1,0 +1,121 @@
+{
+  "reportId": "EC-01-execution-core-foundation",
+  "generatedAt": "2026-07-15T03:55:00.000Z",
+  "branch": "backup-pre-formatacao",
+  "verdict": "PASS",
+  "commitMessage": "refactor(core): introduce unified execution core platform (EC-01)",
+  "gates": {
+    "typescript": "PASS",
+    "prisma": "PASS",
+    "build": "PASS",
+    "domainAudit": "PASS",
+    "workflowAudit": "PASS",
+    "synchronizationAudit": "PASS",
+    "simulationAudit": "PASS",
+    "executionAudit": "PASS",
+    "knowledgeGraphAudit": "PASS",
+    "discoveryAudit": "PASS",
+    "regressionAudit": "PASS",
+    "te02a": "21/21 PASS",
+    "sync01a": "7/7 PASS",
+    "sim01": "10/10 PASS",
+    "sim02": "10/10 PASS"
+  },
+  "entryPoint": "ExecutionCore.run()",
+  "pipeline": [
+    "ExecutionCore",
+    "Workflow",
+    "StateMachine",
+    "DomainEvents",
+    "Synchronization",
+    "Assertions",
+    "Reports",
+    "Cleanup"
+  ],
+  "filesCreated": [
+    "src/app/lib/execution/core.ts",
+    "src/app/lib/execution/runner.ts",
+    "src/app/lib/execution/discovery.ts",
+    "src/app/lib/execution/registry.ts",
+    "src/app/lib/execution/types.ts",
+    "src/app/lib/execution/context.ts",
+    "src/app/lib/execution/session.ts",
+    "src/app/lib/execution/report.ts",
+    "src/app/lib/execution/result.ts",
+    "src/app/lib/execution/permissions.ts",
+    "src/app/lib/execution/pipeline.ts",
+    "src/app/lib/execution/hooks.ts",
+    "src/app/lib/execution/observer.ts",
+    "src/app/lib/execution/cleanup.ts",
+    "src/app/lib/execution/history.ts",
+    "src/app/lib/execution/impact.ts",
+    "src/app/lib/execution/studio-template.ts",
+    "src/app/lib/execution/index.ts",
+    "src/app/lib/domain/graph/types.ts",
+    "src/app/lib/domain/graph/nodes.ts",
+    "src/app/lib/domain/graph/queries.ts",
+    "src/app/lib/domain/graph/index.ts",
+    "src/app/api/execution/run/route.ts",
+    "scripts/execution-audit.ts",
+    "scripts/knowledge-graph-audit.ts",
+    "scripts/discovery-audit.ts",
+    "scripts/regression-audit.ts",
+    "scripts/sim-watch.ts"
+  ],
+  "filesModified": [
+    "package.json",
+    "scripts/sim-run.ts",
+    "src/app/lib/test-engine/scenario-runner.ts",
+    "src/app/lib/test-engine/scenario-registry.ts",
+    "src/app/lib/test-engine/permissions.ts",
+    "src/app/lib/test-engine/index.ts",
+    "src/app/lib/test-engine/scenarios/sync01a-batch.ts",
+    "src/app/lib/simulation/runner.ts",
+    "src/app/lib/simulation/registry.ts",
+    "src/app/lib/simulation/permissions.ts",
+    "src/app/lib/simulation/types.ts",
+    "src/app/lib/simulation/index.ts",
+    "src/app/lib/domain/index.ts"
+  ],
+  "executionCore": {
+    "scenariosDiscovered": 51,
+    "suites": ["te-s01", "te-stubs", "te02a", "sync01a", "sim01", "sim02"]
+  },
+  "knowledgeGraph": {
+    "entities": 12,
+    "edges": 67
+  },
+  "impactAnalyzer": {
+    "preparedOnly": true,
+    "watchMode": "npm run sim:watch"
+  },
+  "discovery": {
+    "batches": 5,
+    "platformModules": true
+  },
+  "qaPreparation": {
+    "api": "/api/execution/run",
+    "ui": false
+  },
+  "studioTemplatePreparation": {
+    "doc": "src/app/lib/execution/studio-template.ts",
+    "packageExtraction": false
+  },
+  "coverage": {
+    "sim01AvgDurationMs": 6659,
+    "sim02AvgDurationMs": 7009
+  },
+  "risks": [
+    "Discovery lists batch exports (not pure FS walk)",
+    "Execution history in-memory only",
+    "Admin HTTP routes still call workflow directly",
+    "TE-01C 132-test catalog not wired as runnable scenarios"
+  ],
+  "nextSteps": [
+    "Persist Execution History",
+    "QA Center UI",
+    "StudioOS package extraction",
+    "Impact CI on PR"
+  ],
+  "sim02AutoApproved": true
+}

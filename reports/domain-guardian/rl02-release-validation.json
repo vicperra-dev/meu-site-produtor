@@ -1,0 +1,129 @@
+{
+  "reportId": "RL-02-release-validation",
+  "mode": "READ_ONLY",
+  "generatedAt": "2026-07-10T02:40:00.000Z",
+  "language": "pt-BR",
+  "projectName": "THouse",
+  "branch": "pr03-clean",
+  "answers": {
+    "1_gitStatus": {
+      "branch": "pr03-clean",
+      "workingTreeClean": false,
+      "porcelain": [
+        " M src/app/lib/service-catalog.ts",
+        "?? public/uploads/",
+        "?? reports/domain-guardian/rl01-release-candidate.json",
+        "?? reports/domain-guardian/rl01-release-candidate.md",
+        "?? reports/domain-guardian/rl01a-build-fix.json",
+        "?? reports/domain-guardian/rl01a-build-fix.md",
+        "?? reports/domain-guardian/rl01b-build-fix.json",
+        "?? reports/domain-guardian/rl01b-build-fix.md"
+      ]
+    },
+    "2_head": {
+      "hash": "8c8627dd78e416c09f7bf0ca40f00ffb3e3098a9",
+      "short": "8c8627d",
+      "message": "fix(build): PR-03 self-contained bundle (ST-01a scripts + SI-01 gates)",
+      "commitsFromMain": 23
+    },
+    "3_fixBuildBundleComplete": {
+      "answer": true,
+      "commit": "8c8627d",
+      "filesExpected": 20,
+      "filesInCommit": 19,
+      "allPresentOnDisk": true,
+      "allCommittedAndClean": true,
+      "note": "Os 20 arquivos do plano SI-02b estão presentes e commitados em 8c8627d (asaas-carrinho-payment-effects.ts incluído). Nenhum arquivo do bundle fix(build) está dirty."
+    },
+    "4_serviceCatalog": {
+      "modified": true,
+      "committed": false,
+      "linesAdded": 65,
+      "origin": "RL-01a (WIP stash)",
+      "functionsAdded": [
+        "resolveAgendamentoItemCatalogId",
+        "isMultiCouponAgendamentoPackageId",
+        "expandAgendamentoItemToCouponTypes"
+      ],
+      "requiredForBuild": true,
+      "diffVsStash": "Faltam CATALOG_SERVICE_PRICES_BRL e getCatalogServicePriceBrl do stash (não usados pelo tree PR-03; build passa sem eles)"
+    },
+    "5_npmRunBuild": {
+      "lastRun": "2026-07-10T02:38:00.000Z",
+      "command": "npm run build (com .next limpo)",
+      "exitCode": 0,
+      "verdict": "PASSOU",
+      "staticPages": 138,
+      "note": "Build depende do service-catalog.ts modificado no working tree — não reproduzível apenas com HEAD commitado"
+    },
+    "6_prismaGenerate": {
+      "lastRun": "2026-07-10T02:36:00.000Z",
+      "command": "npx prisma generate",
+      "exitCode": 0,
+      "verdict": "OK"
+    },
+    "7_mandatoryModifiedOrUntracked": {
+      "answer": true,
+      "mandatory": [
+        {
+          "path": "src/app/lib/service-catalog.ts",
+          "status": "modified",
+          "committed": false,
+          "blocking": true,
+          "reason": "Obrigatório para build; descoberto em RL-01a; ausente do commit fix(build)"
+        }
+      ],
+      "nonBlockingUntracked": [
+        "public/uploads/",
+        "reports/domain-guardian/rl01*.json",
+        "reports/domain-guardian/rl01*.md"
+      ]
+    },
+    "8_differenceVsPlanned": {
+      "PR-01": { "match": true, "detail": "8 cherry-picks; mensagens idênticas às originais" },
+      "PR-02": { "match": true, "detail": "6 cherry-picks; mensagens idênticas às originais" },
+      "PR-03": { "match": true, "detail": "8 cherry-picks; tree 96bd2ed idêntica a cf4b2e7 (diff exit 0)" },
+      "SI-01": { "match": true, "detail": "Bundle fix(build) 8c8627d contém gates + redirects + coupon-origin + plan-coupons; sem imports WIP PR-04+" },
+      "ST-01a": { "match": true, "detail": "4 scripts TS fix commitados em 8c8627d" },
+      "gaps": [
+        {
+          "item": "src/app/lib/service-catalog.ts",
+          "plannedIn": "Não listado em SI-02b; obrigatório pós-RL-01a",
+          "status": "modificado não commitado"
+        }
+      ]
+    },
+    "9_releaseCandidateClosed": {
+      "answer": false,
+      "blockers": [
+        "service-catalog.ts modificado e não commitado",
+        "working tree suja (1 arquivo obrigatório modified)",
+        "build verde depende de alteração fora do HEAD"
+      ]
+    },
+    "10_canStartQe01": {
+      "answer": false,
+      "answerText": "NÃO",
+      "reason": "RC não fechada — commit pendente em service-catalog.ts antes de Functional Testing"
+    }
+  },
+  "verdict": {
+    "releaseCandidate": "PENDENTE",
+    "buildPasses": true,
+    "headReproducible": false,
+    "recommendedAction": "Commitar service-catalog.ts (RL-01a) como fix(build) suplementar ou amend controlado; revalidar working tree limpa"
+  },
+  "constraintsRespected": {
+    "noCodeChanges": true,
+    "noCommits": true,
+    "noMigrate": true,
+    "noDatabaseChanges": true
+  },
+  "sourcesConsulted": [
+    "git status / log / diff",
+    "reports/domain-guardian/rl01-release-candidate.json",
+    "reports/domain-guardian/rl01a-build-fix.json",
+    "reports/domain-guardian/rl01b-build-fix.json",
+    "SI-02b fixBuildCommitContents (transcript)"
+  ]
+}

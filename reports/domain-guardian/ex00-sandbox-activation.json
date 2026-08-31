@@ -1,0 +1,98 @@
+{
+  "reportId": "EX-00-sandbox-activation",
+  "mode": "EXECUCAO_CONTROLADA",
+  "generatedAt": "2026-07-10T19:52:00.000Z",
+  "language": "pt-BR",
+  "projectName": "THouse Rec",
+  "branch": "pr03-clean",
+  "head": "3f20ad0",
+  "veredito": "APROVADO",
+  "alteracoes": {
+    "arquivo": ".env.local",
+    "codigoAlterado": false,
+    "commitCriado": false,
+    "mudancas": [
+      "ASAAS_API_KEY substituída por token sandbox ($aact_hmlg_...)",
+      "NEXT_PUBLIC_SITE_URL=http://localhost:3000 adicionado em .env.local",
+      "ASAAS_SKIP_TLS_VERIFY=true mantido",
+      "ASAAS_WEBHOOK_ACCESS_TOKEN não alterado — permanece ausente"
+    ]
+  },
+  "acoes": [
+    {
+      "ordem": 1,
+      "acao": "Verificar ASAAS_API_KEY sandbox em .env.local",
+      "status": "OK",
+      "prefixo": "$aact_hmlg_...",
+      "comprimento": 166
+    },
+    {
+      "ordem": 2,
+      "acao": "Verificar ASAAS_WEBHOOK_ACCESS_TOKEN",
+      "status": "AUSENTE",
+      "nota": "Permanece ausente — não bloqueou EX-00; recomendado para webhook seguro em EX-02"
+    },
+    {
+      "ordem": 3,
+      "acao": "Verificar NEXT_PUBLIC_SITE_URL=http://localhost:3000",
+      "status": "OK",
+      "arquivo": ".env.local (sobrescreve .env loca.lt)"
+    },
+    {
+      "ordem": 4,
+      "acao": "Salvar .env.local",
+      "status": "OK"
+    },
+    {
+      "ordem": 5,
+      "acao": "Reiniciar servidor npm run dev",
+      "status": "OK",
+      "evidencia": "Ready in 25.9s — http://localhost:3000"
+    },
+    {
+      "ordem": 6,
+      "acao": "Executar scripts de validação",
+      "status": "OK"
+    }
+  ],
+  "scripts": {
+    "ex01-check-env": {
+      "exitCode": 0,
+      "resultado": {
+        "DATABASE_URL": "OK provider=local",
+        "ASAAS_API_KEY": "OK type=sandbox",
+        "NEXT_PUBLIC_SITE_URL": "OK len=21 (localhost:3000)",
+        "ASAAS_WEBHOOK_ACCESS_TOKEN": "MISSING"
+      }
+    },
+    "ex01-asaas-verify": {
+      "exitCode": 0,
+      "environment": "SANDBOX",
+      "sandboxOk": true,
+      "apiUrl": "https://sandbox.asaas.com/api/v3",
+      "tokenPrefix": "$aact_hmlg_0...",
+      "ping": {
+        "apiReachable": false,
+        "nota": "TLS local sem verificação; classificação por prefixo do token é determinística; ASAAS_SKIP_TLS_VERIFY=true ativo para chamadas runtime"
+      }
+    },
+    "ex01-db-ping": {
+      "exitCode": 0,
+      "database": "OK",
+      "userCount": 2
+    }
+  },
+  "resumo": {
+    "environment": "SANDBOX",
+    "sandboxOk": true,
+    "database": "OK",
+    "webhook": "AUSENTE",
+    "devServer": "http://localhost:3000 (rodando)"
+  },
+  "proximosPassos": [
+    "Reexecutar EX-01 a partir da etapa 3",
+    "Reexecutar EX-02 fluxo completo após EX-01 aprovado",
+    "Opcional: adicionar ASAAS_WEBHOOK_ACCESS_TOKEN para webhook automático no EX-02"
+  ],
+  "aptoPara": ["EX-01", "EX-02"]
+}

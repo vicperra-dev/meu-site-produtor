@@ -1,0 +1,281 @@
+{
+  "reportId": "SETUP-01-asaas-guide",
+  "mode": "READ_ONLY",
+  "generatedAt": "2026-07-10T18:35:00.000Z",
+  "language": "pt-BR",
+  "projectName": "THouse Rec",
+  "branch": "pr03-clean",
+  "head": "3f20ad0",
+  "basedOn": [
+    "EX-01-sandbox-execution",
+    "EX-01a-sandbox-config",
+    "OP-01-sandbox-preparation",
+    "OPS-01-runbook",
+    "LE-01-launch-execution"
+  ],
+  "objective": "Guia operacional passo a passo para configurar ambiente Sandbox Asaas no desenvolvimento local",
+  "audience": "Desenvolvedor com acesso ao painel Asaas",
+  "steps": [
+    {
+      "id": "SETUP-01",
+      "titulo": "Criar ou acessar conta Sandbox",
+      "instrucoes": [
+        "Abra o navegador em modo anônimo (recomendado) para evitar sessão de produção.",
+        "Acesse https://sandbox.asaas.com (NÃO use www.asaas.com).",
+        "Se já possui conta sandbox: faça login com e-mail e senha de teste.",
+        "Se não possui: clique em criar conta / cadastrar e complete o formulário de conta de testes.",
+        "Confirme visualmente que o ambiente é sandbox (URL sandbox.asaas.com, dados fictícios, sem cobranças reais)."
+      ],
+      "validacao": "Login bem-sucedido no painel sandbox.asaas.com",
+      "errosComuns": [
+        "Logar em www.asaas.com por engano — isso é produção",
+        "Usar API Key de produção copiada do painel errado"
+      ]
+    },
+    {
+      "id": "SETUP-02",
+      "titulo": "Localizar ASAAS_API_KEY",
+      "instrucoes": [
+        "No painel sandbox.asaas.com, abra o menu lateral.",
+        "Vá em Integrações (ou Configurações → Integrações).",
+        "Selecione API ou Chave de API.",
+        "Copie a chave de acesso (Access Token / API Key).",
+        "Formato esperado: string longa iniciando com $aact_ e SEM o segmento prod.",
+        "Proibido para sandbox: prefixo $aact_prod_ (isso é produção)."
+      ],
+      "formato": {
+        "variavel": "ASAAS_API_KEY",
+        "prefixoSandbox": "$aact_",
+        "prefixoProducao": "$aact_prod_",
+        "comprimentoTipico": "140–180 caracteres",
+        "apiUrlResolvida": "https://sandbox.asaas.com/api/v3"
+      },
+      "ondeColar": ".env.local (nunca commitar)",
+      "validacaoSemExpor": "node scripts/ex01-check-env.js → ASAAS_API_KEY: OK ... type=sandbox"
+    },
+    {
+      "id": "SETUP-03",
+      "titulo": "Localizar ASAAS_WEBHOOK_ACCESS_TOKEN",
+      "instrucoes": [
+        "No painel sandbox.asaas.com → Integrações → Webhooks.",
+        "Ao criar ou editar um webhook, o painel exibe um Token de autenticação (ou campo para definir um token).",
+        "Defina um token forte (ex.: UUID ou string aleatória longa) — você escolhe o valor.",
+        "Copie o mesmo valor para .env.local como ASAAS_WEBHOOK_ACCESS_TOKEN.",
+        "O Asaas enviará esse valor no header HTTP: asaas-access-token.",
+        "O valor no painel e no .env.local devem ser IDÊNTICOS."
+      ],
+      "formato": {
+        "variavel": "ASAAS_WEBHOOK_ACCESS_TOKEN",
+        "headerHttp": "asaas-access-token",
+        "comprimentoRecomendado": "32+ caracteres",
+        "origem": "Definido por você no painel webhook sandbox"
+      },
+      "validacaoSemExpor": "node scripts/ex01-check-env.js → ASAAS_WEBHOOK_ACCESS_TOKEN: OK set len=N"
+    },
+    {
+      "id": "SETUP-04",
+      "titulo": "Criar Webhook no painel Sandbox",
+      "instrucoes": [
+        "Painel sandbox.asaas.com → Integrações → Webhooks → Adicionar / Novo webhook.",
+        "URL: veja seção localhostVsTunel — depende do cenário.",
+        "Token de autenticação: mesmo valor de ASAAS_WEBHOOK_ACCESS_TOKEN.",
+        "Selecione os eventos mínimos listados abaixo.",
+        "Salve e confirme status Ativo no painel."
+      ],
+      "eventosMinimos": {
+        "solicitadoPeloUsuario": ["RECEIVED", "CONFIRMED", "REFUNDED"],
+        "nomesNoPainelAsaas": [
+          "PAYMENT_RECEIVED",
+          "PAYMENT_CONFIRMED",
+          "PAYMENT_REFUNDED"
+        ],
+        "mapeamentoCodigo": {
+          "RECEIVED": "Evento PAYMENT_RECEIVED com payment.status RECEIVED — processa pagamento no webhook",
+          "CONFIRMED": "Evento PAYMENT_RECEIVED com payment.status CONFIRMED (ou PAYMENT_CONFIRMED se disponível no painel) — também processado pelo código",
+          "REFUNDED": "Evento PAYMENT_REFUNDED — sincroniza estorno local"
+        },
+        "nota": "O código em webhooks/asaas/route.ts processa PAYMENT_RECEIVED quando status é RECEIVED ou CONFIRMED. Marque PAYMENT_RECEIVED e PAYMENT_REFUNDED no mínimo; inclua PAYMENT_CONFIRMED se o painel listar separadamente."
+      },
+      "urlPadrao": "{NEXT_PUBLIC_SITE_URL}/api/webhooks/asaas",
+      "exemplos": {
+        "localhost": "http://localhost:3000/api/webhooks/asaas — Asaas NÃO alcança; use só com replay curl",
+        "tunel": "https://abc123.ngrok-free.app/api/webhooks/asaas — Asaas alcança sua máquina"
+      }
+    },
+    {
+      "id": "SETUP-05",
+      "titulo": "Configurar .env.local",
+      "arquivo": ".env.local",
+      "precedencia": ".env.local sobrescreve .env no Next.js",
+      "template": {
+        "descricao": "Apenas nomes e formato — substitua pelos valores reais obtidos no painel",
+        "linhas": [
+          "ASAAS_API_KEY=$aact_<sua_chave_sandbox>",
+          "ASAAS_WEBHOOK_ACCESS_TOKEN=<token_definido_no_painel_webhook>",
+          "NEXT_PUBLIC_SITE_URL=http://localhost:3000",
+          "DATABASE_URL=postgresql://postgres:postgres@localhost:5432/thouse_rec?schema=public",
+          "ASAAS_SKIP_TLS_VERIFY=true"
+        ],
+        "notas": [
+          "DATABASE_URL pode permanecer em .env se já estiver correto — não duplicar com valores conflitantes",
+          "Remover ou comentar qualquer ASAAS_API_KEY de produção ($aact_prod_) antes de salvar",
+          "Nunca commitar .env.local (.gitignore cobre .env*)"
+        ]
+      },
+      "variaveis": [
+        {
+          "nome": "ASAAS_API_KEY",
+          "formato": "$aact_<token_longo_sandbox>",
+          "origem": "Painel sandbox → Integrações → API"
+        },
+        {
+          "nome": "ASAAS_WEBHOOK_ACCESS_TOKEN",
+          "formato": "<string_secreta_32+_chars>",
+          "origem": "Painel sandbox → Webhooks → token de autenticação"
+        },
+        {
+          "nome": "NEXT_PUBLIC_SITE_URL",
+          "formato": "http://localhost:3000 ou https://<tunel>",
+          "origem": "Configuração local"
+        },
+        {
+          "nome": "DATABASE_URL",
+          "formato": "postgresql://<user>:<pass>@localhost:5432/<db>?schema=public",
+          "origem": "PostgreSQL local (não vem do Asaas)"
+        }
+      ]
+    },
+    {
+      "id": "SETUP-06",
+      "titulo": "localhost vs túnel",
+      "localhost": {
+        "valor": "NEXT_PUBLIC_SITE_URL=http://localhost:3000",
+        "usarQuando": [
+          "EX-01 smoke test até checkout (antes do pagamento)",
+          "Desenvolvimento diário sem webhook automático externo",
+          "Validar UI, registro, login, carrinho, geração de initPoint sandbox"
+        ],
+        "webhook": "Asaas sandbox NÃO consegue POST em localhost — webhook automático não funciona",
+        "alternativa": "Replay curl manual para /api/webhooks/asaas com header asaas-access-token (OPS-01)"
+      },
+      "tunel": {
+        "ferramentas": ["ngrok", "localtunnel (loca.lt)", "cloudflared"],
+        "valor": "NEXT_PUBLIC_SITE_URL=https://<subdominio-tunel>",
+        "usarQuando": [
+          "Testar webhook automático PAYMENT_RECEIVED do Asaas sandbox",
+          "Homologação F1 completa com pagamento + confirmação no banco",
+          "Demonstrar fluxo ponta a ponta para stakeholder"
+        ],
+        "webhookUrlPainel": "https://<subdominio-tunel>/api/webhooks/asaas",
+        "cuidados": [
+          "URL do túnel muda a cada sessão (exceto planos pagos ngrok) — atualizar painel e NEXT_PUBLIC_SITE_URL",
+          "Manter npm run dev rodando enquanto o túnel estiver ativo",
+          "Túnel expõe máquina local — usar só em sandbox"
+        ]
+      },
+      "recomendacaoF1Ex01": "localhost para EX-01; túnel opcional para fase posterior com pagamento real sandbox"
+    },
+    {
+      "id": "SETUP-07",
+      "titulo": "Validar configuração",
+      "preRequisitos": [
+        "Salvar .env.local",
+        "Parar e reiniciar npm run dev se já estava rodando",
+        "Opcional: npx prisma migrate deploy (se migration pendente)"
+      ],
+      "scripts": [
+        {
+          "ordem": 1,
+          "comando": "node scripts/ex01-check-env.js",
+          "esperado": [
+            "DATABASE_URL: OK ... provider=local",
+            "ASAAS_API_KEY: OK ... type=sandbox",
+            "NEXT_PUBLIC_SITE_URL: OK",
+            "ASAAS_WEBHOOK_ACCESS_TOKEN: OK set len=N"
+          ],
+          "falhaTipica": "type=PROD ou MISSING"
+        },
+        {
+          "ordem": 2,
+          "comando": "node scripts/ex01-asaas-verify.js",
+          "esperado": [
+            "environment: SANDBOX",
+            "sandboxOk: true",
+            "exit code 0"
+          ],
+          "falhaTipica": "environment: PRODUCTION, sandboxOk: false, exit 2"
+        },
+        {
+          "ordem": 3,
+          "comando": "node scripts/ex01-db-ping.js",
+          "esperado": [
+            "DATABASE_CONNECT: OK",
+            "USER_COUNT: N"
+          ],
+          "falhaTipica": "DATABASE_CONNECT: FAIL — PostgreSQL não rodando"
+        }
+      ],
+      "comandoUnicoWindows": "node scripts/ex01-check-env.js; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; node scripts/ex01-asaas-verify.js; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; node scripts/ex01-db-ping.js"
+    },
+    {
+      "id": "SETUP-08",
+      "titulo": "Voltar para produção sem misturar chaves",
+      "regras": [
+        "Nunca manter ASAAS_API_KEY de produção e sandbox no mesmo arquivo ativo.",
+        "Usar .env.local apenas para desenvolvimento sandbox; produção fica no Vercel (Environment Variables).",
+        "Identificar ambiente pelo prefixo: $aact_prod_ = produção, $aact_ sem prod = sandbox.",
+        "Antes de deploy: remover .env.local do contexto ou garantir que Vercel não lê .env.local.",
+        "No Vercel Production: ASAAS_API_KEY ($aact_prod_), ASAAS_WEBHOOK_ACCESS_TOKEN (painel produção), NEXT_PUBLIC_SITE_URL (domínio real).",
+        "Rotacionar chave se houve exposição em log, chat ou commit acidental.",
+        "Comentar chaves antigas com prefixo claro: # PRODUCAO-NAO-USAR-LOCAL ou # SANDBOX-ONLY."
+      ],
+      "checklistTroca": [
+        "Parar npm run dev",
+        "Remover/comentar variáveis sandbox de .env.local",
+        "Restaurar .env.local vazio ou só variáveis não-Asaas",
+        "Confirmar Vercel Production tem chaves de produção (não sandbox)",
+        "node scripts/ex01-check-env.js localmente NÃO deve ser usado para validar produção — validar no painel Vercel",
+        "Testar checkout em preview/staging antes de produção"
+      ],
+      "separacaoArquivos": {
+        "desenvolvimentoSandbox": ".env.local → ASAAS_API_KEY sandbox, WEBHOOK sandbox, localhost",
+        "producao": "Vercel env vars → ASAAS_API_KEY $aact_prod_, WEBHOOK produção, domínio HTTPS",
+        "nunca": "Copiar $aact_prod_ para .env.local durante testes sandbox"
+      }
+    }
+  ],
+  "checklistConfiguracao": [
+    { "item": "Conta Sandbox", "fazer": "Login em sandbox.asaas.com", "validar": "URL e ambiente de testes", "esperado": "Conta ativa" },
+    { "item": "API Key", "fazer": "Copiar chave Integrações → API", "validar": "ex01-check-env type=sandbox", "esperado": "Prefixo $aact_ sem prod" },
+    { "item": "Webhook", "fazer": "Criar webhook no painel sandbox", "validar": "Status Ativo no painel", "esperado": "URL e eventos salvos" },
+    { "item": "Token", "fazer": "Definir token no painel + .env.local", "validar": "ex01-check-env WEBHOOK OK", "esperado": "Mesmo valor painel e env" },
+    { "item": ".env.local", "fazer": "Preencher 4 variáveis core", "validar": "Arquivo salvo, prod key removida", "esperado": "Sem $aact_prod_ ativo" },
+    { "item": "Restart", "fazer": "Ctrl+C → npm run dev", "validar": "http://localhost:3000", "esperado": "Ready no log" },
+    { "item": "Scripts", "fazer": "Rodar 3 scripts ex01-*", "validar": "Todos exit 0", "esperado": "sandboxOk true, DB OK" },
+    { "item": "Smoke Test", "fazer": "Registro → carrinho → checkout (sem pagar)", "validar": "initPoint sandbox.asaas.com", "esperado": "POST checkout-carrinho 200" }
+  ],
+  "proximoPasso": {
+    "id": "EX-01",
+    "descricao": "Retomar execução real F1 Sandbox a partir da etapa 3",
+    "comandoInicial": "node scripts/ex01-check-env.js && node scripts/ex01-asaas-verify.js && node scripts/ex01-db-ping.js",
+    "sequenciaCompleta": [
+      "Etapa 3: Verificar ASAAS Sandbox (scripts acima — deve passar)",
+      "Etapa 4–5: prisma generate / npm run build (já passaram; repetir se código mudou)",
+      "Etapa 6: npm run dev",
+      "Etapa 7: Smoke Test — Registro → Login → Minha Conta → Agendamento → Carrinho → Checkout (até antes do pagamento)",
+      "Etapa 8: Registrar evidências em ex01-sandbox-execution.json"
+    ],
+    "seTudoCorreto": {
+      "etapa3": "sandboxOk: true, exit 0",
+      "etapa6": "App em http://localhost:3000 sem erro Prisma",
+      "etapa7": "POST /api/registro 200; GET /api/me autenticado; POST /api/asaas/checkout-carrinho 200 com initPoint contendo sandbox.asaas.com",
+      "vereditoFinal": "EX-01 F1 Sandbox — APROVADA",
+      "naoFazer": "Não concluir pagamento real no Asaas durante EX-01 (escopo até antes do pagamento)"
+    },
+    "seFalhar": {
+      "protocolo": "PARAR na etapa que falhou",
+      "registrar": ["Etapa", "Erro", "Causa provável", "Menor correção", "Impacto"],
+      "veredito": "REPROVADA"
+    }
+  }
+}

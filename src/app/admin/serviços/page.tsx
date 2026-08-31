@@ -12,7 +12,7 @@ export default function AdminServicosPage() {
         beats e pacotes.
       </p>
 
-      <div className="mt-6 rounded-xl border border-zinc-800 bg-zinc-950 p-6 text-sm text-zinc-300">
+      <div className="mt-6 rounded-xl border border-zinc-800 bg-zinc-800 p-6 text-sm text-zinc-300">
         ⚠️ Editor de serviços em desenvolvimento.
       </div>
     </main>

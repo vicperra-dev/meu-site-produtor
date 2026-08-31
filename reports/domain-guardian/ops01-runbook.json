@@ -1,0 +1,434 @@
+{
+  "reportId": "OPS-01-runbook",
+  "mode": "READ_ONLY",
+  "generatedAt": "2026-07-10T06:30:00.000Z",
+  "language": "pt-BR",
+  "projectName": "THouse Rec",
+  "branch": "pr03-clean",
+  "head": "3f20ad0",
+  "scope": "MVP comercial — agendamento avulso via Asaas (checkout-carrinho → /api/webhooks/asaas → processCarrinhoPaymentEffects)",
+  "basedOn": [
+    "GL-02-operational-checklist",
+    "PRD-01-production-readiness",
+    "PRE_LANCAMENTO_CHECKLIST.md",
+    "Código-fonte HEAD 3f20ad0",
+    "docs/ai/engineering-agents.md"
+  ],
+  "criticalOperationalNotes": [
+    {
+      "id": "NOTE-1",
+      "titulo": "Webhook canônico exige token em produção",
+      "detalhe": "Rotas processar-manual e buscar-por-valor chamam /api/webhooks/asaas SEM header asaas-access-token. Em produção com ASAAS_WEBHOOK_ACCESS_TOKEN configurado, o webhook retorna 200 mas IGNORA o evento.",
+      "acao_runbook": "Replay manual deve incluir header asaas-access-token"
+    },
+    {
+      "id": "NOTE-2",
+      "titulo": "processar-direto usa orquestrador legado",
+      "detalhe": "POST /api/pagamentos/processar-direto importa process-payment-webhook.ts, NÃO o pipeline PR-03 do webhook canônico.",
+      "acao_runbook": "Para MVP carrinho, preferir replay do webhook canônico com payload Asaas"
+    },
+    {
+      "id": "NOTE-3",
+      "titulo": "Webhook sempre HTTP 200",
+      "detalhe": "Falhas internas são logadas mas Asaas não reenvia automaticamente por 5xx.",
+      "acao_runbook": "Sempre verificar banco após replay, não confiar só no status HTTP"
+    }
+  ],
+  "procedures": [
+    {
+      "id": "P01",
+      "nome": "Deploy",
+      "objetivo": "Publicar versão estável do MVP agendamento avulso em produção com banco e envs corretos.",
+      "passos": [
+        "Confirmar commit deployável (mínimo 3f20ad0 — GL-01 B1 auto-login)",
+        "Executar npm run build local ou verificar CI Domain Guardian verde",
+        "Configurar envs no Vercel Production: DATABASE_URL, ASAAS_API_KEY ($aact_prod_*), ASAAS_WEBHOOK_ACCESS_TOKEN, NEXT_PUBLIC_SITE_URL",
+        "Executar npx prisma migrate deploy contra banco de produção (antes ou imediatamente após deploy)",
+        "Push/merge branch → Vercel dispara build (prisma generate + next build)",
+        "Validar deploy concluído no painel Vercel",
+        "Registrar URL final e commit hash deployado"
+      ],
+      "tempoEsperado": "30–60 min (inclui migrate e validação)",
+      "responsavel": "Engenheiro / DevOps",
+      "podeAutomatizar": "PARCIAL",
+      "automacaoDetalhe": "Build e CI sim; migrate deploy e validação de envs ainda manuais"
+    },
+    {
+      "id": "P02",
+      "nome": "Rollback",
+      "objetivo": "Reverter deploy defeituoso sem perda de dados financeiros.",
+      "passos": [
+        "Identificar commit estável anterior no Vercel Deployments",
+        "Se migration nova foi aplicada: avaliar se rollback de código é seguro sem down-migration (geralmente SIM se migration só adiciona colunas)",
+        "No Vercel: Promote to Production o deployment anterior",
+        "Verificar NEXT_PUBLIC_SITE_URL e envs não mudaram",
+        "Smoke rápido: home, login, /api/me",
+        "Se migration corrompeu dados: acionar procedimento Restore (P11)",
+        "Comunicar equipe e pausar novos pagamentos se rollback por bug financeiro"
+      ],
+      "tempoEsperado": "10–20 min (rollback código); 1–4 h se restore banco",
+      "responsavel": "Engenheiro",
+      "podeAutomatizar": "PARCIAL",
+      "automacaoDetalhe": "Redeploy Vercel pode ser scriptado; decisão e restore exigem humano"
+    },
+    {
+      "id": "P03",
+      "nome": "Pagamento não confirmado",
+      "objetivo": "Diagnosticar quando cliente concluiu checkout mas pagamento permanece PENDING no Asaas ou não chegou a RECEIVED/CONFIRMED.",
+      "passos": [
+        "Obter email do cliente, valor e horário aproximado",
+        "Painel Asaas → Cobranças → buscar por cliente/valor/data",
+        "Confirmar status: PENDING, OVERDUE, RECEIVED ou CONFIRMED",
+        "Se PENDING: orientar cliente a concluir PIX/boleto/cartão ou aguardar compensação",
+        "Consultar GET /api/pagamentos/verificar?paymentId={asaasId} (se ID conhecido)",
+        "Verificar logs Vercel do checkout-carrinho no horário do pedido",
+        "Se RECEIVED/CONFIRMED no Asaas mas não no banco → procedimento P05 ou P08"
+      ],
+      "tempoEsperado": "15–30 min",
+      "responsavel": "Admin / Suporte",
+      "podeAutomatizar": "PARCIAL",
+      "automacaoDetalhe": "Consulta Asaas API e verificar endpoint podem ser scriptados"
+    },
+    {
+      "id": "P04",
+      "nome": "Webhook não recebido",
+      "objetivo": "Recuperar pagamento confirmado no Asaas quando o evento PAYMENT_RECEIVED não foi processado pelo sistema.",
+      "passos": [
+        "Painel Asaas → Integrações → Webhooks → verificar entregas falhas / últimos eventos",
+        "Confirmar URL: https://{dominio}/api/webhooks/asaas",
+        "Confirmar token no painel = ASAAS_WEBHOOK_ACCESS_TOKEN no Vercel",
+        "Logs Vercel: filtrar [Asaas Webhook] no horário do pagamento",
+        "Se ausente nos logs: problema de DNS, deploy down ou URL errada",
+        "Buscar pagamento no Asaas API: GET /v3/payments/{id} com access_token",
+        "Replay canônico (ver P08) com body { event: PAYMENT_RECEIVED, payment: {...} } e header asaas-access-token",
+        "Verificar Payment + Appointment no banco após replay"
+      ],
+      "tempoEsperado": "20–45 min",
+      "responsavel": "Engenheiro / Admin",
+      "podeAutomatizar": "PARCIAL",
+      "automacaoDetalhe": "Detecção de gap Asaas↔DB futurável; replay exige validação humana"
+    },
+    {
+      "id": "P05",
+      "nome": "Pagamento recebido sem Appointment",
+      "objetivo": "Corrigir Payment approved no banco sem Appointment vinculado (efeitos de carrinho não executaram).",
+      "passos": [
+        "Admin → /admin/pagamentos → localizar pagamento (asaasId, usuário, valor)",
+        "Verificar PaymentMetadata: tipo carrinho, items no metadata",
+        "SELECT manual ou Prisma Studio: Payment.appointmentId / appointmentIds vazios",
+        "Logs webhook: buscar [CarrinhoEffects:webhook] skippedReason",
+        "Se metadata incompleto: não replay cego — investigar checkout-carrinho session",
+        "Se metadata OK: replay webhook canônico (P08) com payment object do Asaas",
+        "Confirmar Appointment status pendente criado e Payment linkado",
+        "Se falhar: escalar — criar agendamento manual NÃO é fluxo padrão do MVP"
+      ],
+      "tempoEsperado": "30–60 min",
+      "responsavel": "Engenheiro",
+      "podeAutomatizar": "PARCIAL",
+      "automacaoDetalhe": "Domain Guardian pode detectar inconsistência; correção ainda manual"
+    },
+    {
+      "id": "P06",
+      "nome": "Appointment criado sem Cupom",
+      "objetivo": "Resolver agendamento existente sem cupom de serviço quando esperado pelo tipo de compra.",
+      "passos": [
+        "Admin → /admin/agendamentos → verificar agendamento e cupomAssociado",
+        "Verificar tipo de pagamento: carrinho avulso pode não gerar cupom (cupom é para planos/remarcação)",
+        "Para pagamento coupons-only (metadata): logs [AgendamentoEffects] couponsCount",
+        "Admin cupons: GET /api/admin/cupons ou associar-usuario se cupom órfão",
+        "POST /api/admin/cupons/associar-usuario com userEmail + couponIds se cupom existe mas não aparece",
+        "Reprocessar só se pagamento simbólico: POST /api/admin/reprocessar-pagamento-teste",
+        "Documentar se cupom não era esperado no fluxo avulso (evitar falso positivo)"
+      ],
+      "tempoEsperado": "20–40 min",
+      "responsavel": "Admin",
+      "podeAutomatizar": "NÃO",
+      "automacaoDetalhe": "Requer julgamento de negócio se cupom era esperado"
+    },
+    {
+      "id": "P07",
+      "nome": "Cliente pagou e não aparece em Minha Conta",
+      "objetivo": "Restaurar visibilidade do agendamento/pagamento para o cliente na UI /minha-conta.",
+      "passos": [
+        "Confirmar cliente logado na conta correta (email)",
+        "GET /api/meus-dados autenticado como cliente ou verificar userId do Payment",
+        "Verificar se Appointment existe com userId correto e adminArchivedAt null",
+        "Se Payment existe sem Appointment → P05",
+        "Se Appointment existe: pedir F5 / logout-login; cache AuthContext",
+        "Verificar webhook atrasado: aguardar 2–3 min e recarregar",
+        "Comunicar ao cliente: agendamento pode estar pendente (status pendente é normal pós-pagamento)",
+        "Se persistir após P05/P08: responder cliente com prazo e ID do pagamento Asaas"
+      ],
+      "tempoEsperado": "15–45 min",
+      "responsavel": "Suporte / Admin",
+      "podeAutomatizar": "PARCIAL",
+      "automacaoDetalhe": "Diagnóstico por userId+asaasId scriptável; comunicação humana"
+    },
+    {
+      "id": "P08",
+      "nome": "Reprocessamento",
+      "objetivo": "Reexecutar efeitos de pagamento confirmado pelo pipeline correto (webhook canônico PR-03).",
+      "passos": [
+        "OPÇÃO A (recomendada MVP carrinho): Replay webhook canônico",
+        "  1. Buscar payment no Asaas: GET /v3/payments/{asaasPaymentId}",
+        "  2. curl -X POST https://{dominio}/api/webhooks/asaas -H 'Content-Type: application/json' -H 'asaas-access-token: {ASAAS_WEBHOOK_ACCESS_TOKEN}' -d '{\"event\":\"PAYMENT_RECEIVED\",\"payment\":{...}}'",
+        "  3. Verificar logs [Asaas Webhook] e [CarrinhoEffects:webhook]",
+        "  4. Confirmar Payment + Appointment no banco",
+        "OPÇÃO B: POST /api/pagamentos/processar-manual { paymentId } — admin logado — ATENÇÃO: sem token no header interno; pode falhar silenciosamente em prod (NOTE-1)",
+        "OPÇÃO C: POST /api/pagamentos/buscar-por-valor { valor } — mesma limitação de token (NOTE-1)",
+        "OPÇÃO D: POST /api/pagamentos/processar-direto — usa legado process-payment-webhook (NOTE-2); evitar para carrinho",
+        "OPÇÃO E: Pagamento simbólico — UI /admin/pagamentos → Reprocessar ou POST /api/admin/reprocessar-pagamento-teste",
+        "Nunca reprocessar duas vezes sem verificar idempotência (Payment já approved + Appointment existente)"
+      ],
+      "tempoEsperado": "15–30 min",
+      "responsavel": "Engenheiro",
+      "podeAutomatizar": "PARCIAL",
+      "automacaoDetalhe": "Script de replay com token futurável no DevOS; validação final humana"
+    },
+    {
+      "id": "P09",
+      "nome": "Delete simbólico",
+      "objetivo": "Remover pagamento de teste/simbólico do banco sem afetar cobranças reais Asaas.",
+      "passos": [
+        "Admin → /admin/pagamentos",
+        "Identificar pagamento modoTransacao teste ou valor simbólico (R$ 5)",
+        "Expandir detalhes → Excluir pagamento",
+        "API valida via canAdminDeletePayment: bloqueia se asaasId real, cupom ativo ou agendamento vinculado",
+        "DELETE /api/admin/pagamentos?id={paymentId} retorna 422 se não permitido",
+        "Confirmar remoção na lista",
+        "Não usar para pagamentos produção com asaasId — reembolso via Asaas, não delete"
+      ],
+      "tempoEsperado": "5–10 min",
+      "responsavel": "Admin",
+      "podeAutomatizar": "NÃO",
+      "automacaoDetalhe": "Gate de segurança exige confirmação humana"
+    },
+    {
+      "id": "P10",
+      "nome": "Backup",
+      "objetivo": "Garantir ponto de recuperação do banco antes de deploy e primeiro cliente.",
+      "passos": [
+        "Neon Console → projeto produção",
+        "Criar snapshot manual OU confirmar PITR (Point-in-Time Recovery) habilitado",
+        "Registrar timestamp do backup em planilha/runbook",
+        "Antes de migrate deploy: snapshot obrigatório",
+        "Opcional: export lógico pg_dump se política interna exigir",
+        "Não commitar DATABASE_URL nem dumps no git"
+      ],
+      "tempoEsperado": "10–15 min",
+      "responsavel": "Engenheiro / DevOps",
+      "podeAutomatizar": "SIM",
+      "automacaoDetalhe": "Neon API / scheduled snapshots automatizáveis pelo DevOS"
+    },
+    {
+      "id": "P11",
+      "nome": "Restore",
+      "objetivo": "Recuperar banco após migration falha, corrupção ou erro operacional grave.",
+      "passos": [
+        "PAUSAR tráfego: modo manutenção em /admin/manutencao OU unpublish Vercel",
+        "Neon → Restore from snapshot ou PITR para timestamp anterior ao incidente",
+        "Atualizar DATABASE_URL no Vercel se branch Neon mudou",
+        "Verificar prisma migrate status — reaplicar migrations se necessário com cuidado",
+        "Smoke: contagem Users, Payments recentes, último Appointment",
+        "Reconciliar pagamentos Asaas vs banco (período do outage)",
+        "Desativar manutenção após validação",
+        "Documentar incidente e dados perdidos no intervalo PITR"
+      ],
+      "tempoEsperado": "1–4 h",
+      "responsavel": "Engenheiro / DevOps",
+      "podeAutomatizar": "PARCIAL",
+      "automacaoDetalhe": "Trigger PITR via API possível; reconciliação financeira humana"
+    },
+    {
+      "id": "P12",
+      "nome": "Troca de chave Asaas",
+      "objetivo": "Rotacionar ASAAS_API_KEY ou ASAAS_WEBHOOK_ACCESS_TOKEN sem perder pagamentos em flight.",
+      "passos": [
+        "Gerar nova chave no painel Asaas (Integrações → API / Webhooks)",
+        "Janela de manutenção curta ou horário de baixo tráfego",
+        "Atualizar ASAAS_API_KEY no Vercel → redeploy (ou env change + redeploy)",
+        "Atualizar ASAAS_WEBHOOK_ACCESS_TOKEN no Vercel E no painel webhook Asaas (mesmo valor)",
+        "Testar checkout sandbox/prod com valor mínimo",
+        "Disparar evento teste no painel webhook Asaas",
+        "Revogar chave antiga no Asaas após 24h estável",
+        "Monitorar logs 1h pós-troca"
+      ],
+      "tempoEsperado": "30–45 min",
+      "responsavel": "Engenheiro",
+      "podeAutomatizar": "NÃO",
+      "automacaoDetalhe": "Painel Asaas e janela de troca exigem humano"
+    },
+    {
+      "id": "P13",
+      "nome": "Logs",
+      "objetivo": "Investigar incidentes usando logs de runtime Vercel e padrões do código.",
+      "passos": [
+        "Vercel → Project → Logs → filtrar Production",
+        "Filtros úteis: [Asaas Webhook], [Asaas Checkout], checkout-carrinho, [CarrinhoEffects:webhook], [Processar Manual]",
+        "Correlacionar por timestamp + asaasId + userId",
+        "Webhook loga primeiros 500 chars do body — não logar PII em tickets externos",
+        "Exportar trecho relevante para incidente",
+        "Local dev: terminal next dev com mesmo filtro",
+        "Sem log aggregation externo hoje — Vercel é fonte primária"
+      ],
+      "tempoEsperado": "10–30 min por incidente",
+      "responsavel": "Engenheiro",
+      "podeAutomatizar": "SIM",
+      "automacaoDetalhe": "Log drain + queries automatizáveis; análise de causa raiz parcial"
+    },
+    {
+      "id": "P14",
+      "nome": "Monitoramento",
+      "objetivo": "Detectar proativamente falhas de checkout, webhook e inconsistências pós-go-live.",
+      "passos": [
+        "Diário: Vercel Logs — erros 5xx em /api/asaas/checkout-carrinho e /api/webhooks/asaas",
+        "Diário: painel Asaas — webhooks com falha de entrega",
+        "Diário: /admin/pagamentos — pagamentos approved sem asaasId ou sem agendamento",
+        "Semanal: node scripts/domain-guardian-runner.ts com DATABASE_URL prod (read-only)",
+        "Semanal: revisar release-manager-agent report",
+        "Configurar alerta manual: planilha de smoke + checklist GL-02",
+        "Futuro: Sentry / Vercel Log Drain / alerta email em skippedReason"
+      ],
+      "tempoEsperado": "15 min/dia + 30 min/semana",
+      "responsavel": "Engenheiro / Admin",
+      "podeAutomatizar": "PARCIAL",
+      "automacaoDetalhe": "Domain Guardian CI já parcial; alertas proativos ainda ausentes"
+    },
+    {
+      "id": "P15",
+      "nome": "Primeiro pagamento em produção",
+      "objetivo": "Validar cadeia completa real money com risco controlado antes do primeiro cliente externo.",
+      "passos": [
+        "Pré-requisito: checklist GL-02 itens 1–17 concluídos",
+        "Conta admin + conta teste cliente (email real controlado)",
+        "Fluxo completo: registro → agendamento → carrinho → checkout Asaas PROD",
+        "Valor real mínimo (menor serviço disponível)",
+        "Após pagamento: verificar painel Asaas RECEIVED/CONFIRMED",
+        "Verificar logs webhook PAYMENT_RECEIVED sem skippedReason",
+        "Banco: Payment approved + Appointment pendente + PaymentMetadata tipo carrinho",
+        "UI: /minha-conta do cliente teste mostra agendamento",
+        "Admin: /admin/agendamentos mostra pedido com pagamentoConfirmado",
+        "Só então liberar primeiro cliente externo"
+      ],
+      "tempoEsperado": "45–90 min",
+      "responsavel": "Proprietário + Engenheiro",
+      "podeAutomatizar": "NÃO",
+      "automacaoDetalhe": "Validação com dinheiro real e aceite de negócio exigem humano"
+    },
+    {
+      "id": "P16",
+      "nome": "Primeiras 24 horas",
+      "objetivo": "Estabilizar operação imediatamente após go-live.",
+      "passos": [
+        "H+0: deploy produção + primeiro pagamento validado (P15)",
+        "H+1: revisar logs Vercel (webhook + checkout)",
+        "H+4: verificar /admin/pagamentos — zero pagamentos órfãos",
+        "H+8: segundo check logs + painel Asaas webhooks",
+        "H+24: relatório: total pagamentos, appointments criados, tickets suporte",
+        "Manter canal suporte ativo (email/WhatsApp definido)",
+        "Runbook impresso/acessível: P04, P07, P08",
+        "Não alterar envs nas primeiras 24h salvo incidente"
+      ],
+      "tempoEsperado": "24 h watch (≈1 h trabalho efetivo)",
+      "responsavel": "Engenheiro + Admin plantão",
+      "podeAutomatizar": "PARCIAL",
+      "automacaoDetalhe": "Checks de log e guardian agendáveis; plantão humano"
+    },
+    {
+      "id": "P17",
+      "nome": "Primeira semana",
+      "objetivo": "Confirmar estabilidade do MVP e fechar gaps operacionais antes de escalar divulgação.",
+      "passos": [
+        "Dia 1–3: monitoramento diário (P14)",
+        "Dia 2: revisar taxa abandono carrinho (logs + feedback)",
+        "Dia 3: testar procedimento replay webhook em sandbox documentado",
+        "Dia 4: revisar CRON_SECRET + crons se configurados",
+        "Dia 5: backup Neon verificado + snapshot semanal",
+        "Dia 7: retrospectiva: incidentes, pagamentos órfãos, tempo médio resolução",
+        "Decidir: implementar alertas (H2) ou limitar tráfego",
+        "Atualizar runbook com lições aprendidas"
+      ],
+      "tempoEsperado": "7 dias (≈3–5 h total engenharia)",
+      "responsavel": "Engenheiro + Proprietário",
+      "podeAutomatizar": "PARCIAL",
+      "automacaoDetalhe": "Relatórios agentes podem ser cron semanal"
+    }
+  ],
+  "checklists": {
+    "emergencia": [
+      "□ Ativar modo manutenção (/admin/manutencao) se bug financeiro ativo",
+      "□ Identificar escopo: quantos clientes/pagamentos afetados",
+      "□ Pausar divulgação / novos checkouts se necessário",
+      "□ Coletar asaasId + email cliente + timestamp",
+      "□ Verificar status no painel Asaas",
+      "□ Verificar logs [Asaas Webhook] no horário",
+      "□ Executar P08 replay canônico COM asaas-access-token se pagamento confirmado no Asaas",
+      "□ Confirmar Appointment no banco antes de comunicar cliente",
+      "□ Comunicar cliente com status real (não prometer antes de verificar banco)",
+      "□ Se corrupção banco: P11 Restore",
+      "□ Se bug código: P02 Rollback",
+      "□ Registrar incidente (data, causa, resolução, pagamentos afetados)"
+    ],
+    "rollback": [
+      "□ Confirmar necessidade (bug reproduzível ou perda financeira)",
+      "□ Identificar commit estável anterior no Vercel",
+      "□ Verificar se migration recente impede rollback seguro",
+      "□ Snapshot Neon antes de rollback se dados em risco",
+      "□ Promote deployment anterior no Vercel",
+      "□ Validar envs inalterados",
+      "□ Smoke: login, checkout página, webhook endpoint 200",
+      "□ Verificar pagamentos em flight no Asaas",
+      "□ Reprocessar órfãos pós-rollback se necessário (P08)",
+      "□ Comunicar equipe e retomar tráfego"
+    ],
+    "monitoramento": [
+      "□ Diário: erros 5xx Vercel (checkout-carrinho, webhooks/asaas)",
+      "□ Diário: painel Asaas webhooks — entregas falhas",
+      "□ Diário: /admin/pagamentos — approved sem vínculo agendamento",
+      "□ Diário: tickets 'paguei e não apareceu'",
+      "□ Semanal: domain-guardian-runner (DATABASE_URL prod)",
+      "□ Semanal: backup Neon confirmado",
+      "□ Mensal: revisar ASAAS_API_KEY validade",
+      "□ Mensal: testar replay webhook documentado (sandbox)"
+    ]
+  },
+  "devosAutomation": {
+    "definicao": "DevOS = ecossistema de agentes de engenharia THouse (Domain Guardian CI, Release Manager, Decision Engine, Execution Manager) descrito em docs/ai/engineering-agents.md",
+    "percentualFuturoAutomatizavel": 58,
+    "faixa": { "min": 52, "max": 65 },
+    "porProcedimento": [
+      { "id": "P01", "percentual": 75, "nota": "CI build + guardian gate; migrate/env manual" },
+      { "id": "P02", "percentual": 45, "nota": "Redeploy scriptável; decisão humana" },
+      { "id": "P03", "percentual": 55, "nota": "Query Asaas API automatizável" },
+      { "id": "P04", "percentual": 60, "nota": "Detecção gap + replay script com token" },
+      { "id": "P05", "percentual": 70, "nota": "Guardian invariant checks" },
+      { "id": "P06", "percentual": 40, "nota": "Julgamento negócio" },
+      { "id": "P07", "percentual": 50, "nota": "Diagnóstico script; comunicação humana" },
+      { "id": "P08", "percentual": 65, "nota": "Replay script padrão; validação humana" },
+      { "id": "P09", "percentual": 25, "nota": "Gate segurança — confirmação humana" },
+      { "id": "P10", "percentual": 85, "nota": "Neon API snapshots" },
+      { "id": "P11", "percentual": 55, "nota": "PITR trigger; reconciliação financeira manual" },
+      { "id": "P12", "percentual": 20, "nota": "Painel Asaas manual" },
+      { "id": "P13", "percentual": 80, "nota": "Log drain + queries" },
+      { "id": "P14", "percentual": 70, "nota": "Guardian scheduled + alertas" },
+      { "id": "P15", "percentual": 25, "nota": "Dinheiro real — supervisão humana" },
+      { "id": "P16", "percentual": 60, "nota": "Checks agendados; plantão humano" },
+      { "id": "P17", "percentual": 55, "nota": "Relatórios agentes semanais" }
+    ],
+    "naoAutomatizavel": [
+      "Comunicação com cliente e expectativa de prazo",
+      "Aprovação de rollback com impacto financeiro",
+      "Primeiro pagamento real e go/no-go de negócio",
+      "Troca de chaves no painel Asaas",
+      "Delete simbólico (confirmação de segurança)",
+      "Decisão se cupom era esperado no fluxo avulso"
+    ],
+    "roadmapAutomacao": [
+      "Script DevOS: replay-webhook-asaas.ts com token e validação pós-banco",
+      "Guardian check: Payment approved sem Appointment > 5 min",
+      "Release Manager integrado ao deploy Vercel",
+      "Neon backup pré-deploy automático",
+      "Alerta email quando webhook retorna received:true com error no body"
+    ]
+  }
+}

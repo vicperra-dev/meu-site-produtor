@@ -1,0 +1,437 @@
+{
+  "reportId": "GO-01-release-orchestration",
+  "generatedAt": "2026-07-15T20:53:21.499Z",
+  "language": "pt-BR",
+  "projectName": "THouse",
+  "mode": "PREPARATION_ONLY",
+  "verdict": "APROVADO PARA DOCUMENTAÇÃO",
+  "confidencePercent": 90,
+  "inventory": {
+    "currentBranch": "backup-pre-formatacao",
+    "head": "a6670ffbbbf4c7448769a11af96f3174fd63af6e",
+    "productionBranch": "main",
+    "productionHead": "7057b13d5e7e7947a8eb3fa32ae116773cf6706a",
+    "commitsAhead": [
+      "a6670ff test(rc): certify security permissions and concurrency",
+      "e32fdba test(rc): certify administration and operations workflow",
+      "2171e83 test(rc): certify complete customer journey",
+      "f355143 fix(golive): finalize production readiness and critical business validation",
+      "8a613c5 feat(ph01): product hardening and business validation",
+      "0e4e259 refactor(core): introduce unified execution core platform (EC-01)",
+      "67dcc81 feat(sim): implement official domain simulation engine (SIM-01)",
+      "36f3824 feat(sync): implement realtime domain synchronization engine (SYNC-01A)",
+      "362d347 test(te02): implement business validation suite batch 1",
+      "b8e1d8e refactor(workflow): consolidate official state machine (HS-03B)",
+      "7e89aff refactor(domain): consolidate operational domain (HS-03A)",
+      "7238fc7 feat(test-engine): implement core scenario runner (TE-01B)",
+      "3089b49 refactor(service): consolidate Service as operational authority (HS-02B)",
+      "53d9c97 backup: HS-01 antes da formatação do computador"
+    ],
+    "migrationCount": 33,
+    "productionUrl": "https://www.thouse-rec.com.br",
+    "vercelAlias": "https://meu-site-produtor-13.vercel.app",
+    "officialScripts": [
+      "rc:certify",
+      "rc02:certify",
+      "rc03:certify",
+      "rc04:certify",
+      "launch01:reset",
+      "launch01:certify",
+      "go01:orchestrate",
+      "golive:cleanup",
+      "workflow:smoke",
+      "domain:audit",
+      "workflow:audit",
+      "sync:audit",
+      "sim:audit",
+      "exec:audit",
+      "regression:audit",
+      "te:run",
+      "sim:run"
+    ],
+    "requiredEnv": [
+      {
+        "key": "DATABASE_URL",
+        "present": true
+      },
+      {
+        "key": "ASAAS_API_KEY",
+        "present": true
+      },
+      {
+        "key": "ASAAS_WEBHOOK_ACCESS_TOKEN",
+        "present": false
+      },
+      {
+        "key": "NEXT_PUBLIC_SITE_URL",
+        "present": true
+      },
+      {
+        "key": "GMAIL_USER",
+        "present": false
+      },
+      {
+        "key": "GMAIL_APP_PASSWORD",
+        "present": false
+      },
+      {
+        "key": "SESSION_SECRET",
+        "present": false
+      },
+      {
+        "key": "GO_LIVE_MAINTENANCE_MODE",
+        "present": false
+      }
+    ],
+    "environments": {
+      "local": {
+        "url": "http://localhost:3000",
+        "notes": "dev + reset local"
+      },
+      "preview": {
+        "url": "https://meu-site-produtor-13.vercel.app",
+        "notes": "VERCEL_ENV=preview"
+      },
+      "production": {
+        "url": "https://www.thouse-rec.com.br",
+        "notes": "main + Neon"
+      }
+    }
+  },
+  "releasePlan": [
+    {
+      "step": 1,
+      "title": "Revisar inventário GO-01",
+      "action": "Ler reports/domain-guardian/go01-release-orchestration.md e confirmar branch/commits/migrations.",
+      "owner": "Release Manager",
+      "automated": false
+    },
+    {
+      "step": 2,
+      "title": "Gates locais",
+      "action": "npm run go01:orchestrate — typescript, prisma validate, workflow-smoke devem PASS.",
+      "owner": "QA Lead",
+      "automated": true
+    },
+    {
+      "step": 3,
+      "title": "Certificações RC",
+      "action": "npm run rc04:certify && npm run launch01:certify — revisar relatórios; resolver ressalvas críticas.",
+      "owner": "Domain Guardian",
+      "automated": false
+    },
+    {
+      "step": 4,
+      "title": "Ativar modo manutenção Go Live",
+      "action": "Em Vercel Production: GO_LIVE_MAINTENANCE_MODE=1. Login admin OK; cadastro/compra/agendamento bloqueados.",
+      "owner": "DevOps",
+      "automated": false
+    },
+    {
+      "step": 5,
+      "title": "Merge para main",
+      "action": "git checkout main && git merge backup-pre-formatacao (ou PR aprovada). Não fazer push automático.",
+      "owner": "Release Manager",
+      "automated": false
+    },
+    {
+      "step": 6,
+      "title": "Push origin/main",
+      "action": "git push origin main — apenas após aprovação explícita do responsável.",
+      "owner": "Release Manager",
+      "automated": false
+    },
+    {
+      "step": 7,
+      "title": "Deploy Vercel",
+      "action": "Aguardar build Production em https://www.thouse-rec.com.br. Verificar logs sem erro.",
+      "owner": "DevOps",
+      "automated": false
+    },
+    {
+      "step": 8,
+      "title": "Migrations produção",
+      "action": "npx prisma migrate deploy no ambiente Production (Neon). Confirmar 33 migrations aplicadas.",
+      "owner": "DBA",
+      "automated": false
+    },
+    {
+      "step": 9,
+      "title": "Reset produção (homolog apenas)",
+      "action": "LAUNCH01_CONFIRM_PRODUCTION=1 LAUNCH01_CONFIRM_PHRASE=\"RESET THOUSE PRODUCTION\" npm run launch01:reset -- --execute --confirm-production",
+      "owner": "DBA + Release Manager",
+      "automated": false
+    },
+    {
+      "step": 10,
+      "title": "Smoke pós-deploy",
+      "action": "npm run workflow:smoke + rotas públicas 200 + webhook Asaas token válido.",
+      "owner": "QA Lead",
+      "automated": false
+    },
+    {
+      "step": 11,
+      "title": "Pagamento real sandbox/produção",
+      "action": "1 transação real mínima; confirmar Payment+Appointment em Minha Conta.",
+      "owner": "QA Lead",
+      "automated": false
+    },
+    {
+      "step": 12,
+      "title": "Desativar manutenção Go Live",
+      "action": "GO_LIVE_MAINTENANCE_MODE=0 em Vercel + redeploy.",
+      "owner": "DevOps",
+      "automated": false
+    },
+    {
+      "step": 13,
+      "title": "Go Live público",
+      "action": "Anunciar disponibilidade; monitorar primeiras 24h.",
+      "owner": "Release Manager",
+      "automated": false
+    }
+  ],
+  "resetValidation": {
+    "preserved": [
+      "FAQ",
+      "SiteSettings",
+      "BlockedTimeSlot",
+      "User (admin Victor)"
+    ],
+    "removed": [
+      "Usuários não-admin",
+      "Appointment",
+      "Payment",
+      "Service",
+      "Coupon",
+      "UserPlan",
+      "Subscription",
+      "PaymentMetadata",
+      "SynchronizationEvent (homolog)",
+      "DomainTransitionHistory (homolog)",
+      "Session",
+      "LoginLog",
+      "ChatSession",
+      "UserQuestion",
+      "AccountDeletionLog",
+      "PasswordResetCode",
+      "Uploads tmp/homolog/deliveries",
+      "Relatórios TE/SIM temporários"
+    ],
+    "neverTouched": [
+      "prisma/migrations/",
+      "prisma/schema.prisma",
+      "FAQ (catálogo)",
+      "SiteSettings",
+      "BlockedTimeSlot",
+      "Código-fonte"
+    ],
+    "checks": [
+      {
+        "id": "scope-migrations",
+        "label": "Migrations nunca removidas pelo reset",
+        "status": "PASS",
+        "evidence": "33 migrations no repositório — reset não toca em arquivos"
+      },
+      {
+        "id": "scope-schema",
+        "label": "Schema Prisma preservado",
+        "status": "PASS",
+        "evidence": "reset.ts não importa nem altera schema"
+      },
+      {
+        "id": "preserve-FAQ",
+        "label": "Preservado: FAQ",
+        "status": "PASS",
+        "evidence": "runLaunchReset não chama deleteMany nessas tabelas"
+      },
+      {
+        "id": "preserve-SiteSettings",
+        "label": "Preservado: SiteSettings",
+        "status": "PASS",
+        "evidence": "runLaunchReset não chama deleteMany nessas tabelas"
+      },
+      {
+        "id": "preserve-BlockedTimeSlot",
+        "label": "Preservado: BlockedTimeSlot",
+        "status": "PASS",
+        "evidence": "runLaunchReset não chama deleteMany nessas tabelas"
+      },
+      {
+        "id": "preserve-User (admin Victor)",
+        "label": "Preservado: User (admin Victor)",
+        "status": "PASS",
+        "evidence": "runLaunchReset não chama deleteMany nessas tabelas"
+      },
+      {
+        "id": "scope-admin-only",
+        "label": "ADMIN Victor nunca removido",
+        "status": "PASS",
+        "evidence": "findPreservedAdmin + abort se ausente"
+      }
+    ]
+  },
+  "maintenanceMode": {
+    "envVar": "GO_LIVE_MAINTENANCE_MODE",
+    "message": "Estamos realizando os preparativos finais para o lançamento. Voltaremos em instantes.",
+    "activeLocally": false,
+    "behavior": {
+      "login": "allowed",
+      "register": "blocked",
+      "purchase": "blocked",
+      "appointment": "blocked",
+      "admin": "full"
+    }
+  },
+  "safetyChecks": {
+    "local": [
+      "--execute",
+      "--confirm-local"
+    ],
+    "preview": [
+      "LAUNCH01_TARGET=preview",
+      "LAUNCH01_CONFIRM_PREVIEW=1",
+      "--confirm-preview"
+    ],
+    "production": [
+      "LAUNCH01_CONFIRM_PRODUCTION=1",
+      "LAUNCH01_CONFIRM_PHRASE=\"RESET THOUSE PRODUCTION\"",
+      "--confirm-production"
+    ]
+  },
+  "checklists": {
+    "beforePush": [
+      "Todos gates GO-01 PASS",
+      "git status limpo ou apenas artefatos intencionais",
+      "Nenhum segredo em arquivos staged",
+      "RC-04 e LAUNCH-01 relatórios revisados"
+    ],
+    "beforeMerge": [
+      "PR/code review aprovado",
+      "Conflitos resolvidos com main",
+      "Migrations incluídas no branch",
+      "NEXT_PUBLIC_SITE_URL aponta produção no Vercel"
+    ],
+    "beforeDeploy": [
+      "GO_LIVE_MAINTENANCE_MODE=1 em Production",
+      "Variáveis Asaas/webhook/SMTP configuradas",
+      "Backup Neon recente confirmado"
+    ],
+    "beforeReset": [
+      "Ambiente identificado (local/preview/production)",
+      "Confirmações explícitas conforme target",
+      "Admin Victor preservado (PRESERVE_ADMIN_EMAILS)",
+      "Backup banco antes de production reset"
+    ],
+    "beforeGoLive": [
+      "Smoke routes 200",
+      "Webhook Asaas responde",
+      "1 pagamento teste OK",
+      "Emails SMTP smoke (opcional ressalva)"
+    ],
+    "afterGoLive": [
+      "GO_LIVE_MAINTENANCE_MODE=0",
+      "Monitorar logs Vercel 1h",
+      "Verificar primeiro agendamento real"
+    ],
+    "first24h": [
+      "Revisar webhooks falhos no Asaas",
+      "Tickets suporte 'paguei e não apareceu'",
+      "Uptime > 99%"
+    ],
+    "first48h": [
+      "Revisar DomainTransitionHistory",
+      "Confirmar nenhum dado homolog em produção"
+    ],
+    "firstWeek": [
+      "Retrospectiva GO-01",
+      "Arquivar relatórios domain-guardian",
+      "Planejar H2 hardening (E2E-02)"
+    ]
+  },
+  "rollbackPlan": {
+    "cancelDeploy": [
+      "Vercel Dashboard → Deployments → Promover deploy anterior estável",
+      "Ou: git revert do merge commit + push + redeploy"
+    ],
+    "restoreDatabase": [
+      "Neon Dashboard → Restore from backup (timestamp pré-reset)",
+      "Nunca usar launch01:reset para rollback",
+      "prisma migrate deploy após restore se schema divergir"
+    ],
+    "disableMaintenance": [
+      "Vercel: GO_LIVE_MAINTENANCE_MODE=0",
+      "Ou SiteSettings.maintenanceMode=false via /admin/manutencao",
+      "Redeploy ou aguardar propagação env"
+    ],
+    "restorePreviousVersion": [
+      "git checkout main@{1} ou tag v1.0.0-rc",
+      "vercel --prod com commit anterior",
+      "Validar DATABASE_URL compatível com schema da versão"
+    ],
+    "note": "DOCUMENTAÇÃO APENAS — nenhum passo executado automaticamente pelo GO-01."
+  },
+  "gates": {
+    "allPass": true,
+    "results": [
+      {
+        "name": "typescript",
+        "ok": true
+      },
+      {
+        "name": "prisma-validate",
+        "ok": true
+      },
+      {
+        "name": "workflow-smoke",
+        "ok": true
+      },
+      {
+        "name": "reset-local-requires-confirm",
+        "ok": true,
+        "detail": "Reset LOCAL bloqueado: use --execute --confirm-local"
+      },
+      {
+        "name": "reset-production-requires-phrase",
+        "ok": true,
+        "detail": "Reset PRODUCTION bloqueado: LAUNCH01_CONFIRM_PHRASE=\"RESET THOUSE PRODUCTION\""
+      },
+      {
+        "name": "reset-production-full-confirm",
+        "ok": true,
+        "detail": "triple confirm OK"
+      },
+      {
+        "name": "reset-target-detection",
+        "ok": true,
+        "detail": "target=local"
+      },
+      {
+        "name": "go-live-maintenance-module",
+        "ok": true
+      },
+      {
+        "name": "launch-safety-module",
+        "ok": true
+      },
+      {
+        "name": "reset-scope-all-pass",
+        "ok": true
+      }
+    ]
+  },
+  "pending": [
+    "14 commits locais não publicados em origin/main",
+    "Pagamento real em produção não validado (RC-04 ressalva)",
+    "SMTP não smoke-testado em produção",
+    "Reset produção nunca executado nesta sessão GO-01",
+    "Push/merge/deploy aguardam aprovação explícita"
+  ],
+  "constraints": {
+    "noProductionExecution": true,
+    "noPush": true,
+    "noMerge": true,
+    "noStudioOS": true,
+    "noNewFeatures": true
+  }
+}

@@ -1,0 +1,122 @@
+{
+  "reportId": "GO-04-production-path-report",
+  "generatedAt": "2026-07-11T21:20:00.000Z",
+  "language": "pt-BR",
+  "titulo": "Relatório — Preview concluído e caminho para Production",
+  "branchRC": "pr03-clean",
+  "headRC": "f882047",
+  "branchProduction": "main",
+  "headProductionAtual": "fd9ff6d",
+  "esclarecimentoVercel": {
+    "pergunta": "Por que não consigo deploy pr03 em Production?",
+    "resposta": "No Vercel, branches que não são a branch de Production (main) geram apenas Preview. Isso é comportamento esperado. Production só recebe deploy ao fazer merge em main ou ao promover manualmente um deployment.",
+    "branchProductionConfigurada": "main (padrão Vercel + GitHub)"
+  },
+  "previewHomologacao": {
+    "urlRecomendada": "https://meu-site-produtor-13-558l8y1zx-rauls-projects-6bf8a8b0.vercel.app",
+    "sha": "f882047",
+    "projetoVercel": "meu-site-produtor-1.3"
+  },
+  "concluido": [
+    {
+      "item": "Deployment Protection Preview",
+      "status": "RESOLVIDO",
+      "evidencia": "Preview acessível sem redirect SSO"
+    },
+    {
+      "item": "DATABASE_URL Neon + migrations",
+      "status": "RESOLVIDO",
+      "evidencia": "29 migrations aplicadas; registro e meus-dados 200"
+    },
+    {
+      "item": "Coluna UserPlan.refundProcessedAt",
+      "status": "RESOLVIDO",
+      "evidencia": "SQL operacional no Neon (schema drift corrigido)"
+    },
+    {
+      "item": "ASAAS_API_KEY sandbox Preview",
+      "status": "RESOLVIDO",
+      "evidencia": "payment-provider asaas:true no deploy 558l8y1zx"
+    },
+    {
+      "item": "ASAAS_WEBHOOK_ACCESS_TOKEN Preview",
+      "status": "RESOLVIDO",
+      "evidencia": "Token configurado no Vercel Preview; webhook auth aceita token"
+    },
+    {
+      "item": "Webhook Asaas sandbox",
+      "status": "PARCIAL",
+      "evidencia": "Webhook Thouse-rec Ativado no painel; URL deve apontar para deploy ativo"
+    },
+    {
+      "item": "Smoke EX-01 (até checkout)",
+      "status": "RESOLVIDO",
+      "evidencia": "10/10 PASS no deploy 558l8y1zx; initPoint sandbox gerado"
+    },
+    {
+      "item": "Domínio cadastrado no Asaas sandbox",
+      "status": "RESOLVIDO",
+      "evidencia": "Checkout passou após cadastro de domínio"
+    }
+  ],
+  "alteracoesUsuarioComSucesso": [
+    "Desabilitou Deployment Protection no Preview",
+    "Configurou DATABASE_URL Neon no Vercel",
+    "Executou redeploys Preview",
+    "Criou ASAAS_API_KEY sandbox scoped Preview (separada da prod $aact_prod_)",
+    "Criou ASAAS_WEBHOOK_ACCESS_TOKEN no Vercel Preview",
+    "Criou webhook Thouse-rec no Asaas sandbox (Ativado)",
+    "Cadastrou domínio Vercel no Asaas sandbox",
+    "Deployou branch pr03-clean (Preview f882047)"
+  ],
+  "inconsistenciasDetectadas": [
+    {
+      "item": "NEXT_PUBLIC_SITE_URL",
+      "configurado": "https://meu-site-produtor-13-f4zevxgo3-rauls-projects-6bf8a8b0.vercel.app",
+      "deployFuncional": "https://meu-site-produtor-13-558l8y1zx-rauls-projects-6bf8a8b0.vercel.app",
+      "acao": "Alinhar URL no Vercel Preview e no webhook Asaas para o mesmo host"
+    },
+    {
+      "item": "Webhook token",
+      "nota": "Token rotacionado no Vercel (whsec_8Bve...) — deve ser idêntico no painel Asaas webhook"
+    },
+    {
+      "item": "Deploy main vs RC",
+      "nota": "Redeploys em main (fd9ff6d) não substituem homologação da RC (f882047)"
+    }
+  ],
+  "faltaFazer": [
+    {
+      "prioridade": "P0",
+      "item": "Alinhar NEXT_PUBLIC_SITE_URL + webhook URL Asaas para 558l8y1zx",
+      "tempo": "5 min"
+    },
+    {
+      "prioridade": "P1",
+      "item": "Teste manual: pagamento sandbox + webhook HTTP 200 no Asaas",
+      "tempo": "10 min"
+    },
+    {
+      "prioridade": "P0",
+      "item": "Merge pr03-clean → main (GitHub PR)",
+      "tempo": "5 min"
+    },
+    {
+      "prioridade": "P0",
+      "item": "Configurar env Production (ASAAS prod, webhook prod, DATABASE_URL prod, NEXT_PUBLIC domínio real)",
+      "tempo": "20 min"
+    },
+    {
+      "prioridade": "P0",
+      "item": "prisma migrate deploy no banco Production Neon",
+      "tempo": "5 min"
+    },
+    {
+      "prioridade": "P1",
+      "item": "Smoke mínimo Production pós-deploy",
+      "tempo": "10 min"
+    }
+  ],
+  "releaseProntaParaMerge": true,
+  "productionDeployPossivelAposMerge": true
+}

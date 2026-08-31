@@ -1,0 +1,63 @@
+{
+  "reportId": "RC-04-ci-publish",
+  "mode": "EXECUCAO_CONTROLADA",
+  "generatedAt": "2026-07-11T04:46:00.000Z",
+  "language": "pt-BR",
+  "projectName": "THouse Rec",
+  "branch": "pr03-clean",
+  "basedOn": ["RC-02-ci-update", "RC-03-workflow-finalization", "PV-01-release-publish"],
+  "restricoes": {
+    "novosCommits": false,
+    "alteracaoCodigo": false,
+    "operacoesGit": ["push"]
+  },
+  "push": {
+    "comando": "git push origin pr03-clean",
+    "exitCode": 0,
+    "range": "bfc5c38..f882047",
+    "commitsPublicados": [
+      {
+        "sha": "9379167",
+        "message": "ci: update domain guardian workflow to Node 22"
+      },
+      {
+        "sha": "f882047",
+        "message": "ci: make optional StudioOS-only workflow steps"
+      }
+    ],
+    "headRemoto": "f8820474c927f685387f5bee9d479d7a4d7ab233",
+    "remote": "https://github.com/rvits/meu-site-produtor.git"
+  },
+  "githubActions": {
+    "workflow": "Domain Guardian",
+    "workflowFile": ".github/workflows/domain-guardian.yml",
+    "runVerificado": {
+      "id": 29140096152,
+      "runNumber": 2,
+      "headSha": "f8820474c927f685387f5bee9d479d7a4d7ab233",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "job": "Governança de domínio",
+      "jobConclusion": "success",
+      "duracaoAproximada": "37s",
+      "url": "https://github.com/rvits/meu-site-produtor/actions/runs/29140096152"
+    },
+    "runAnterior": {
+      "runNumber": 1,
+      "headSha": "bfc5c38",
+      "conclusion": "failure",
+      "nota": "Falha pré-RC-02 (exit 9 — Node 20 + --experimental-strip-types)"
+    }
+  },
+  "respostas": {
+    "workflow": "PASS",
+    "stepFalha": null,
+    "erro": null
+  },
+  "veredito": "APROVADO",
+  "launchConfidenceScore": {
+    "atual": 88,
+    "nota": "CI de governança verde após RC-02/RC-03 publicados"
+  }
+}

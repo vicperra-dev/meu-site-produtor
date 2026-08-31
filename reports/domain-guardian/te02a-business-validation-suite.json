@@ -1,0 +1,625 @@
+﻿{
+    "sprint":  "TE-02A",
+    "title":  "Business Validation Suite (Batch 1)",
+    "generatedAt":  "2026-07-14T01:08:31.5087641Z",
+    "branch":  "backup-pre-formatacao",
+    "runId":  "te_1783990953933_butcgv",
+    "durationMs":  102152,
+    "startedAt":  "2026-07-14T01:02:33.932Z",
+    "finishedAt":  "2026-07-14T01:04:16.084Z",
+    "summary":  {
+                    "total":  21,
+                    "passed":  21,
+                    "failed":  0,
+                    "stubs":  0,
+                    "skipped":  0,
+                    "errors":  0
+                },
+    "validation":  {
+                       "typescript":  "PASS",
+                       "prisma":  "PASS",
+                       "build":  "PASS",
+                       "domainAudit":  "PASS",
+                       "workflowAudit":  "PASS",
+                       "scenarioRunner":  "PASS"
+                   },
+    "bugsFound":  [
+                      {
+                          "id":  "BUG-TE02A-001",
+                          "area":  "PaymentWebhook/carrinho",
+                          "severity":  "high",
+                          "description":  "Metadata tipo=carrinho era interceptada por isAgendamentoDesc quando description continha \u0027Agendamento\u0027, roteando para processAgendamentoPaymentEffects e zerando Appointments no carrinho.",
+                          "fix":  "Reordenar handlers: processCarrinhoPaymentEffects antes de isAgendamentoDesc; descriptions TE usam \u0027TE Carrinho\u0027.",
+                          "file":  "src/app/lib/process-payment-webhook.ts"
+                      }
+                  ],
+    "corrections":  [
+                        "process-payment-webhook.ts: carrinho priorizado sobre isAgendamentoDesc"
+                    ],
+    "pendencias":  [
+
+                   ],
+    "coverage":  {
+                     "batch1Catalog":  21,
+                     "implemented":  21,
+                     "passed":  21,
+                     "failed":  0,
+                     "families":  [
+                                      "SRV",
+                                      "CPN",
+                                      "PLN",
+                                      "APT",
+                                      "PAY",
+                                      "ADM",
+                                      "USR"
+                                  ]
+                 },
+    "scenarios":  [
+                      {
+                          "id":  "SRV-001",
+                          "name":  "Compra mÃºltiplos serviÃ§os (carrinho)",
+                          "status":  "pass",
+                          "durationMs":  858,
+                          "assertCount":  6,
+                          "assertFails":  0,
+                          "errors":  [
+
+                                     ],
+                          "warnings":  [
+
+                                       ],
+                          "cleanup":  {
+                                          "deleted":  {
+                                                          "services":  2,
+                                                          "appointments":  2,
+                                                          "coupons":  0,
+                                                          "subscriptions":  0,
+                                                          "userPlans":  0,
+                                                          "payments":  1,
+                                                          "paymentMetadata":  1,
+                                                          "users":  1
+                                                      }
+                                      }
+                      },
+                      {
+                          "id":  "SRV-002",
+                          "name":  "SessÃ£o + Mix + Master â†’ 3 Appointments",
+                          "status":  "pass",
+                          "durationMs":  579,
+                          "assertCount":  11,
+                          "assertFails":  0,
+                          "errors":  [
+
+                                     ],
+                          "warnings":  [
+
+                                       ],
+                          "cleanup":  {
+                                          "deleted":  {
+                                                          "services":  3,
+                                                          "appointments":  3,
+                                                          "coupons":  0,
+                                                          "subscriptions":  0,
+                                                          "userPlans":  0,
+                                                          "payments":  1,
+                                                          "paymentMetadata":  1,
+                                                          "users":  1
+                                                      }
+                                      }
+                      },
+                      {
+                          "id":  "CPN-001",
+                          "name":  "Cupom de serviÃ§o â†’ deep link",
+                          "status":  "pass",
+                          "durationMs":  7449,
+                          "assertCount":  3,
+                          "assertFails":  0,
+                          "errors":  [
+
+                                     ],
+                          "warnings":  [
+
+                                       ],
+                          "cleanup":  {
+                                          "deleted":  {
+                                                          "services":  0,
+                                                          "appointments":  0,
+                                                          "coupons":  2,
+                                                          "subscriptions":  0,
+                                                          "userPlans":  0,
+                                                          "payments":  1,
+                                                          "paymentMetadata":  2,
+                                                          "users":  1
+                                                      }
+                                      }
+                      },
+                      {
+                          "id":  "CPN-002",
+                          "name":  "Cupom de desconto percentual",
+                          "status":  "pass",
+                          "durationMs":  109,
+                          "assertCount":  2,
+                          "assertFails":  0,
+                          "errors":  [
+
+                                     ],
+                          "warnings":  [
+
+                                       ],
+                          "cleanup":  {
+                                          "deleted":  {
+                                                          "services":  0,
+                                                          "appointments":  0,
+                                                          "coupons":  1,
+                                                          "subscriptions":  0,
+                                                          "userPlans":  0,
+                                                          "payments":  0,
+                                                          "paymentMetadata":  0,
+                                                          "users":  1
+                                                      }
+                                      }
+                      },
+                      {
+                          "id":  "CPN-003",
+                          "name":  "Cupom de reembolso â†’ remarcaÃ§Ã£o",
+                          "status":  "pass",
+                          "durationMs":  7819,
+                          "assertCount":  5,
+                          "assertFails":  0,
+                          "errors":  [
+
+                                     ],
+                          "warnings":  [
+
+                                       ],
+                          "cleanup":  {
+                                          "deleted":  {
+                                                          "services":  2,
+                                                          "appointments":  2,
+                                                          "coupons":  1,
+                                                          "subscriptions":  0,
+                                                          "userPlans":  0,
+                                                          "payments":  1,
+                                                          "paymentMetadata":  1,
+                                                          "users":  1
+                                                      }
+                                      }
+                      },
+                      {
+                          "id":  "CPN-004",
+                          "name":  "Cupom utilizado nÃ£o reutiliza",
+                          "status":  "pass",
+                          "durationMs":  299,
+                          "assertCount":  2,
+                          "assertFails":  0,
+                          "errors":  [
+
+                                     ],
+                          "warnings":  [
+
+                                       ],
+                          "cleanup":  {
+                                          "deleted":  {
+                                                          "services":  0,
+                                                          "appointments":  0,
+                                                          "coupons":  1,
+                                                          "subscriptions":  0,
+                                                          "userPlans":  0,
+                                                          "payments":  0,
+                                                          "paymentMetadata":  0,
+                                                          "users":  1
+                                                      }
+                                      }
+                      },
+                      {
+                          "id":  "PLN-001",
+                          "name":  "Plano Bronze",
+                          "status":  "pass",
+                          "durationMs":  4240,
+                          "assertCount":  5,
+                          "assertFails":  0,
+                          "errors":  [
+
+                                     ],
+                          "warnings":  [
+
+                                       ],
+                          "cleanup":  {
+                                          "deleted":  {
+                                                          "services":  0,
+                                                          "appointments":  0,
+                                                          "coupons":  5,
+                                                          "subscriptions":  0,
+                                                          "userPlans":  1,
+                                                          "payments":  1,
+                                                          "paymentMetadata":  1,
+                                                          "users":  1
+                                                      }
+                                      }
+                      },
+                      {
+                          "id":  "PLN-002",
+                          "name":  "Plano Prata",
+                          "status":  "pass",
+                          "durationMs":  3127,
+                          "assertCount":  5,
+                          "assertFails":  0,
+                          "errors":  [
+
+                                     ],
+                          "warnings":  [
+
+                                       ],
+                          "cleanup":  {
+                                          "deleted":  {
+                                                          "services":  0,
+                                                          "appointments":  0,
+                                                          "coupons":  5,
+                                                          "subscriptions":  0,
+                                                          "userPlans":  1,
+                                                          "payments":  1,
+                                                          "paymentMetadata":  1,
+                                                          "users":  1
+                                                      }
+                                      }
+                      },
+                      {
+                          "id":  "PLN-003",
+                          "name":  "Plano Ouro",
+                          "status":  "pass",
+                          "durationMs":  3488,
+                          "assertCount":  5,
+                          "assertFails":  0,
+                          "errors":  [
+
+                                     ],
+                          "warnings":  [
+
+                                       ],
+                          "cleanup":  {
+                                          "deleted":  {
+                                                          "services":  0,
+                                                          "appointments":  0,
+                                                          "coupons":  12,
+                                                          "subscriptions":  0,
+                                                          "userPlans":  1,
+                                                          "payments":  1,
+                                                          "paymentMetadata":  1,
+                                                          "users":  1
+                                                      }
+                                      }
+                      },
+                      {
+                          "id":  "PLN-004",
+                          "name":  "Agendamento individual por cupom do plano",
+                          "status":  "pass",
+                          "durationMs":  3343,
+                          "assertCount":  6,
+                          "assertFails":  0,
+                          "errors":  [
+
+                                     ],
+                          "warnings":  [
+
+                                       ],
+                          "cleanup":  {
+                                          "deleted":  {
+                                                          "services":  4,
+                                                          "appointments":  4,
+                                                          "coupons":  5,
+                                                          "subscriptions":  0,
+                                                          "userPlans":  1,
+                                                          "payments":  1,
+                                                          "paymentMetadata":  1,
+                                                          "users":  1
+                                                      }
+                                      }
+                      },
+                      {
+                          "id":  "PLN-005",
+                          "name":  "Cancelamento do plano",
+                          "status":  "pass",
+                          "durationMs":  4048,
+                          "assertCount":  3,
+                          "assertFails":  0,
+                          "errors":  [
+
+                                     ],
+                          "warnings":  [
+
+                                       ],
+                          "cleanup":  {
+                                          "deleted":  {
+                                                          "services":  0,
+                                                          "appointments":  0,
+                                                          "coupons":  5,
+                                                          "subscriptions":  0,
+                                                          "userPlans":  1,
+                                                          "payments":  1,
+                                                          "paymentMetadata":  1,
+                                                          "users":  1
+                                                      }
+                                      }
+                      },
+                      {
+                          "id":  "APT-001",
+                          "name":  "Recusa antes do aceite",
+                          "status":  "pass",
+                          "durationMs":  6099,
+                          "assertCount":  3,
+                          "assertFails":  0,
+                          "errors":  [
+
+                                     ],
+                          "warnings":  [
+
+                                       ],
+                          "cleanup":  {
+                                          "deleted":  {
+                                                          "services":  1,
+                                                          "appointments":  1,
+                                                          "coupons":  0,
+                                                          "subscriptions":  0,
+                                                          "userPlans":  0,
+                                                          "payments":  1,
+                                                          "paymentMetadata":  1,
+                                                          "users":  1
+                                                      }
+                                      }
+                      },
+                      {
+                          "id":  "APT-002",
+                          "name":  "Cancelamento apÃ³s aceite",
+                          "status":  "pass",
+                          "durationMs":  6345,
+                          "assertCount":  2,
+                          "assertFails":  0,
+                          "errors":  [
+
+                                     ],
+                          "warnings":  [
+
+                                       ],
+                          "cleanup":  {
+                                          "deleted":  {
+                                                          "services":  1,
+                                                          "appointments":  1,
+                                                          "coupons":  0,
+                                                          "subscriptions":  0,
+                                                          "userPlans":  0,
+                                                          "payments":  1,
+                                                          "paymentMetadata":  1,
+                                                          "users":  1
+                                                      }
+                                      }
+                      },
+                      {
+                          "id":  "APT-003",
+                          "name":  "Em andamento",
+                          "status":  "pass",
+                          "durationMs":  6566,
+                          "assertCount":  3,
+                          "assertFails":  0,
+                          "errors":  [
+
+                                     ],
+                          "warnings":  [
+
+                                       ],
+                          "cleanup":  {
+                                          "deleted":  {
+                                                          "services":  1,
+                                                          "appointments":  1,
+                                                          "coupons":  0,
+                                                          "subscriptions":  0,
+                                                          "userPlans":  0,
+                                                          "payments":  1,
+                                                          "paymentMetadata":  1,
+                                                          "users":  1
+                                                      }
+                                      }
+                      },
+                      {
+                          "id":  "APT-004",
+                          "name":  "ConcluÃ­do com entrega",
+                          "status":  "pass",
+                          "durationMs":  5849,
+                          "assertCount":  4,
+                          "assertFails":  0,
+                          "errors":  [
+
+                                     ],
+                          "warnings":  [
+
+                                       ],
+                          "cleanup":  {
+                                          "deleted":  {
+                                                          "services":  1,
+                                                          "appointments":  1,
+                                                          "coupons":  0,
+                                                          "subscriptions":  0,
+                                                          "userPlans":  0,
+                                                          "payments":  1,
+                                                          "paymentMetadata":  1,
+                                                          "users":  1
+                                                      }
+                                      }
+                      },
+                      {
+                          "id":  "PAY-001",
+                          "name":  "Reembolso financeiro",
+                          "status":  "pass",
+                          "durationMs":  6555,
+                          "assertCount":  5,
+                          "assertFails":  0,
+                          "errors":  [
+
+                                     ],
+                          "warnings":  [
+
+                                       ],
+                          "cleanup":  {
+                                          "deleted":  {
+                                                          "services":  1,
+                                                          "appointments":  1,
+                                                          "coupons":  0,
+                                                          "subscriptions":  0,
+                                                          "userPlans":  0,
+                                                          "payments":  1,
+                                                          "paymentMetadata":  1,
+                                                          "users":  1
+                                                      }
+                                      }
+                      },
+                      {
+                          "id":  "ADM-001",
+                          "name":  "ServiÃ§os Gerais",
+                          "status":  "pass",
+                          "durationMs":  6152,
+                          "assertCount":  2,
+                          "assertFails":  0,
+                          "errors":  [
+
+                                     ],
+                          "warnings":  [
+
+                                       ],
+                          "cleanup":  {
+                                          "deleted":  {
+                                                          "services":  1,
+                                                          "appointments":  1,
+                                                          "coupons":  0,
+                                                          "subscriptions":  0,
+                                                          "userPlans":  0,
+                                                          "payments":  1,
+                                                          "paymentMetadata":  1,
+                                                          "users":  1
+                                                      }
+                                      }
+                      },
+                      {
+                          "id":  "ADM-002",
+                          "name":  "ServiÃ§os Selecionados",
+                          "status":  "pass",
+                          "durationMs":  11516,
+                          "assertCount":  2,
+                          "assertFails":  0,
+                          "errors":  [
+
+                                     ],
+                          "warnings":  [
+
+                                       ],
+                          "cleanup":  {
+                                          "deleted":  {
+                                                          "services":  2,
+                                                          "appointments":  2,
+                                                          "coupons":  0,
+                                                          "subscriptions":  0,
+                                                          "userPlans":  0,
+                                                          "payments":  2,
+                                                          "paymentMetadata":  2,
+                                                          "users":  1
+                                                      }
+                                      }
+                      },
+                      {
+                          "id":  "ADM-003",
+                          "name":  "Dashboard stats",
+                          "status":  "pass",
+                          "durationMs":  5689,
+                          "assertCount":  2,
+                          "assertFails":  0,
+                          "errors":  [
+
+                                     ],
+                          "warnings":  [
+
+                                       ],
+                          "cleanup":  {
+                                          "deleted":  {
+                                                          "services":  1,
+                                                          "appointments":  1,
+                                                          "coupons":  0,
+                                                          "subscriptions":  0,
+                                                          "userPlans":  0,
+                                                          "payments":  1,
+                                                          "paymentMetadata":  1,
+                                                          "users":  1
+                                                      }
+                                      }
+                      },
+                      {
+                          "id":  "ADM-004",
+                          "name":  "Pagamentos â†’ Appointment â†’ Service â†’ Dashboard",
+                          "status":  "pass",
+                          "durationMs":  6107,
+                          "assertCount":  4,
+                          "assertFails":  0,
+                          "errors":  [
+
+                                     ],
+                          "warnings":  [
+
+                                       ],
+                          "cleanup":  {
+                                          "deleted":  {
+                                                          "services":  1,
+                                                          "appointments":  1,
+                                                          "coupons":  0,
+                                                          "subscriptions":  0,
+                                                          "userPlans":  0,
+                                                          "payments":  1,
+                                                          "paymentMetadata":  1,
+                                                          "users":  1
+                                                      }
+                                      }
+                      },
+                      {
+                          "id":  "USR-001",
+                          "name":  "Minha Conta sincronizada",
+                          "status":  "pass",
+                          "durationMs":  5911,
+                          "assertCount":  2,
+                          "assertFails":  0,
+                          "errors":  [
+
+                                     ],
+                          "warnings":  [
+
+                                       ],
+                          "cleanup":  {
+                                          "deleted":  {
+                                                          "services":  1,
+                                                          "appointments":  1,
+                                                          "coupons":  0,
+                                                          "subscriptions":  0,
+                                                          "userPlans":  0,
+                                                          "payments":  1,
+                                                          "paymentMetadata":  1,
+                                                          "users":  1
+                                                      }
+                                      }
+                      }
+                  ],
+    "engine":  {
+                   "bases":  [
+                                 "HS-01",
+                                 "HS-02A",
+                                 "HS-02B",
+                                 "HS-03A",
+                                 "HS-03B",
+                                 "TE-01A",
+                                 "TE-01B",
+                                 "TE-01C"
+                             ],
+                   "adapters":  [
+                                    "ScenarioRunner",
+                                    "PipelineAdapter",
+                                    "StateMachine",
+                                    "Workflow",
+                                    "DomainService"
+                                ],
+                   "suiteCommand":  "npm run te:suite:te02a"
+               }
+}

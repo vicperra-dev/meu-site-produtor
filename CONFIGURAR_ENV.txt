@@ -1,0 +1,20 @@
+# ============================================
+# CONFIGURAÇÃO DO ARQUIVO .env
+# ============================================
+# 
+# Crie um arquivo chamado ".env" na raiz do projeto
+# (mesma pasta onde está o package.json)
+# 
+# Copie e cole o conteúdo abaixo no arquivo .env:
+# ============================================
+
+SUPPORT_EMAIL=thouse.rec.tremv@gmail.com
+SUPPORT_EMAIL_PASSWORD=kjpexhpoqeqxycza
+SUPPORT_DEST_EMAIL=tremv03021@gmail.com
+
+# ============================================
+# IMPORTANTE:
+# - Remova todos os espaços da senha de app
+# - Não commite este arquivo no Git
+# - Reinicie o servidor após criar o arquivo
+# ============================================

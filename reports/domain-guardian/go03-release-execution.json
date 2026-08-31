@@ -1,0 +1,467 @@
+{
+  "reportId": "GO-03-release-execution",
+  "generatedAt": "2026-07-15T21:52:21.141Z",
+  "language": "pt-BR",
+  "projectName": "THouse",
+  "version": "1.0.0",
+  "mode": "EXECUTION_PREP_ONLY",
+  "branch": "backup-pre-formatacao",
+  "head": "8f4125f15efe5ce3f1609fc1f69133868a573641",
+  "productionUrl": "https://www.thouse-rec.com.br",
+  "releaseNotes": "docs/releases/v1.0.0.md",
+  "architectureSnapshot": "docs/architecture/v1.0-overview.md",
+  "executionPlan": [
+    {
+      "step": 1,
+      "title": "Ativar Maintenance Mode",
+      "owner": "DevOps",
+      "actions": [
+        "Acessar Vercel → Project → Settings → Environment Variables → Production",
+        "Definir GO_LIVE_MAINTENANCE_MODE=1",
+        "Opcional: SiteSettings.maintenanceMode=false (GO_LIVE tem precedência para rotas bloqueadas)",
+        "Salvar e aguardar redeploy automático OU disparar redeploy manual",
+        "Validar: visitante em /registro redireciona para /manutencao?mode=golive",
+        "Validar: admin logado acessa /admin normalmente"
+      ],
+      "rollback": "GO_LIVE_MAINTENANCE_MODE=0 + redeploy"
+    },
+    {
+      "step": 2,
+      "title": "Merge",
+      "owner": "Release Manager",
+      "actions": [
+        "git fetch origin",
+        "git checkout main",
+        "git pull origin main",
+        "git merge backup-pre-formatacao --no-ff -m \"release: merge v1.0.0 candidate\"",
+        "Resolver conflitos se houver (nunca aceitar perda de migrations)",
+        "git log -1 --oneline (confirmar merge commit)"
+      ],
+      "rollback": "git revert -m 1 <merge-commit-sha>"
+    },
+    {
+      "step": 3,
+      "title": "Push",
+      "owner": "Release Manager",
+      "actions": [
+        "Confirmar aprovação humana explícita antes do push",
+        "git push origin main",
+        "Verificar no GitHub: branch main atualizada"
+      ],
+      "rollback": "git revert + push (não force-push em main)"
+    },
+    {
+      "step": 4,
+      "title": "Deploy",
+      "owner": "DevOps",
+      "actions": [
+        "Aguardar Vercel Production build (branch main)",
+        "URL: https://www.thouse-rec.com.br",
+        "Verificar build logs: sem erro, prisma generate OK",
+        "Confirmar deployment Ready"
+      ],
+      "rollback": "Vercel → Promote deployment anterior"
+    },
+    {
+      "step": 5,
+      "title": "Prisma migrate deploy",
+      "owner": "DBA",
+      "actions": [
+        "Conectar DATABASE_URL de Production (Neon)",
+        "npx prisma migrate deploy",
+        "Confirmar 33 migrations aplicadas",
+        "npx prisma migrate status → Database schema is up to date",
+        "Se HS-01 falhar (CPF duplicado): resolver dados antes de continuar"
+      ],
+      "rollback": "Neon PITR restore para timestamp pré-deploy"
+    },
+    {
+      "step": 6,
+      "title": "Launch Reset",
+      "owner": "DBA + Release Manager",
+      "actions": [
+        "Backup Neon confirmado (PITR < 1h)",
+        "LAUNCH01_CONFIRM_PRODUCTION=1",
+        "LAUNCH01_CONFIRM_PHRASE=\"RESET THOUSE PRODUCTION\"",
+        "npm run launch01:reset -- --execute --confirm-production",
+        "Verificar launch01-reset-result.json: preservedAdmin=true",
+        "Confirmar 1 usuário (Victor ADMIN) no banco"
+      ],
+      "rollback": "Neon PITR — nunca usar reset como rollback"
+    },
+    {
+      "step": 7,
+      "title": "Smoke Test",
+      "owner": "QA Lead",
+      "actions": [
+        "npm run workflow:smoke (local apontando prod read-only OU probes HTTP)",
+        "GET https://www.thouse-rec.com.br → 200",
+        "GET /login, /registro, /agendamento, /minha-conta, /admin → 200",
+        "POST /api/webhooks/asaas sem token → 401 (Token inválido)"
+      ],
+      "rollback": "Ativar maintenance + investigar"
+    },
+    {
+      "step": 8,
+      "title": "Pagamento real",
+      "owner": "QA Lead",
+      "actions": [
+        "Admin desativa GO_LIVE temporariamente OU usa conta admin",
+        "Fluxo: serviço avulso mínimo (valor simbólico se possível)",
+        "Pagar no Asaas produção",
+        "Aguardar webhook (até 60s)",
+        "Confirmar Payment + Appointment em Minha Conta",
+        "Registrar asaasId e appointmentId no checklist"
+      ],
+      "rollback": "Reembolso manual Asaas se cobrança indevida"
+    },
+    {
+      "step": 9,
+      "title": "Reembolso real",
+      "owner": "QA Lead + Admin",
+      "actions": [
+        "Admin cancela agendamento de teste",
+        "Cliente escolhe reembolso financeiro em Minha Conta",
+        "Confirmar refund no Asaas + status local",
+        "Alternativa: cupom de reembolso (registrar qual fluxo testado)"
+      ],
+      "rollback": "N/A — documentar IDs para auditoria"
+    },
+    {
+      "step": 10,
+      "title": "Plano real",
+      "owner": "QA Lead",
+      "actions": [
+        "Comprar plano Bronze (mensal) com pagamento real",
+        "Webhook cria UserPlan ativo",
+        "Verificar em Minha Conta + painel admin"
+      ],
+      "rollback": "Cancelar plano admin + reembolso se necessário"
+    },
+    {
+      "step": 11,
+      "title": "Desativar Maintenance Mode",
+      "owner": "DevOps",
+      "actions": [
+        "Vercel: GO_LIVE_MAINTENANCE_MODE=0",
+        "Redeploy Production",
+        "Validar: /registro e /agendamento acessíveis"
+      ],
+      "rollback": "GO_LIVE_MAINTENANCE_MODE=1"
+    },
+    {
+      "step": 12,
+      "title": "Abrir sistema",
+      "owner": "Release Manager",
+      "actions": [
+        "Comunicar equipe: go-live ativo",
+        "Monitorar Vercel logs primeiros 15 min",
+        "Verificar primeiro acesso público sem erro 5xx"
+      ],
+      "rollback": "Passo 11 imediato"
+    },
+    {
+      "step": 13,
+      "title": "Monitorar 24h",
+      "owner": "DevOps + QA",
+      "actions": [
+        "Revisar webhooks falhos no painel Asaas",
+        "Tickets 'paguei e não apareceu'",
+        "Uptime Vercel > 99%",
+        "Zero erros críticos em logs"
+      ],
+      "rollback": "Ver Rollback Card"
+    },
+    {
+      "step": 14,
+      "title": "Monitorar 48h",
+      "owner": "Release Manager",
+      "actions": [
+        "Retrospectiva GO-03",
+        "Arquivar relatórios domain-guardian",
+        "Decidir início v1.1 (ver Post-Launch Plan)"
+      ],
+      "rollback": "N/A"
+    }
+  ],
+  "productionChecklist": [
+    {
+      "id": "PC-01",
+      "item": "GO_LIVE_MAINTENANCE_MODE=1 antes do merge/deploy",
+      "pass": null,
+      "fail": null,
+      "observations": ""
+    },
+    {
+      "id": "PC-02",
+      "item": "Backup Neon recente (< 1h)",
+      "pass": null,
+      "fail": null,
+      "observations": ""
+    },
+    {
+      "id": "PC-03",
+      "item": "Merge backup-pre-formatacao → main sem conflitos",
+      "pass": null,
+      "fail": null,
+      "observations": ""
+    },
+    {
+      "id": "PC-04",
+      "item": "Push origin/main concluído",
+      "pass": null,
+      "fail": null,
+      "observations": ""
+    },
+    {
+      "id": "PC-05",
+      "item": "Vercel Production build SUCCESS",
+      "pass": null,
+      "fail": null,
+      "observations": ""
+    },
+    {
+      "id": "PC-06",
+      "item": "prisma migrate deploy — 33 migrations",
+      "pass": null,
+      "fail": null,
+      "observations": ""
+    },
+    {
+      "id": "PC-07",
+      "item": "Launch reset — ADMIN Victor preservado",
+      "pass": null,
+      "fail": null,
+      "observations": ""
+    },
+    {
+      "id": "PC-08",
+      "item": "Smoke routes HTTP 200",
+      "pass": null,
+      "fail": null,
+      "observations": ""
+    },
+    {
+      "id": "PC-09",
+      "item": "Webhook Asaas token válido",
+      "pass": null,
+      "fail": null,
+      "observations": ""
+    },
+    {
+      "id": "PC-10",
+      "item": "Pagamento real → Payment + Appointment",
+      "pass": null,
+      "fail": null,
+      "observations": ""
+    },
+    {
+      "id": "PC-11",
+      "item": "Reembolso real testado",
+      "pass": null,
+      "fail": null,
+      "observations": ""
+    },
+    {
+      "id": "PC-12",
+      "item": "Plano real testado",
+      "pass": null,
+      "fail": null,
+      "observations": ""
+    },
+    {
+      "id": "PC-13",
+      "item": "GO_LIVE_MAINTENANCE_MODE=0 pós-validação",
+      "pass": null,
+      "fail": null,
+      "observations": ""
+    },
+    {
+      "id": "PC-14",
+      "item": "NEXT_PUBLIC_SITE_URL=https://www.thouse-rec.com.br",
+      "pass": null,
+      "fail": null,
+      "observations": ""
+    },
+    {
+      "id": "PC-15",
+      "item": "ASAAS_API_KEY produção configurada",
+      "pass": null,
+      "fail": null,
+      "observations": ""
+    },
+    {
+      "id": "PC-16",
+      "item": "ASAAS_WEBHOOK_ACCESS_TOKEN configurado",
+      "pass": null,
+      "fail": null,
+      "observations": ""
+    },
+    {
+      "id": "PC-17",
+      "item": "SESSION_SECRET configurado",
+      "pass": null,
+      "fail": null,
+      "observations": ""
+    },
+    {
+      "id": "PC-18",
+      "item": "GMAIL_USER + GMAIL_APP_PASSWORD (email)",
+      "pass": null,
+      "fail": null,
+      "observations": ""
+    },
+    {
+      "id": "PC-19",
+      "item": "Primeiro cliente real sem suporte manual",
+      "pass": null,
+      "fail": null,
+      "observations": ""
+    },
+    {
+      "id": "PC-20",
+      "item": "24h sem incidente crítico",
+      "pass": null,
+      "fail": null,
+      "observations": ""
+    }
+  ],
+  "rollbackCard": {
+    "cancelDeploy": [
+      "Vercel Dashboard → Deployments → ⋯ no deploy anterior estável → Promote to Production",
+      "Alternativa: git revert do merge + push + aguardar redeploy"
+    ],
+    "restoreDatabase": [
+      "Neon Console → Branch → Restore → escolher timestamp anterior ao reset",
+      "Nunca executar launch01:reset para 'desfazer' erro",
+      "Após restore: verificar prisma migrate status"
+    ],
+    "revertVersion": [
+      "git checkout <sha-anterior> ou tag",
+      "Vercel promote deployment correspondente",
+      "Confirmar compatibilidade schema ↔ código"
+    ],
+    "stopPayments": [
+      "GO_LIVE_MAINTENANCE_MODE=1 imediato",
+      "SiteSettings.maintenanceMode=true via /admin/manutencao",
+      "Desativar webhook no painel Asaas (último recurso)"
+    ],
+    "activateMaintenance": [
+      "GO_LIVE_MAINTENANCE_MODE=1 em Vercel Production",
+      "Redeploy",
+      "Mensagem: preparativos finais para lançamento"
+    ]
+  },
+  "postLaunchPlan": {
+    "first24h": [
+      "Monitorar logs Vercel a cada 2h",
+      "Revisar fila webhooks Asaas",
+      "Responder tickets em < 2h",
+      "Confirmar zero pagamentos órfãos"
+    ],
+    "firstWeek": [
+      "Daily check: agendamentos pendentes > 24h",
+      "Revisar DomainTransitionHistory anomalias",
+      "Coletar feedback UX (E2E-02 itens H1)",
+      "Retrospectiva GO-03 documentada"
+    ],
+    "firstMonth": [
+      "Métricas: conversão registro→pagamento",
+      "Taxa webhook success > 99%",
+      "Planejar sprint v1.1 (E2E-02 H1)"
+    ],
+    "criteriaV11": [
+      "7 dias sem ticket crítico de pagamento",
+      "Webhook estável em produção",
+      "≥ 5 agendamentos reais concluídos",
+      "Aprovação Release Manager"
+    ],
+    "criteriaPortfolio": [
+      "v1.0 estável ≥ 30 dias",
+      "v1.1 H1 entregue",
+      "Capacidade de equipe separada do operacional"
+    ],
+    "criteriaStudioOS": [
+      "v1.0 + v1.1 estáveis",
+      "Domínio congelamento levantado por ADR",
+      "Aprovação explícita stakeholders",
+      "Não iniciar antes do fim do hardening E2E-02"
+    ]
+  },
+  "gates": {
+    "allPass": true,
+    "results": [
+      {
+        "name": "go02-report-exists",
+        "ok": true,
+        "detail": "APROVADO — candidata v1.0"
+      },
+      {
+        "name": "go02-readiness-sim",
+        "ok": true,
+        "detail": "Todos os gates técnicos (TypeScript, build, Prisma, auditorias) passaram. A branch consolida 15 commits de hardening, ce"
+      },
+      {
+        "name": "go02-gates-all-pass",
+        "ok": true,
+        "detail": "ALL PASS"
+      },
+      {
+        "name": "rc04-report-exists",
+        "ok": true,
+        "detail": "APROVADO COM RESSALVAS"
+      },
+      {
+        "name": "rc04-no-section-fail",
+        "ok": true,
+        "detail": "sectionsFail=0"
+      },
+      {
+        "name": "rc04-gates-pass",
+        "ok": true,
+        "detail": "gates 16/16"
+      },
+      {
+        "name": "launch01-report-exists",
+        "ok": true,
+        "detail": "APROVADO COM RESSALVAS"
+      },
+      {
+        "name": "launch01-no-phase-fail",
+        "ok": true,
+        "detail": "OK"
+      },
+      {
+        "name": "doc-v1.0.0.md",
+        "ok": true,
+        "detail": "docs/releases/v1.0.0.md"
+      },
+      {
+        "name": "doc-v1.0-overview.md",
+        "ok": true,
+        "detail": "docs/architecture/v1.0-overview.md"
+      },
+      {
+        "name": "typescript-consistency",
+        "ok": true
+      }
+    ]
+  },
+  "readiness": {
+    "ready": true,
+    "verdict": "APROVADO — runbook pronto",
+    "justification": "GO-02, RC-04 e LAUNCH-01 consistentes. Documentação v1.0.0 e arquitetura geradas. TypeScript OK. Execução operacional (merge/push/deploy) aguarda aprovação humana passo a passo."
+  },
+  "constraints": {
+    "noMerge": true,
+    "noPush": true,
+    "noDeploy": true,
+    "noNewFeatures": true,
+    "consistencyOnly": true
+  },
+  "upstreamReports": {
+    "go02": "reports/domain-guardian/go02-release-assembly.json",
+    "rc04": "reports/domain-guardian/rc04-production-certification.json",
+    "launch01": "reports/domain-guardian/launch01-final-readiness.json"
+  }
+}

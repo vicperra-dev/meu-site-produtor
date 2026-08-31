@@ -1,0 +1,311 @@
+{
+  "reportId": "GO-02-infrastructure-execution-plan",
+  "mode": "EXECUCAO",
+  "generatedAt": "2026-07-11T05:50:00.000Z",
+  "language": "pt-BR",
+  "projectName": "THouse Rec",
+  "branchAlvo": "pr03-clean",
+  "headAlvo": "f882047",
+  "previewUrl": "https://meu-site-produtor-13-176nozk2j-rauls-projects-6bf8a8b0.vercel.app",
+  "vercelProject": "meu-site-produtor-1.3",
+  "vercelTeam": "rauls-projects-6bf8a8b0",
+  "basedOn": ["GO-01-infrastructure-closeout"],
+  "pendencias": {
+    "1_deploymentProtection": {
+      "titulo": "Deployment Protection",
+      "ondeClicar": [
+        "https://vercel.com → login",
+        "Team: rauls-projects-6bf8a8b0",
+        "Project: meu-site-produtor-1.3 (ou meu-site-produtor)",
+        "Settings → Deployment Protection"
+      ],
+      "oQueAlterar": "Opção Preview: desabilitar Vercel Authentication (SSO) temporariamente OU gerar Protection Bypass for Automation e salvar como VERCEL_AUTOMATION_BYPASS_SECRET no projeto",
+      "resultadoEsperado": "GET na URL Preview retorna HTTP 200 (não 302 para vercel.com/sso-api)",
+      "tempoEstimado": "3–5 min",
+      "risco": "Baixo (Preview). Médio se desabilitar em Production por engano — alterar somente Preview.",
+      "responsavel": ["Usuário", "Vercel"],
+      "automatizavel": "PARCIAL",
+      "automatizavelNota": "SIM com VERCEL_TOKEN + API; NÃO sem credenciais",
+      "criterioAprovacao": "curl -I {previewUrl} → status 200 ou 307 interno, sem redirect para sso-api"
+    },
+    "2_databaseUrlPreview": {
+      "titulo": "DATABASE_URL Preview + migrations",
+      "comoVerificar": [
+        "Neon → projeto → branch staging/preview → Connection string (PostgreSQL)",
+        "Vercel → Settings → Environment Variables → filtrar Preview → DATABASE_URL existe e aponta para Neon (não localhost)"
+      ],
+      "comoAplicarMigrations": "Terminal local com DATABASE_URL do Preview",
+      "comando": "cd C:\\Users\\raulv\\Documents\\projetos\\meu-site-produtor; $env:DATABASE_URL=\"<connection_string_neon_preview>\"; npx prisma migrate deploy",
+      "comoValidar": [
+        "Saída: 'No pending migrations' ou 'X migration(s) applied'",
+        "npx prisma migrate status → 'Database schema is up to date!'",
+        "GET {previewUrl}/api/meus-dados com cookie de sessão → HTTP 200 (não 500)"
+      ],
+      "resultadoEsperado": "29 migrations aplicadas; coluna adminArchivedAt presente",
+      "tempoEstimado": "5–10 min",
+      "risco": "Médio — aplicar no banco errado corrompe dados. Confirmar branch Neon Preview antes de executar.",
+      "responsavel": ["Usuário", "Neon", "Cursor"],
+      "automatizavel": "SIM",
+      "automatizavelNota": "Cursor executa migrate deploy se Usuário fornecer DATABASE_URL",
+      "criterioAprovacao": "prisma migrate status = up to date; /api/meus-dados = 200 após login"
+    },
+    "3_nextPublicSiteUrl": {
+      "titulo": "NEXT_PUBLIC_SITE_URL",
+      "valorDeveSer": "https://meu-site-produtor-13-176nozk2j-rauls-projects-6bf8a8b0.vercel.app",
+      "valorAlternativo": "Alias estável Preview se configurado no Vercel (ex.: meu-site-produtor-13-git-pr03-clean-....vercel.app)",
+      "ondeConfigurar": [
+        "Vercel → Settings → Environment Variables",
+        "Nome: NEXT_PUBLIC_SITE_URL",
+        "Value: URL HTTPS do deployment Preview (sem barra final)",
+        "Environment: Preview apenas",
+        "Save → Redeploy Preview obrigatório (variável NEXT_PUBLIC_* é build-time)"
+      ],
+      "comoValidar": [
+        "Redeploy Preview concluído",
+        "Iniciar checkout → initPoint Asaas contém callback/successUrl coerente",
+        "Webhook Asaas registrado com mesma base URL"
+      ],
+      "resultadoEsperado": "Checkout e links absolutos usam HTTPS do Preview, não localhost",
+      "tempoEstimado": "5 min + tempo de redeploy (~2–4 min)",
+      "risco": "Baixo. Esquecer redeploy = valor antigo em cache de build.",
+      "responsavel": ["Usuário", "Vercel"],
+      "automatizavel": "PARCIAL",
+      "automatizavelNota": "SIM com VERCEL_TOKEN; requer redeploy manual ou via API",
+      "criterioAprovacao": "Checkout sandbox retorna initPoint válido; nenhuma referência a localhost:3000 nas respostas da API Preview"
+    },
+    "4_asaasWebhookAccessToken": {
+      "titulo": "ASAAS_WEBHOOK_ACCESS_TOKEN",
+      "ondeObter": [
+        "https://sandbox.asaas.com → login",
+        "Integrações → Webhooks → criar/editar webhook",
+        "Campo 'Token de autenticação' — você define a string (mín. 16 caracteres aleatórios)"
+      ],
+      "ondeConfigurar": [
+        "Vercel → Settings → Environment Variables",
+        "Nome: ASAAS_WEBHOOK_ACCESS_TOKEN",
+        "Value: mesmo token definido no painel Asaas",
+        "Environment: Preview",
+        "Save → Redeploy Preview"
+      ],
+      "comoValidar": [
+        "POST {previewUrl}/api/webhooks/asaas sem header → 401",
+        "POST com header asaas-access-token: {token} + payload PAYMENT_RECEIVED válido → 200",
+        "Logs Vercel → Functions → webhooks/asaas sem 'token inválido'"
+      ],
+      "resultadoEsperado": "Webhook aceita apenas requests com token correto",
+      "tempoEstimado": "5–8 min",
+      "risco": "Baixo. Token divergente = webhook rejeitado (pagamentos não sincronizam).",
+      "responsavel": ["Usuário", "Asaas", "Vercel"],
+      "automatizavel": "NÃO",
+      "criterioAprovacao": "Webhook teste retorna 200 com token; 401 sem token"
+    },
+    "5_webhookSandbox": {
+      "titulo": "Webhook Sandbox Asaas",
+      "comoConfigurar": [
+        "sandbox.asaas.com → Integrações → Webhooks → Adicionar",
+        "URL: https://meu-site-produtor-13-176nozk2j-rauls-projects-6bf8a8b0.vercel.app/api/webhooks/asaas",
+        "Token: igual ASAAS_WEBHOOK_ACCESS_TOKEN no Vercel",
+        "Eventos: PAYMENT_RECEIVED, PAYMENT_CONFIRMED (se listado), PAYMENT_REFUNDED",
+        "Status: Ativo",
+        "Confirmar ASAAS_API_KEY no Vercel Preview é sandbox ($aact_hmlg_ ou $aact_ sem prod)"
+      ],
+      "comoTestar": [
+        "Opção A (automática): completar pagamento sandbox no checkout Preview",
+        "Opção B (manual): painel Asaas → Webhooks → enviar evento de teste PAYMENT_RECEIVED",
+        "Opção C (Cursor): node scripts/ex02-financial-flow.js com BASE_URL=Preview após checkout"
+      ],
+      "comoConfirmarRecebimento": [
+        "Painel Asaas → Webhooks → histórico → HTTP 200",
+        "Vercel → Logs → /api/webhooks/asaas → 200",
+        "Banco Preview: Payment status atualizado; Appointment criado",
+        "GET /api/meus-dados → agendamento visível"
+      ],
+      "resultadoEsperado": "Pagamento sandbox dispara webhook; domínio Payment/Appointment sincronizado",
+      "tempoEstimado": "10–15 min (inclui pagamento sandbox)",
+      "risco": "Médio — URL errada ou Protection ativa = webhook 302/401/timeout",
+      "responsavel": ["Usuário", "Asaas", "Vercel"],
+      "automatizavel": "PARCIAL",
+      "automatizavelNota": "Teste com replay possível via Cursor; registro no painel Asaas = manual",
+      "criterioAprovacao": "Asaas webhook log HTTP 200; Payment RECEIVED no banco; agendamento em Minha Conta"
+    },
+    "6_smokeTestPreview": {
+      "titulo": "Smoke Test Preview (F2 completo)",
+      "urlBase": "https://meu-site-produtor-13-176nozk2j-rauls-projects-6bf8a8b0.vercel.app",
+      "preRequisitos": [
+        "Itens 1–5 concluídos",
+        "Preview @ f882047 acessível sem SSO"
+      ],
+      "roteiro": [
+        {
+          "passo": 1,
+          "acao": "Registro",
+          "detalhe": "POST /api/registro com payload completo (nomeCompleto, cpf, email, senha, etc.)",
+          "aprovacao": "HTTP 200 + Set-Cookie session_id"
+        },
+        {
+          "passo": 2,
+          "acao": "Auto-login",
+          "detalhe": "GET /api/me com cookie da etapa 1",
+          "aprovacao": "user.email = email registrado"
+        },
+        {
+          "passo": 3,
+          "acao": "Minha Conta",
+          "detalhe": "GET /api/meus-dados + GET /minha-conta",
+          "aprovacao": "API 200; página 200"
+        },
+        {
+          "passo": 4,
+          "acao": "Carrinho",
+          "detalhe": "POST /api/conta/update (CPF) → POST /api/asaas/checkout-carrinho com item sessão",
+          "aprovacao": "checkout 200; initPoint contém sandbox.asaas.com"
+        },
+        {
+          "passo": 5,
+          "acao": "Checkout",
+          "detalhe": "Abrir initPoint no browser; pagar com cartão sandbox Asaas",
+          "aprovacao": "Pagamento confirmado no painel Asaas sandbox"
+        },
+        {
+          "passo": 6,
+          "acao": "Webhook",
+          "detalhe": "Aguardar webhook automático (ou verificar log Asaas)",
+          "aprovacao": "HTTP 200 no histórico webhook Asaas"
+        },
+        {
+          "passo": 7,
+          "acao": "Minha Conta (pós-pagamento)",
+          "detalhe": "GET /api/meus-dados",
+          "aprovacao": "Agendamento/pagamento visível; status coerente"
+        }
+      ],
+      "comandoAutomatizadoParcial": "$env:NODE_TLS_REJECT_UNAUTHORIZED='0'; $env:BASE_URL='https://meu-site-produtor-13-176nozk2j-rauls-projects-6bf8a8b0.vercel.app'; node scripts/ex01-local-smoke.js",
+      "comandoFluxoFinanceiro": "$env:NODE_TLS_REJECT_UNAUTHORIZED='0'; $env:BASE_URL='<preview_url>'; node scripts/ex02-financial-flow.js",
+      "tempoEstimado": "15–25 min",
+      "risco": "Baixo após infra OK. Falha em webhook = revisar item 5.",
+      "responsavel": ["Cursor", "Usuário"],
+      "automatizavel": "PARCIAL",
+      "automatizavelNota": "Etapas 1–4 e 7 via script; etapa 5 (pagamento browser) manual; etapa 6 automática se webhook configurado",
+      "criterioAprovacao": "ex01-local-smoke.js success:true até checkout; pagamento + webhook + meus-dados com agendamento"
+    }
+  },
+  "sequenciaProducao": [
+    {
+      "ordem": 1,
+      "tarefa": "Desabilitar Deployment Protection (Preview)",
+      "responsavel": ["Usuário", "Vercel"],
+      "tempo": "3–5 min",
+      "bloqueia": "Todo smoke Preview"
+    },
+    {
+      "ordem": 2,
+      "tarefa": "Confirmar DATABASE_URL Preview no Vercel (Neon staging)",
+      "responsavel": ["Usuário", "Neon", "Vercel"],
+      "tempo": "3 min",
+      "bloqueia": "Migrations e /api/meus-dados"
+    },
+    {
+      "ordem": 3,
+      "tarefa": "npx prisma migrate deploy no banco Preview",
+      "responsavel": ["Cursor", "Usuário"],
+      "tempo": "5–10 min",
+      "bloqueia": "Minha Conta API"
+    },
+    {
+      "ordem": 4,
+      "tarefa": "Configurar NEXT_PUBLIC_SITE_URL Preview + redeploy",
+      "responsavel": ["Usuário", "Vercel"],
+      "tempo": "5–7 min",
+      "bloqueia": "Checkout URLs corretas"
+    },
+    {
+      "ordem": 5,
+      "tarefa": "Confirmar ASAAS_API_KEY sandbox no Vercel Preview",
+      "responsavel": ["Usuário", "Asaas", "Vercel"],
+      "tempo": "3 min",
+      "bloqueia": "Checkout"
+    },
+    {
+      "ordem": 6,
+      "tarefa": "Criar ASAAS_WEBHOOK_ACCESS_TOKEN + configurar no Vercel Preview",
+      "responsavel": ["Usuário", "Asaas", "Vercel"],
+      "tempo": "5–8 min",
+      "bloqueia": "Webhook seguro"
+    },
+    {
+      "ordem": 7,
+      "tarefa": "Registrar webhook sandbox Asaas → Preview URL",
+      "responsavel": ["Usuário", "Asaas"],
+      "tempo": "5 min",
+      "bloqueia": "Sincronização pagamento"
+    },
+    {
+      "ordem": 8,
+      "tarefa": "Redeploy Preview (se env alterada)",
+      "responsavel": ["Vercel", "Usuário"],
+      "tempo": "2–4 min",
+      "bloqueia": "Env vars em runtime/build"
+    },
+    {
+      "ordem": 9,
+      "tarefa": "Smoke Test Preview F2 completo (GO-02 item 6)",
+      "responsavel": ["Cursor", "Usuário"],
+      "tempo": "15–25 min",
+      "bloqueia": "Aprovação homologação"
+    },
+    {
+      "ordem": 10,
+      "tarefa": "Merge PR pr03-clean → main (GitHub)",
+      "responsavel": ["Usuário", "GitHub"],
+      "tempo": "5 min",
+      "bloqueia": "Deploy produção com RC"
+    },
+    {
+      "ordem": 11,
+      "tarefa": "Configurar env Production: DATABASE_URL (Neon prod), ASAAS_API_KEY ($aact_prod_), ASAAS_WEBHOOK_ACCESS_TOKEN, NEXT_PUBLIC_SITE_URL (domínio produção)",
+      "responsavel": ["Usuário", "Vercel", "Neon", "Asaas"],
+      "tempo": "15–20 min",
+      "bloqueia": "Produção funcional"
+    },
+    {
+      "ordem": 12,
+      "tarefa": "npx prisma migrate deploy no banco Production",
+      "responsavel": ["Cursor", "Usuário"],
+      "tempo": "5–10 min",
+      "bloqueia": "Schema produção"
+    },
+    {
+      "ordem": 13,
+      "tarefa": "Registrar webhook Asaas PRODUÇÃO → https://{dominio-producao}/api/webhooks/asaas",
+      "responsavel": ["Usuário", "Asaas"],
+      "tempo": "5 min",
+      "bloqueia": "Pagamentos reais"
+    },
+    {
+      "ordem": 14,
+      "tarefa": "Deploy Production (auto pós-merge ou manual Promote)",
+      "responsavel": ["Vercel", "GitHub"],
+      "tempo": "3–5 min",
+      "bloqueia": "Go-live"
+    },
+    {
+      "ordem": 15,
+      "tarefa": "Smoke mínimo Production (registro → login → meus-dados)",
+      "responsavel": ["Usuário"],
+      "tempo": "10 min",
+      "bloqueia": "Confirmação go-live"
+    },
+    {
+      "ordem": 16,
+      "tarefa": "Reativar Deployment Protection Preview (opcional pós-homologação)",
+      "responsavel": ["Usuário", "Vercel"],
+      "tempo": "2 min",
+      "bloqueia": "Nada"
+    }
+  ],
+  "tempoTotalEstimado": {
+    "previewHomologacao": "45–75 min",
+    "ateProducao": "90–130 min"
+  },
+  "veredito": "PLANO_OPERACIONAL_PRONTO"
+}

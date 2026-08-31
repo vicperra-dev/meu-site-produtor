@@ -1,0 +1,279 @@
+{
+  "reportId": "QE-02-service-purchase",
+  "mode": "READ_ONLY",
+  "generatedAt": "2026-07-10T04:30:00.000Z",
+  "language": "pt-BR",
+  "projectName": "THouse",
+  "branch": "pr03-clean",
+  "head": "66a8e5c",
+  "verdict": {
+    "fluxoCompraServico": "REPROVADO",
+    "reason": "Fluxo Asaas principal funcional para usuário real (carrinho), porém gaps críticos em metadata fallback, orquestradores duplicados, UI admin de teste quebrada e rotas legadas incompletas impedem aprovação para QE funcional sem ressalvas"
+  },
+  "journeyMap": {
+    "escolhaServico": {
+      "classification": "OK",
+      "emoji": "🟢",
+      "page": "src/app/agendamento/page.tsx",
+      "apis": ["/api/blocked-slots", "/api/agendamentos/disponibilidade", "/api/coupons/validate", "/api/agendamentos/com-cupom"],
+      "libs": ["agendamento-payment-rules.ts", "validate-coupon-checkout.ts", "service-catalog.ts"],
+      "prisma": ["Appointment (conflito no checkout)"],
+      "notes": "Pago → sessionStorage carrinho; cupom 100% → com-cupom sem Payment"
+    },
+    "checkout": {
+      "classification": "OK",
+      "emoji": "🟢",
+      "productionPath": "carrinho/page.tsx → POST /api/asaas/checkout-carrinho",
+      "alternatePath": "POST /api/asaas/checkout-agendamento (API direta / simbólico)",
+      "libs": ["payment-providers.ts", "asaas-fetch.ts", "checkout-coupon-gates.ts", "appointment-operational-filter.ts"],
+      "prisma": ["PaymentMetadata", "Appointment (409 conflito slot)", "Coupon (validação)"]
+    },
+    "paymentMetadata": {
+      "classification": "ATENCAO",
+      "emoji": "🟡",
+      "creation": "prisma.paymentMetadata.create antes do POST Asaas (checkout-carrinho, checkout-agendamento)",
+      "update": "asaasId := preferenceId após createCheckout",
+      "resolution": "resolvePaymentMetadataForWebhook → loadMetadataForPayment (asaas-agendamento-reconcile.ts)",
+      "gap": "Fallbacks agressivos podem associar metadata errado"
+    },
+    "asaas": {
+      "classification": "OK",
+      "emoji": "🟢",
+      "provider": "AsaasProvider em payment-providers.ts",
+      "api": "POST /v3/payments",
+      "externalReference": "userId"
+    },
+    "webhook": {
+      "classification": "ATENCAO",
+      "emoji": "🟡",
+      "route": "POST /api/webhooks/asaas/route.ts",
+      "events": ["PAYMENT_RECEIVED + RECEIVED|CONFIRMED", "PAYMENT_REFUNDED"],
+      "always200": true,
+      "duplicate": "existingPayment → reconcile only, no re-run effects",
+      "alternate": "process-payment-webhook.ts (debug/manual — não usado pelo webhook principal)"
+    },
+    "payment": {
+      "classification": "OK",
+      "emoji": "🟢",
+      "model": "Payment",
+      "localStatus": "approved",
+      "idempotency": "findFirst by asaasId before create"
+    },
+    "effects": {
+      "classification": "OK",
+      "emoji": "🟢",
+      "carrinho": "asaas-carrinho-payment-effects.ts → processCarrinhoPaymentEffects",
+      "agendamento": "asaas-agendamento-payment-effects.ts → processAgendamentoPaymentEffects",
+      "reconcile": "asaas-agendamento-reconcile.ts → reconcileAgendamentoPaymentArtifacts"
+    },
+    "appointment": {
+      "classification": "OK",
+      "emoji": "🟢",
+      "carrinho": "Appointment.create por item com data/hora",
+      "agendamento": "processAgendamentoPaymentEffects — idempotente via pay.appointmentId",
+      "cupom100": "com-cupom/route.ts sem Payment"
+    },
+    "coupon": {
+      "classification": "OK",
+      "emoji": "🟢",
+      "lib": "agendamento-payment-coupons.ts → createCouponsForAgendamentoItems",
+      "idempotency": "por paymentId (Serializable transaction)",
+      "symbolic": "TESTE_ prefix via symbolic-payment.ts"
+    },
+    "minhaConta": {
+      "classification": "ATENCAO",
+      "emoji": "🟡",
+      "page": "src/app/minha-conta/page.tsx",
+      "api": "GET /api/meus-dados",
+      "prisma": ["Appointment", "Payment", "Coupon", "UserPlan", "UserQuestion"],
+      "notes": "Fallbacks legados R$5 / TESTE_ auto-vinculação"
+    },
+    "admin": {
+      "classification": "ATENCAO",
+      "emoji": "🟡",
+      "pagamentos": "admin/pagamentos/page.tsx + /api/admin/pagamentos",
+      "agendamentos": "admin/agendamentos/page.tsx + /api/admin/agendamentos",
+      "reprocess": "/api/admin/reprocessar-pagamento-teste",
+      "gap": "UI teste em agendamento chama /api/test-payment (410)"
+    }
+  },
+  "validations": {
+    "paymentMetadataCreatedOnce": {
+      "answer": "parcial",
+      "detail": "Criado uma vez no checkout por intent; fallback webhook pode reutilizar metadata de outro pagamento do mesmo user"
+    },
+    "webhookIdempotent": {
+      "answer": "parcial",
+      "detail": "Payment.asaasId @unique + duplicate path reconcile; não reexecuta effects se 1º run falhou parcialmente"
+    },
+    "paymentCreatedOnce": {
+      "answer": true,
+      "detail": "findFirst asaasId antes de create no webhook"
+    },
+    "appointmentCreatedOnce": {
+      "answer": true,
+      "detail": "Reusa pay.appointmentId; carrinho cria por item com data/hora"
+    },
+    "couponCreatedCorrectly": {
+      "answer": true,
+      "detail": "Idempotente por paymentId; expandAgendamentoItemToCouponTypes"
+    },
+    "minhaContaUpdatesStatus": {
+      "answer": true,
+      "detail": "approved + status agendamento; polling 60s"
+    },
+    "adminCorrectState": {
+      "answer": true,
+      "detail": "GET admin pagamentos/agendamentos com Payment linkage; DELETE gates OK"
+    }
+  },
+  "duplicationAndLegacy": {
+    "duplicateLogic": [
+      "webhooks/asaas/route.ts vs process-payment-webhook.ts",
+      "resolvePaymentMetadataForWebhook usado em ambos com comportamentos diferentes em retry"
+    ],
+    "parallelOldFlows": [
+      "mercadopago/checkout-agendamento (sem PaymentMetadata)",
+      "infinitypay/checkout-agendamento (sem PaymentMetadata)",
+      "mercadopago/webhook stub",
+      "test-payment legado (410 para agendamento)"
+    ],
+    "deadCode": [
+      "api/agendamento-checkout (cache memória, não ligado ao pagamento)",
+      "InfinityPayProvider se só Asaas ativo"
+    ],
+    "oldWebhookStillUsed": false,
+    "oldWebhookNote": "MP webhook existe mas só loga; produção usa Asaas webhook",
+    "oldEffects": false,
+    "oldEffectsNote": "Effects unificados em asaas-*-payment-effects.ts"
+  },
+  "statusConsistency": {
+    "asaasApi": ["PENDING", "RECEIVED", "CONFIRMED", "REFUNDED"],
+    "webhookProcesses": "PAYMENT_RECEIVED + (RECEIVED | CONFIRMED)",
+    "paymentLocal": ["pending", "approved", "rejected"],
+    "appointment": ["pendente", "aceito", "confirmado", "cancelado", "recusado"],
+    "refundTracking": "Appointment/Coupon.refundAsaasStatus — não Payment.status",
+    "cancelled": "Não existe em Payment; UserPlan usa cancelled",
+    "gaps": [
+      "Payment local não espelha REFUNDED do Asaas",
+      "PAYMENT_OVERDUE e PAYMENT_DELETED ignorados",
+      "Mapeamento RECEIVED/CONFIRMED → approved é unidirecional"
+    ]
+  },
+  "adminFlows": {
+    "reprocessamento": {
+      "route": "POST /api/admin/reprocessar-pagamento-teste",
+      "classification": "OK",
+      "detail": "Admin only; reexecuta processAgendamentoPaymentEffects em Payment simbólico existente"
+    },
+    "cancelamento": {
+      "user": "POST /api/agendamentos/cancelar",
+      "admin": "POST /api/admin/agendamentos/cancelar",
+      "classification": "OK",
+      "idempotency": "alreadyProcessed flags"
+    },
+    "reembolso": {
+      "user": "POST /api/agendamentos/escolher-reembolso + refundAsaasPayment",
+      "webhook": "PAYMENT_REFUNDED → syncInboundAsaasRefund",
+      "classification": "OK"
+    },
+    "deleteSimbolico": {
+      "route": "DELETE /api/admin/pagamentos",
+      "lib": "admin-delete-payment.ts → canAdminDeletePayment",
+      "classification": "OK"
+    },
+    "deleteReal422": {
+      "classification": "OK",
+      "messages": [
+        "Pagamento possui integração financeira ativa.",
+        "Pagamento aprovado vinculado a agendamento ativo.",
+        "Pagamento possui cupons ativos."
+      ]
+    }
+  },
+  "productionScenario": {
+    "avulsoComDataHora": {
+      "ui": "agendamento → carrinho → checkout-carrinho",
+      "metadataTipo": "carrinho",
+      "effects": "processCarrinhoPaymentEffects"
+    },
+    "avulsoApiDireta": {
+      "api": "checkout-agendamento",
+      "metadataTipo": "agendamento",
+      "effects": "processAgendamentoPaymentEffects"
+    }
+  },
+  "gapsByCriticality": [
+    {
+      "severity": "CRITICO",
+      "id": "G01",
+      "title": "UI admin teste quebrada",
+      "detail": "agendamento/page.tsx chama POST /api/test-payment; tipo agendamento retorna 410. Deveria usar checkout-agendamento com symbolicAgendamento"
+    },
+    {
+      "severity": "CRITICO",
+      "id": "G02",
+      "title": "PaymentMetadata fallback perigoso",
+      "detail": "loadMetadataForPayment pode usar último metadata do userId (linha 118-122 asaas-agendamento-reconcile.ts), associando pagamento ao contexto errado"
+    },
+    {
+      "severity": "CRITICO",
+      "id": "G03",
+      "title": "Carrinho + providers legados",
+      "detail": "carrinho/page.tsx monta /api/{provider}/checkout-carrinho mas só existe rota Asaas; MP/Infinity quebrariam se ativados"
+    },
+    {
+      "severity": "CRITICO",
+      "id": "G04",
+      "title": "Dois orquestradores de webhook",
+      "detail": "webhooks/asaas vs process-payment-webhook.ts — retry e efeitos inconsistentes (carrinho incompleto no segundo)"
+    },
+    {
+      "severity": "CRITICO",
+      "id": "G05",
+      "title": "Divergência fluxo avulso UI vs API",
+      "detail": "Usuário real paga como tipo carrinho; regras cupons-only/multi-item de checkout-agendamento não passam pelo carrinho UI atual"
+    },
+    {
+      "severity": "ATENCAO",
+      "id": "G06",
+      "title": "PaymentMetadata.create com catch warn",
+      "detail": "Checkout continua sem metadata se create falhar — webhook depende de fallbacks"
+    },
+    {
+      "severity": "ATENCAO",
+      "id": "G07",
+      "title": "Webhook duplicata não reexecuta effects",
+      "detail": "Só reconcileAgendamentoPaymentArtifacts; edge case Payment criado e effects falharam antes do reconcile cobrir appointment"
+    },
+    {
+      "severity": "ATENCAO",
+      "id": "G08",
+      "title": "Payment local sem status REFUNDED",
+      "detail": "Reembolso rastreado em Appointment/Coupon, não em Payment.status"
+    },
+    {
+      "severity": "ATENCAO",
+      "id": "G09",
+      "title": "PAYMENT_OVERDUE / PAYMENT_DELETED ignorados",
+      "detail": "Webhook retorna 200 sem ação"
+    },
+    {
+      "severity": "ATENCAO",
+      "id": "G10",
+      "title": "Minha Conta — fallbacks legados",
+      "detail": "Auto-vinculação pagamento R$5 / cupons TESTE_ aumenta complexidade e risco de dados cruzados"
+    },
+    {
+      "severity": "ATENCAO",
+      "id": "G11",
+      "title": "Mercado Pago pipeline incompleto",
+      "detail": "checkout-agendamento existe; webhook stub; sem PaymentMetadata"
+    }
+  ],
+  "constraintsRespected": {
+    "noCodeChanges": true,
+    "noCommits": true,
+    "noDatabaseChanges": true
+  }
+}

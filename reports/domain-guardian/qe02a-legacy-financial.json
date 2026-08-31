@@ -1,0 +1,387 @@
+{
+  "reportId": "QE-02a-legacy-financial",
+  "mode": "READ_ONLY",
+  "generatedAt": "2026-07-10T05:00:00.000Z",
+  "language": "pt-BR",
+  "projectName": "THouse",
+  "branch": "pr03-clean",
+  "head": "66a8e5c",
+  "objective": "Mapear coexistência do fluxo financeiro legado com a arquitetura PR-03 (Asaas webhook + efeitos modulares)",
+  "summary": {
+    "activeProductionWebhook": "POST /api/webhooks/asaas — único webhook que persiste Payment e dispara efeitos",
+    "activeProductionCheckout": "POST /api/asaas/checkout-carrinho (UI carrinho)",
+    "duplicateOrchestrator": "process-payment-webhook.ts espelha webhooks/asaas mas NÃO é chamado pelo webhook de produção",
+    "legacyProviders": "Mercado Pago e Infinity Pay — rotas existem; payment-provider retorna apenas asaas",
+    "deadCodeConfirmed": ["agendamento-checkout", "carrinho-checkout", "webhooks/mercadopago (stub)", "api/pagamentos (MP)", "asaas/checkout sem consumidor UI"],
+    "legacyFallbacks": ["TESTE_ prefix", "SYMBOLIC_*_BRL = 5", "amount === 5 em symbolic-payment.ts", "loadMetadataForPayment cascata agressiva"],
+    "estimatedLegacySharePercent": {
+      "legacyPlusObsolete": 40,
+      "obsoleteRemovableNow": 12,
+      "legacyStillReachable": 28,
+      "methodology": "~54 arquivos / ~8573 linhas no domínio financeiro; ~3400 linhas classificadas legado+obsoleto"
+    }
+  },
+  "audit": {
+    "processPaymentWebhook": {
+      "file": "src/app/lib/process-payment-webhook.ts",
+      "imports": [
+        "src/app/api/pagamentos/processar-direto/route.ts",
+        "src/app/api/pagamentos/processar-plano-apos-pagamento/route.ts",
+        "src/app/api/debug/processar-ultimo-pagamento/route.ts"
+      ],
+      "executedBy": [
+        "POST /api/pagamentos/processar-direto (script processar_pagamento.ps1 + admin)",
+        "POST /api/pagamentos/processar-plano-apos-pagamento (pagamentos/sucesso?tipo=plano, minha-conta)",
+        "POST /api/debug/processar-ultimo-pagamento (debug admin)"
+      ],
+      "notUsedBy": "POST /api/webhooks/asaas — duplica lógica inline sem importar esta lib",
+      "classification": "Legado",
+      "notes": "Orquestrador paralelo ao webhook PR-03; necessário apenas para fallbacks localhost/admin até consolidação"
+    },
+    "webhooksAsaas": {
+      "file": "src/app/api/webhooks/asaas/route.ts",
+      "isOnlyActiveWebhook": true,
+      "proxiedBy": [
+        "POST /api/pagamentos/processar-manual (fetch interno)",
+        "POST /api/pagamentos/buscar-por-fatura (fetch interno)",
+        "POST /api/pagamentos/buscar-por-valor (fetch interno)"
+      ],
+      "classification": "Necessário",
+      "notes": "Caminho canônico PR-03; sempre HTTP 200; usa libs de efeitos diretamente"
+    },
+    "webhooksMercadoPago": {
+      "file": "src/app/api/webhooks/mercadopago/route.ts",
+      "isActive": false,
+      "classification": "Obsoleto",
+      "notes": "Stub — apenas log; TODO comentado; sem Payment/Appointment"
+    },
+    "checkoutPipelines": {
+      "asaasCheckoutCarrinho": {
+        "route": "POST /api/asaas/checkout-carrinho",
+        "uiConsumers": ["src/app/carrinho/page.tsx"],
+        "classification": "Necessário"
+      },
+      "asaasCheckoutAgendamento": {
+        "route": "POST /api/asaas/checkout-agendamento",
+        "uiConsumers": [],
+        "apiConsumers": ["admin reprocessar-pagamento-teste (indireto)", "test-payment 410 redirect message"],
+        "classification": "Necessário",
+        "notes": "Fluxo simbólico/admin; não usado pelo carrinho principal"
+      },
+      "asaasCheckoutPlano": {
+        "route": "POST /api/asaas/checkout",
+        "uiConsumers": [],
+        "classification": "Legado",
+        "notes": "planos/page.tsx → /pagamentos?… → redirect /carrinho sem query — checkout de plano inalcançável pela UI"
+      },
+      "mercadopagoInfinity": {
+        "routes": [
+          "POST /api/mercadopago/checkout",
+          "POST /api/mercadopago/checkout-agendamento",
+          "POST /api/infinitypay/checkout",
+          "POST /api/infinitypay/checkout-agendamento"
+        ],
+        "uiConsumers": [],
+        "classification": "Obsoleto",
+        "notes": "carrinho monta /api/${provider}/checkout-carrinho mas MP/Infinity não têm checkout-carrinho"
+      }
+    },
+    "deadCode": [
+      "src/app/api/agendamento-checkout/route.ts",
+      "src/app/api/carrinho-checkout/route.ts",
+      "src/app/api/pagamentos/route.ts",
+      "src/app/api/webhooks/mercadopago/route.ts"
+    ],
+    "unreachableCode": [
+      "POST /api/asaas/checkout — sem fetch na UI",
+      "POST /api/test-payment tipo=agendamento|plano — retorna 410",
+      "Fluxo planos → /pagamentos → /carrinho — perde query params do plano"
+    ],
+    "legacyFallbacks": [
+      {
+        "location": "src/app/lib/symbolic-payment.ts",
+        "patterns": ["TESTE_", "SYMBOLIC_AGENDAMENTO_BRL=5", "SYMBOLIC_PLANO_BRL=5", "amount === 5 fallback"],
+        "classification": "Legado",
+        "stillUsedBy": ["admin reprocessar", "meus-dados", "checkout-agendamento symbolic"]
+      },
+      {
+        "location": "src/app/lib/asaas-agendamento-reconcile.ts loadMetadataForPayment",
+        "patterns": ["5 níveis de findFirst sem asaasId exato", "último fallback: qualquer metadata do userId"],
+        "classification": "Legado",
+        "stillUsedBy": ["webhooks/asaas", "process-payment-webhook"]
+      }
+    ],
+    "endpointsWithoutUiConsumers": [
+      "POST /api/pagamentos/processar-direto",
+      "POST /api/pagamentos/processar-manual",
+      "POST /api/pagamentos/buscar-por-fatura",
+      "POST /api/pagamentos/buscar-por-valor",
+      "GET|POST /api/pagamentos/debug",
+      "POST /api/debug/processar-ultimo-pagamento",
+      "POST /api/asaas/checkout",
+      "POST /api/pagamentos/route",
+      "POST /api/mercadopago/*",
+      "POST /api/infinitypay/*"
+    ],
+    "legacyProviders": {
+      "mercadoPago": {
+        "files": [
+          "src/app/api/pagamentos/route.ts",
+          "src/app/api/mercadopago/checkout/route.ts",
+          "src/app/api/mercadopago/checkout-agendamento/route.ts",
+          "src/app/api/webhooks/mercadopago/route.ts",
+          "MercadoPagoProvider em payment-providers.ts"
+        ],
+        "active": false,
+        "classification": "Obsoleto"
+      },
+      "infinityPay": {
+        "files": [
+          "src/app/api/infinitypay/checkout/route.ts",
+          "src/app/api/infinitypay/checkout-agendamento/route.ts",
+          "InfinityPayProvider em payment-providers.ts",
+          "test-payment fallback se sem ASAAS"
+        ],
+        "active": false,
+        "classification": "Obsoleto"
+      }
+    }
+  },
+  "inventory": [
+    {
+      "arquivo": "src/app/lib/process-payment-webhook.ts",
+      "responsavel": "Orquestrador legado: Payment + metadata + efeitos (espelho do webhook)",
+      "consumidores": "processar-direto, processar-plano-apos-pagamento, debug/processar-ultimo-pagamento",
+      "status": "Legado"
+    },
+    {
+      "arquivo": "src/app/api/webhooks/asaas/route.ts",
+      "responsavel": "Webhook canônico PR-03 — PAYMENT_RECEIVED/REFUNDED",
+      "consumidores": "Asaas externo; proxy interno de processar-manual, buscar-por-fatura, buscar-por-valor",
+      "status": "Necessário"
+    },
+    {
+      "arquivo": "src/app/api/webhooks/mercadopago/route.ts",
+      "responsavel": "Stub webhook MP (só log)",
+      "consumidores": "Nenhum produtivo",
+      "status": "Obsoleto"
+    },
+    {
+      "arquivo": "src/app/api/asaas/checkout-carrinho/route.ts",
+      "responsavel": "Checkout produção — carrinho multi-item",
+      "consumidores": "carrinho/page.tsx",
+      "status": "Necessário"
+    },
+    {
+      "arquivo": "src/app/api/asaas/checkout-agendamento/route.ts",
+      "responsavel": "Checkout agendamento único + symbolicAgendamento",
+      "consumidores": "API direta/admin; mensagem em test-payment",
+      "status": "Necessário"
+    },
+    {
+      "arquivo": "src/app/api/asaas/checkout/route.ts",
+      "responsavel": "Checkout plano (mensal/anual)",
+      "consumidores": "Nenhum na UI (planos redireciona para carrinho)",
+      "status": "Legado"
+    },
+    {
+      "arquivo": "src/app/api/mercadopago/checkout/route.ts",
+      "responsavel": "Checkout plano Mercado Pago",
+      "consumidores": "Nenhum",
+      "status": "Obsoleto"
+    },
+    {
+      "arquivo": "src/app/api/mercadopago/checkout-agendamento/route.ts",
+      "responsavel": "Checkout agendamento Mercado Pago",
+      "consumidores": "Nenhum",
+      "status": "Obsoleto"
+    },
+    {
+      "arquivo": "src/app/api/infinitypay/checkout/route.ts",
+      "responsavel": "Checkout plano Infinity Pay",
+      "consumidores": "Nenhum",
+      "status": "Obsoleto"
+    },
+    {
+      "arquivo": "src/app/api/infinitypay/checkout-agendamento/route.ts",
+      "responsavel": "Checkout agendamento Infinity Pay",
+      "consumidores": "Nenhum",
+      "status": "Obsoleto"
+    },
+    {
+      "arquivo": "src/app/api/pagamentos/route.ts",
+      "responsavel": "Checkout legado Mercado Pago (Preference)",
+      "consumidores": "Nenhum na UI",
+      "status": "Obsoleto"
+    },
+    {
+      "arquivo": "src/app/api/pagamentos/processar-direto/route.ts",
+      "responsavel": "Processamento manual via processPaymentWebhook",
+      "consumidores": "processar_pagamento.ps1, docs/checklist",
+      "status": "Legado"
+    },
+    {
+      "arquivo": "src/app/api/pagamentos/processar-manual/route.ts",
+      "responsavel": "Admin reprocessa pay_xxx via proxy webhook Asaas",
+      "consumidores": "Scripts/docs; sem UI",
+      "status": "Legado"
+    },
+    {
+      "arquivo": "src/app/api/pagamentos/buscar-por-fatura/route.ts",
+      "responsavel": "Admin busca fatura Asaas → proxy webhook",
+      "consumidores": "Scripts/docs; sem UI",
+      "status": "Legado"
+    },
+    {
+      "arquivo": "src/app/api/pagamentos/buscar-por-valor/route.ts",
+      "responsavel": "Admin busca por valor → proxy webhook",
+      "consumidores": "Scripts/docs; sem UI",
+      "status": "Legado"
+    },
+    {
+      "arquivo": "src/app/api/pagamentos/processar-plano-apos-pagamento/route.ts",
+      "responsavel": "Fallback localhost pós-pagamento plano",
+      "consumidores": "pagamentos/sucesso?tipo=plano, minha-conta/page.tsx",
+      "status": "Legado"
+    },
+    {
+      "arquivo": "src/app/api/pagamentos/verificar/route.ts",
+      "responsavel": "Consulta status Payment por paymentId",
+      "consumidores": "pagamentos/sucesso, pagamentos/verificar",
+      "status": "Necessário"
+    },
+    {
+      "arquivo": "src/app/api/pagamentos/debug/route.ts",
+      "responsavel": "Debug pagamentos",
+      "consumidores": "Nenhum UI",
+      "status": "Obsoleto"
+    },
+    {
+      "arquivo": "src/app/api/debug/processar-ultimo-pagamento/route.ts",
+      "responsavel": "Debug — último pagamento Asaas → processPaymentWebhook",
+      "consumidores": "Admin manual",
+      "status": "Legado"
+    },
+    {
+      "arquivo": "src/app/api/agendamento-checkout/route.ts",
+      "responsavel": "Cache em memória checkout (abandonado)",
+      "consumidores": "Nenhum",
+      "status": "Pode remover agora"
+    },
+    {
+      "arquivo": "src/app/api/carrinho-checkout/route.ts",
+      "responsavel": "Cache em memória carrinho (abandonado)",
+      "consumidores": "Nenhum",
+      "status": "Pode remover agora"
+    },
+    {
+      "arquivo": "src/app/api/payment-provider/route.ts",
+      "responsavel": "Expõe provider ativo (só asaas)",
+      "consumidores": "carrinho/page.tsx",
+      "status": "Necessário"
+    },
+    {
+      "arquivo": "src/app/lib/payment-providers.ts",
+      "responsavel": "AsaasProvider + classes MP/Infinity legadas",
+      "consumidores": "checkouts, test-payment",
+      "status": "Legado",
+      "notes": "AsaasProvider necessário; MP/Infinity obsoletos mas ainda no arquivo"
+    },
+    {
+      "arquivo": "src/app/lib/asaas-agendamento-reconcile.ts",
+      "responsavel": "Metadata resolve + reconcile artifacts",
+      "consumidores": "webhooks/asaas, process-payment-webhook",
+      "status": "Necessário",
+      "notes": "Fallbacks de metadata são legado"
+    },
+    {
+      "arquivo": "src/app/lib/asaas-agendamento-payment-effects.ts",
+      "responsavel": "Efeitos pós-pagamento agendamento",
+      "consumidores": "webhooks/asaas, process-payment-webhook",
+      "status": "Necessário"
+    },
+    {
+      "arquivo": "src/app/lib/asaas-carrinho-payment-effects.ts",
+      "responsavel": "Efeitos pós-pagamento carrinho",
+      "consumidores": "webhooks/asaas, process-payment-webhook",
+      "status": "Necessário"
+    },
+    {
+      "arquivo": "src/app/lib/asaas-plano-payment-effects.ts",
+      "responsavel": "Efeitos pós-pagamento plano",
+      "consumidores": "webhooks/asaas, process-payment-webhook",
+      "status": "Necessário"
+    },
+    {
+      "arquivo": "src/app/lib/symbolic-payment.ts",
+      "responsavel": "Regras simbólico TESTE_/R$5/metadata",
+      "consumidores": "checkouts admin, reprocessar-teste, meus-dados, refunds",
+      "status": "Legado"
+    },
+    {
+      "arquivo": "src/app/api/test-payment/route.ts",
+      "responsavel": "Checkout teste admin",
+      "consumidores": "agendamento/page.tsx, planos/page.tsx (410 para agendamento/plano)",
+      "status": "Legado"
+    },
+    {
+      "arquivo": "src/app/api/admin/reprocessar-pagamento-teste/route.ts",
+      "responsavel": "Simula pagamento agendamento sem Asaas",
+      "consumidores": "admin/page, admin/agendamentos, admin/pagamentos",
+      "status": "Legado"
+    },
+    {
+      "arquivo": "src/app/api/admin/reprocessar-pagamento-plano-teste/route.ts",
+      "responsavel": "Simula pagamento plano sem Asaas",
+      "consumidores": "admin/pagamentos",
+      "status": "Legado"
+    },
+    {
+      "arquivo": "src/app/pagamentos/page.tsx",
+      "responsavel": "Redirect para /carrinho",
+      "consumidores": "planos/page.tsx (quebra fluxo plano)",
+      "status": "Legado"
+    },
+    {
+      "arquivo": "src/app/pagamentos/sucesso/page.tsx",
+      "responsavel": "Pós-checkout — verificar + fallback plano",
+      "consumidores": "backUrls Asaas",
+      "status": "Necessário"
+    }
+  ],
+  "removalPlan": {
+    "podeRemoverAgora": [
+      "src/app/api/agendamento-checkout/route.ts",
+      "src/app/api/carrinho-checkout/route.ts",
+      "src/app/api/webhooks/mercadopago/route.ts",
+      "src/app/api/pagamentos/route.ts",
+      "src/app/api/mercadopago/checkout/route.ts",
+      "src/app/api/mercadopago/checkout-agendamento/route.ts",
+      "src/app/api/infinitypay/checkout/route.ts",
+      "src/app/api/infinitypay/checkout-agendamento/route.ts",
+      "src/app/api/pagamentos/debug/route.ts"
+    ],
+    "podeRemoverAposDeploy": [
+      "src/app/lib/process-payment-webhook.ts (após unificar fallbacks no webhook)",
+      "src/app/api/pagamentos/processar-direto/route.ts",
+      "src/app/api/pagamentos/processar-manual/route.ts",
+      "src/app/api/pagamentos/buscar-por-fatura/route.ts",
+      "src/app/api/pagamentos/buscar-por-valor/route.ts",
+      "MercadoPagoProvider/InfinityPayProvider em payment-providers.ts",
+      "Fallback amount===5 em symbolic-payment.ts (após migração metadata)",
+      "Cascata agressiva loadMetadataForPayment (após garantir asaasId em todos checkouts)"
+    ],
+    "naoRemoverSemSubstituir": [
+      "webhooks/asaas/route.ts",
+      "asaas/checkout-carrinho",
+      "libs de efeitos PR-03",
+      "processar-plano-apos-pagamento (até webhook estável em prod)",
+      "symbolic-payment (admin QA ainda depende)"
+    ]
+  },
+  "verdict": {
+    "coexistenciaLegadoPR03": "CONFIRMADA",
+    "percentualLegadoEstimado": 40,
+    "detalhe": "~28% legado ainda executável (orquestrador duplicado, fallbacks, rotas admin/script); ~12% código morto removível"
+  }
+}

@@ -33,6 +33,9 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
+# GO-H11A — entregas locais (fora de public/)
+/storage/deliveries/
+
 # vercel
 .vercel
 
@@ -41,3 +44,14 @@ yarn-error.log*
 next-env.d.ts
 
 /src/generated/prisma
+
+# GO-02 — artefatos regeneráveis (não versionar)
+reports/homologation/
+reports/domain-guardian/*-audit-latest.json
+reports/domain-guardian/*-last-run.json
+reports/domain-guardian/latest.json
+reports/domain-guardian/execution-status.json
+reports/domain-guardian/execution-status.md
+reports/domain-guardian/execution-plan-EB-*.json
+reports/domain-guardian/execution-plan-EB-*.md
+reports/domain-guardian/2026-*.json

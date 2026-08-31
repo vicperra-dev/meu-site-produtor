@@ -1,0 +1,1916 @@
+{
+  "agentVersion": "1.0.0",
+  "generatedAt": "2026-07-05T20:54:37.971Z",
+  "language": "pt-BR",
+  "summary": {
+    "projectName": "THouse",
+    "question": "O que mudou desde o último deploy?",
+    "answer": "173 arquivo(s) pendente(s) em 7 área(s) de negócio. 4 funcionalidade(s) nova(s), 4 alterada(s). verificação automática HEALTHY, decisão BLOCKED.",
+    "deployReady": false,
+    "deployReadyReason": "Deploy não recomendado: Motor de decisão BLOCKED — revisar alterações pendentes; Grande volume de arquivos pendentes (173) — considerar deploy incremental; Rodar 9 migration(s): npx prisma migrate deploy.",
+    "featuresAdded": 4,
+    "featuresChanged": 4,
+    "featuresRemoved": 0,
+    "totalChanges": 7,
+    "pendingFiles": 173,
+    "migrationsPending": 9,
+    "criticalFiles": 7,
+    "guardianStatus": "HEALTHY",
+    "decisionStatus": "BLOCKED",
+    "openRisks": 5
+  },
+  "timeline": [
+    {
+      "label": "Versão Atual",
+      "description": "Branch main, commit fd9ff6d, 173 arquivo(s) pendentes.",
+      "items": [
+        "fd9ff6d hardening completo sistema: cupons, webhook, idempotencia, sync e validações finais",
+        "60fb2fa feat(admin): boxes de agendamento por status com links e filtros na lista",
+        "69ce69f Contato: subtitulo em duas linhas centralizado sem scroll; hero: texto vermelho centralizado no PC"
+      ]
+    },
+    {
+      "label": "Grandes alterações",
+      "description": "Mudanças de maior impacto no negócio.",
+      "items": [
+        "Serviços internos (APIs) alterados",
+        "Interface do sistema atualizada",
+        "Arquivamento administrativo de agendamentos",
+        "Fortalecimento de pagamentos e cupons",
+        "Adicionar arquivamento administrativo de pagamentos"
+      ]
+    },
+    {
+      "label": "Novas funcionalidades",
+      "description": "Recursos adicionados ou planejados.",
+      "items": [
+        "Interface do sistema atualizada",
+        "Arquivamento administrativo de agendamentos",
+        "Pipeline de agentes de planejamento e relatórios",
+        "Adicionar arquivamento administrativo de pagamentos",
+        "Adicionar arquivamento administrativo de pagamentos (planejado)"
+      ]
+    },
+    {
+      "label": "Correções",
+      "description": "Estabilização e hardening.",
+      "items": [
+        "Fortalecimento de pagamentos e cupons"
+      ]
+    },
+    {
+      "label": "Mudanças arquiteturais",
+      "description": "Agentes, documentação e estrutura.",
+      "items": [
+        "Alterações no banco de dados",
+        "Pipeline de agentes de planejamento e relatórios"
+      ]
+    },
+    {
+      "label": "Guardian",
+      "description": "Verificação automática: HEALTHY.",
+      "items": [
+        "domain-guardian-runner.ts",
+        "domain-decision-engine.ts",
+        "memory.json"
+      ]
+    },
+    {
+      "label": "Deploy Readiness",
+      "description": "Não recomendado — pendências e riscos abertos.",
+      "items": [
+        "Resolver BLOCKED",
+        "Dividir alterações",
+        "Testes em staging"
+      ]
+    }
+  ],
+  "changes": [
+    {
+      "id": "altera-es-no-banco-de-dados",
+      "title": "Alterações no banco de dados",
+      "categories": [
+        "Deploy",
+        "Arquitetura"
+      ],
+      "kind": "modified",
+      "status": "pendente",
+      "previousProblem": "Estrutura do banco sem os novos campos ou tabelas previstos.",
+      "howItWorkedBefore": "Schema anterior em produção.",
+      "whatChanged": "9 migration(s) e 1 alteração(ões) de schema pendentes.",
+      "howItWorksNow": "Após deploy, o banco terá a estrutura atualizada. Migrations devem rodar antes ou durante o deploy.",
+      "benefit": "Suporte a novos recursos que dependem de colunas ou índices adicionais.",
+      "userImpact": "Indireto — habilita funcionalidades novas após migration.",
+      "adminImpact": "Novos campos disponíveis para operações administrativas.",
+      "financialImpact": "Médio se migrations tocam Payment ou Appointment.",
+      "risk": "Migration em produção exige backup e janela controlada.",
+      "files": [
+        "prisma/schema.prisma",
+        "prisma/migrations/20260504200000_add_foto_position/",
+        "prisma/migrations/20260504213000_account_deletion_log/",
+        "prisma/migrations/20260511231500_user_plan_admin_inactive/",
+        "prisma/migrations/20260511234500_coupon_refund_tracking/",
+        "prisma/migrations/20260512030000_appointment_refund_confirmation/",
+        "prisma/migrations/20260512040000_user_plan_refund_tracking/",
+        "prisma/migrations/20260604210000_user_plan_user_hidden/",
+        "prisma/migrations/20260605120000_appointment_user_hidden/",
+        "prisma/migrations/20260617120000_appointment_admin_archive/"
+      ],
+      "entities": [
+        "UserPlan",
+        "User",
+        "Coupon",
+        "Appointment"
+      ],
+      "flows": [
+        "Estrutura de dados"
+      ],
+      "testsRecommended": [
+        "npx prisma migrate deploy em staging",
+        "npx prisma generate após migration",
+        "Smoke test pós-migration"
+      ]
+    },
+    {
+      "id": "servi-os-internos-apis-alterados",
+      "title": "Serviços internos (APIs) alterados",
+      "categories": [
+        "Financeiro",
+        "Admin",
+        "Segurança",
+        "Infraestrutura"
+      ],
+      "kind": "modified",
+      "status": "pendente",
+      "previousProblem": "Contratos e regras anteriores em produção.",
+      "howItWorkedBefore": "Endpoints respondiam conforme versão deployada.",
+      "whatChanged": "53 rota(s) de API com alterações pendentes de deploy.",
+      "howItWorksNow": "Após deploy, novas regras e respostas entram em vigor.",
+      "benefit": "Regras de negócio e integrações atualizadas.",
+      "userImpact": "Pode afetar checkout, Minha Conta e cancelamentos.",
+      "adminImpact": "Painel admin usa estas APIs — validar ações administrativas.",
+      "financialImpact": "Alto — rotas financeiras no escopo.",
+      "risk": "Regressão em fluxo de pagamento ou reembolso.",
+      "files": [
+        "src/app/api/admin/agendamentos/cancelar/route.ts",
+        "src/app/api/admin/agendamentos/reverter-cancelamento/route.ts",
+        "src/app/api/admin/agendamentos/route.ts",
+        "src/app/api/admin/cupons/liberar/route.ts",
+        "src/app/api/admin/cupons/route.ts",
+        "src/app/api/admin/pagamentos/route.ts",
+        "src/app/api/admin/planos/excluir-cancelados/route.ts",
+        "src/app/api/admin/planos/route.ts",
+        "src/app/api/admin/reprocessar-pagamento-teste/route.ts",
+        "src/app/api/admin/servicos/route.ts",
+        "src/app/api/admin/stats/detalhadas/route.ts",
+        "src/app/api/admin/stats/route.ts",
+        "src/app/api/admin/usuarios/route.ts",
+        "src/app/api/agendamentos/cancelar/route.ts",
+        "src/app/api/agendamentos/com-cupom/route.ts",
+        "src/app/api/agendamentos/disponibilidade/route.ts",
+        "src/app/api/agendamentos/escolher-reembolso/route.ts",
+        "src/app/api/agendamentos/route.ts",
+        "src/app/api/asaas/checkout-agendamento/route.ts",
+        "src/app/api/asaas/checkout-carrinho/route.ts",
+        "src/app/api/asaas/checkout/route.ts",
+        "src/app/api/conta/route.ts",
+        "src/app/api/conta/update/route.ts",
+        "src/app/api/coupons/validate/route.ts",
+        "src/app/api/cupons/renunciar/route.ts",
+        "src/app/api/esqueci-senha/route.ts",
+        "src/app/api/login/route.ts",
+        "src/app/api/me/route.ts",
+        "src/app/api/meus-dados/route.ts",
+        "src/app/api/meus-dados/vincular-cupons-teste/route.ts"
+      ],
+      "entities": [
+        "Appointment",
+        "Payment",
+        "UserPlan",
+        "Service",
+        "User",
+        "Coupon"
+      ],
+      "flows": [
+        "Checkout",
+        "Webhook Asaas",
+        "Admin"
+      ],
+      "testsRecommended": [
+        "Testar checkout sandbox",
+        "Testar webhook PAYMENT_RECEIVED",
+        "Testar endpoints admin afetados"
+      ]
+    },
+    {
+      "id": "interface-do-sistema-atualizada",
+      "title": "Interface do sistema atualizada",
+      "categories": [
+        "Admin",
+        "Nova funcionalidade"
+      ],
+      "kind": "modified",
+      "status": "pendente",
+      "previousProblem": "Telas anteriores sem novos botões ou filtros.",
+      "howItWorkedBefore": "UI conforme versão em produção.",
+      "whatChanged": "21 página(s) ou componente(s) de interface alterados.",
+      "howItWorksNow": "Novas ações visíveis no admin ou área do cliente após deploy.",
+      "benefit": "Melhor experiência e novas operações administrativas.",
+      "userImpact": "Mudanças em Minha Conta ou fluxos visíveis ao cliente.",
+      "adminImpact": "Novos botões, filtros ou telas no painel admin.",
+      "financialImpact": "Baixo — salvo telas de pagamento.",
+      "risk": "Validação manual de UI obrigatória.",
+      "files": [
+        "src/app/admin/agendamentos/page.tsx",
+        "src/app/admin/estatisticas/page.tsx",
+        "src/app/admin/layout.tsx",
+        "src/app/admin/pagamentos/page.tsx",
+        "src/app/admin/page.tsx",
+        "src/app/admin/planos/page.tsx",
+        "src/app/admin/servicos-aceitos/page.tsx",
+        "src/app/admin/servicos-solicitados/page.tsx",
+        "src/app/admin/usuarios/page.tsx",
+        "src/app/agendamento/page.tsx",
+        "src/app/carrinho/page.tsx",
+        "src/app/components/Header.tsx",
+        "src/app/conta/page.tsx",
+        "src/app/esqueci-senha/page.tsx",
+        "src/app/layout.tsx",
+        "src/app/login/page.tsx",
+        "src/app/minha-conta/page.tsx",
+        "src/app/planos/page.tsx",
+        "src/app/registro/page.tsx",
+        "src/app/components/ConditionalBodyLayout.tsx",
+        "src/app/components/UserFeedbackDialog.tsx"
+      ],
+      "entities": [
+        "Appointment",
+        "Payment",
+        "UserPlan",
+        "Service",
+        "User"
+      ],
+      "flows": [
+        "Minha Conta",
+        "Admin"
+      ],
+      "testsRecommended": [
+        "Navegar telas admin alteradas",
+        "Verificar Minha Conta do cliente teste"
+      ]
+    },
+    {
+      "id": "arquivamento-administrativo-de-agendamentos",
+      "title": "Arquivamento administrativo de agendamentos",
+      "categories": [
+        "Nova funcionalidade",
+        "Admin"
+      ],
+      "kind": "added",
+      "status": "pendente",
+      "previousProblem": "Agendamentos encerrados poluíam a operação diária.",
+      "howItWorkedBefore": "Sem arquivamento com justificativa — opções limitadas.",
+      "whatChanged": "Admin pode arquivar e restaurar agendamentos sem apagar histórico.",
+      "howItWorksNow": "Arquivados saem de checkout, disponibilidade e stats operacionais.",
+      "benefit": "Painel organizado com histórico preservado.",
+      "userImpact": "Cliente não vê agendamentos arquivados pelo admin.",
+      "adminImpact": "Botões Arquivar/Restaurar e filtro de arquivados.",
+      "financialImpact": "Não altera pagamentos — apenas visão operacional.",
+      "risk": "Arquivar por engano — mitigado por restauração.",
+      "files": [
+        "src/app/admin/agendamentos/page.tsx",
+        "src/app/agendamento/page.tsx",
+        "src/app/api/admin/agendamentos/cancelar/route.ts",
+        "src/app/api/admin/agendamentos/reverter-cancelamento/route.ts",
+        "src/app/api/admin/agendamentos/route.ts",
+        "src/app/api/agendamentos/cancelar/route.ts",
+        "src/app/api/agendamentos/com-cupom/route.ts",
+        "src/app/api/agendamentos/disponibilidade/route.ts",
+        "src/app/api/agendamentos/escolher-reembolso/route.ts",
+        "src/app/api/agendamentos/route.ts",
+        "src/app/api/asaas/checkout-agendamento/route.ts",
+        "src/app/lib/agendamento-payment-coupons.ts",
+        "src/app/lib/asaas-agendamento-reconcile.ts",
+        "src/app/lib/coupon-stale-appointment.ts",
+        "prisma/migrations/20260512030000_appointment_refund_confirmation/"
+      ],
+      "entities": [
+        "Appointment"
+      ],
+      "flows": [
+        "Aceite/recusa admin"
+      ],
+      "testsRecommended": [
+        "Arquivar agendamento teste no admin",
+        "Confirmar ausência em checkout",
+        "Restaurar agendamento"
+      ]
+    },
+    {
+      "id": "pipeline-de-agentes-de-planejamento-e-relat-rios",
+      "title": "Pipeline de agentes de planejamento e relatórios",
+      "categories": [
+        "Arquitetura",
+        "Guardian",
+        "Infraestrutura"
+      ],
+      "kind": "added",
+      "status": "concluído",
+      "previousProblem": "Evolução do projeto difícil de acompanhar antes do deploy.",
+      "howItWorkedBefore": "Relatórios técnicos dispersos, sem visão consolidada.",
+      "whatChanged": "Novos agentes: arquitetura, design, implementação, relatório humano e evolução.",
+      "howItWorksNow": "Scripts geram planos e relatórios automaticamente antes de cada deploy.",
+      "benefit": "Proprietário e equipe enxergam evolução e riscos com clareza.",
+      "userImpact": "Nenhum — ferramentas internas.",
+      "adminImpact": "Nenhum direto.",
+      "financialImpact": "Indireto — reduz risco de deploy com bugs financeiros.",
+      "risk": "Agentes auxiliam — não substituem testes manuais.",
+      "files": [
+        "scripts/architecture-agent.ts",
+        "scripts/design-planner-agent.ts",
+        "scripts/evolution-agent.ts",
+        "scripts/human-report-agent.ts",
+        "scripts/implementation-planner-agent.ts"
+      ],
+      "entities": [],
+      "flows": [
+        "Documentação / tooling"
+      ],
+      "testsRecommended": [
+        "Executar evolution-agent antes de cada deploy"
+      ]
+    },
+    {
+      "id": "fortalecimento-de-pagamentos-e-cupons",
+      "title": "Fortalecimento de pagamentos e cupons",
+      "categories": [
+        "Correção",
+        "Financeiro",
+        "Segurança"
+      ],
+      "kind": "modified",
+      "status": "pendente",
+      "previousProblem": "Risco de cobrança duplicada ou agendamento não criado após pagamento.",
+      "howItWorkedBefore": "Confirmações do Asaas podiam processar mais de uma vez.",
+      "whatChanged": "Proteção contra duplicidade, sincronização pagamento-agendamento-cupom.",
+      "howItWorksNow": "Cada pagamento confirmado processa uma vez; efeitos colaterais consistentes.",
+      "benefit": "Integridade financeira e operacional.",
+      "userImpact": "Checkout e confirmação mais confiáveis.",
+      "adminImpact": "Dados consistentes no painel.",
+      "financialImpact": "Alto — protege receita diretamente.",
+      "risk": "Área crítica — testes obrigatórios em sandbox.",
+      "files": [
+        "src/app/api/webhooks/asaas/route.ts",
+        "src/app/lib/process-payment-webhook.ts",
+        "src/app/lib/asaas-agendamento-payment-effects.ts",
+        "src/app/lib/asaas-plano-payment-effects.ts"
+      ],
+      "entities": [
+        "Payment",
+        "Coupon",
+        "Appointment"
+      ],
+      "flows": [
+        "Checkout",
+        "Webhook Asaas",
+        "Reembolso"
+      ],
+      "testsRecommended": [
+        "Checkout sandbox → confirmação Asaas",
+        "Reenviar mesma notificação (idempotência)",
+        "Verificar agendamento e cupom pós-pagamento"
+      ]
+    },
+    {
+      "id": "adicionar-arquivamento-administrativo-de-pagamen",
+      "title": "Adicionar arquivamento administrativo de pagamentos",
+      "categories": [
+        "Nova funcionalidade",
+        "Financeiro",
+        "Admin"
+      ],
+      "kind": "planned",
+      "status": "planejado",
+      "previousProblem": "Recurso ainda não disponível em produção.",
+      "howItWorkedBefore": "Operação sem este recurso.",
+      "whatChanged": "Implementar soft-delete admin em Payment com adminArchivedAt e adminArchivedReason.",
+      "howItWorksNow": "Será implementado conforme design-plan e implementation-plan.",
+      "benefit": "Organização administrativa sem perder histórico.",
+      "userImpact": "Planejado sem impacto em Minha Conta do cliente.",
+      "adminImpact": "Novas ações no painel após implementação.",
+      "financialImpact": "Preserva histórico financeiro.",
+      "risk": "Crítico",
+      "files": [
+        "src/app/lib/process-payment-webhook.ts",
+        "src/app/api/webhooks/asaas/route.ts",
+        "src/app/lib/asaas-agendamento-payment-effects.ts",
+        "src/app/lib/asaas-plano-payment-effects.ts",
+        "src/app/lib/asaas-agendamento-reconcile.ts",
+        "src/app/lib/appointment-refund-payment.ts",
+        "src/app/lib/symbolic-payment.ts",
+        "src/app/lib/admin-delete-payment.ts",
+        "src/app/api/asaas/checkout-agendamento/route.ts",
+        "src/app/api/admin/pagamentos/route.ts",
+        "prisma/schema.prisma",
+        "src/app/lib/asaas-agendamento-payment-effects.ts",
+        "src/app/lib/appointment-hidden.ts",
+        "src/app/lib/appointment-refund-payment.ts",
+        "src/app/lib/appointment-refund-value.ts"
+      ],
+      "entities": [
+        "Payment",
+        "Appointment",
+        "User"
+      ],
+      "flows": [
+        "Checkout (agendamento e plano)",
+        "Webhook Asaas",
+        "Reembolso (outbound e inbound)",
+        "Remarcação (resolução de pagamento origem)",
+        "Simulação admin (`symbolicAgendamento`, `symbolicPlano`)"
+      ],
+      "testsRecommended": [
+        "Seguir implementation-plan após codificar",
+        "Executar Guardian antes do deploy"
+      ]
+    }
+  ],
+  "improvements": {
+    "completed": [
+      "Proprietário e equipe enxergam evolução e riscos com clareza."
+    ],
+    "planned": [
+      "Adicionar arquivamento administrativo de pagamentos",
+      "Finalizar migração de simulação (S4): vincular ou eliminar cupons legados TESTE_AGEND_/TESTE_PAY_ antes de remover helpers @legacy.",
+      "Alta frequência de BLOCKED: adotar PRs menores (split-to-prs) e rodar change-analyzer antes de abrir PR.",
+      "Divergência banco saudável vs diff CRITICAL: separar gate de dados (Guardian) do gate de merge (Decision Engine)."
+    ]
+  },
+  "pendingWork": [
+    "Motor de decisão BLOCKED — revisar alterações pendentes",
+    "Grande volume de arquivos pendentes (173) — considerar deploy incremental",
+    "Rodar 9 migration(s): npx prisma migrate deploy",
+    "Planejado: Adicionar arquivamento administrativo de pagamentos",
+    "Planejado: Finalizar migração de simulação (S4): vincular ou eliminar cupons legados TESTE_AGEND_/TESTE_PAY_ antes de remover helpers @legacy.",
+    "Planejado: Alta frequência de BLOCKED: adotar PRs menores (split-to-prs) e rodar change-analyzer antes de abrir PR.",
+    "Planejado: Divergência banco saudável vs diff CRITICAL: separar gate de dados (Guardian) do gate de merge (Decision Engine)."
+  ],
+  "deployChecklist": {
+    "ready": false,
+    "missing": [
+      "Motor de decisão BLOCKED — revisar alterações pendentes",
+      "Grande volume de arquivos pendentes (173) — considerar deploy incremental",
+      "Rodar 9 migration(s): npx prisma migrate deploy"
+    ],
+    "risks": [
+      "Alterações extensas em áreas críticas (pagamentos, agendamentos, cupons)"
+    ],
+    "migrations": [
+      "prisma/migrations/20260504200000_add_foto_position/",
+      "prisma/migrations/20260504213000_account_deletion_log/",
+      "prisma/migrations/20260511231500_user_plan_admin_inactive/",
+      "prisma/migrations/20260511234500_coupon_refund_tracking/",
+      "prisma/migrations/20260512030000_appointment_refund_confirmation/",
+      "prisma/migrations/20260512040000_user_plan_refund_tracking/",
+      "prisma/migrations/20260604210000_user_plan_user_hidden/",
+      "prisma/migrations/20260605120000_appointment_user_hidden/",
+      "prisma/migrations/20260617120000_appointment_admin_archive/"
+    ],
+    "mandatoryTests": [
+      "node --experimental-strip-types scripts/domain-guardian-runner.ts",
+      "npm run build",
+      "Login admin e cliente teste",
+      "Checkout sandbox (se área financeira no deploy)",
+      "Smoke test pós-migration",
+      "Fazer login e acessar Minha Conta",
+      "Verificar listagem de agendamentos, cupons e planos",
+      "Acessar painel admin e verificar agendamentos, pagamentos e cupons",
+      "Testar filtros e ações de arquivar/restaurar (se disponíveis)",
+      "Conferir se pagamentos aprovados têm agendamento ou plano correspondente",
+      "Verificar ausência de cobrança duplicada"
+    ]
+  },
+  "architectureEvolution": {
+    "agentsCreated": [
+      "scripts/architecture-agent.ts",
+      "scripts/design-planner-agent.ts",
+      "scripts/evolution-agent.ts",
+      "scripts/human-report-agent.ts",
+      "scripts/implementation-planner-agent.ts"
+    ],
+    "docsUpdated": [
+      "docs/"
+    ],
+    "guardianMaturity": "4 execuções registradas",
+    "before": "Documentação dispersa, sem agentes de planejamento nem relatório de evolução pré-deploy.",
+    "after": "Mapa de domínio, Guardian, agentes de design/implementação/evolução e relatório humano."
+  },
+  "guardianEvolution": {
+    "status": "HEALTHY",
+    "totalRuns": 4,
+    "errors": 0,
+    "warnings": 0,
+    "info": 1,
+    "activeChecks": [
+      "S4"
+    ],
+    "trend": "Últimas 4 execuções — 4 saudáveis"
+  },
+  "riskEvolution": {
+    "before": "Pagamentos e cupons com pontos frágeis; sem gate automático de deploy.",
+    "after": "Guardian HEALTHY; decisão BLOCKED; 5 risco(s) mapeado(s).",
+    "openRisks": [
+      {
+        "level": "Alto",
+        "description": "Motor de decisão bloqueou deploy — alterações pendentes extensas."
+      },
+      {
+        "level": "Médio",
+        "description": "Check **S4** (Resíduo legado TESTE_AGEND_/TESTE_PAY_): finding em 3/4 execuções (75%)"
+      },
+      {
+        "level": "Médio",
+        "description": "Entidade **Coupon**: 3 menção(ões) em decisões/checks"
+      },
+      {
+        "level": "Médio",
+        "description": "Decision Engine **BLOCKED** em 1/1 snapshot(s)"
+      },
+      {
+        "level": "Médio",
+        "description": "Arquivo sensível: `prisma/schema.prisma` (1 citação(ões), risco CRITICAL)"
+      }
+    ],
+    "mitigated": [
+      "Cobrança duplicada por falha na confirmação do Asaas",
+      "Agendamento pago que não aparece para o cliente",
+      "Cupom utilizável após cancelamento com reembolso",
+      "Perda de histórico financeiro por exclusão irreversível",
+      "Deploy de alterações críticas sem verificação prévia"
+    ]
+  },
+  "businessEvolution": {
+    "headline": "7 evolução(ões) identificada(s) desde o último deploy",
+    "systemBetterBecause": "O sistema ganhou proteção financeira, verificação automática antes do deploy, organização administrativa e ferramentas para o proprietário acompanhar a evolução sem ler código.",
+    "before": [
+      "Pagamentos podiam duplicar em retries do Asaas",
+      "Sem arquivamento admin estruturado",
+      "Deploy sem relatório consolidado de evolução",
+      "Decisão de deploy baseada apenas em intuição"
+    ],
+    "after": [
+      "Proteção contra processamento duplicado de pagamentos",
+      "Arquivamento de agendamentos com histórico preservado",
+      "Relatório de evolução automático antes de cada deploy",
+      "Motor de decisão e Guardian como rede de segurança"
+    ],
+    "ownerSummary": "Fortalecimento do sistema de pagamentos e cupons; Arquivamento administrativo de agendamentos; Melhorias no fluxo de reembolso e cupons; Melhorias na área do cliente e segurança de acesso"
+  },
+  "technicalEvolution": {
+    "apisImpacted": [
+      "src/app/api/admin/agendamentos/cancelar/route.ts",
+      "src/app/api/admin/agendamentos/reverter-cancelamento/route.ts",
+      "src/app/api/admin/agendamentos/route.ts",
+      "src/app/api/admin/cupons/liberar/route.ts",
+      "src/app/api/admin/cupons/route.ts",
+      "src/app/api/admin/pagamentos/route.ts",
+      "src/app/api/admin/planos/excluir-cancelados/route.ts",
+      "src/app/api/admin/planos/route.ts",
+      "src/app/api/admin/reprocessar-pagamento-teste/route.ts",
+      "src/app/api/admin/servicos/route.ts",
+      "src/app/api/admin/stats/detalhadas/route.ts",
+      "src/app/api/admin/stats/route.ts",
+      "src/app/api/admin/usuarios/route.ts",
+      "src/app/api/agendamentos/cancelar/route.ts",
+      "src/app/api/agendamentos/com-cupom/route.ts",
+      "src/app/api/agendamentos/disponibilidade/route.ts",
+      "src/app/api/agendamentos/escolher-reembolso/route.ts",
+      "src/app/api/agendamentos/route.ts",
+      "src/app/api/asaas/checkout-agendamento/route.ts",
+      "src/app/api/asaas/checkout-carrinho/route.ts",
+      "src/app/api/asaas/checkout/route.ts",
+      "src/app/api/conta/route.ts",
+      "src/app/api/conta/update/route.ts",
+      "src/app/api/coupons/validate/route.ts",
+      "src/app/api/cupons/renunciar/route.ts",
+      "src/app/api/esqueci-senha/route.ts",
+      "src/app/api/login/route.ts",
+      "src/app/api/me/route.ts",
+      "src/app/api/meus-dados/route.ts",
+      "src/app/api/meus-dados/vincular-cupons-teste/route.ts",
+      "src/app/api/planos/cancelar/route.ts",
+      "src/app/api/planos/excluir/route.ts",
+      "src/app/api/planos/solicitar-reembolso/route.ts",
+      "src/app/api/test-payment/route.ts",
+      "src/app/api/trocar-senha/route.ts",
+      "src/app/api/verificar-codigo/route.ts",
+      "src/app/api/webhooks/asaas/route.ts",
+      "src/app/api/admin/agendamentos/archive/",
+      "src/app/api/admin/agendamentos/restore/",
+      "src/app/api/admin/cupons/excluir-lote/",
+      "src/app/api/admin/cupons/resetar-simulacao/",
+      "src/app/api/admin/reprocessar-pagamento-plano-teste/",
+      "src/app/api/admin/servicos/entrega/",
+      "src/app/api/agendamentos/confirmar-reembolso/",
+      "src/app/api/agendamentos/excluir/",
+      "src/app/api/conta/alterar-senha/",
+      "src/app/api/conta/excluir/",
+      "src/app/api/conta/foto/",
+      "src/app/api/coupons/resgate/",
+      "src/app/api/cupons/confirmar-reembolso/",
+      "src/app/api/cupons/excluir-usado/",
+      "src/app/api/cupons/solicitar-reembolso/",
+      "src/app/api/planos/confirmar-reembolso/"
+    ],
+    "entitiesImpacted": [
+      "Appointment",
+      "Coupon",
+      "Payment",
+      "PaymentMetadata",
+      "Service",
+      "User",
+      "UserPlan"
+    ],
+    "flowsImpacted": [
+      "Checkout agendamento",
+      "Checkout plano",
+      "Reembolso",
+      "Remarcação (cupom)",
+      "Minha Conta (leitura)",
+      "PaymentMetadata → Payment",
+      "Payment → Appointment",
+      "Payment → Coupon",
+      "Payment → UserPlan",
+      "Appointment → Service",
+      "Appointment → Coupon (remarcação)",
+      "Coupon → Appointment (consumo)",
+      "UserPlan → Coupon",
+      "User → Payment / Appointment / UserPlan / Service",
+      "User → Coupon (assigned)"
+    ],
+    "filesByArea": {
+      "apis": [
+        "src/app/api/admin/agendamentos/cancelar/route.ts",
+        "src/app/api/admin/agendamentos/reverter-cancelamento/route.ts",
+        "src/app/api/admin/agendamentos/route.ts",
+        "src/app/api/admin/cupons/liberar/route.ts",
+        "src/app/api/admin/cupons/route.ts",
+        "src/app/api/admin/pagamentos/route.ts",
+        "src/app/api/admin/planos/excluir-cancelados/route.ts",
+        "src/app/api/admin/planos/route.ts",
+        "src/app/api/admin/reprocessar-pagamento-teste/route.ts",
+        "src/app/api/admin/servicos/route.ts",
+        "src/app/api/admin/stats/detalhadas/route.ts",
+        "src/app/api/admin/stats/route.ts",
+        "src/app/api/admin/usuarios/route.ts",
+        "src/app/api/agendamentos/cancelar/route.ts",
+        "src/app/api/agendamentos/com-cupom/route.ts",
+        "src/app/api/agendamentos/disponibilidade/route.ts",
+        "src/app/api/agendamentos/escolher-reembolso/route.ts",
+        "src/app/api/agendamentos/route.ts",
+        "src/app/api/asaas/checkout-agendamento/route.ts",
+        "src/app/api/asaas/checkout-carrinho/route.ts",
+        "src/app/api/asaas/checkout/route.ts",
+        "src/app/api/conta/route.ts",
+        "src/app/api/conta/update/route.ts",
+        "src/app/api/coupons/validate/route.ts",
+        "src/app/api/cupons/renunciar/route.ts",
+        "src/app/api/esqueci-senha/route.ts",
+        "src/app/api/login/route.ts",
+        "src/app/api/me/route.ts",
+        "src/app/api/meus-dados/route.ts",
+        "src/app/api/meus-dados/vincular-cupons-teste/route.ts",
+        "src/app/api/planos/cancelar/route.ts",
+        "src/app/api/planos/excluir/route.ts",
+        "src/app/api/planos/solicitar-reembolso/route.ts",
+        "src/app/api/test-payment/route.ts",
+        "src/app/api/trocar-senha/route.ts",
+        "src/app/api/verificar-codigo/route.ts",
+        "src/app/api/webhooks/asaas/route.ts",
+        "src/app/api/admin/agendamentos/archive/",
+        "src/app/api/admin/agendamentos/restore/",
+        "src/app/api/admin/cupons/excluir-lote/",
+        "src/app/api/admin/cupons/resetar-simulacao/",
+        "src/app/api/admin/reprocessar-pagamento-plano-teste/",
+        "src/app/api/admin/servicos/entrega/",
+        "src/app/api/agendamentos/confirmar-reembolso/",
+        "src/app/api/agendamentos/excluir/",
+        "src/app/api/conta/alterar-senha/",
+        "src/app/api/conta/excluir/",
+        "src/app/api/conta/foto/",
+        "src/app/api/coupons/resgate/",
+        "src/app/api/cupons/confirmar-reembolso/",
+        "src/app/api/cupons/excluir-usado/",
+        "src/app/api/cupons/solicitar-reembolso/",
+        "src/app/api/planos/confirmar-reembolso/"
+      ],
+      "ui": [
+        "src/app/admin/agendamentos/page.tsx",
+        "src/app/admin/estatisticas/page.tsx",
+        "src/app/admin/layout.tsx",
+        "src/app/admin/pagamentos/page.tsx",
+        "src/app/admin/page.tsx",
+        "src/app/admin/planos/page.tsx",
+        "src/app/admin/servicos-aceitos/page.tsx",
+        "src/app/admin/servicos-solicitados/page.tsx",
+        "src/app/admin/usuarios/page.tsx",
+        "src/app/agendamento/page.tsx",
+        "src/app/carrinho/page.tsx",
+        "src/app/components/Header.tsx",
+        "src/app/conta/page.tsx",
+        "src/app/esqueci-senha/page.tsx",
+        "src/app/layout.tsx",
+        "src/app/login/page.tsx",
+        "src/app/minha-conta/page.tsx",
+        "src/app/planos/page.tsx",
+        "src/app/registro/page.tsx",
+        "src/app/components/ConditionalBodyLayout.tsx",
+        "src/app/components/UserFeedbackDialog.tsx"
+      ],
+      "database": [
+        "prisma/schema.prisma"
+      ],
+      "migrations": [
+        "prisma/migrations/20260504200000_add_foto_position/",
+        "prisma/migrations/20260504213000_account_deletion_log/",
+        "prisma/migrations/20260511231500_user_plan_admin_inactive/",
+        "prisma/migrations/20260511234500_coupon_refund_tracking/",
+        "prisma/migrations/20260512030000_appointment_refund_confirmation/",
+        "prisma/migrations/20260512040000_user_plan_refund_tracking/",
+        "prisma/migrations/20260604210000_user_plan_user_hidden/",
+        "prisma/migrations/20260605120000_appointment_user_hidden/",
+        "prisma/migrations/20260617120000_appointment_admin_archive/"
+      ],
+      "scripts": [
+        "scripts/architecture-agent.ts",
+        "scripts/check-db.mjs",
+        "scripts/design-planner-agent.ts",
+        "scripts/domain-architecture-planner.ts",
+        "scripts/domain-change-analyzer.ts",
+        "scripts/domain-decision-engine.ts",
+        "scripts/domain-guardian-advisor.ts",
+        "scripts/domain-guardian-audit.ts",
+        "scripts/domain-guardian-diff.ts",
+        "scripts/domain-guardian-runner.ts",
+        "scripts/domain-issue-generator.ts",
+        "scripts/domain-memory-engine.ts",
+        "scripts/domain-pr-reviewer.ts",
+        "scripts/domain-review-engine.ts",
+        "scripts/evolution-agent.ts",
+        "scripts/human-report-agent.ts",
+        "scripts/implementation-planner-agent.ts",
+        "scripts/inspect-payments.mjs",
+        "scripts/inspect-simulation-coupons.mjs",
+        "scripts/repair-coupon-ownership.mjs",
+        "scripts/reset-operational-data.mjs",
+        "scripts/test-simulation-flags.mjs"
+      ],
+      "docs": [
+        "docs/"
+      ],
+      "critical": [
+        "prisma/schema.prisma",
+        "src/app/api/agendamentos/escolher-reembolso/route.ts",
+        "src/app/api/asaas/checkout-agendamento/route.ts",
+        "src/app/api/webhooks/asaas/route.ts",
+        "src/app/lib/process-payment-webhook.ts",
+        "src/app/lib/asaas-agendamento-payment-effects.ts",
+        "src/app/lib/asaas-plano-payment-effects.ts"
+      ],
+      "other": [
+        ".gitignore",
+        "package.json",
+        "src/app/context/AuthContext.tsx",
+        "src/app/globals.css",
+        "src/app/hooks/useUnreadChatCount.ts",
+        "src/app/lib/agendamento-payment-coupons.ts",
+        "src/app/lib/asaas-agendamento-reconcile.ts",
+        "src/app/lib/auth.ts",
+        "src/app/lib/coupon-booking-rules.ts",
+        "src/app/lib/coupon-release.ts",
+        "src/app/lib/coupon-stale-appointment.ts",
+        "src/app/lib/delivery-url-validation.ts",
+        "src/app/lib/payment-providers.ts",
+        "src/app/lib/plan-coupons.ts",
+        "src/app/lib/process-payment-webhook.ts",
+        "src/app/lib/sendEmail.ts",
+        "src/app/lib/service-catalog.ts",
+        "src/app/lib/validate-coupon-checkout.ts",
+        "src/app/lib/validations.ts",
+        "src/app/middleware.ts",
+        ".github/",
+        "prisma/backfill_coupon_origin.sql",
+        "prisma/ensure_account_deletion_log.sql",
+        "prisma/reset_operational_data.sql",
+        "public/uploads/",
+        "reports/",
+        "src/app/agendamento/cupom/",
+        "src/app/conta/alterar-senha/",
+        "src/app/lib/active-user-plan.ts",
+        "src/app/lib/admin-delete-coupon.ts",
+        "src/app/lib/admin-delete-payment.ts",
+        "src/app/lib/adminAccess.ts",
+        "src/app/lib/agendamento-payment-rules.ts",
+        "src/app/lib/appointment-admin-archive.ts",
+        "src/app/lib/appointment-hidden.ts",
+        "src/app/lib/appointment-plan-coupon.ts",
+        "src/app/lib/appointment-refund-payment.ts",
+        "src/app/lib/appointment-refund-value.ts",
+        "src/app/lib/asaas-agendamento-payment-effects.ts",
+        "src/app/lib/asaas-fetch.ts",
+        "src/app/lib/asaas-plano-payment-effects.ts",
+        "src/app/lib/avatarDisplayUrl.ts",
+        "src/app/lib/coupon-account-ownership.ts",
+        "src/app/lib/coupon-admin-sections.ts",
+        "src/app/lib/coupon-origin.ts",
+        "src/app/lib/coupon-refund.ts",
+        "src/app/lib/coupon-scheduling-rules.ts",
+        "src/app/lib/coupon-sections.ts",
+        "src/app/lib/coupon-visibility.ts",
+        "src/app/lib/deleteUserAccount.ts",
+        "src/app/lib/delivery-audio-upload.ts",
+        "src/app/lib/payment-refund-status.ts",
+        "src/app/lib/plan-payment-simulation.ts",
+        "src/app/lib/plan-refund.ts",
+        "src/app/lib/prisma-errors.ts",
+        "src/app/lib/purge-cancelled-appointment.ts",
+        "src/app/lib/refund-coupon.ts",
+        "src/app/lib/simulation-coupon-codes.ts",
+        "src/app/lib/simulation-coupon-user-link.ts",
+        "src/app/lib/simulation-coupon.ts",
+        "src/app/lib/simulation-reset.ts",
+        "src/app/lib/support-contact.ts",
+        "src/app/lib/symbolic-payment-resolve.ts",
+        "src/app/lib/symbolic-payment.ts",
+        "src/app/lib/user-feedback.ts",
+        "src/app/lib/user-plan-hidden.ts"
+      ]
+    },
+    "commitHistory": [
+      "fd9ff6d hardening completo sistema: cupons, webhook, idempotencia, sync e validações finais",
+      "60fb2fa feat(admin): boxes de agendamento por status com links e filtros na lista",
+      "69ce69f Contato: subtitulo em duas linhas centralizado sem scroll; hero: texto vermelho centralizado no PC",
+      "72b7b0a Hero desktop: titulo uma linha e servicos alinhados; contato subtitulo sem box uma linha",
+      "d6798e0 Captacao R; hero mobile legivel; agendamento sem espaco inicial; planos DuvidasBox alinhado; contato subtitulo preto",
+      "8ddb81d Loja Digital mobile: texto sem corte nas laterais (padding e overflow)",
+      "88f87c8 Loja Digital: textos juntos em um so paragrafo na versao desktop",
+      "27d834a Desktop: texto vermelho do hero centralizado; base 20px em todas as paginas",
+      "0f3b4db Desktop: base 18px e hero maiores; hero centralizado e tagline sem corte",
+      "bd922d0 Desktop: base 16px e hero maior; hero 3 textos centralizados na mesma coluna; mobile inalterado",
+      "f2fc693 Hero desktop: titulo no meio; 3 textos centralizados na mesma coluna; textos maiores",
+      "65636c3 Hero desktop: servicos em uma linha; tagline centralizada no viewport",
+      "609bbfc Hero: titulo e frases maiores; tagline responsiva no mobile (quebra de linha)",
+      "40c34f9 Hero: titulo e textos com borda preta, tagline em uma linha centralizada",
+      "0f8b1a1 Meus-dados: incluir assignedUserId na query principal de cupons para aparecerem na Minha Conta"
+    ]
+  },
+  "financialEvolution": {
+    "areas": [
+      "Pagamentos",
+      "Webhook Asaas",
+      "Reembolso",
+      "Cupons"
+    ],
+    "safeguards": [
+      "Verificação F1 (pagamento duplicado)",
+      "Verificação F4 (agendamento pós-pagamento)",
+      "Motor de decisão BLOCKED em mudanças críticas"
+    ],
+    "risks": [
+      "Regressão em fluxo de pagamento ou reembolso.",
+      "Área crítica — testes obrigatórios em sandbox.",
+      "Crítico"
+    ],
+    "before": "Integridade financeira dependia de revisão manual.",
+    "after": "Camadas automáticas de verificação + hardening de webhook e checkout."
+  },
+  "adminEvolution": {
+    "features": [
+      "Serviços internos (APIs) alterados",
+      "Interface do sistema atualizada",
+      "Arquivamento administrativo de agendamentos",
+      "Adicionar arquivamento administrativo de pagamentos"
+    ],
+    "uiPages": [
+      "src/app/admin/agendamentos/page.tsx",
+      "src/app/admin/estatisticas/page.tsx",
+      "src/app/admin/layout.tsx",
+      "src/app/admin/pagamentos/page.tsx",
+      "src/app/admin/page.tsx",
+      "src/app/admin/planos/page.tsx",
+      "src/app/admin/servicos-aceitos/page.tsx",
+      "src/app/admin/servicos-solicitados/page.tsx",
+      "src/app/admin/usuarios/page.tsx"
+    ],
+    "before": "Painel admin sem arquivamento estruturado em todas as entidades.",
+    "after": "Arquivamento de agendamentos; planejamento de arquivamento de pagamentos."
+  },
+  "uiEvolution": {
+    "pages": [
+      "src/app/admin/agendamentos/page.tsx",
+      "src/app/admin/estatisticas/page.tsx",
+      "src/app/admin/layout.tsx",
+      "src/app/admin/pagamentos/page.tsx",
+      "src/app/admin/page.tsx",
+      "src/app/admin/planos/page.tsx",
+      "src/app/admin/servicos-aceitos/page.tsx",
+      "src/app/admin/servicos-solicitados/page.tsx",
+      "src/app/admin/usuarios/page.tsx",
+      "src/app/agendamento/page.tsx",
+      "src/app/carrinho/page.tsx",
+      "src/app/components/Header.tsx",
+      "src/app/conta/page.tsx",
+      "src/app/esqueci-senha/page.tsx",
+      "src/app/layout.tsx",
+      "src/app/login/page.tsx",
+      "src/app/minha-conta/page.tsx",
+      "src/app/planos/page.tsx",
+      "src/app/registro/page.tsx",
+      "src/app/components/ConditionalBodyLayout.tsx",
+      "src/app/components/UserFeedbackDialog.tsx"
+    ],
+    "components": [
+      "src/app/components/Header.tsx",
+      "src/app/components/ConditionalBodyLayout.tsx",
+      "src/app/components/UserFeedbackDialog.tsx"
+    ],
+    "before": "Interface conforme versão anterior em produção.",
+    "after": "21 tela(s)/componente(s) com alterações pendentes de deploy."
+  },
+  "databaseEvolution": {
+    "schemaChanged": true,
+    "migrationsPending": [
+      "prisma/migrations/20260504200000_add_foto_position/",
+      "prisma/migrations/20260504213000_account_deletion_log/",
+      "prisma/migrations/20260511231500_user_plan_admin_inactive/",
+      "prisma/migrations/20260511234500_coupon_refund_tracking/",
+      "prisma/migrations/20260512030000_appointment_refund_confirmation/",
+      "prisma/migrations/20260512040000_user_plan_refund_tracking/",
+      "prisma/migrations/20260604210000_user_plan_user_hidden/",
+      "prisma/migrations/20260605120000_appointment_user_hidden/",
+      "prisma/migrations/20260617120000_appointment_admin_archive/"
+    ],
+    "entitiesTouched": [
+      "UserPlan",
+      "User",
+      "Coupon",
+      "Appointment"
+    ],
+    "before": "Schema em produção sem alterações pendentes.",
+    "after": "9 migration(s) aguardando deploy."
+  },
+  "context": {
+    "sourcesConsulted": [
+      {
+        "path": "reports/domain-guardian/change-analysis.md",
+        "loaded": true
+      },
+      {
+        "path": "reports/domain-guardian/pr-review.md",
+        "loaded": true
+      },
+      {
+        "path": "reports/domain-guardian/action-plan.md",
+        "loaded": true
+      },
+      {
+        "path": "reports/domain-guardian/review-checklist.md",
+        "loaded": true
+      },
+      {
+        "path": "reports/domain-guardian/advisor.md",
+        "loaded": true
+      },
+      {
+        "path": "reports/domain-guardian/issues.md",
+        "loaded": true
+      },
+      {
+        "path": "reports/domain-guardian/decision.md",
+        "loaded": true
+      },
+      {
+        "path": "docs/ai/domain-dependencies.md",
+        "loaded": true
+      },
+      {
+        "path": "docs/ai/domain-map.md",
+        "loaded": true
+      },
+      {
+        "path": "docs/ai/payment-lifecycle-audit.md",
+        "loaded": true
+      },
+      {
+        "path": "docs/ai/appointment-archive-audit.md",
+        "loaded": true
+      },
+      {
+        "path": "docs/ai/domain-invariants.md",
+        "loaded": true
+      }
+    ],
+    "git": {
+      "branch": "main",
+      "head": "fd9ff6d",
+      "statusPorcelain": " M .gitignore\n M package.json\n M prisma/schema.prisma\n M src/app/admin/agendamentos/page.tsx\n M src/app/admin/estatisticas/page.tsx\n M src/app/admin/layout.tsx\n M src/app/admin/pagamentos/page.tsx\n M src/app/admin/page.tsx\n M src/app/admin/planos/page.tsx\n M src/app/admin/servicos-aceitos/page.tsx\n M src/app/admin/servicos-solicitados/page.tsx\n M src/app/admin/usuarios/page.tsx\n M src/app/agendamento/page.tsx\n M src/app/api/admin/agendamentos/cancelar/route.ts\n M src/app/api/admin/agendamentos/reverter-cancelamento/route.ts\n M src/app/api/admin/agendamentos/route.ts\n M src/app/api/admin/cupons/liberar/route.ts\n M src/app/api/admin/cupons/route.ts\n M src/app/api/admin/pagamentos/route.ts\n M src/app/api/admin/planos/excluir-cancelados/route.ts\n M src/app/api/admin/planos/route.ts\n M src/app/api/admin/reprocessar-pagamento-teste/route.ts\n M src/app/api/admin/servicos/route.ts\n M src/app/api/admin/stats/detalhadas/route.ts\n M src/app/api/admin/stats/route.ts\n M src/app/api/admin/usuarios/route.ts\n M src/app/api/agendamentos/cancelar/route.ts\n M src/app/api/agendamentos/com-cupom/route.ts\n M src/app/api/agendamentos/disponibilidade/route.ts\n M src/app/api/agendamentos/escolher-reembolso/route.ts\n M src/app/api/agendamentos/route.ts\n M src/app/api/asaas/checkout-agendamento/route.ts\n M src/app/api/asaas/checkout-carrinho/route.ts\n M src/app/api/asaas/checkout/route.ts\n M src/app/api/conta/route.ts\n M src/app/api/conta/update/route.ts\n M src/app/api/coupons/validate/route.ts\n M src/app/api/cupons/renunciar/route.ts\n M src/app/api/esqueci-senha/route.ts\n M src/app/api/login/route.ts\n M src/app/api/me/route.ts\n M src/app/api/meus-dados/route.ts\n M src/app/api/meus-dados/vincular-cupons-teste/route.ts\n M src/app/api/planos/cancelar/route.ts\n M src/app/api/planos/excluir/route.ts\n M src/app/api/planos/solicitar-reembolso/route.ts\n M src/app/api/test-payment/route.ts\n M src/app/api/trocar-senha/route.ts\n M src/app/api/verificar-codigo/route.ts\n M src/app/api/webhooks/asaas/route.ts\n M src/app/carrinho/page.tsx\n M src/app/components/Header.tsx\n M src/app/conta/page.tsx\n M src/app/context/AuthContext.tsx\n M src/app/esqueci-senha/page.tsx\n M src/app/globals.css\n M src/app/hooks/useUnreadChatCount.ts\n M src/app/layout.tsx\n M src/app/lib/agendamento-payment-coupons.ts\n M src/app/lib/asaas-agendamento-reconcile.ts\n M src/app/lib/auth.ts\n M src/app/lib/coupon-booking-rules.ts\n M src/app/lib/coupon-release.ts\n M src/app/lib/coupon-stale-appointment.ts\n M src/app/lib/delivery-url-validation.ts\n M src/app/lib/payment-providers.ts\n M src/app/lib/plan-coupons.ts\n M src/app/lib/process-payment-webhook.ts\n M src/app/lib/sendEmail.ts\n M src/app/lib/service-catalog.ts\n M src/app/lib/validate-coupon-checkout.ts\n M src/app/lib/validations.ts\n M src/app/login/page.tsx\n M src/app/middleware.ts\n M src/app/minha-conta/page.tsx\n M src/app/planos/page.tsx\n M src/app/registro/page.tsx\n?? .github/\n?? docs/\n?? prisma/backfill_coupon_origin.sql\n?? prisma/ensure_account_deletion_log.sql\n?? prisma/migrations/20260504200000_add_foto_position/\n?? prisma/migrations/20260504213000_account_deletion_log/\n?? prisma/migrations/20260511231500_user_plan_admin_inactive/\n?? prisma/migrations/20260511234500_coupon_refund_tracking/\n?? prisma/migrations/20260512030000_appointment_refund_confirmation/\n?? prisma/migrations/20260512040000_user_plan_refund_tracking/\n?? prisma/migrations/20260604210000_user_plan_user_hidden/\n?? prisma/migrations/20260605120000_appointment_user_hidden/\n?? prisma/migrations/20260617120000_appointment_admin_archive/\n?? prisma/reset_operational_data.sql\n?? public/uploads/\n?? reports/\n?? scripts/architecture-agent.ts\n?? scripts/check-db.mjs\n?? scripts/design-planner-agent.ts\n?? scripts/domain-architecture-planner.ts\n?? scripts/domain-change-analyzer.ts\n?? scripts/domain-decision-engine.ts\n?? scripts/domain-guardian-advisor.ts\n?? scripts/domain-guardian-audit.ts\n?? scripts/domain-guardian-diff.ts\n?? scripts/domain-guardian-runner.ts\n?? scripts/domain-issue-generator.ts\n?? scripts/domain-memory-engine.ts\n?? scripts/domain-pr-reviewer.ts\n?? scripts/domain-review-engine.ts\n?? scripts/evolution-agent.ts\n?? scripts/human-report-agent.ts\n?? scripts/implementation-planner-agent.ts\n?? scripts/inspect-payments.mjs\n?? scripts/inspect-simulation-coupons.mjs\n?? scripts/repair-coupon-ownership.mjs\n?? scripts/reset-operational-data.mjs\n?? scripts/test-simulation-flags.mjs\n?? src/app/agendamento/cupom/\n?? src/app/api/admin/agendamentos/archive/\n?? src/app/api/admin/agendamentos/restore/\n?? src/app/api/admin/cupons/excluir-lote/\n?? src/app/api/admin/cupons/resetar-simulacao/\n?? src/app/api/admin/reprocessar-pagamento-plano-teste/\n?? src/app/api/admin/servicos/entrega/\n?? src/app/api/agendamentos/confirmar-reembolso/\n?? src/app/api/agendamentos/excluir/\n?? src/app/api/conta/alterar-senha/\n?? src/app/api/conta/excluir/\n?? src/app/api/conta/foto/\n?? src/app/api/coupons/resgate/\n?? src/app/api/cupons/confirmar-reembolso/\n?? src/app/api/cupons/excluir-usado/\n?? src/app/api/cupons/solicitar-reembolso/\n?? src/app/api/planos/confirmar-reembolso/\n?? src/app/components/ConditionalBodyLayout.tsx\n?? src/app/components/UserFeedbackDialog.tsx\n?? src/app/conta/alterar-senha/\n?? src/app/lib/active-user-plan.ts\n?? src/app/lib/admin-delete-coupon.ts\n?? src/app/lib/admin-delete-payment.ts\n?? src/app/lib/adminAccess.ts\n?? src/app/lib/agendamento-payment-rules.ts\n?? src/app/lib/appointment-admin-archive.ts\n?? src/app/lib/appointment-hidden.ts\n?? src/app/lib/appointment-plan-coupon.ts\n?? src/app/lib/appointment-refund-payment.ts\n?? src/app/lib/appointment-refund-value.ts\n?? src/app/lib/asaas-agendamento-payment-effects.ts\n?? src/app/lib/asaas-fetch.ts\n?? src/app/lib/asaas-plano-payment-effects.ts\n?? src/app/lib/avatarDisplayUrl.ts\n?? src/app/lib/coupon-account-ownership.ts\n?? src/app/lib/coupon-admin-sections.ts\n?? src/app/lib/coupon-origin.ts\n?? src/app/lib/coupon-refund.ts\n?? src/app/lib/coupon-scheduling-rules.ts\n?? src/app/lib/coupon-sections.ts\n?? src/app/lib/coupon-visibility.ts\n?? src/app/lib/deleteUserAccount.ts\n?? src/app/lib/delivery-audio-upload.ts\n?? src/app/lib/payment-refund-status.ts\n?? src/app/lib/plan-payment-simulation.ts\n?? src/app/lib/plan-refund.ts\n?? src/app/lib/prisma-errors.ts\n?? src/app/lib/purge-cancelled-appointment.ts\n?? src/app/lib/refund-coupon.ts\n?? src/app/lib/simulation-coupon-codes.ts\n?? src/app/lib/simulation-coupon-user-link.ts\n?? src/app/lib/simulation-coupon.ts\n?? src/app/lib/simulation-reset.ts\n?? src/app/lib/support-contact.ts\n?? src/app/lib/symbolic-payment-resolve.ts\n?? src/app/lib/symbolic-payment.ts\n?? src/app/lib/user-feedback.ts\n?? src/app/lib/user-plan-hidden.ts",
+      "diffUnstaged": "M\t.gitignore\nM\tpackage.json\nM\tprisma/schema.prisma\nM\tsrc/app/admin/agendamentos/page.tsx\nM\tsrc/app/admin/estatisticas/page.tsx\nM\tsrc/app/admin/layout.tsx\nM\tsrc/app/admin/pagamentos/page.tsx\nM\tsrc/app/admin/page.tsx\nM\tsrc/app/admin/planos/page.tsx\nM\tsrc/app/admin/servicos-aceitos/page.tsx\nM\tsrc/app/admin/servicos-solicitados/page.tsx\nM\tsrc/app/admin/usuarios/page.tsx\nM\tsrc/app/agendamento/page.tsx\nM\tsrc/app/api/admin/agendamentos/cancelar/route.ts\nM\tsrc/app/api/admin/agendamentos/reverter-cancelamento/route.ts\nM\tsrc/app/api/admin/agendamentos/route.ts\nM\tsrc/app/api/admin/cupons/liberar/route.ts\nM\tsrc/app/api/admin/cupons/route.ts\nM\tsrc/app/api/admin/pagamentos/route.ts\nM\tsrc/app/api/admin/planos/excluir-cancelados/route.ts\nM\tsrc/app/api/admin/planos/route.ts\nM\tsrc/app/api/admin/reprocessar-pagamento-teste/route.ts\nM\tsrc/app/api/admin/servicos/route.ts\nM\tsrc/app/api/admin/stats/detalhadas/route.ts\nM\tsrc/app/api/admin/stats/route.ts\nM\tsrc/app/api/admin/usuarios/route.ts\nM\tsrc/app/api/agendamentos/cancelar/route.ts\nM\tsrc/app/api/agendamentos/com-cupom/route.ts\nM\tsrc/app/api/agendamentos/disponibilidade/route.ts\nM\tsrc/app/api/agendamentos/escolher-reembolso/route.ts\nM\tsrc/app/api/agendamentos/route.ts\nM\tsrc/app/api/asaas/checkout-agendamento/route.ts\nM\tsrc/app/api/asaas/checkout-carrinho/route.ts\nM\tsrc/app/api/asaas/checkout/route.ts\nM\tsrc/app/api/conta/route.ts\nM\tsrc/app/api/conta/update/route.ts\nM\tsrc/app/api/coupons/validate/route.ts\nM\tsrc/app/api/cupons/renunciar/route.ts\nM\tsrc/app/api/esqueci-senha/route.ts\nM\tsrc/app/api/login/route.ts\nM\tsrc/app/api/me/route.ts\nM\tsrc/app/api/meus-dados/route.ts\nM\tsrc/app/api/meus-dados/vincular-cupons-teste/route.ts\nM\tsrc/app/api/planos/cancelar/route.ts\nM\tsrc/app/api/planos/excluir/route.ts\nM\tsrc/app/api/planos/solicitar-reembolso/route.ts\nM\tsrc/app/api/test-payment/route.ts\nM\tsrc/app/api/trocar-senha/route.ts\nM\tsrc/app/api/verificar-codigo/route.ts\nM\tsrc/app/api/webhooks/asaas/route.ts\nM\tsrc/app/carrinho/page.tsx\nM\tsrc/app/components/Header.tsx\nM\tsrc/app/conta/page.tsx\nM\tsrc/app/context/AuthContext.tsx\nM\tsrc/app/esqueci-senha/page.tsx\nM\tsrc/app/globals.css\nM\tsrc/app/hooks/useUnreadChatCount.ts\nM\tsrc/app/layout.tsx\nM\tsrc/app/lib/agendamento-payment-coupons.ts\nM\tsrc/app/lib/asaas-agendamento-reconcile.ts\nM\tsrc/app/lib/auth.ts\nM\tsrc/app/lib/coupon-booking-rules.ts\nM\tsrc/app/lib/coupon-release.ts\nM\tsrc/app/lib/coupon-stale-appointment.ts\nM\tsrc/app/lib/delivery-url-validation.ts\nM\tsrc/app/lib/payment-providers.ts\nM\tsrc/app/lib/plan-coupons.ts\nM\tsrc/app/lib/process-payment-webhook.ts\nM\tsrc/app/lib/sendEmail.ts\nM\tsrc/app/lib/service-catalog.ts\nM\tsrc/app/lib/validate-coupon-checkout.ts\nM\tsrc/app/lib/validations.ts\nM\tsrc/app/login/page.tsx\nM\tsrc/app/middleware.ts\nM\tsrc/app/minha-conta/page.tsx\nM\tsrc/app/planos/page.tsx\nM\tsrc/app/registro/page.tsx",
+      "diffStaged": "",
+      "logOneline": [
+        "fd9ff6d hardening completo sistema: cupons, webhook, idempotencia, sync e validações finais",
+        "60fb2fa feat(admin): boxes de agendamento por status com links e filtros na lista",
+        "69ce69f Contato: subtitulo em duas linhas centralizado sem scroll; hero: texto vermelho centralizado no PC",
+        "72b7b0a Hero desktop: titulo uma linha e servicos alinhados; contato subtitulo sem box uma linha",
+        "d6798e0 Captacao R; hero mobile legivel; agendamento sem espaco inicial; planos DuvidasBox alinhado; contato subtitulo preto",
+        "8ddb81d Loja Digital mobile: texto sem corte nas laterais (padding e overflow)",
+        "88f87c8 Loja Digital: textos juntos em um so paragrafo na versao desktop",
+        "27d834a Desktop: texto vermelho do hero centralizado; base 20px em todas as paginas",
+        "0f3b4db Desktop: base 18px e hero maiores; hero centralizado e tagline sem corte",
+        "bd922d0 Desktop: base 16px e hero maior; hero 3 textos centralizados na mesma coluna; mobile inalterado",
+        "f2fc693 Hero desktop: titulo no meio; 3 textos centralizados na mesma coluna; textos maiores",
+        "65636c3 Hero desktop: servicos em uma linha; tagline centralizada no viewport",
+        "609bbfc Hero: titulo e frases maiores; tagline responsiva no mobile (quebra de linha)",
+        "40c34f9 Hero: titulo e textos com borda preta, tagline em uma linha centralizada",
+        "0f8b1a1 Meus-dados: incluir assignedUserId na query principal de cupons para aparecerem na Minha Conta"
+      ],
+      "changedFiles": [
+        {
+          "kind": "modified",
+          "path": ".gitignore",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "package.json",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "prisma/schema.prisma",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "src/app/admin/agendamentos/page.tsx",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "src/app/admin/estatisticas/page.tsx",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "src/app/admin/layout.tsx",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "src/app/admin/pagamentos/page.tsx",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "src/app/admin/page.tsx",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "src/app/admin/planos/page.tsx",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "src/app/admin/servicos-aceitos/page.tsx",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "src/app/admin/servicos-solicitados/page.tsx",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "src/app/admin/usuarios/page.tsx",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "src/app/agendamento/page.tsx",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "src/app/api/admin/agendamentos/cancelar/route.ts",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "src/app/api/admin/agendamentos/reverter-cancelamento/route.ts",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "src/app/api/admin/agendamentos/route.ts",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "src/app/api/admin/cupons/liberar/route.ts",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "src/app/api/admin/cupons/route.ts",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "src/app/api/admin/pagamentos/route.ts",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "src/app/api/admin/planos/excluir-cancelados/route.ts",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "src/app/api/admin/planos/route.ts",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "src/app/api/admin/reprocessar-pagamento-teste/route.ts",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "src/app/api/admin/servicos/route.ts",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "src/app/api/admin/stats/detalhadas/route.ts",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "src/app/api/admin/stats/route.ts",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "src/app/api/admin/usuarios/route.ts",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "src/app/api/agendamentos/cancelar/route.ts",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "src/app/api/agendamentos/com-cupom/route.ts",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "src/app/api/agendamentos/disponibilidade/route.ts",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "src/app/api/agendamentos/escolher-reembolso/route.ts",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "src/app/api/agendamentos/route.ts",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "src/app/api/asaas/checkout-agendamento/route.ts",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "src/app/api/asaas/checkout-carrinho/route.ts",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "src/app/api/asaas/checkout/route.ts",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "src/app/api/conta/route.ts",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "src/app/api/conta/update/route.ts",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "src/app/api/coupons/validate/route.ts",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "src/app/api/cupons/renunciar/route.ts",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "src/app/api/esqueci-senha/route.ts",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "src/app/api/login/route.ts",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "src/app/api/me/route.ts",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "src/app/api/meus-dados/route.ts",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "src/app/api/meus-dados/vincular-cupons-teste/route.ts",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "src/app/api/planos/cancelar/route.ts",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "src/app/api/planos/excluir/route.ts",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "src/app/api/planos/solicitar-reembolso/route.ts",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "src/app/api/test-payment/route.ts",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "src/app/api/trocar-senha/route.ts",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "src/app/api/verificar-codigo/route.ts",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "src/app/api/webhooks/asaas/route.ts",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "src/app/carrinho/page.tsx",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "src/app/components/Header.tsx",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "src/app/conta/page.tsx",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "src/app/context/AuthContext.tsx",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "src/app/esqueci-senha/page.tsx",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "src/app/globals.css",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "src/app/hooks/useUnreadChatCount.ts",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "src/app/layout.tsx",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "src/app/lib/agendamento-payment-coupons.ts",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "src/app/lib/asaas-agendamento-reconcile.ts",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "src/app/lib/auth.ts",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "src/app/lib/coupon-booking-rules.ts",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "src/app/lib/coupon-release.ts",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "src/app/lib/coupon-stale-appointment.ts",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "src/app/lib/delivery-url-validation.ts",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "src/app/lib/payment-providers.ts",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "src/app/lib/plan-coupons.ts",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "src/app/lib/process-payment-webhook.ts",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "src/app/lib/sendEmail.ts",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "src/app/lib/service-catalog.ts",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "src/app/lib/validate-coupon-checkout.ts",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "src/app/lib/validations.ts",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "src/app/login/page.tsx",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "src/app/middleware.ts",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "src/app/minha-conta/page.tsx",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "src/app/planos/page.tsx",
+          "staged": false
+        },
+        {
+          "kind": "modified",
+          "path": "src/app/registro/page.tsx",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": ".github/",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "docs/",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "prisma/backfill_coupon_origin.sql",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "prisma/ensure_account_deletion_log.sql",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "prisma/migrations/20260504200000_add_foto_position/",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "prisma/migrations/20260504213000_account_deletion_log/",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "prisma/migrations/20260511231500_user_plan_admin_inactive/",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "prisma/migrations/20260511234500_coupon_refund_tracking/",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "prisma/migrations/20260512030000_appointment_refund_confirmation/",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "prisma/migrations/20260512040000_user_plan_refund_tracking/",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "prisma/migrations/20260604210000_user_plan_user_hidden/",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "prisma/migrations/20260605120000_appointment_user_hidden/",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "prisma/migrations/20260617120000_appointment_admin_archive/",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "prisma/reset_operational_data.sql",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "public/uploads/",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "reports/",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "scripts/architecture-agent.ts",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "scripts/check-db.mjs",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "scripts/design-planner-agent.ts",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "scripts/domain-architecture-planner.ts",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "scripts/domain-change-analyzer.ts",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "scripts/domain-decision-engine.ts",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "scripts/domain-guardian-advisor.ts",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "scripts/domain-guardian-audit.ts",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "scripts/domain-guardian-diff.ts",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "scripts/domain-guardian-runner.ts",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "scripts/domain-issue-generator.ts",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "scripts/domain-memory-engine.ts",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "scripts/domain-pr-reviewer.ts",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "scripts/domain-review-engine.ts",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "scripts/evolution-agent.ts",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "scripts/human-report-agent.ts",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "scripts/implementation-planner-agent.ts",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "scripts/inspect-payments.mjs",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "scripts/inspect-simulation-coupons.mjs",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "scripts/repair-coupon-ownership.mjs",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "scripts/reset-operational-data.mjs",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "scripts/test-simulation-flags.mjs",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "src/app/agendamento/cupom/",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "src/app/api/admin/agendamentos/archive/",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "src/app/api/admin/agendamentos/restore/",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "src/app/api/admin/cupons/excluir-lote/",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "src/app/api/admin/cupons/resetar-simulacao/",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "src/app/api/admin/reprocessar-pagamento-plano-teste/",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "src/app/api/admin/servicos/entrega/",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "src/app/api/agendamentos/confirmar-reembolso/",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "src/app/api/agendamentos/excluir/",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "src/app/api/conta/alterar-senha/",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "src/app/api/conta/excluir/",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "src/app/api/conta/foto/",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "src/app/api/coupons/resgate/",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "src/app/api/cupons/confirmar-reembolso/",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "src/app/api/cupons/excluir-usado/",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "src/app/api/cupons/solicitar-reembolso/",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "src/app/api/planos/confirmar-reembolso/",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "src/app/components/ConditionalBodyLayout.tsx",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "src/app/components/UserFeedbackDialog.tsx",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "src/app/conta/alterar-senha/",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "src/app/lib/active-user-plan.ts",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "src/app/lib/admin-delete-coupon.ts",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "src/app/lib/admin-delete-payment.ts",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "src/app/lib/adminAccess.ts",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "src/app/lib/agendamento-payment-rules.ts",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "src/app/lib/appointment-admin-archive.ts",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "src/app/lib/appointment-hidden.ts",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "src/app/lib/appointment-plan-coupon.ts",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "src/app/lib/appointment-refund-payment.ts",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "src/app/lib/appointment-refund-value.ts",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "src/app/lib/asaas-agendamento-payment-effects.ts",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "src/app/lib/asaas-fetch.ts",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "src/app/lib/asaas-plano-payment-effects.ts",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "src/app/lib/avatarDisplayUrl.ts",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "src/app/lib/coupon-account-ownership.ts",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "src/app/lib/coupon-admin-sections.ts",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "src/app/lib/coupon-origin.ts",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "src/app/lib/coupon-refund.ts",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "src/app/lib/coupon-scheduling-rules.ts",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "src/app/lib/coupon-sections.ts",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "src/app/lib/coupon-visibility.ts",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "src/app/lib/deleteUserAccount.ts",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "src/app/lib/delivery-audio-upload.ts",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "src/app/lib/payment-refund-status.ts",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "src/app/lib/plan-payment-simulation.ts",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "src/app/lib/plan-refund.ts",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "src/app/lib/prisma-errors.ts",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "src/app/lib/purge-cancelled-appointment.ts",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "src/app/lib/refund-coupon.ts",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "src/app/lib/simulation-coupon-codes.ts",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "src/app/lib/simulation-coupon-user-link.ts",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "src/app/lib/simulation-coupon.ts",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "src/app/lib/simulation-reset.ts",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "src/app/lib/support-contact.ts",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "src/app/lib/symbolic-payment-resolve.ts",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "src/app/lib/symbolic-payment.ts",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "src/app/lib/user-feedback.ts",
+          "staged": false
+        },
+        {
+          "kind": "untracked",
+          "path": "src/app/lib/user-plan-hidden.ts",
+          "staged": false
+        }
+      ],
+      "totalChanged": 173
+    },
+    "lastCommitMessage": "hardening completo sistema: cupons, webhook, idempotencia, sync e validações finais",
+    "humanReportLoaded": true
+  },
+  "limitations": [
+    "'Último deploy' inferido pelo working tree Git — não há marcador de deploy em produção.",
+    "Alterações já commitadas mas não deployadas aparecem como pendentes se o working tree estiver sujo.",
+    "project-report.json buscado em reports/human/ e reports/domain-guardian/.",
+    "Classificação de mudanças por heurística de caminhos e palavras-chave.",
+    "Não substitui change-analyzer nem decision-engine para gate de merge.",
+    "Timeline ordenada por tema, não por timestamp exato de cada alteração."
+  ]
+}

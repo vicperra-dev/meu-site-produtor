@@ -1,0 +1,139 @@
+{
+  "reportId": "HS-01-hardening-sprint",
+  "mode": "STAFF_ENGINEER_RELEASE_GUARDIAN",
+  "generatedAt": "2026-07-12T07:45:00.000Z",
+  "language": "pt-BR",
+  "branch": "pr03-clean",
+  "launchConfidenceScore": {
+    "antes": 72,
+    "depois": 88,
+    "escala": "0-100"
+  },
+  "fases": {
+    "1_cadastro": {
+      "status": "IMPLEMENTADO",
+      "itens": [
+        "CPF único: schema @unique + validação backend + mensagem padrão",
+        "Data nascimento: 1900-2026, datas inválidas e futuras (Zod + frontend)",
+        "Sexo obrigatório (sem Selecione)",
+        "Gênero obrigatório + opção prefiro_nao_informar"
+      ]
+    },
+    "2_limpeza": {
+      "status": "IMPLEMENTADO",
+      "script": "scripts/cleanup-test-users.js",
+      "nota": "Dry-run por padrão; preserva Victor Pereira Ramos, ADMIN e pagamentos reais"
+    },
+    "3_cupons": {
+      "status": "PARCIAL",
+      "itens": [
+        "Botão Pagou R$5 oculto para usuários comuns (localhost/admin apenas)",
+        "Revisão completa cupons: pendente validação manual E2E pós-deploy"
+      ]
+    },
+    "4_servicos": {
+      "status": "IMPLEMENTADO",
+      "itens": [
+        "ensureServicesForAppointment no aceite admin",
+        "Serviços Selecionados filtra apenas ativos (pendente/aceito/em_andamento)"
+      ]
+    },
+    "5_status": {
+      "status": "PARCIAL",
+      "itens": [
+        "app-data-events: notify + visibility refresh",
+        "Polling 30s Minha Conta e Serviços Selecionados"
+      ]
+    },
+    "6_simulacao": {
+      "status": "IMPLEMENTADO",
+      "itens": [
+        "canUseSymbolicSimulation: localhost/dev OU admin; nunca production público"
+      ]
+    },
+    "7_bug_critico_appointmentId": {
+      "status": "IMPLEMENTADO",
+      "migration": "20260712120000_hs01_cpf_unique_service_appointment",
+      "nota": "Rodar prisma migrate deploy em Preview e Production"
+    },
+    "8_estatisticas": {
+      "status": "NAO_ALTERADO",
+      "nota": "Catálogo normalizeServiceTypeId já cobre tipos; auditoria recomendada pós-deploy"
+    },
+    "9_sincronizacao_ui": {
+      "status": "PARCIAL",
+      "itens": [
+        "Minha Conta, Serviços Selecionados, Agendamentos admin com refresh automático"
+      ]
+    },
+    "10_integridade": {
+      "status": "IMPLEMENTADO",
+      "script": "scripts/hs01-data-integrity-audit.js"
+    },
+    "11_testes": {
+      "status": "PENDENTE_DEPLOY",
+      "nota": "tsc --noEmit OK; ex01 após push Preview"
+    },
+    "12_build": {
+      "status": "PARCIAL",
+      "tsc": "PASS",
+      "nextBuild": "BLOQUEADO_REDE_FONTS_GOOGLE",
+      "lint": "520 issues preexistentes no repo"
+    },
+    "13_preview": {
+      "status": "PENDENTE",
+      "nota": "Commits + push pr03-clean aguardando aprovação do usuário"
+    },
+    "14_production": {
+      "status": "PENDENTE",
+      "nota": "Merge main após Preview PASS"
+    }
+  },
+  "problemasEncontrados": [
+    "CPF duplicado sem constraint",
+    "Data nascimento sem validação de ano/datas impossíveis",
+    "Sexo/gênero opcionais com Selecione",
+    "Service.appointmentId sem migration rastreada (prisma.service.create falhava em prod)",
+    "Admin aceitar agendamento sem criar Service quando pagamento não gerou linhas",
+    "Botão R$5 teste visível para usuários comuns",
+    "UI dependia de F5 (polling lento)"
+  ],
+  "problemasCorrigidos": [
+    "CPF único + mensagem O CPF informado já está cadastrado",
+    "Validação data nascimento 1900-2026",
+    "Sexo e gênero obrigatórios + prefiro_nao_informar",
+    "Migration appointmentId + índice/FK",
+    "ensureServicesForAppointment no PATCH aceite admin",
+    "Simulação liberada em dev/localhost",
+    "Refresh automático via app-data-events"
+  ],
+  "arquivosAlterados": [
+    "prisma/schema.prisma",
+    "prisma/migrations/20260712120000_hs01_cpf_unique_service_appointment/migration.sql",
+    "src/app/lib/birth-date-validation.ts",
+    "src/app/lib/cpf-validation.ts",
+    "src/app/lib/app-data-events.ts",
+    "src/app/lib/ensure-appointment-services.ts",
+    "src/app/lib/validations.ts",
+    "src/app/lib/symbolic-payment.ts",
+    "src/app/api/registro/route.ts",
+    "src/app/api/conta/update/route.ts",
+    "src/app/api/admin/agendamentos/route.ts",
+    "src/app/registro/page.tsx",
+    "src/app/context/AuthContext.tsx",
+    "src/app/minha-conta/page.tsx",
+    "src/app/admin/servicos-solicitados/page.tsx",
+    "src/app/admin/agendamentos/page.tsx",
+    "scripts/cleanup-test-users.js",
+    "scripts/hs01-data-integrity-audit.js"
+  ],
+  "pendencias": [
+    "git commit + push pr03-clean",
+    "prisma migrate deploy Preview e Production",
+    "Smoke EX-01 Preview e Production",
+    "Merge pr03-clean → main",
+    "Validar cupons E2E manualmente",
+    "Rodar cleanup-test-users.js --execute se desejado (após revisar dry-run)",
+    "Resolver CPFs duplicados existentes antes da migration em prod (se houver)"
+  ]
+}

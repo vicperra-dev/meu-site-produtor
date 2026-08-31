@@ -1,0 +1,136 @@
+{
+  "reportId": "PV-02a-preview-alignment",
+  "mode": "EXECUCAO_CONTROLADA",
+  "generatedAt": "2026-07-11T05:20:00.000Z",
+  "language": "pt-BR",
+  "projectName": "THouse Rec",
+  "branchAlvo": "pr03-clean",
+  "headAlvo": "f882047",
+  "basedOn": ["PV-02-preview-validation", "ENV-01-environment-validation"],
+  "restricoes": {
+    "semCommits": true,
+    "semAlteracaoCodigo": true,
+    "semAlteracaoAuthLogic": true,
+    "semAlteracaoFrontend": true
+  },
+  "limitacoesExecucao": {
+    "vercelCli": "npx vercel whoami / vercel link não autenticados (timeout sem credenciais)",
+    "vercelToken": "ausente no ambiente",
+    "databaseUrlPreview": "não disponível localmente — valor apenas no painel Vercel",
+    "acoesRemotasExecutadas": false,
+    "nota": "Diagnóstico completo; alterações de ambiente requerem acesso manual ao painel Vercel ou VERCEL_TOKEN"
+  },
+  "verificacoes": {
+    "1_deploymentProtection": {
+      "ativa": "SIM",
+      "evidencia": "GET https://meu-site-produtor-13-176nozk2j-rauls-projects-6bf8a8b0.vercel.app → HTTP 302 → vercel.com/sso-api",
+      "urlPreviewOficial": "https://meu-site-produtor-13-176nozk2j-rauls-projects-6bf8a8b0.vercel.app",
+      "desabilitadaNestaExecucao": false,
+      "menorCorrecao": "Vercel → Project → Settings → Deployment Protection → desabilitar para Preview (ou gerar Protection Bypass para homologação F2)"
+    },
+    "2_variaveisPreview": {
+      "comparacaoComLocalHomologado": {
+        "DATABASE_URL": {
+          "local": "postgresql://localhost:5432/thouse_rec (.env)",
+          "previewEsperado": "PostgreSQL remoto (Neon/staging) — Vercel Preview",
+          "status": "NAO_VERIFICAVEL_SEM_VERCEL",
+          "menorCorrecao": "Copiar DATABASE_URL do Neon staging para Environment Variables → Preview no Vercel"
+        },
+        "ASAAS_API_KEY": {
+          "local": "SANDBOX ($aact_hmlg_ — .env.local)",
+          "previewEsperado": "SANDBOX ($aact_hmlg_)",
+          "status": "PROVAVEL_OK",
+          "evidencia": "Checkout sandbox funcionou em PV-02 no alias público",
+          "menorCorrecao": "Confirmar no Vercel Preview que a chave é sandbox, não produção"
+        },
+        "ASAAS_WEBHOOK_ACCESS_TOKEN": {
+          "local": "AUSENTE",
+          "previewEsperado": "OBRIGATÓRIO para webhook automático F2",
+          "status": "PROVAVEL_AUSENTE",
+          "menorCorrecao": "Definir ASAAS_WEBHOOK_ACCESS_TOKEN no Vercel Preview e registrar webhook Asaas → {preview}/api/webhooks/asaas"
+        },
+        "NEXT_PUBLIC_SITE_URL": {
+          "local": "http://localhost:3000 (.env.local)",
+          "previewEsperado": "https://meu-site-produtor-13-176nozk2j-rauls-projects-6bf8a8b0.vercel.app (ou alias estável Preview)",
+          "status": "PROVAVEL_DESALINHADO",
+          "menorCorrecao": "Atualizar NEXT_PUBLIC_SITE_URL no Vercel Preview para a URL HTTPS do deployment"
+        },
+        "SESSION_COOKIES": {
+          "local": "secure=false (NODE_ENV development)",
+          "preview": "secure=true (NODE_ENV production)",
+          "variaveisSessionEspecificas": "NENHUMA no projeto",
+          "status": "CONFIG_PADRAO_OK"
+        }
+      }
+    },
+    "3_bancoPreview": {
+      "comando": "npx prisma migrate deploy",
+      "executadoPreview": false,
+      "executadoLocal": true,
+      "localResultado": "29 migrations — Database schema is up to date",
+      "previewResultado": "NAO_EXECUTADO",
+      "evidenciaProblema": "GET /api/meus-dados → 500 no deploy acessível (coluna adminArchivedAt ausente no banco remoto)",
+      "migrationCritica": "20260617120000_appointment_admin_archive",
+      "menorCorrecao": "No terminal: $env:DATABASE_URL='<url_preview_neon>'; npx prisma migrate deploy"
+    },
+    "4_cookiesRegistro": {
+      "pergunta": "Configuração ou Código?",
+      "resposta": "CODIGO",
+      "evidencia": [
+        "/api/login retorna Set-Cookie session_id no deploy acessível",
+        "/api/registro retorna 200 sem Set-Cookie no mesmo deploy",
+        "main @ fd9ff6d NÃO chama createUserSession em registro/route.ts",
+        "pr03-clean inclui createUserSession (fix QE-01b / commit 3f20ad0)",
+        "Alias público meu-site-produtor-13.vercel.app comporta-se como produção (main), não Preview RC"
+      ],
+      "naoECausa": "Variáveis SESSION_* inexistentes; secure/sameSite configurados corretamente em auth.ts",
+      "menorCorrecaoAmbiente": "Deploy Preview de pr03-clean acessível (após desabilitar Protection) — sem alterar auth",
+      "notaCodigo": "Fix já existe na RC; não requer mudança adicional se Preview deployar pr03-clean"
+    },
+    "5_buildPreview": {
+      "executado": false,
+      "necessario": "SIM",
+      "motivo": "Último deploy acessível publicamente não reflete pr03-clean (f882047)",
+      "ultimoDeployPreviewSha": "f882047",
+      "ultimoDeployAcessivelComportamento": "main (fd9ff6d) inferido",
+      "menorCorrecao": "Push já feito (RC-04); redeploy Preview pr03-clean após alinhar envs e desabilitar Protection"
+    }
+  },
+  "respostas": {
+    "ambientePreviewAlinhado": "NAO",
+    "itensPendentes": [
+      {
+        "item": "Deployment Protection",
+        "menorCorrecao": "Desabilitar proteção SSO no ambiente Preview no Vercel"
+      },
+      {
+        "item": "DATABASE_URL + migrations",
+        "menorCorrecao": "Apontar Preview para banco staging e executar npx prisma migrate deploy (29 migrations)"
+      },
+      {
+        "item": "NEXT_PUBLIC_SITE_URL",
+        "menorCorrecao": "Definir URL HTTPS do Preview no Vercel"
+      },
+      {
+        "item": "ASAAS_WEBHOOK_ACCESS_TOKEN",
+        "menorCorrecao": "Configurar token no Preview e webhook sandbox Asaas"
+      },
+      {
+        "item": "Deploy da RC",
+        "menorCorrecao": "Garantir que homologação F2 use Preview pr03-clean (f882047), não alias de produção main"
+      }
+    ]
+  },
+  "checklistManualVercel": [
+    "Settings → Deployment Protection → Preview: OFF (temporário)",
+    "Settings → Environment Variables → Preview: DATABASE_URL, ASAAS_API_KEY (sandbox), ASAAS_WEBHOOK_ACCESS_TOKEN, NEXT_PUBLIC_SITE_URL",
+    "Terminal local: prisma migrate deploy com DATABASE_URL do Preview",
+    "Deployments → confirmar Preview pr03-clean @ f882047 Ready",
+    "Reexecutar PV-02"
+  ],
+  "veredito": "REPROVADO",
+  "launchConfidenceScore": {
+    "atual": 88,
+    "nota": "Bloqueio operacional Vercel/DB remoto — não regressão de código RC"
+  }
+}

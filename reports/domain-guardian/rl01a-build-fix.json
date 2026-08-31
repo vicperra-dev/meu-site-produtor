@@ -1,0 +1,79 @@
+{
+  "reportId": "RL-01a-build-fix",
+  "mode": "IMPLEMENTAÇÃO_CONTROLADA",
+  "generatedAt": "2026-07-10T02:10:00.000Z",
+  "language": "pt-BR",
+  "projectName": "THouse",
+  "branch": "pr03-clean",
+  "scope": "src/app/lib/service-catalog.ts",
+  "answers": {
+    "1_existedInSprintBranch": {
+      "answer": "parcial",
+      "detail": "Não no HEAD commitado de sprint1/pr-01-guardian (cf4b2e7). Sim no WIP do stash (working tree antes do RL-01 stash push).",
+      "evidence": {
+        "sprintHead": "apenas normalizeServiceTypeId + CANONICAL_SERVICE_IDS",
+        "stash": "expandAgendamentoItemToCouponTypes, isMultiCouponAgendamentoPackageId e helpers presentes"
+      }
+    },
+    "2_lostDuringExtraction": {
+      "answer": true,
+      "detail": "As funções estavam no WIP não commitado e não entraram no bundle fix(build) do RL-01. O cherry-pick trouxe agendamento-payment-coupons.ts e agendamento-payment-rules.ts que as importam, mas service-catalog.ts permaneceu na versão mínima de main."
+    },
+    "3_exportsOnlyOrMissingLogic": {
+      "answer": "lógica_faltando",
+      "detail": "Não eram apenas re-exports. Faltavam PACKAGE_LABEL_ALIASES, COMPOSITE_COUPON_SPLIT, resolveAgendamentoItemCatalogId e as duas funções exportadas."
+    },
+    "4_originalLogicPreserved": {
+      "answer": true,
+      "detail": "Lógica restaurada verbatim do stash@{0} (WIP sprint1). Nenhuma alteração de regra de negócio."
+    },
+    "5_buildAfterFix": {
+      "answer": "NOVO_ERRO",
+      "exitCode": 1,
+      "originalErrorsResolved": true,
+      "compilePhase": "passou",
+      "typescriptPhase": "falhou"
+    }
+  },
+  "changeApplied": {
+    "file": "src/app/lib/service-catalog.ts",
+    "functionsAdded": [
+      "resolveAgendamentoItemCatalogId",
+      "isMultiCouponAgendamentoPackageId",
+      "expandAgendamentoItemToCouponTypes"
+    ],
+    "supportingConstantsAdded": [
+      "PACKAGE_LABEL_ALIASES",
+      "COMPOSITE_COUPON_SPLIT"
+    ],
+    "note": "resolveAgendamentoItemCatalogId é helper interno necessário às duas funções alvo; não altera APIs/webhooks/checkouts."
+  },
+  "buildResult": {
+    "verdict": "NOVO ERRO",
+    "command": "npm run build",
+    "exitCode": 1,
+    "resolvedErrors": [
+      "expandAgendamentoItemToCouponTypes missing export",
+      "isMultiCouponAgendamentoPackageId missing export"
+    ],
+    "newErrors": [
+      {
+        "file": ".next/dev/types/validator.ts",
+        "line": 215,
+        "message": "Cannot find module '../../../src/app/agendamento/cupom/page.js' or its corresponding type declarations."
+      }
+    ],
+    "autoFixApplied": false,
+    "stoppedImmediately": true
+  },
+  "constraintsRespected": {
+    "noArchitectureChange": true,
+    "noBusinessRuleChange": true,
+    "noDatabaseChange": true,
+    "noPrismaChange": true,
+    "noApiChange": true,
+    "noWebhookChange": true,
+    "noCheckoutChange": true,
+    "scopeExclusive": true
+  }
+}

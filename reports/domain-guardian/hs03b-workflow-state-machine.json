@@ -1,0 +1,89 @@
+{
+  "sprint": "HS-03B",
+  "title": "Workflow & State Machine Consolidation",
+  "generatedAt": "2026-07-14T00:45:00.000Z",
+  "commitMessage": "refactor(workflow): consolidate official state machine (HS-03B)",
+  "bases": ["HS-02A", "HS-02B", "HS-03A", "TE-01A", "TE-01B", "TE-01C"],
+  "created": [
+    "src/app/lib/domain/state-machine/types.ts",
+    "src/app/lib/domain/state-machine/guards.ts",
+    "src/app/lib/domain/state-machine/events.ts",
+    "src/app/lib/domain/state-machine/history.ts",
+    "src/app/lib/domain/state-machine/effects.ts",
+    "src/app/lib/domain/state-machine/transition.ts",
+    "src/app/lib/domain/state-machine/index.ts",
+    "scripts/workflow-audit.ts",
+    "scripts/workflow-smoke.ts",
+    "reports/domain-guardian/hs03b-workflow-state-machine.md",
+    "reports/domain-guardian/hs03b-workflow-state-machine.json"
+  ],
+  "removed": [],
+  "changed": [
+    "src/app/lib/domain/workflow.ts",
+    "src/app/lib/domain/index.ts",
+    "src/app/lib/domain/statuses.ts",
+    "src/app/lib/process-payment-webhook.ts",
+    "scripts/domain-audit.ts",
+    "src/app/api/admin/agendamentos/route.ts",
+    "package.json",
+    "prisma/schema.prisma"
+  ],
+  "api": "transition({ entity, id, from?, to, reason, actor, metadata })",
+  "entities": ["appointment", "service", "payment", "coupon"],
+  "guards": [
+    "concluido->pendente",
+    "recusado->em_andamento",
+    "reembolsado->confirmado",
+    "utilizado->criado"
+  ],
+  "events": [
+    "AppointmentAccepted",
+    "AppointmentRejected",
+    "AppointmentCancelled",
+    "AppointmentRebooked",
+    "AppointmentStarted",
+    "AppointmentCompleted",
+    "ServiceAccepted",
+    "ServiceStarted",
+    "ServiceDelivered",
+    "ServiceCompleted",
+    "ServiceCancelled",
+    "ServiceRejected",
+    "PaymentReceived",
+    "PaymentConfirmed",
+    "PaymentRefunded",
+    "CouponGenerated",
+    "CouponConsumed",
+    "CouponExpired",
+    "CouponCancelled"
+  ],
+  "historyTable": "DomainTransitionHistory",
+  "duplicationsRemoved": [
+    "inline_status_updates_in_workflow_wrappers",
+    "scattered_service_cascade_in_routes"
+  ],
+  "validation": {
+    "tsc": "PASS",
+    "prisma": "PASS",
+    "build": "PASS",
+    "domainAudit": "PASS",
+    "workflowAudit": "PASS",
+    "workflowSmoke": "PASS"
+  },
+  "residualRisks": [
+    "payment_create_approved_bootstrap_in_asaas_webhook",
+    "appointment_concluido_mirror_in_service_effect",
+    "symbolic_payment_without_appointment_warning"
+  ],
+  "outOfScope": [
+    "StudioOS",
+    "Event Bus",
+    "CQRS",
+    "Event Sourcing",
+    "QA Center",
+    "Release Gates",
+    "TE-02",
+    "layout_css_auth_faq_chat_test_engine"
+  ],
+  "pendingNext": ["HS-03C", "HS-03D", "HS-03E", "TE-02"]
+}

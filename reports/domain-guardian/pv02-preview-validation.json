@@ -1,0 +1,91 @@
+{
+  "reportId": "PV-02-preview-validation",
+  "mode": "EXECUCAO_CONTROLADA",
+  "generatedAt": "2026-07-11T04:55:00.000Z",
+  "language": "pt-BR",
+  "projectName": "THouse Rec",
+  "branch": "pr03-clean",
+  "head": "f882047",
+  "basedOn": ["PV-01-release-publish", "RC-04-ci-publish", "EX-01-local-validation", "EX-02-financial-flow"],
+  "restricoes": {
+    "novosCommits": false,
+    "alteracaoCodigo": false
+  },
+  "previewDeployment": {
+    "sha": "f8820474c927f685387f5bee9d479d7a4d7ab233",
+    "deploymentId": 5400838403,
+    "environment": "Preview - meu-site-produtor-1.3",
+    "urlOficial": "https://meu-site-produtor-13-176nozk2j-rauls-projects-6bf8a8b0.vercel.app",
+    "urlAlternativaPublica": "https://meu-site-produtor-13.vercel.app",
+    "githubActionsRun": "https://github.com/rvits/meu-site-produtor/actions/runs/29140096152"
+  },
+  "execucao": {
+    "metodo": "HTTP automatizado (scripts ex01 adaptados) + GitHub Deployments API",
+    "tlsNota": "NODE_TLS_REJECT_UNAUTHORIZED=0 necessário neste ambiente Windows para fetch HTTPS",
+    "webhookReplay": false
+  },
+  "resultados": {
+    "etapa1_urlPreviewOficial": {
+      "status": "FAIL",
+      "http": 302,
+      "redirect": "https://vercel.com/sso-api?url=...",
+      "causa": "Vercel Deployment Protection (SSO) na URL de deployment Preview"
+    },
+    "etapa1_urlAlternativa": {
+      "status": "PASS_PARCIAL",
+      "http": 200,
+      "nota": "Alias público acessível; não substitui URL oficial de Preview protegida"
+    },
+    "etapa2_home": { "status": "PASS", "http": 200, "url": "meu-site-produtor-13.vercel.app" },
+    "etapa2_registro": { "status": "PASS", "http": 200 },
+    "etapa2_loginAutomatico": {
+      "status": "FAIL",
+      "detalhe": "/api/registro não retorna Set-Cookie session_id; /api/me user null após registro"
+    },
+    "etapa2_loginManual": { "status": "PASS", "http": 200 },
+    "etapa2_minhaConta": {
+      "status": "FAIL",
+      "apiMeusDados": 500,
+      "pageMinhaConta": 200,
+      "body": "{\"error\":\"Erro ao buscar dados\"}"
+    },
+    "etapasNaoAlcancadas": [
+      "Agendamento → Carrinho → Checkout",
+      "Pagamento Sandbox",
+      "Webhook automático",
+      "Validação Payment/Appointment/Service",
+      "Admin"
+    ]
+  },
+  "respostas": {
+    "previewAprovado": "NAO",
+    "etapaParada": 1,
+    "etapaParadaTitulo": "Abrir URL Preview",
+    "erro": "URL oficial do Preview retorna HTTP 302 para Vercel SSO (Deployment Protection) — homologação F2 bloqueada sem autenticação Vercel",
+    "menorCorrecao": "Vercel → Settings → Deployment Protection: desabilitar proteção em Preview ou configurar bypass token (VERCEL_AUTOMATION_BYPASS_SECRET) para homologação automatizada e browser externo"
+  },
+  "achadosAdicionais": [
+    {
+      "etapa": 3,
+      "erro": "Auto-login pós-registro não funciona no deploy acessível (cookie ausente em /api/registro)",
+      "menorCorrecao": "Investigar createUserSession + Set-Cookie em produção Vercel (mesmo padrão de /api/login)"
+    },
+    {
+      "etapa": 4,
+      "erro": "GET /api/meus-dados → 500",
+      "menorCorrecao": "Aplicar `prisma migrate deploy` no banco do DATABASE_URL Preview (migration adminArchivedAt ausente — mesmo bloqueador resolvido em EX-01 local)"
+    },
+    {
+      "etapa": 7,
+      "erro": "Webhook automático não testado",
+      "menorCorrecao": "Após liberar Preview e corrigir DB: registrar webhook Asaas sandbox → {preview}/api/webhooks/asaas + ASAAS_WEBHOOK_ACCESS_TOKEN no Vercel Preview"
+    }
+  ],
+  "veredito": "REPROVADO",
+  "pv02Aprovado": false,
+  "releaseProntaParaMerge": false,
+  "launchConfidenceScore": {
+    "atual": 88,
+    "nota": "CI verde; Preview F2 não homologado"
+  }
+}

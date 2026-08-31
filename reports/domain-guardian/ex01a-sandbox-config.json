@@ -1,0 +1,240 @@
+{
+  "reportId": "EX-01a-sandbox-config",
+  "mode": "READ_ONLY",
+  "generatedAt": "2026-07-10T08:20:00.000Z",
+  "language": "pt-BR",
+  "projectName": "THouse Rec",
+  "branch": "pr03-clean",
+  "head": "3f20ad0",
+  "basedOn": ["EX-01-sandbox-execution", "LE-01-launch-execution", "HL-01-final-homologation"],
+  "objective": "Preparar ambiente local para reexecutar EX-01 com segurança (sandbox Asaas, sem produção)",
+  "envFiles": {
+    ".env": {
+      "exists": true,
+      "gitignored": true,
+      "variableCount": 5,
+      "keys": [
+        "NEXT_PUBLIC_SITE_URL",
+        "DATABASE_URL",
+        "SUPPORT_EMAIL",
+        "SUPPORT_EMAIL_PASSWORD",
+        "SUPPORT_DEST_EMAIL"
+      ]
+    },
+    ".env.local": {
+      "exists": true,
+      "gitignored": true,
+      "variableCount": 5,
+      "keys": [
+        "SUPPORT_EMAIL",
+        "SUPPORT_EMAIL_PASSWORD",
+        "SUPPORT_DEST_EMAIL",
+        "ASAAS_API_KEY",
+        "ASAAS_SKIP_TLS_VERIFY"
+      ],
+      "precedence": "Sobrescreve .env para chaves duplicadas (padrão Next.js)"
+    },
+    ".env.example": {
+      "exists": false,
+      "nota": "Arquivo ausente no repositório; variáveis documentadas apenas em código e relatórios domain-guardian"
+    }
+  },
+  "asaasVariables": {
+    "referencedInCode": [
+      {
+        "name": "ASAAS_API_KEY",
+        "files": ["src/app/lib/env.ts", "src/app/lib/payment-providers.ts", "src/app/api/asaas/*"],
+        "purpose": "Autenticação API Asaas (checkout, consulta pagamentos)",
+        "classification": "PRODUCAO",
+        "location": ".env.local",
+        "prefix": "$aact_prod_",
+        "length": 166,
+        "apiUrlResolved": "https://www.asaas.com/api/v3",
+        "nota": "Token de produção detectado pelo prefixo $aact_prod_; incompatível com F1 sandbox"
+      },
+      {
+        "name": "ASAAS_WEBHOOK_ACCESS_TOKEN",
+        "files": ["src/app/api/webhooks/asaas/route.ts"],
+        "purpose": "Validação header asaas-access-token nos webhooks",
+        "classification": "AUSENTE",
+        "location": null,
+        "nota": "Em dev sem token, webhook aceita qualquer request; em produção exige configuração"
+      },
+      {
+        "name": "ASAAS_SKIP_TLS_VERIFY",
+        "files": ["src/app/lib/asaas-fetch.ts"],
+        "purpose": "Relaxar TLS apenas em NODE_ENV !== production (workaround certificado local)",
+        "classification": "LOCAL_DEV",
+        "location": ".env.local",
+        "value": "true",
+        "nota": "Não vem do painel Asaas; flag local opcional"
+      }
+    ],
+    "summary": {
+      "sandbox": 0,
+      "producao": 1,
+      "ausente": 1,
+      "duplicada": 0,
+      "localDevOnly": 1
+    }
+  },
+  "coreVariables": {
+    "ASAAS_API_KEY": {
+      "status": "DEFINIDA",
+      "classification": "PRODUCAO",
+      "file": ".env.local",
+      "prefix": "$aact_prod_...",
+      "length": 166,
+      "requiredForF1": "Token sandbox ($aact_ sem prefixo prod)",
+      "f1Ready": false
+    },
+    "ASAAS_WEBHOOK_ACCESS_TOKEN": {
+      "status": "AUSENTE",
+      "classification": "AUSENTE",
+      "file": null,
+      "requiredForF1": "Recomendado para webhook automático; opcional se usar replay curl (LE-F1-003 plano B)",
+      "f1Ready": false
+    },
+    "NEXT_PUBLIC_SITE_URL": {
+      "status": "DEFINIDA",
+      "classification": "LOCAL_TUNNEL",
+      "file": ".env",
+      "currentValue": "https://crazy-pans-own.loca.lt",
+      "length": 30,
+      "recommendedF1": "http://localhost:3000",
+      "nota": "Usada em backUrls do checkout e chamadas internas ao webhook; túnel loca.lt só necessário se Asaas sandbox precisar alcançar localhost",
+      "f1Ready": "PARCIAL — funciona com túnel; localhost preferível para smoke sem webhook externo"
+    },
+    "DATABASE_URL": {
+      "status": "DEFINIDA",
+      "classification": "LOCAL",
+      "file": ".env",
+      "provider": "postgresql://localhost:5432/thouse_rec",
+      "length": 70,
+      "f1Ready": true,
+      "nota": "Banco local não-produção; conexão validada no EX-01 (SELECT 1 OK)"
+    }
+  },
+  "duplications": [
+    {
+      "variable": "SUPPORT_EMAIL",
+      "files": [".env", ".env.local"],
+      "classification": "DUPLICADA",
+      "effectiveValue": ".env.local (mesmo valor em ambos)"
+    },
+    {
+      "variable": "SUPPORT_EMAIL_PASSWORD",
+      "files": [".env", ".env.local"],
+      "classification": "DUPLICADA",
+      "effectiveValue": ".env.local (mesmo valor em ambos)"
+    },
+    {
+      "variable": "SUPPORT_DEST_EMAIL",
+      "files": [".env", ".env.local"],
+      "classification": "DUPLICADA_CONFLITO",
+      "nota": "Valores diferentes entre .env e .env.local; .env.local prevalece em runtime Next.js"
+    }
+  ],
+  "origemValores": {
+    "doPainelSandboxAsaas": [
+      {
+        "variavel": "ASAAS_API_KEY",
+        "ondeNoPainel": "Asaas Sandbox → Integrações → API / Chave de API",
+        "formato": "Token iniciando com $aact_ (NÃO $aact_prod_)",
+        "ambiente": "Conta separada sandbox.asaas.com"
+      },
+      {
+        "variavel": "ASAAS_WEBHOOK_ACCESS_TOKEN",
+        "ondeNoPainel": "Asaas Sandbox → Integrações → Webhooks → Token de autenticação (asaas-access-token)",
+        "formato": "String definida no painel; deve ser idêntica em .env.local",
+        "ambiente": "Sandbox apenas"
+      },
+      {
+        "variavel": "Webhook URL (configuração no painel, não é env)",
+        "ondeNoPainel": "Asaas Sandbox → Integrações → Webhooks → URL do webhook",
+        "valorF1ComTunel": "https://{seu-tunel}/api/webhooks/asaas",
+        "valorF1SemTunel": "Não registrar no painel; usar replay curl documentado em OPS-01",
+        "eventosMinimos": ["PAYMENT_RECEIVED", "PAYMENT_REFUNDED"]
+      }
+    ],
+    "permanecemLocais": [
+      {
+        "variavel": "DATABASE_URL",
+        "valorRecomendado": "postgresql://postgres:postgres@localhost:5432/thouse_rec?schema=public",
+        "origem": "PostgreSQL local ou banco dev/staging próprio"
+      },
+      {
+        "variavel": "NEXT_PUBLIC_SITE_URL",
+        "valorRecomendadoF1": "http://localhost:3000",
+        "origem": "Configuração local; túnel (ngrok/loca.lt) só se webhook externo for necessário"
+      },
+      {
+        "variavel": "ASAAS_SKIP_TLS_VERIFY",
+        "valorOpcional": "true",
+        "origem": "Workaround TLS em dev; nunca em produção",
+        "condicao": "NODE_ENV !== production"
+      },
+      {
+        "variavel": "SUPPORT_EMAIL / SUPPORT_EMAIL_PASSWORD / SUPPORT_DEST_EMAIL",
+        "origem": "Credenciais SMTP locais; não relacionadas ao Asaas"
+      }
+    ]
+  },
+  "envLocalTemplate": {
+    "description": "Conteúdo sugerido para .env.local após obter credenciais sandbox (valores placeholder — substituir manualmente)",
+    "lines": [
+      "# --- Asaas Sandbox (painel sandbox.asaas.com) ---",
+      "ASAAS_API_KEY=$aact_SUA_CHAVE_SANDBOX_AQUI",
+      "ASAAS_WEBHOOK_ACCESS_TOKEN=seu_token_webhook_sandbox",
+      "",
+      "# --- Local F1 ---",
+      "NEXT_PUBLIC_SITE_URL=http://localhost:3000",
+      "ASAAS_SKIP_TLS_VERIFY=true",
+      "",
+      "# DATABASE_URL pode permanecer em .env (local postgres)"
+    ],
+    "naoCommitar": true
+  },
+  "checklist": [
+    { "id": "CHK-01", "item": "Criar ou acessar conta Sandbox em https://sandbox.asaas.com", "done": false },
+    { "id": "CHK-02", "item": "Obter API Key Sandbox (Integrações → API) — prefixo $aact_ sem prod", "done": false },
+    { "id": "CHK-03", "item": "Obter Webhook Token Sandbox (Integrações → Webhooks → token asaas-access-token)", "done": false },
+    { "id": "CHK-04", "item": "Decidir webhook F1: túnel público OU replay curl (LE-F1-003 plano B)", "done": false },
+    { "id": "CHK-05", "item": "Se túnel: configurar Webhook URL no painel → https://{tunel}/api/webhooks/asaas", "done": false },
+    { "id": "CHK-06", "item": "Remover ou comentar ASAAS_API_KEY de produção em .env.local", "done": false },
+    { "id": "CHK-07", "item": "Atualizar .env.local com ASAAS_API_KEY sandbox + ASAAS_WEBHOOK_ACCESS_TOKEN", "done": false },
+    { "id": "CHK-08", "item": "Definir NEXT_PUBLIC_SITE_URL=http://localhost:3000 (em .env ou .env.local)", "done": false },
+    { "id": "CHK-09", "item": "Manter DATABASE_URL apontando para banco local/dev (já OK)", "done": true },
+    { "id": "CHK-10", "item": "Reiniciar Next.js após alterar .env.local (parar npm run dev e subir de novo)", "done": false },
+    { "id": "CHK-11", "item": "Validar: node scripts/ex01-check-env.js (ASAAS type=sandbox, WEBHOOK set)", "done": false },
+    { "id": "CHK-12", "item": "Validar: node scripts/ex01-asaas-verify.js (exit 0, sandboxOk=true)", "done": false },
+    { "id": "CHK-13", "item": "Validar banco: node scripts/ex01-db-ping.js", "done": true }
+  ],
+  "resumeEx01": {
+    "fromStep": 3,
+    "stepName": "Verificar ASAAS Sandbox",
+    "prerequisite": "Checklist CHK-01 a CHK-10 concluídos; Next.js parado antes de editar env",
+    "validationCommand": "node scripts/ex01-check-env.js && node scripts/ex01-asaas-verify.js",
+    "validationExpected": "ASAAS_API_KEY type=sandbox; ASAAS_WEBHOOK_ACCESS_TOKEN set; ex01-asaas-verify exit 0",
+    "resumeCommand": "node scripts/ex01-check-env.js && node scripts/ex01-asaas-verify.js && node scripts/ex01-db-ping.js",
+    "resumeCommandWindows": "node scripts/ex01-check-env.js; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; node scripts/ex01-asaas-verify.js; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; node scripts/ex01-db-ping.js",
+    "thenContinueEx01": [
+      "npm run build (se ainda não executado após mudança de env)",
+      "npm run dev",
+      "Smoke test: Registro → Login → Minha Conta → Agendamento → Carrinho → Checkout (até antes do pagamento)",
+      "Atualizar reports/domain-guardian/ex01-sandbox-execution.json com veredito"
+    ],
+    "singleLineResume": "cd c:\\Users\\raulv\\Documents\\projetos\\meu-site-produtor && node scripts/ex01-check-env.js && node scripts/ex01-asaas-verify.js && node scripts/ex01-db-ping.js"
+  },
+  "securityNotes": [
+    "ASAAS_API_KEY atual é PRODUÇÃO — não usar em npm run dev até substituir",
+    "Nunca commitar .env ou .env.local (.gitignore cobre .env*)",
+    "Rotacionar chave de produção se foi exposta em logs ou relatórios",
+    "ASAAS_SKIP_TLS_VERIFY apenas em desenvolvimento local"
+  ],
+  "ex01BlockerRecap": {
+    "etapa": 3,
+    "erro": "ASAAS_API_KEY produção + WEBHOOK ausente",
+    "resolucao": "Substituir por credenciais sandbox em .env.local conforme checklist"
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "reportId": "SIM-02-execution-core-migration",
+  "generatedAt": "2026-07-15T03:55:00.000Z",
+  "verdict": "PASS",
+  "autoApprovedBy": "EC-01 Phase 11",
+  "engine": "ExecutionCore",
+  "entryPoint": "ExecutionCore.run()",
+  "suite": "sim02",
+  "scenarios": [
+    "SIM-001",
+    "SIM-002",
+    "SIM-003",
+    "SIM-004",
+    "SIM-005",
+    "SIM-006",
+    "SIM-007",
+    "SIM-008",
+    "SIM-009",
+    "SIM-010"
+  ],
+  "lastRun": {
+    "file": "reports/domain-guardian/sim02-last-run.json",
+    "reportId": "SIM-02-execution",
+    "total": 10,
+    "passed": 10,
+    "failed": 0,
+    "errors": 0,
+    "avgDurationMs": 7009,
+    "durationMs": 70112
+  },
+  "constraints": {
+    "exclusiveExecutionCore": true,
+    "sameScenariosAsSim01": true,
+    "noParallelPipeline": true,
+    "noDuplicatedBusinessRules": true,
+    "usesSynchronizationEngine": true,
+    "usesWorkflow": true,
+    "usesStateMachine": true,
+    "usesOfficialCleanup": true
+  },
+  "cli": {
+    "batch": "npm run sim:batch:sim02",
+    "watch": "npm run sim:watch"
+  }
+}

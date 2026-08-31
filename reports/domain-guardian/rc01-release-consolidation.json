@@ -1,0 +1,84 @@
+{
+  "reportId": "RC-01-release-consolidation",
+  "mode": "EXECUCAO_CONTROLADA",
+  "generatedAt": "2026-07-10T22:45:00.000Z",
+  "language": "pt-BR",
+  "projectName": "THouse Rec",
+  "branch": "pr03-clean",
+  "head": "106ac39",
+  "headAfterRc": "pending-rc01-report-commit",
+  "veredito": "PRONTA",
+  "podeIniciar": "PV-01",
+  "launchConfidenceScore": {
+    "antes": 86,
+    "depois": 88,
+    "nota": "EX-02 aprovado + fix webhook commitado + build verde na RC"
+  },
+  "workingTreeAnalise": {
+    "alteracoesDecorrentesHomologacao": true,
+    "codigoCorrigidoNaoCommitadoAntes": true,
+    "detalhe": "fix(webhook) estava apenas no working tree; scripts e reports untracked"
+  },
+  "commitsCriados": [
+    {
+      "sha": "db4e91a",
+      "message": "fix(webhook): prioritize carrinho handler before agendamento description match",
+      "origem": "EX-02 homologation",
+      "arquivos": ["src/app/api/webhooks/asaas/route.ts"]
+    },
+    {
+      "sha": "ddda5a8",
+      "message": "chore(homologation): add EX-01 and EX-02 sandbox validation scripts",
+      "origem": "EX-01/EX-02 operational",
+      "arquivos": [
+        "scripts/ex01-check-env.js",
+        "scripts/ex01-asaas-verify.js",
+        "scripts/ex01-db-ping.js",
+        "scripts/ex01-local-smoke.js",
+        "scripts/ex02-financial-flow.js",
+        "scripts/ex02-reset-payment.js"
+      ]
+    },
+    {
+      "sha": "106ac39",
+      "message": "docs(homologation): add EX-00 through EX-02 sandbox execution reports",
+      "origem": "Homologation evidence",
+      "arquivos": "18 reports domain-guardian EX/ENV/SETUP/OP"
+    }
+  ],
+  "excluidoDoEscopoRc": {
+    "motivo": "Não originado da homologação MVP agendamento / PR-04+ / GL-01 B2 planos",
+    "arquivos": [
+      {
+        "path": "src/app/carrinho/page.tsx",
+        "motivo": "GL-01 B2 — checkout planos via asaas/checkout (fora escopo RC homologação)"
+      },
+      {
+        "path": "src/app/pagamentos/page.tsx",
+        "motivo": "GL-01 B2 — preservar query string planId/modo na redirect"
+      }
+    ],
+    "acao": "Mantidos unstaged — não commitados nesta RC"
+  },
+  "build": {
+    "prismaGenerate": "OK — Prisma Client v5.19.0",
+    "npmRunBuild": "OK — exit 0",
+    "nextVersion": "16.1.6",
+    "compiledIn": "~95s",
+    "typescript": "pass",
+    "nota": "Build inicial falhou EPERM (dev server lock); resolvido parando processos node"
+  },
+  "validacoes": {
+    "buildVerde": true,
+    "semConflitosMerge": true,
+    "arquivosObrigatoriosPendentes": false,
+    "arquivosObrigatoriosPendentesDetalhe": "carrinho/pagamentos GL-01 B2 intencionalmente fora da RC"
+  },
+  "homologacaoBase": {
+    "EX-01": "APROVADO",
+    "EX-02": "APROVADO",
+    "ENV-01": "APROVADO",
+    "EX-00": "APROVADO"
+  },
+  "proximoPasso": "PV-01 — Preview Vercel + homologação F2"
+}

@@ -1,0 +1,480 @@
+{
+  "agentVersion": "1.0.0",
+  "generatedAt": "2026-07-05T21:29:48.028Z",
+  "language": "pt-BR",
+  "summary": {
+    "projectName": "THouse",
+    "headline": "173 arquivos pendentes · Guardian HEALTHY · Decisão BLOCKED · Score geral 78/100",
+    "primaryRecommendation": "Estabilizar: dividir PR, executar testes, resolver BLOCKED — depois deploy incremental.",
+    "verdict": "Estabilizar antes de avançar"
+  },
+  "health": {
+    "database": {
+      "status": "HEALTHY",
+      "detail": "0 erros, 0 avisos na última verificação."
+    },
+    "architecture": {
+      "status": "Sólida",
+      "detail": "15 ADRs, 7 entidades, grafo com 152 arquivos."
+    },
+    "deploy": {
+      "ready": false,
+      "reason": "Deploy não recomendado: Motor de decisão BLOCKED — revisar alterações pendentes; Grande volume de arquivos pendentes (173) — considerar deploy incremental; Rodar 9 migration(s): npx prisma migrate deploy."
+    },
+    "overall": "Banco saudável, entrega bloqueada"
+  },
+  "scores": {
+    "architecture": {
+      "score": 100,
+      "reason": "Índice de conhecimento arquitetural 100%, 15 ADRs, 7 entidades mapeadas."
+    },
+    "quality": {
+      "score": 80,
+      "reason": "Banco saudável (HEALTHY), mas motor de decisão BLOCKED reduz score de qualidade de entrega."
+    },
+    "documentation": {
+      "score": 100,
+      "reason": "6 docs de domínio, 39 invariantes, 15 ADRs documentados."
+    },
+    "governance": {
+      "score": 97,
+      "reason": "9 agentes, 4 execuções Guardian, decision engine ativo."
+    },
+    "deploy": {
+      "score": 15,
+      "reason": "173 arquivos pendentes, decisão BLOCKED, 9 migrations."
+    },
+    "scalability": {
+      "score": 45,
+      "reason": "Volume alto de mudanças pendentes indica acoplamento e dificuldade de escalar equipe."
+    },
+    "automation": {
+      "score": 91,
+      "reason": "Pipeline de 9 agentes read-only + Guardian automatizado."
+    },
+    "security": {
+      "score": 95,
+      "reason": "Área financeira com índice 100%, 39 invariantes, checks F1/F4 ativos."
+    },
+    "overall": {
+      "score": 78,
+      "reason": "Média ponderada dos 8 pilares. Principal limitador: deploy (15) e qualidade de entrega (80)."
+    }
+  },
+  "priorities": [
+    {
+      "title": "Desbloquear decisão de deploy",
+      "description": "Revisar e dividir alterações pendentes para reduzir risco CRITICAL.",
+      "reason": "Motor de decisão BLOCKED com 173 arquivos.",
+      "benefit": "Permite merge seguro e deploy incremental.",
+      "urgency": "Imediata",
+      "effort": "Alto",
+      "dependencies": [],
+      "expectedImpact": "Reduz risco de regressão financeira em produção.",
+      "category": "Qualidade",
+      "rank": 1
+    },
+    {
+      "title": "Executar migrations em staging",
+      "description": "Rodar 9 migration(s) e validar schema antes de produção.",
+      "reason": "Migrations pendentes detectadas no evolution-report.",
+      "benefit": "Schema alinhado com código.",
+      "urgency": "Alta",
+      "effort": "Médio",
+      "dependencies": [
+        "Backup do banco"
+      ],
+      "expectedImpact": "Habilita features que dependem de novos campos.",
+      "category": "Deploy",
+      "rank": 2
+    },
+    {
+      "title": "Executar checklist de testes obrigatórios",
+      "description": "Guardian, build, checkout sandbox, login admin e cliente.",
+      "reason": "Deploy não liberado sem validação manual.",
+      "benefit": "Confiança para próximo deploy.",
+      "urgency": "Alta",
+      "effort": "Médio",
+      "dependencies": [
+        "domain-guardian-runner.ts exit 0"
+      ],
+      "expectedImpact": "Detecta regressões antes de produção.",
+      "category": "Qualidade",
+      "rank": 3
+    },
+    {
+      "title": "Dividir alterações em PRs menores",
+      "description": "Separar: (1) pagamentos/webhook, (2) agendamentos/arquivamento, (3) agentes/docs.",
+      "reason": "173 arquivos em um único diff.",
+      "benefit": "Revisão mais rápida e rollback granular.",
+      "urgency": "Alta",
+      "effort": "Alto",
+      "dependencies": [
+        "Desbloquear decisão"
+      ],
+      "expectedImpact": "Acelera merge sem sacrificar segurança.",
+      "category": "Arquitetura",
+      "rank": 4
+    },
+    {
+      "title": "Finalizar migração de simulação (S4): vincular ou eliminar cupons legados TESTE_",
+      "description": "Finalizar migração de simulação (S4): vincular ou eliminar cupons legados TESTE_AGEND_/TESTE_PAY_ antes de remover helpers @legacy.",
+      "reason": "Recomendação do memory engine.",
+      "benefit": "Reduz dívida técnica recorrente.",
+      "urgency": "Média",
+      "effort": "Médio",
+      "dependencies": [],
+      "expectedImpact": "Melhora estabilidade de longo prazo.",
+      "category": "Infraestrutura",
+      "rank": 5
+    },
+    {
+      "title": "Alta frequência de BLOCKED: adotar PRs menores (split-to-prs) e rodar change-ana",
+      "description": "Alta frequência de BLOCKED: adotar PRs menores (split-to-prs) e rodar change-analyzer antes de abrir PR.",
+      "reason": "Recomendação do memory engine.",
+      "benefit": "Reduz dívida técnica recorrente.",
+      "urgency": "Média",
+      "effort": "Médio",
+      "dependencies": [],
+      "expectedImpact": "Melhora estabilidade de longo prazo.",
+      "category": "Infraestrutura",
+      "rank": 6
+    },
+    {
+      "title": "Implementar: Adicionar arquivamento administrativo de pagamentos",
+      "description": "Seguir design-plan e implementation-plan após estabilização.",
+      "reason": "Feature planejada mas não deployada.",
+      "benefit": "Entrega de valor ao administrador.",
+      "urgency": "Média",
+      "effort": "Alto",
+      "dependencies": [
+        "Estabilização",
+        "Testes"
+      ],
+      "expectedImpact": "Organização admin sem perder histórico financeiro.",
+      "category": "Backend",
+      "rank": 7
+    },
+    {
+      "title": "Regenerar relatórios de agentes",
+      "description": "Rodar pipeline: architecture → knowledge-graph → evolution → CTO.",
+      "reason": "Manter memória do projeto atualizada.",
+      "benefit": "Decisões baseadas em dados recentes.",
+      "urgency": "Baixa",
+      "effort": "Baixo",
+      "dependencies": [],
+      "expectedImpact": "CTO e proprietário com visão atualizada.",
+      "category": "IA",
+      "rank": 8
+    }
+  ],
+  "roadmap": {
+    "shortTerm": {
+      "Infraestrutura": [],
+      "Backend": [],
+      "Frontend": [],
+      "Arquitetura": [
+        "Dividir PR em partes menores"
+      ],
+      "IA": [],
+      "Deploy": [
+        "Migrations em staging"
+      ],
+      "Qualidade": [
+        "Executar Guardian e testes obrigatórios",
+        "Resolver BLOCKED do decision engine"
+      ],
+      "Documentação": []
+    },
+    "mediumTerm": {
+      "Infraestrutura": [],
+      "Backend": [
+        "Adicionar arquivamento administrativo de pagamentos",
+        "Consolidar arquivamento de agendamentos em produção"
+      ],
+      "Frontend": [],
+      "Arquitetura": [],
+      "IA": [
+        "Integrar agentes no CI pré-deploy"
+      ],
+      "Deploy": [],
+      "Qualidade": [
+        "Finalizar migração S4 — cupons TESTE legados"
+      ],
+      "Documentação": []
+    },
+    "longTerm": {
+      "Infraestrutura": [
+        "Garbage collection PaymentMetadata"
+      ],
+      "Backend": [],
+      "Frontend": [],
+      "Arquitetura": [
+        "Avaliar FK/junção Payment-Appointment (ADR-014)"
+      ],
+      "IA": [],
+      "Deploy": [
+        "Pipeline CI com gate automático"
+      ],
+      "Qualidade": [],
+      "Documentação": [
+        "Sincronizar domain-map após cada feature"
+      ]
+    }
+  },
+  "recommendations": [
+    "Estabilizar: dividir PR, executar testes, resolver BLOCKED — depois deploy incremental.",
+    "Finalizar migração de simulação (S4): vincular ou eliminar cupons legados TESTE_AGEND_/TESTE_PAY_ antes de remover helpers @legacy.",
+    "Alta frequência de BLOCKED: adotar PRs menores (split-to-prs) e rodar change-analyzer antes de abrir PR.",
+    "Divergência banco saudável vs diff CRITICAL: separar gate de dados (verificação automática) do gate de merge (motor de decisão).",
+    "Motor de decisão BLOCKED — revisar alterações pendentes",
+    "Grande volume de arquivos pendentes (173) — considerar deploy incremental"
+  ],
+  "bottlenecks": [
+    {
+      "area": "Deploy",
+      "description": "Motor de decisão BLOCKED — merge/deploy impedido.",
+      "severity": "Crítico"
+    },
+    {
+      "area": "Escopo",
+      "description": "173 arquivos pendentes — PR muito grande.",
+      "severity": "Alto"
+    },
+    {
+      "area": "Banco",
+      "description": "9 migrations aguardando deploy.",
+      "severity": "Alto"
+    },
+    {
+      "area": "Recorrente",
+      "description": "Check **S4** (Resíduo legado TESTE_AGEND_/TESTE_PAY_): finding em 3/4 execuções (75%)",
+      "severity": "Médio"
+    },
+    {
+      "area": "Recorrente",
+      "description": "Entidade **Coupon**: 3 menção(ões) em decisões/checks",
+      "severity": "Médio"
+    },
+    {
+      "area": "Recorrente",
+      "description": "motor de decisão **BLOCKED** em 1/1 snapshot(s)",
+      "severity": "Médio"
+    },
+    {
+      "area": "Acoplamento",
+      "description": "Payment concentra 30+ arquivos — hub financeiro crítico.",
+      "severity": "Médio"
+    },
+    {
+      "area": "IA",
+      "description": "9 agentes — risco de foco em tooling vs. código de produção.",
+      "severity": "Médio"
+    }
+  ],
+  "nextActions": [
+    "Desbloquear decisão de deploy",
+    "Executar migrations em staging",
+    "Executar checklist de testes obrigatórios",
+    "Dividir alterações em PRs menores",
+    "node --experimental-strip-types scripts/domain-guardian-runner.ts",
+    "npm run build",
+    "Login admin e cliente teste"
+  ],
+  "strategicAnswers": [
+    {
+      "question": "Estamos desenvolvendo rápido demais?",
+      "answer": true,
+      "explanation": "Sim — 173 arquivos pendentes com 9 agentes sugere foco em infraestrutura sobre estabilização."
+    },
+    {
+      "question": "Precisamos estabilizar?",
+      "answer": true,
+      "explanation": "Sim — decisão BLOCKED e 173 arquivos exigem consolidar antes de novas features."
+    },
+    {
+      "question": "Precisamos fazer deploy?",
+      "answer": false,
+      "explanation": "Não agora — Deploy não recomendado: Motor de decisão BLOCKED — revisar alterações pendentes; Grande volume de arquivos pendentes (173) — considerar deploy incremental; Rodar 9 migration(s): npx prisma migrate deploy."
+    },
+    {
+      "question": "Precisamos revisar código?",
+      "answer": true,
+      "explanation": "Sim — volume de alterações e áreas financeiras críticas exigem revisão humana."
+    },
+    {
+      "question": "Precisamos parar de criar agentes?",
+      "answer": true,
+      "explanation": "Sim — 9 agentes criados; priorizar uso e estabilização do código pendente."
+    },
+    {
+      "question": "Precisamos criar documentação?",
+      "answer": false,
+      "explanation": "Não — 6 docs e 15 ADRs cobrem o essencial."
+    },
+    {
+      "question": "Precisamos dividir o PR?",
+      "answer": true,
+      "explanation": "Sim — 173 arquivos é excessivo para um único merge; dividir por domínio (pagamentos, agendamentos, agentes)."
+    },
+    {
+      "question": "Precisamos testar?",
+      "answer": true,
+      "explanation": "Sim — 9 migration(s), área financeira e deploy não liberado."
+    },
+    {
+      "question": "Precisamos revisar arquitetura?",
+      "answer": true,
+      "explanation": "Sim — riscos abertos e mudanças amplas tocam invariantes críticos."
+    }
+  ],
+  "currentState": {
+    "pendingFiles": 173,
+    "migrationsPending": 9,
+    "changesCount": 7,
+    "adrsCount": 15,
+    "agentsCount": 9,
+    "docsCount": 6,
+    "risksOpen": 5,
+    "improvementsPending": 8,
+    "guardianStatus": "HEALTHY",
+    "decisionStatus": "BLOCKED",
+    "complexity": "Muito Alta",
+    "gitHead": "fd9ff6d",
+    "gitBranch": "main"
+  },
+  "projectMaturity": {
+    "level": "Maduro",
+    "signals": [
+      "Score geral 78/100",
+      "9 agentes no pipeline",
+      "15 decisões arquiteturais registradas",
+      "4 execuções Guardian"
+    ],
+    "developingTooFast": true,
+    "shouldStabilize": true
+  },
+  "whatToDoFirst": [
+    "Desbloquear decisão de deploy",
+    "Executar migrations em staging",
+    "Executar checklist de testes obrigatórios",
+    "Dividir alterações em PRs menores"
+  ],
+  "whatNotToDoNow": [
+    "Deploy em produção com decisão BLOCKED",
+    "Criar novos agentes antes de estabilizar código pendente",
+    "Implementar Adicionar arquivamento administrativo de pagamentos antes de dividir o PR",
+    "Merge de 150+ arquivos em um único PR",
+    "Deploy sem rodar migrations em staging"
+  ],
+  "context": {
+    "sourcesConsulted": [
+      {
+        "path": "reports/domain-guardian/project-context.json",
+        "loaded": true
+      },
+      {
+        "path": "reports/domain-guardian/project-knowledge-graph.json",
+        "loaded": true
+      },
+      {
+        "path": "reports/domain-guardian/architecture-decisions.json",
+        "loaded": true
+      },
+      {
+        "path": "reports/domain-guardian/evolution-report.json",
+        "loaded": true
+      },
+      {
+        "path": "reports/domain-guardian/implementation-plan.json",
+        "loaded": true
+      },
+      {
+        "path": "reports/domain-guardian/design-plan.json",
+        "loaded": true
+      },
+      {
+        "path": "reports/domain-guardian/memory.json",
+        "loaded": true
+      },
+      {
+        "path": "reports/domain-guardian/latest.json",
+        "loaded": true
+      },
+      {
+        "path": "reports/human/project-report.json",
+        "loaded": true
+      },
+      {
+        "path": "reports/domain-guardian/change-analysis.md",
+        "loaded": true
+      },
+      {
+        "path": "reports/domain-guardian/action-plan.md",
+        "loaded": true
+      },
+      {
+        "path": "reports/domain-guardian/advisor.md",
+        "loaded": true
+      },
+      {
+        "path": "reports/domain-guardian/decision.md",
+        "loaded": true
+      },
+      {
+        "path": "reports/domain-guardian/review-checklist.md",
+        "loaded": true
+      },
+      {
+        "path": "reports/domain-guardian/pr-review.md",
+        "loaded": true
+      },
+      {
+        "path": "reports/domain-guardian/issues.md",
+        "loaded": true
+      },
+      {
+        "path": "docs/ai/domain-map.md",
+        "loaded": true
+      },
+      {
+        "path": "docs/ai/domain-dependencies.md",
+        "loaded": true
+      },
+      {
+        "path": "docs/ai/domain-invariants.md",
+        "loaded": true
+      },
+      {
+        "path": "docs/ai/domain-risks.md",
+        "loaded": true
+      },
+      {
+        "path": "docs/ai/payment-lifecycle-audit.md",
+        "loaded": true
+      },
+      {
+        "path": "docs/ai/appointment-archive-audit.md",
+        "loaded": true
+      }
+    ],
+    "agentsRead": [
+      "Architecture Agent",
+      "Design Planner",
+      "Implementation Planner",
+      "Human Report",
+      "Evolution Agent",
+      "Architecture Decision Agent",
+      "Project Knowledge Graph",
+      "Domain Guardian",
+      "CTO Agent"
+    ]
+  },
+  "limitations": [
+    "Consolida relatórios existentes — não inspeciona código nem banco diretamente.",
+    "Scores heurísticos baseados em métricas dos agentes — não substituem auditoria humana.",
+    "Prioridades derivadas de BLOCKED, migrations e memory — podem omitir contexto de negócio.",
+    "Não acessa produção nem Vercel — deploy readiness é inferido.",
+    "Roadmap genérico — ajustar com prioridades do proprietário."
+  ]
+}

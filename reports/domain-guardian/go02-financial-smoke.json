@@ -1,0 +1,59 @@
+{
+  "reportId": "GO-02-financial-smoke",
+  "title": "GO-02 Financial Smoke Certification",
+  "executedAt": "2026-07-18T08:48:00.000Z",
+  "verdict": "STOP_PRE_SMOKE_FAIL",
+  "financialSmoke": "NOT_EXECUTED",
+  "architectureFreeze": "MAINTAINED",
+  "readinessPercent": 93,
+  "mayProceedToGo03": false,
+  "payment": {
+    "executed": false,
+    "approved": false,
+    "reason": "Phase 1 hard gates failed"
+  },
+  "refund": {
+    "executed": false,
+    "approved": false
+  },
+  "webhook": {
+    "paymentReceived": false,
+    "refundReceived": false
+  },
+  "domainArtifacts": {
+    "appointmentCreated": false,
+    "serviceCreated": false,
+    "couponsCorrect": null,
+    "workflowCorrect": null,
+    "minhaContaCorrect": null,
+    "dashboardCorrect": null,
+    "adminCorrect": null
+  },
+  "auditsThisSession": {
+    "domain": "NOT_RERUN",
+    "workflow": "NOT_RERUN",
+    "regression": "NOT_RERUN",
+    "note": "No financial state changed; GO-01 audits remain last PASS"
+  },
+  "homologationVsProduction": {
+    "equivalent": null,
+    "differences": "NOT_MEASURED — financial smoke blocked at pre-smoke"
+  },
+  "codeChanged": false,
+  "productCodeChanged": false,
+  "hardFails": [
+    "webhook_token_present",
+    "backup_restorable_validated",
+    "migration_deployed_target",
+    "webhook_reachable_configured",
+    "release_checklist_complete",
+    "asaas_env_explicit"
+  ],
+  "observedEnv": {
+    "database": "localhost/thouse_rec",
+    "asaasKeyKind": "sandbox_hmlg",
+    "webhookToken": "MISSING",
+    "publicUrl": "MISSING"
+  },
+  "recommendation": "Do not start GO-03. Complete human gates, set GO02_CONFIRM_* + GO02_ASAAS_ENV, configure webhook token, then re-run GO-02 Phase 1 until READY before any payment."
+}

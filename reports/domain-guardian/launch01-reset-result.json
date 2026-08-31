@@ -1,0 +1,38 @@
+{
+  "reportId": "LAUNCH-01-reset",
+  "executedAt": "2026-07-23T02:19:04.876Z",
+  "target": "production",
+  "database": "production",
+  "safetyConfirmations": "validated",
+  "atomicTransaction": true,
+  "mode": "execute",
+  "preservedAdmin": {
+    "id": "79f9f28b-582c-45c8-85b8-cd3600c21747",
+    "email": "vicperra@gmail.com",
+    "nomeCompleto": "Victor Pereira Ramos "
+  },
+  "usersBefore": 2,
+  "usersAfter": 1,
+  "deleted": {
+    "_before": 2,
+    "synchronizationEvents": 51,
+    "domainTransitionHistory": 15,
+    "chatSessions": 0,
+    "userQuestions": 0,
+    "loginLogs": 7,
+    "sessions": 6,
+    "coupons": 3,
+    "subscriptions": 0,
+    "services": 3,
+    "appointments": 3,
+    "userPlans": 0,
+    "payments": 4,
+    "paymentMetadata": 7,
+    "accountDeletionLogs": 0,
+    "passwordResetCodes": 0,
+    "users": 1
+  },
+  "uploadsRemoved": 0,
+  "reportFilesRemoved": 3,
+  "warnings": []
+}

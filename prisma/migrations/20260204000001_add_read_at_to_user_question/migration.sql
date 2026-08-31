@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "UserQuestion" ADD COLUMN IF NOT EXISTS "readAt" TIMESTAMP(3);

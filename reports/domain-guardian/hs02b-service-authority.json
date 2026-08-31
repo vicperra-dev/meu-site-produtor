@@ -1,0 +1,88 @@
+{
+  "reportId": "HS-02B-service-authority",
+  "mode": "STAFF_ENGINEER_DOMAIN_ARCHITECT_REFACTOR_GUARDIAN",
+  "generatedAt": "2026-07-13T22:45:00.000Z",
+  "language": "pt-BR",
+  "basedOn": ["HS-02A-service-domain-map"],
+  "commitMessage": "refactor(service): consolidate Service as operational authority (HS-02B)",
+  "planoInterno": {
+    "resumo": "Consolidar Service como autoridade operacional; Appointment como solicitação; Payment como finanças. Remover backfill duplicado do GET; unificar mappers; stats operacionais em Service; sync unidirecional Service→Appointment.",
+    "restricoes": [
+      "Não quebrar webhook/pagamento",
+      "Não mudar comportamento cliente Minha Conta entrega",
+      "Não iniciar StudioOS/Test Engine/PR-04"
+    ]
+  },
+  "authoridade": {
+    "Appointment": "solicitação do cliente (data/hora/tipo solicitado/status admin/pagamento vinculado)",
+    "Service": "trabalho executado (status operacional + delivery)",
+    "Payment": "domínio financeiro"
+  },
+  "fases": {
+    "1_arquitetura": "IMPLEMENTADO — service-authority.ts + fluxo Aceite→ensure→Service autoridade",
+    "2_sync": "IMPLEMENTADO — GET sem create duplicado; repair via ensure; reconcile só espelha Appointment",
+    "3_fonteUnica": "IMPLEMENTADO — Gerais/Selecionados/stats/gráficos tipos usam Service",
+    "4_appointment": "PRESERVADO — admin agendamentos para solicitação; execução em Service UIs",
+    "5_status": "IMPLEMENTADO — mapRequestStatusToServiceStatus único; deriveAppointmentStatusFromServiceStatuses",
+    "6_gerais": "IMPLEMENTADO — GET puro + repair opcional + no-store + poll/events",
+    "7_selecionados": "IMPLEMENTADO — ACTIVE_OPERATIONAL_SERVICE_STATUSES; concluidos saem da lista",
+    "8_dashboard": "IMPLEMENTADO — stats detalhadas + graficos operacionais em Service; pagamentos em Payment",
+    "9_delivery": "PRESERVADO — PATCH Service concluido+URL; Minha Conta via meus-dados",
+    "10_refresh": "IMPLEMENTADO — app-data-events + poll 30s Gerais/Selecionados",
+    "11_validacao": "tsc PASS · prisma validate PASS · build PASS · integrity audit 0 issues",
+    "12_deadCode": "IMPLEMENTADO — /admin/servicos → redirect servicos-aceitos; mapper/backfill inline removidos",
+    "13_checks": "PASS",
+    "14_relatorio": "ESTE_ARQUIVO"
+  },
+  "arquivosAlterados": [
+    "src/app/lib/service-authority.ts (NOVO)",
+    "src/app/lib/appointment-service-sync.ts",
+    "src/app/lib/ensure-appointment-services.ts",
+    "src/app/api/admin/servicos/route.ts",
+    "src/app/api/admin/agendamentos/reverter-cancelamento/route.ts",
+    "src/app/api/admin/stats/detalhadas/route.ts",
+    "src/app/api/admin/stats/graficos/route.ts",
+    "src/app/admin/servicos/page.tsx",
+    "src/app/admin/servicos-aceitos/page.tsx",
+    "src/app/admin/servicos-solicitados/page.tsx",
+    "src/app/admin/estatisticas/page.tsx",
+    "reports/domain-guardian/hs02b-service-authority.json",
+    "reports/domain-guardian/hs02b-service-authority.md"
+  ],
+  "fluxosModificados": [
+    "GET /api/admin/servicos: leitura pura; repair opcional ?repair=1 via ensure",
+    "reconcileAppointmentWithServices: deriva Appointment apenas de Service statuses",
+    "reverter-cancelamento: realinha Services cancelados→aceito + ensure",
+    "stats detalhadas/gráficos operacionais: Service; financeiros: Payment",
+    "agendamentos-servicos gráfico: Service.tipo em vez de Appointment.tipo"
+  ],
+  "codigoRemovido": [
+    "Backfill inline create em GET admin/servicos (mapper + loop create)",
+    "UI paralela admin/servicos (substituída por redirect)",
+    "Lógica duplicada de reconcile (movida para deriveAppointmentStatusFromServiceStatuses)"
+  ],
+  "duplicacoesEliminadas": [
+    "mapAppointmentStatusToServiceStatus duplicado → mapRequestStatusToServiceStatus",
+    "create órfão no GET vs ensure → repairOrphanAppointmentServices → ensure",
+    "conteúdo legado /admin/servicos page"
+  ],
+  "preservado": {
+    "webhook": "createServicesForAppointmentIfMissing inalterado na cadeia payment effects",
+    "pagamento": "checkout/webhook payment paths não tocados nas rotas Asaas",
+    "comCupom": "tx.service.create no booking com cupom mantido",
+    "cliente": "meus-dados entregas a partir de Service concluido+URL"
+  },
+  "riscosResiduais": [
+    "Repair ainda pode ser acionado no primeiro load das UIs admin (?repair=1) — necessário para A5/órfãos",
+    "createServicesIfMissing ainda não completa contagem parcial (0<count<expected)",
+    "Admin Agendamentos ainda mostra/transiciona status da solicitação (intencional Fase 4)",
+    "confirmado permanece alias admin de aceito no Appointment"
+  ],
+  "validacao": {
+    "typescript": "PASS",
+    "prismaValidate": "PASS",
+    "build": "PASS",
+    "integrityAudit": { "issueCount": 0 },
+    "eslint": "não gate — baseline repo pré-existente; sem novos arquivos com erros bloqueantes no núcleo Service"
+  }
+}

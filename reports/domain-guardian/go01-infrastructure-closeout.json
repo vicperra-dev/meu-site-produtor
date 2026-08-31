@@ -1,0 +1,105 @@
+{
+  "reportId": "GO-01-infrastructure-closeout",
+  "mode": "EXECUCAO_CONTROLADA",
+  "generatedAt": "2026-07-11T05:40:00.000Z",
+  "language": "pt-BR",
+  "projectName": "THouse Rec",
+  "branchAlvo": "pr03-clean",
+  "headAlvo": "f882047",
+  "basedOn": ["PV-02a-preview-alignment", "PV-02-preview-validation", "RC-04-ci-publish"],
+  "restricoes": {
+    "semCommits": true,
+    "semAlteracaoCodigo": true
+  },
+  "limitacoesExecucao": {
+    "vercelToken": "ausente",
+    "vercelCli": "não autenticado",
+    "databaseUrlPreview": "indisponível localmente",
+    "neonDashboard": "sem acesso programático",
+    "asaasDashboard": "sem acesso programático",
+    "nota": "Verificações HTTP + GitHub Deployments API; alterações de painel requerem ação manual"
+  },
+  "itens": {
+    "1_deploymentProtection": {
+      "status": "PENDENTE",
+      "ativa": true,
+      "evidencia": "GET https://meu-site-produtor-13-176nozk2j-rauls-projects-6bf8a8b0.vercel.app → HTTP 302 → vercel.com/sso-api",
+      "acaoNecessaria": "Vercel → Settings → Deployment Protection → desabilitar Preview ou configurar VERCEL_AUTOMATION_BYPASS_SECRET"
+    },
+    "2_previewDeployment": {
+      "status": "OK",
+      "sha": "f8820474c927f685387f5bee9d479d7a4d7ab233",
+      "branch": "pr03-clean",
+      "deploymentId": 5400838403,
+      "environment": "Preview – meu-site-produtor-1.3",
+      "githubStatus": "success",
+      "url": "https://meu-site-produtor-13-176nozk2j-rauls-projects-6bf8a8b0.vercel.app",
+      "evidencia": "GitHub Deployments API — vercel[bot] @ 2026-07-11T04:45:46Z — Deployment has completed"
+    },
+    "3_bancoPreview": {
+      "status": "PENDENTE",
+      "databaseUrlConfirmado": false,
+      "migrateDeployExecutado": false,
+      "evidencia": "GET /api/meus-dados → 500 no deploy acessível (alias produção) — coluna adminArchivedAt ausente",
+      "localMigrateStatus": "29 migrations — up to date",
+      "acaoNecessaria": "Neon → copiar DATABASE_URL Preview → npx prisma migrate deploy"
+    },
+    "4_nextPublicSiteUrl": {
+      "status": "PENDENTE",
+      "valorEsperado": "https://meu-site-produtor-13-176nozk2j-rauls-projects-6bf8a8b0.vercel.app",
+      "valorLocal": "http://localhost:3000",
+      "confirmadoNoPreview": false,
+      "acaoNecessaria": "Vercel → Environment Variables → Preview → NEXT_PUBLIC_SITE_URL = URL HTTPS do deployment"
+    },
+    "5_asaas": {
+      "status": "PENDENTE",
+      "subitens": {
+        "apiSandbox": {
+          "status": "PENDENTE",
+          "nota": "Não verificável no Preview (SSO); alias produção aceita checkout sandbox (PV-02)"
+        },
+        "webhookToken": {
+          "status": "PENDENTE",
+          "variavel": "ASAAS_WEBHOOK_ACCESS_TOKEN",
+          "nota": "Ausente localmente; não confirmado no Vercel Preview"
+        },
+        "webhookUrl": {
+          "status": "PENDENTE",
+          "urlEsperada": "https://meu-site-produtor-13-176nozk2j-rauls-projects-6bf8a8b0.vercel.app/api/webhooks/asaas",
+          "nota": "Registrar no painel Asaas sandbox após liberar Preview"
+        }
+      }
+    },
+    "6_testeMinimo": {
+      "status": "PENDENTE",
+      "urlTestadaOficial": "https://meu-site-produtor-13-176nozk2j-rauls-projects-6bf8a8b0.vercel.app",
+      "bloqueio": "Deployment Protection (SSO)",
+      "urlAlternativaTestada": "https://meu-site-produtor-13.vercel.app",
+      "notaAlternativa": "Alias produção — não substitui Preview RC",
+      "resultadosAlternativa": {
+        "registro": "PASS (HTTP 200)",
+        "autoLogin": "FAIL (sem Set-Cookie em /api/registro; /api/me user null)",
+        "minhaConta": "PASS página (HTTP 200)",
+        "apiMeusDados": "FAIL (HTTP 500 — Erro ao buscar dados)"
+      },
+      "script": "scripts/ex01-local-smoke.js com BASE_URL=alias — parou na etapa 3"
+    }
+  },
+  "resumo": {
+    "pendenciasRestantes": 5,
+    "itensOk": 1,
+    "itensPendente": 5,
+    "itensNaoSeAplica": 0,
+    "previewProntaParaHomologacaoFinal": false,
+    "mensagemFinal": null
+  },
+  "acoesManuaisPrioritarias": [
+    "Desabilitar Deployment Protection no Preview (Vercel)",
+    "Configurar DATABASE_URL Preview + prisma migrate deploy (Neon)",
+    "Atualizar NEXT_PUBLIC_SITE_URL no Vercel Preview",
+    "Configurar ASAAS_WEBHOOK_ACCESS_TOKEN + webhook Asaas sandbox",
+    "Reexecutar teste mínimo na URL oficial do Preview"
+  ],
+  "veredito": "REPROVADO",
+  "launchConfidenceScore": 88
+}

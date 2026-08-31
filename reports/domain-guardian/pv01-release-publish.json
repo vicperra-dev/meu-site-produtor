@@ -1,0 +1,77 @@
+{
+  "reportId": "PV-01-release-publish",
+  "mode": "EXECUCAO_CONTROLADA",
+  "generatedAt": "2026-07-11T00:32:06.396Z",
+  "language": "pt-BR",
+  "projectName": "THouse Rec",
+  "basedOn": ["RC-01-release-consolidation", "PV-00-vercel-inventory"],
+  "restricoes": {
+    "novosCommits": false,
+    "alteracaoCodigo": false,
+    "alteracaoEnv": false,
+    "operacoesGit": ["push"]
+  },
+  "verificacoes": {
+    "1_branchAtual": {
+      "esperado": "pr03-clean",
+      "confirmado": "pr03-clean",
+      "status": "OK"
+    },
+    "2_statusGit": {
+      "workingTreeLimpo": false,
+      "arquivosObrigatoriosPendentes": false,
+      "detalhe": "RC publicada sem pendências de escopo; alterações locais fora da RC (GL-01 B2) e reports untracked não impedem o push",
+      "modificadosForaRc": [
+        "src/app/carrinho/page.tsx",
+        "src/app/pagamentos/page.tsx"
+      ],
+      "untracked": "public/uploads/, reports/domain-guardian/* (diversos, exceto pv01 gerado nesta execução)"
+    },
+    "3_push": {
+      "comando": "git push -u origin pr03-clean",
+      "exitCode": 0,
+      "resultado": "nova branch publicada em origin",
+      "upstream": "origin/pr03-clean"
+    }
+  },
+  "posPush": {
+    "branchPublicada": "origin/pr03-clean",
+    "headLocal": "bfc5c38",
+    "headRemoto": "bfc5c381c6e211215fb4bc8eb98e5bec1db9effd",
+    "headRemotoShort": "bfc5c38",
+    "mensagemHead": "docs(rc01): release candidate consolidation report",
+    "commitsEnviados": 29,
+    "baseComparacao": "origin/main @ fd9ff6d",
+    "tipoPush": "new branch",
+    "pullRequestUrl": "https://github.com/rvits/meu-site-produtor/pull/new/pr03-clean",
+    "remote": "https://github.com/rvits/meu-site-produtor.git"
+  },
+  "vercel": {
+    "integracaoPresumida": true,
+    "integracaoVerificada": false,
+    "previewDeploymentCriado": "NAO_VERIFICAVEL",
+    "previewUrl": null,
+    "limitacoes": [
+      "Vercel CLI não autenticado neste ambiente",
+      "GitHub CLI (gh) não disponível",
+      "API GitHub deployments inacessível (erro de conexão)",
+      "Painel Vercel não consultado"
+    ],
+    "nota": "Se o projeto estiver vinculado ao GitHub na Vercel, o preview deve iniciar automaticamente em 1–3 min após o push — confirmar em vercel.com → Deployments"
+  },
+  "respostas": {
+    "pushRealizado": "SIM",
+    "previewIniciado": "NAO"
+  },
+  "veredito": "APROVADO",
+  "proximosPassos": [
+    "Confirmar Preview Deployment no painel Vercel",
+    "Configurar envs Preview: DATABASE_URL staging, ASAAS sandbox, ASAAS_WEBHOOK_ACCESS_TOKEN, NEXT_PUBLIC_SITE_URL",
+    "Registrar webhook Asaas sandbox apontando para URL do preview",
+    "Executar homologação F2 no ambiente Preview"
+  ],
+  "launchConfidenceScore": {
+    "atual": 88,
+    "nota": "RC publicada; Preview F2 ainda pendente de confirmação"
+  }
+}

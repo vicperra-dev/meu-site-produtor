@@ -1,0 +1,754 @@
+{
+  "reportId": "QE-02b-legacy-removal-plan",
+  "mode": "READ_ONLY",
+  "generatedAt": "2026-07-10T05:15:00.000Z",
+  "language": "pt-BR",
+  "projectName": "THouse",
+  "branch": "pr03-clean",
+  "head": "66a8e5c",
+  "basedOn": "QE-02a-legacy-financial",
+  "pr04Definition": "PR-04 — Cupons e ownership (simulation-coupon*, coupon-origin, coupon-refund, ownership repair). Depende de PR-03 mergeado.",
+  "lineRemovalEstimate": {
+    "lote1Seguro": 1014,
+    "lote2PosDeploy": 1290,
+    "lote3PosPR04": 1420,
+    "editsParciaisPosEstabilizacao": 180,
+    "totalAposEstabilizacaoCompleta": 3904,
+    "nota": "Não inclui remoção de coluna mercadopagoId no Prisma (migração separada). Inclui ~76 linhas InfinityPayProvider + ~15 MercadoPagoProvider em payment-providers.ts no Lote 2."
+  },
+  "lotes": {
+    "lote1": {
+      "nome": "Remoção segura",
+      "descricao": "Código morto/obsoleto sem importadores nem executores em runtime produtivo",
+      "linhasEstimadas": 1014,
+      "commitsSugeridos": [
+        {
+          "titulo": "chore(payments): remove dead MP/Infinity routes and checkout caches",
+          "arquivos": [
+            "src/app/api/agendamento-checkout/route.ts",
+            "src/app/api/carrinho-checkout/route.ts",
+            "src/app/api/webhooks/mercadopago/route.ts",
+            "src/app/api/pagamentos/route.ts",
+            "src/app/api/mercadopago/checkout/route.ts",
+            "src/app/api/mercadopago/checkout-agendamento/route.ts",
+            "src/app/api/infinitypay/checkout/route.ts",
+            "src/app/api/infinitypay/checkout-agendamento/route.ts",
+            "src/app/api/pagamentos/debug/route.ts"
+          ]
+        },
+        {
+          "titulo": "chore(deps): remove mercadopago package (follow-up mesmo PR ou commit adjacente)",
+          "arquivos": ["package.json", "package-lock.json"],
+          "nota": "Apenas após confirmar zero imports de mercadopago no src/"
+        }
+      ]
+    },
+    "lote2": {
+      "nome": "Remoção pós-deploy",
+      "descricao": "Legado operacional substituível após webhook Asaas estável em produção e observabilidade mínima",
+      "linhasEstimadas": 1290,
+      "preRequisitos": [
+        "Webhook Asaas configurado e recebendo PAYMENT_RECEIVED em produção por ≥7 dias",
+        "Zero pagamentos órfãos reportados em admin",
+        "Extrair função compartilhada do webhook OU confirmar que fallbacks localhost não são mais necessários",
+        "Atualizar PRE_LANCAMENTO_CHECKLIST.md e processar_pagamento.ps1"
+      ],
+      "commitsSugeridos": [
+        {
+          "titulo": "refactor(payments): remove legacy orchestrator and manual processing routes",
+          "arquivos": [
+            "src/app/lib/process-payment-webhook.ts",
+            "src/app/api/pagamentos/processar-direto/route.ts",
+            "src/app/api/pagamentos/processar-manual/route.ts",
+            "src/app/api/pagamentos/buscar-por-fatura/route.ts",
+            "src/app/api/pagamentos/buscar-por-valor/route.ts",
+            "src/app/api/debug/processar-ultimo-pagamento/route.ts",
+            "processar_pagamento.ps1"
+          ]
+        },
+        {
+          "titulo": "refactor(payments): remove plan localhost fallback after webhook stable",
+          "arquivos": [
+            "src/app/api/pagamentos/processar-plano-apos-pagamento/route.ts"
+          ],
+          "editsRelacionados": [
+            "src/app/pagamentos/sucesso/page.tsx",
+            "src/app/minha-conta/page.tsx"
+          ]
+        },
+        {
+          "titulo": "refactor(payments): strip Infinity/MP from payment-providers",
+          "arquivos": ["src/app/lib/payment-providers.ts", "src/app/api/test-payment/route.ts"]
+        }
+      ]
+    },
+    "lote3": {
+      "nome": "Remoção pós PR-04",
+      "descricao": "Simulação simbólica, fluxo plano e fallbacks de metadata/cupom — dependem de ownership e simulation-coupon do PR-04",
+      "linhasEstimadas": 1420,
+      "preRequisitos": [
+        "PR-04 mergeado (simulation-coupon*, coupon-origin, coupon-refund)",
+        "Fluxo plano UI reconectado a asaas/checkout ou checkout-carrinho com tipo=plano",
+        "Admin QA migrado para APIs PR-04 (sem TESTE_/R$5 legado)",
+        "Metadata sempre vinculada via asaasId em todos checkouts"
+      ],
+      "commitsSugeridos": [
+        {
+          "titulo": "feat(plans): wire plan checkout UI and remove pagamentos redirect shim",
+          "arquivos": [
+            "src/app/pagamentos/page.tsx",
+            "src/app/planos/page.tsx"
+          ],
+          "nota": "asaas/checkout pode ser mantido ou fundido; remover redirect cego /carrinho"
+        },
+        {
+          "titulo": "refactor(payments): replace symbolic-payment with PR-04 simulation libs",
+          "arquivos": [
+            "src/app/lib/symbolic-payment.ts",
+            "src/app/lib/symbolic-payment-resolve.ts",
+            "src/app/lib/plan-payment-simulation.ts",
+            "src/app/lib/payment-simulation-coupon-gate.ts",
+            "src/app/api/test-payment/route.ts",
+            "src/app/api/admin/reprocessar-pagamento-teste/route.ts",
+            "src/app/api/admin/reprocessar-pagamento-plano-teste/route.ts"
+          ]
+        },
+        {
+          "titulo": "refactor(payments): tighten metadata resolution fallbacks",
+          "arquivos": ["src/app/lib/asaas-agendamento-reconcile.ts"],
+          "tipo": "partial-removal",
+          "linhasRemovidasEstimadas": 45
+        }
+      ]
+    },
+    "lote4": {
+      "nome": "Manter",
+      "descricao": "Núcleo PR-03 e superfícies produtivas — não remover",
+      "arquivos": [
+        "src/app/api/webhooks/asaas/route.ts",
+        "src/app/api/asaas/checkout-carrinho/route.ts",
+        "src/app/api/asaas/checkout-agendamento/route.ts",
+        "src/app/lib/asaas-agendamento-payment-effects.ts",
+        "src/app/lib/asaas-carrinho-payment-effects.ts",
+        "src/app/lib/asaas-plano-payment-effects.ts",
+        "src/app/lib/asaas-agendamento-reconcile.ts",
+        "src/app/lib/payment-providers.ts (AsaasProvider apenas)",
+        "src/app/api/payment-provider/route.ts",
+        "src/app/api/pagamentos/verificar/route.ts",
+        "src/app/pagamentos/sucesso/page.tsx",
+        "src/app/pagamentos/verificar/page.tsx",
+        "src/app/pagamentos/falha/page.tsx",
+        "src/app/pagamentos/pendente/page.tsx",
+        "src/app/lib/agendamento-payment-rules.ts",
+        "src/app/lib/agendamento-payment-coupons.ts",
+        "src/app/lib/asaas-fetch.ts",
+        "src/app/lib/asaas-list-payments.ts",
+        "src/app/lib/checkout-active-plan-gate.ts",
+        "src/app/lib/plan-prices.ts"
+      ]
+    }
+  },
+  "items": [
+    {
+      "id": "dead-agendamento-checkout",
+      "arquivo": "src/app/api/agendamento-checkout/route.ts",
+      "classificacao": "Código morto",
+      "linhas": 39,
+      "quemImporta": [],
+      "quemExecuta": [],
+      "podeRemoverAgora": true,
+      "precisaEsperarDeploy": false,
+      "precisaEsperarPR04": false,
+      "risco": "BAIXO",
+      "dependenciasIndiretas": ["Nenhuma — cache Map em memória isolado"],
+      "mesmoCommit": ["src/app/api/carrinho-checkout/route.ts"],
+      "lote": 1
+    },
+    {
+      "id": "dead-carrinho-checkout",
+      "arquivo": "src/app/api/carrinho-checkout/route.ts",
+      "classificacao": "Código morto",
+      "linhas": 40,
+      "quemImporta": [],
+      "quemExecuta": [],
+      "podeRemoverAgora": true,
+      "precisaEsperarDeploy": false,
+      "precisaEsperarPR04": false,
+      "risco": "BAIXO",
+      "dependenciasIndiretas": [],
+      "mesmoCommit": ["src/app/api/agendamento-checkout/route.ts"],
+      "lote": 1
+    },
+    {
+      "id": "obsolete-webhook-mp",
+      "arquivo": "src/app/api/webhooks/mercadopago/route.ts",
+      "classificacao": "Obsoleto",
+      "linhas": 35,
+      "quemImporta": [],
+      "quemExecuta": ["Mercado Pago externo (se URL ainda configurada no painel MP — improvável)"],
+      "podeRemoverAgora": true,
+      "precisaEsperarDeploy": false,
+      "precisaEsperarPR04": false,
+      "risco": "BAIXO",
+      "dependenciasIndiretas": ["scripts/domain-guardian (referências em relatórios apenas)"],
+      "mesmoCommit": ["src/app/api/mercadopago/checkout/route.ts", "src/app/api/mercadopago/checkout-agendamento/route.ts", "src/app/api/pagamentos/route.ts"],
+      "lote": 1
+    },
+    {
+      "id": "obsolete-pagamentos-route",
+      "arquivo": "src/app/api/pagamentos/route.ts",
+      "classificacao": "Obsoleto",
+      "linhas": 134,
+      "quemImporta": [],
+      "quemExecuta": [],
+      "podeRemoverAgora": true,
+      "precisaEsperarDeploy": false,
+      "precisaEsperarPR04": false,
+      "risco": "BAIXO",
+      "dependenciasIndiretas": ["import mercadopago SDK — remover package no mesmo PR"],
+      "mesmoCommit": ["src/app/api/mercadopago/checkout/route.ts", "src/app/api/webhooks/mercadopago/route.ts"],
+      "lote": 1
+    },
+    {
+      "id": "obsolete-mp-checkout-plano",
+      "arquivo": "src/app/api/mercadopago/checkout/route.ts",
+      "classificacao": "Obsoleto",
+      "linhas": 190,
+      "quemImporta": [],
+      "quemExecuta": [],
+      "podeRemoverAgora": true,
+      "precisaEsperarDeploy": false,
+      "precisaEsperarPR04": false,
+      "risco": "BAIXO",
+      "dependenciasIndiretas": ["PLAN_PRICES, checkoutSchema — usados por outras rotas que permanecem"],
+      "mesmoCommit": ["src/app/api/mercadopago/checkout-agendamento/route.ts", "src/app/api/pagamentos/route.ts"],
+      "lote": 1
+    },
+    {
+      "id": "obsolete-mp-checkout-agendamento",
+      "arquivo": "src/app/api/mercadopago/checkout-agendamento/route.ts",
+      "classificacao": "Obsoleto",
+      "linhas": 271,
+      "quemImporta": [],
+      "quemExecuta": [],
+      "podeRemoverAgora": true,
+      "precisaEsperarDeploy": false,
+      "precisaEsperarPR04": false,
+      "risco": "BAIXO",
+      "dependenciasIndiretas": ["Sem PaymentMetadata — nunca integrado ao PR-03"],
+      "mesmoCommit": ["src/app/api/mercadopago/checkout/route.ts"],
+      "lote": 1
+    },
+    {
+      "id": "obsolete-infinity-checkout-plano",
+      "arquivo": "src/app/api/infinitypay/checkout/route.ts",
+      "classificacao": "Obsoleto",
+      "linhas": 108,
+      "quemImporta": [],
+      "quemExecuta": [],
+      "podeRemoverAgora": true,
+      "precisaEsperarDeploy": false,
+      "precisaEsperarPR04": false,
+      "risco": "BAIXO",
+      "dependenciasIndiretas": ["InfinityPayProvider em payment-providers.ts — remover classe no Lote 2"],
+      "mesmoCommit": ["src/app/api/infinitypay/checkout-agendamento/route.ts"],
+      "lote": 1
+    },
+    {
+      "id": "obsolete-infinity-checkout-agendamento",
+      "arquivo": "src/app/api/infinitypay/checkout-agendamento/route.ts",
+      "classificacao": "Obsoleto",
+      "linhas": 175,
+      "quemImporta": [],
+      "quemExecuta": [],
+      "podeRemoverAgora": true,
+      "precisaEsperarDeploy": false,
+      "precisaEsperarPR04": false,
+      "risco": "BAIXO",
+      "dependenciasIndiretas": [],
+      "mesmoCommit": ["src/app/api/infinitypay/checkout/route.ts"],
+      "lote": 1
+    },
+    {
+      "id": "obsolete-pagamentos-debug",
+      "arquivo": "src/app/api/pagamentos/debug/route.ts",
+      "classificacao": "Obsoleto",
+      "linhas": 22,
+      "quemImporta": [],
+      "quemExecuta": [],
+      "podeRemoverAgora": true,
+      "precisaEsperarDeploy": false,
+      "precisaEsperarPR04": false,
+      "risco": "BAIXO",
+      "dependenciasIndiretas": [],
+      "mesmoCommit": ["demais rotas obsoletas Lote 1"],
+      "lote": 1
+    },
+    {
+      "id": "legacy-process-payment-webhook",
+      "arquivo": "src/app/lib/process-payment-webhook.ts",
+      "classificacao": "Legado",
+      "linhas": 168,
+      "quemImporta": [
+        "src/app/api/pagamentos/processar-direto/route.ts",
+        "src/app/api/pagamentos/processar-plano-apos-pagamento/route.ts",
+        "src/app/api/debug/processar-ultimo-pagamento/route.ts"
+      ],
+      "quemExecuta": [
+        "POST /api/pagamentos/processar-direto",
+        "POST /api/pagamentos/processar-plano-apos-pagamento",
+        "POST /api/debug/processar-ultimo-pagamento"
+      ],
+      "podeRemoverAgora": false,
+      "precisaEsperarDeploy": true,
+      "precisaEsperarPR04": false,
+      "risco": "ALTO",
+      "dependenciasIndiretas": [
+        "Duplica webhooks/asaas — remover sem extrair shared handler quebra fallbacks localhost",
+        "scripts/domain-guardian referenciam como CRITICAL",
+        "Divergência conhecida: carrinho incompleto no orquestrador vs webhook (QE-02)"
+      ],
+      "mesmoCommit": [
+        "src/app/api/pagamentos/processar-direto/route.ts",
+        "src/app/api/debug/processar-ultimo-pagamento/route.ts",
+        "processar_pagamento.ps1"
+      ],
+      "lote": 2,
+      "acaoPrevia": "Extrair handleAsaasPaymentReceived() compartilhado entre webhook e fallbacks, OU eliminar fallbacks primeiro"
+    },
+    {
+      "id": "legacy-processar-direto",
+      "arquivo": "src/app/api/pagamentos/processar-direto/route.ts",
+      "classificacao": "Legado",
+      "linhas": 272,
+      "quemImporta": [],
+      "quemExecuta": ["processar_pagamento.ps1", "admin manual via curl/Postman"],
+      "podeRemoverAgora": false,
+      "precisaEsperarDeploy": true,
+      "precisaEsperarPR04": false,
+      "risco": "MÉDIO",
+      "dependenciasIndiretas": ["PRE_LANCAMENTO_CHECKLIST.md", "PAYMENT_PROCESS_SECRET env"],
+      "mesmoCommit": ["src/app/lib/process-payment-webhook.ts", "processar_pagamento.ps1"],
+      "lote": 2
+    },
+    {
+      "id": "legacy-processar-manual",
+      "arquivo": "src/app/api/pagamentos/processar-manual/route.ts",
+      "classificacao": "Legado",
+      "linhas": 168,
+      "quemImporta": [],
+      "quemExecuta": ["Admin manual — proxy fetch para /api/webhooks/asaas"],
+      "podeRemoverAgora": false,
+      "precisaEsperarDeploy": true,
+      "precisaEsperarPR04": false,
+      "risco": "MÉDIO",
+      "dependenciasIndiretas": [
+        "NÃO usa process-payment-webhook — pode sobreviver temporariamente",
+        "Útil em incidentes até admin UI de reprocessamento existir"
+      ],
+      "mesmoCommit": ["src/app/api/pagamentos/buscar-por-fatura/route.ts", "src/app/api/pagamentos/buscar-por-valor/route.ts"],
+      "lote": 2,
+      "nota": "Alternativa: migrar para botão admin que chama webhook diretamente antes de remover"
+    },
+    {
+      "id": "legacy-buscar-por-fatura",
+      "arquivo": "src/app/api/pagamentos/buscar-por-fatura/route.ts",
+      "classificacao": "Legado",
+      "linhas": 178,
+      "quemImporta": [],
+      "quemExecuta": ["Admin manual"],
+      "podeRemoverAgora": false,
+      "precisaEsperarDeploy": true,
+      "precisaEsperarPR04": false,
+      "risco": "MÉDIO",
+      "dependenciasIndiretas": ["Proxy para webhooks/asaas — mesma lógica que processar-manual"],
+      "mesmoCommit": ["src/app/api/pagamentos/processar-manual/route.ts", "src/app/api/pagamentos/buscar-por-valor/route.ts"],
+      "lote": 2
+    },
+    {
+      "id": "legacy-buscar-por-valor",
+      "arquivo": "src/app/api/pagamentos/buscar-por-valor/route.ts",
+      "classificacao": "Legado",
+      "linhas": 155,
+      "quemImporta": [],
+      "quemExecuta": ["Admin manual"],
+      "podeRemoverAgora": false,
+      "precisaEsperarDeploy": true,
+      "precisaEsperarPR04": false,
+      "risco": "MÉDIO",
+      "dependenciasIndiretas": [],
+      "mesmoCommit": ["src/app/api/pagamentos/buscar-por-fatura/route.ts"],
+      "lote": 2
+    },
+    {
+      "id": "legacy-processar-plano-apos-pagamento",
+      "arquivo": "src/app/api/pagamentos/processar-plano-apos-pagamento/route.ts",
+      "classificacao": "Legado",
+      "linhas": 102,
+      "quemImporta": [],
+      "quemExecuta": [
+        "src/app/pagamentos/sucesso/page.tsx (tipo=plano)",
+        "src/app/minha-conta/page.tsx"
+      ],
+      "podeRemoverAgora": false,
+      "precisaEsperarDeploy": true,
+      "precisaEsperarPR04": false,
+      "risco": "ALTO",
+      "dependenciasIndiretas": [
+        "Compensa webhook ausente em localhost",
+        "listAsaasPaymentsReceived + processPaymentWebhook",
+        "Fluxo plano UI ainda quebrado — fallback raramente acionado em prod até plano ser consertado"
+      ],
+      "mesmoCommit": [
+        "src/app/lib/process-payment-webhook.ts",
+        "edits em pagamentos/sucesso/page.tsx e minha-conta/page.tsx"
+      ],
+      "lote": 2
+    },
+    {
+      "id": "legacy-debug-processar-ultimo",
+      "arquivo": "src/app/api/debug/processar-ultimo-pagamento/route.ts",
+      "classificacao": "Legado",
+      "linhas": 156,
+      "quemImporta": [],
+      "quemExecuta": ["Admin debug manual"],
+      "podeRemoverAgora": false,
+      "precisaEsperarDeploy": true,
+      "precisaEsperarPR04": false,
+      "risco": "MÉDIO",
+      "dependenciasIndiretas": ["Importa process-payment-webhook"],
+      "mesmoCommit": ["src/app/lib/process-payment-webhook.ts"],
+      "lote": 2
+    },
+    {
+      "id": "legacy-asaas-checkout-plano",
+      "arquivo": "src/app/api/asaas/checkout/route.ts",
+      "classificacao": "Legado",
+      "linhas": 184,
+      "quemImporta": [],
+      "quemExecuta": [],
+      "podeRemoverAgora": false,
+      "precisaEsperarDeploy": false,
+      "precisaEsperarPR04": true,
+      "risco": "ALTO",
+      "dependenciasIndiretas": [
+        "planos/page.tsx redireciona para /pagamentos que descarta query",
+        "checkout-active-plan-gate, PLAN_PRICES — libs permanecem",
+        "Remover rota antes de reconectar UI quebra compra de plano permanentemente"
+      ],
+      "mesmoCommit": ["src/app/pagamentos/page.tsx", "src/app/planos/page.tsx"],
+      "lote": 3,
+      "acaoPrevia": "Reconectar planos → POST /api/asaas/checkout (ou unificar em checkout-carrinho)"
+    },
+    {
+      "id": "legacy-pagamentos-page-redirect",
+      "arquivo": "src/app/pagamentos/page.tsx",
+      "classificacao": "Legado",
+      "linhas": 16,
+      "quemImporta": [],
+      "quemExecuta": ["src/app/planos/page.tsx → router.push(/pagamentos?…)"],
+      "podeRemoverAgora": false,
+      "precisaEsperarDeploy": false,
+      "precisaEsperarPR04": true,
+      "risco": "ALTO",
+      "dependenciasIndiretas": ["Substituir por checkout inline ou redirect com preservação de planId/modo"],
+      "mesmoCommit": ["src/app/planos/page.tsx", "src/app/api/asaas/checkout/route.ts"],
+      "lote": 3
+    },
+    {
+      "id": "legacy-payment-providers-mp-infinity",
+      "arquivo": "src/app/lib/payment-providers.ts (InfinityPayProvider + MercadoPagoProvider)",
+      "classificacao": "Legado/Obsoleto",
+      "linhas": 91,
+      "quemImporta": [
+        "src/app/api/test-payment/route.ts (InfinityPayProvider fallback)",
+        "src/app/api/infinitypay/* (removidos Lote 1)"
+      ],
+      "quemExecuta": ["test-payment se ASAAS_API_KEY ausente"],
+      "podeRemoverAgora": false,
+      "precisaEsperarDeploy": true,
+      "precisaEsperarPR04": false,
+      "risco": "BAIXO",
+      "dependenciasIndiretas": ["AsaasProvider permanece — ~300 linhas"],
+      "mesmoCommit": ["src/app/api/test-payment/route.ts (remover branch Infinity)"],
+      "lote": 2
+    },
+    {
+      "id": "legacy-test-payment",
+      "arquivo": "src/app/api/test-payment/route.ts",
+      "classificacao": "Legado",
+      "linhas": 219,
+      "quemImporta": [],
+      "quemExecuta": [
+        "src/app/agendamento/page.tsx (tipo agendamento/plano → 410)",
+        "src/app/planos/page.tsx (tipo plano → 410)"
+      ],
+      "podeRemoverAgora": false,
+      "precisaEsperarDeploy": false,
+      "precisaEsperarPR04": true,
+      "risco": "MÉDIO",
+      "dependenciasIndiretas": [
+        "UI admin ainda chama mas recebe 410 para agendamento/plano",
+        "reprocessar-pagamento-* substitui simulação",
+        "symbolic-payment imports"
+      ],
+      "mesmoCommit": [
+        "src/app/agendamento/page.tsx",
+        "src/app/planos/page.tsx",
+        "src/app/api/admin/reprocessar-pagamento-teste/route.ts"
+      ],
+      "lote": 3
+    },
+    {
+      "id": "legacy-reprocessar-pagamento-teste",
+      "arquivo": "src/app/api/admin/reprocessar-pagamento-teste/route.ts",
+      "classificacao": "Legado",
+      "linhas": 225,
+      "quemImporta": [],
+      "quemExecuta": [
+        "src/app/admin/page.tsx",
+        "src/app/admin/agendamentos/page.tsx",
+        "src/app/admin/pagamentos/page.tsx",
+        "src/app/agendamento/page.tsx"
+      ],
+      "podeRemoverAgora": false,
+      "precisaEsperarDeploy": false,
+      "precisaEsperarPR04": true,
+      "risco": "ALTO",
+      "dependenciasIndiretas": [
+        "symbolic-payment, symbolic-payment-resolve",
+        "PR-04 introduz simulation-coupon.ts como substituto canônico",
+        "Admin QA depende desta rota hoje"
+      ],
+      "mesmoCommit": [
+        "src/app/lib/symbolic-payment.ts",
+        "src/app/lib/symbolic-payment-resolve.ts",
+        "src/app/admin/page.tsx",
+        "src/app/admin/agendamentos/page.tsx"
+      ],
+      "lote": 3
+    },
+    {
+      "id": "legacy-reprocessar-plano-teste",
+      "arquivo": "src/app/api/admin/reprocessar-pagamento-plano-teste/route.ts",
+      "classificacao": "Legado",
+      "linhas": 156,
+      "quemImporta": [],
+      "quemExecuta": ["src/app/admin/pagamentos/page.tsx"],
+      "podeRemoverAgora": false,
+      "precisaEsperarDeploy": false,
+      "precisaEsperarPR04": true,
+      "risco": "ALTO",
+      "dependenciasIndiretas": ["PLAN_PRICES, symbolic-payment, plan-payment-simulation"],
+      "mesmoCommit": ["src/app/api/admin/reprocessar-pagamento-teste/route.ts"],
+      "lote": 3
+    },
+    {
+      "id": "legacy-symbolic-payment",
+      "arquivo": "src/app/lib/symbolic-payment.ts",
+      "classificacao": "Legado",
+      "linhas": 185,
+      "quemImporta": [
+        "src/app/api/webhooks/asaas/route.ts",
+        "src/app/api/asaas/checkout-agendamento/route.ts",
+        "src/app/lib/asaas-plano-payment-effects.ts (via plan-payment-simulation)",
+        "src/app/lib/agendamento-payment-coupons.ts",
+        "src/app/lib/appointment-refund-payment.ts",
+        "src/app/lib/admin-delete-payment.ts",
+        "src/app/api/admin/pagamentos/route.ts",
+        "src/app/api/admin/reprocessar-pagamento-*",
+        "src/app/api/test-payment/route.ts"
+      ],
+      "quemExecuta": ["Webhook (parsePaymentAppointmentIds), checkouts simbólicos, admin, refunds"],
+      "podeRemoverAgora": false,
+      "precisaEsperarDeploy": false,
+      "precisaEsperarPR04": true,
+      "risco": "ALTO",
+      "dependenciasIndiretas": [
+        "PR-04 simulation-coupon* deve absorver TESTE_/ownership",
+        "Fallback amount===5 usado em produção para pagamentos antigos",
+        "Remoção total quebra reembolso e admin"
+      ],
+      "mesmoCommit": [
+        "src/app/lib/symbolic-payment-resolve.ts",
+        "src/app/lib/plan-payment-simulation.ts",
+        "src/app/lib/payment-simulation-coupon-gate.ts"
+      ],
+      "lote": 3,
+      "tipo": "partial-then-full",
+      "fase1": "Remover apenas fallback amount===5 após PR-04 + migração dados",
+      "fase2": "Substituir lib inteira por simulation-coupon PR-04"
+    },
+    {
+      "id": "legacy-symbolic-payment-resolve",
+      "arquivo": "src/app/lib/symbolic-payment-resolve.ts",
+      "classificacao": "Legado",
+      "linhas": 233,
+      "quemImporta": ["src/app/api/admin/reprocessar-pagamento-teste/route.ts", "src/app/api/admin/reprocessar-pagamento-plano-teste/route.ts"],
+      "quemExecuta": ["Admin reprocessar rotas"],
+      "podeRemoverAgora": false,
+      "precisaEsperarDeploy": false,
+      "precisaEsperarPR04": true,
+      "risco": "ALTO",
+      "dependenciasIndiretas": ["Acoplado a symbolic-payment.ts"],
+      "mesmoCommit": ["src/app/lib/symbolic-payment.ts", "src/app/api/admin/reprocessar-pagamento-*"],
+      "lote": 3
+    },
+    {
+      "id": "legacy-plan-payment-simulation",
+      "arquivo": "src/app/lib/plan-payment-simulation.ts",
+      "classificacao": "Legado",
+      "linhas": 25,
+      "quemImporta": ["src/app/lib/asaas-plano-payment-effects.ts"],
+      "quemExecuta": ["processPlanoPaymentEffects via resolvePlanIsTestPayment"],
+      "podeRemoverAgora": false,
+      "precisaEsperarDeploy": false,
+      "precisaEsperarPR04": true,
+      "risco": "MÉDIO",
+      "dependenciasIndiretas": ["Duplica SYMBOLIC_PLANO_BRL de symbolic-payment.ts"],
+      "mesmoCommit": ["src/app/lib/symbolic-payment.ts", "src/app/lib/asaas-plano-payment-effects.ts"],
+      "lote": 3,
+      "acaoPrevia": "Consolidar resolvePlanIsTestPayment em um único módulo PR-04"
+    },
+    {
+      "id": "legacy-payment-simulation-coupon-gate",
+      "arquivo": "src/app/lib/payment-simulation-coupon-gate.ts",
+      "classificacao": "Legado",
+      "linhas": 27,
+      "quemImporta": ["src/app/lib/admin-delete-payment.ts"],
+      "quemExecuta": ["Exclusão admin de pagamentos simulados"],
+      "podeRemoverAgora": false,
+      "precisaEsperarDeploy": false,
+      "precisaEsperarPR04": true,
+      "risco": "MÉDIO",
+      "dependenciasIndiretas": ["PR-04 simulation-coupon-codes.ts substitui ACTIVE_SIMULATION_COUPON_PREFIX"],
+      "mesmoCommit": ["src/app/lib/admin-delete-payment.ts"],
+      "lote": 3
+    },
+    {
+      "id": "legacy-metadata-fallbacks",
+      "arquivo": "src/app/lib/asaas-agendamento-reconcile.ts (loadMetadataForPayment)",
+      "classificacao": "Legado",
+      "linhas": 45,
+      "quemImporta": [
+        "src/app/api/webhooks/asaas/route.ts",
+        "src/app/lib/process-payment-webhook.ts"
+      ],
+      "quemExecuta": ["Todo webhook PAYMENT_RECEIVED", "Orquestrador legado"],
+      "podeRemoverAgora": false,
+      "precisaEsperarDeploy": true,
+      "precisaEsperarPR04": false,
+      "risco": "ALTO",
+      "dependenciasIndiretas": [
+        "Pagamentos antigos sem asaasId em PaymentMetadata dependem do fallback",
+        "Remoção prematura associa metadata errado ou falha efeitos"
+      ],
+      "mesmoCommit": [],
+      "lote": 3,
+      "tipo": "partial-removal",
+      "nota": "Manter reconcile core no Lote 4; podar apenas níveis 3-5 do fallback após deploy + auditoria metadata"
+    },
+    {
+      "id": "legacy-vincular-cupons-teste",
+      "arquivo": "src/app/api/meus-dados/vincular-cupons-teste/route.ts",
+      "classificacao": "Legado",
+      "linhas": 113,
+      "quemImporta": [],
+      "quemExecuta": ["src/app/minha-conta/page.tsx"],
+      "podeRemoverAgora": false,
+      "precisaEsperarDeploy": false,
+      "precisaEsperarPR04": true,
+      "risco": "MÉDIO",
+      "dependenciasIndiretas": [
+        "TESTE_AGEND_*, TESTE_PAY_* prefixos",
+        "PR-04 coupon-account-ownership deve tornar esta rota desnecessária"
+      ],
+      "mesmoCommit": ["src/app/minha-conta/page.tsx", "trechos TESTE_ em meus-dados/route.ts"],
+      "lote": 3
+    },
+    {
+      "id": "legacy-carrinho-provider-types",
+      "arquivo": "src/app/carrinho/page.tsx (tipo paymentProvider)",
+      "classificacao": "Legado",
+      "linhas": 3,
+      "quemImporta": [],
+      "quemExecuta": ["Sempre resolve para asaas via /api/payment-provider"],
+      "podeRemoverAgora": true,
+      "precisaEsperarDeploy": false,
+      "precisaEsperarPR04": false,
+      "risco": "BAIXO",
+      "dependenciasIndiretas": [],
+      "mesmoCommit": ["Lote 1 MP/Infinity routes"],
+      "lote": 1,
+      "tipo": "edit-only",
+      "acao": "Fixar provider asaas; remover union type infinitypay|mercadopago"
+    },
+    {
+      "id": "legacy-mercadopago-npm",
+      "arquivo": "package.json (mercadopago ^2.11.0)",
+      "classificacao": "Obsoleto",
+      "linhas": 0,
+      "quemImporta": ["Rotas MP removidas no Lote 1"],
+      "quemExecuta": [],
+      "podeRemoverAgora": true,
+      "precisaEsperarDeploy": false,
+      "precisaEsperarPR04": false,
+      "risco": "BAIXO",
+      "dependenciasIndiretas": ["Build falha se algum import mercadopago restar"],
+      "mesmoCommit": ["Lote 1 rotas MP"],
+      "lote": 1
+    },
+    {
+      "id": "legacy-processar-pagamento-ps1",
+      "arquivo": "processar_pagamento.ps1",
+      "classificacao": "Legado",
+      "linhas": 21,
+      "quemImporta": [],
+      "quemExecuta": ["Operador local/dev"],
+      "podeRemoverAgora": false,
+      "precisaEsperarDeploy": true,
+      "precisaEsperarPR04": false,
+      "risco": "BAIXO",
+      "dependenciasIndiretas": ["Chama processar-direto"],
+      "mesmoCommit": ["src/app/api/pagamentos/processar-direto/route.ts"],
+      "lote": 2
+    },
+    {
+      "id": "legacy-mercadopagoId-queries",
+      "arquivo": "mercadopagoId em queries (webhook, verificar, admin)",
+      "classificacao": "Legado",
+      "linhas": 12,
+      "quemImporta": [
+        "src/app/api/webhooks/asaas/route.ts",
+        "src/app/api/pagamentos/verificar/route.ts",
+        "src/app/admin/pagamentos/page.tsx"
+      ],
+      "quemExecuta": ["Busca idempotência e verificação"],
+      "podeRemoverAgora": false,
+      "precisaEsperarDeploy": true,
+      "precisaEsperarPR04": false,
+      "risco": "MÉDIO",
+      "dependenciasIndiretas": [
+        "Coluna Prisma Payment.mercadopagoId — migração DB separada",
+        "Pagamentos históricos MP no banco (se existirem)"
+      ],
+      "mesmoCommit": [],
+      "lote": 2,
+      "tipo": "edit-only",
+      "nota": "Remover OR mercadopagoId das queries após confirmar zero registros MP ativos"
+    }
+  ],
+  "ordemExecucaoRecomendada": [
+    "Lote 1 — imediato após aprovação QE (zero impacto prod)",
+    "Deploy PR-03 RC + monitoramento webhook 7d",
+    "Lote 2 — consolidar orchestrator + remover fallbacks manuais",
+    "Merge PR-04 (cupons/ownership)",
+    "Lote 3 — fluxo plano + simulação + metadata strict",
+    "Opcional pós-Lote 3: migração Prisma drop mercadopagoId"
+  ],
+  "verdict": {
+    "linhasRemoviveisAposEstabilizacao": 3904,
+    "percentualDoDominioFinanceiro": 46,
+    "riscoGeral": "MÉDIO — Lote 1 seguro; Lotes 2-3 exigem sequência e testes de regressão"
+  }
+}

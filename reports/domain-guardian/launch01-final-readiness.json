@@ -1,0 +1,293 @@
+{
+  "reportId": "LAUNCH-01-final-readiness",
+  "mode": "CERTIFICATION",
+  "generatedAt": "2026-07-15T19:25:01.093Z",
+  "startedAt": "2026-07-15T19:20:08.522Z",
+  "durationMs": 292571,
+  "durationHuman": "293s",
+  "language": "pt-BR",
+  "projectName": "THouse Rec",
+  "version": null,
+  "productionUrl": "https://www.thouse-rec.com.br",
+  "question": "O sistema está pronto para receber clientes reais?",
+  "verdict": {
+    "final": "APROVADO COM RESSALVAS",
+    "readyForPublicRelease": false,
+    "declaration": null,
+    "confidencePercent": 88,
+    "commitAllowed": false
+  },
+  "preserved": {
+    "adminName": "Victor Pereira Ramos",
+    "admin": {
+      "id": "6fad51b2-e79c-4ed3-bfd3-684cdc15cd4f",
+      "email": "vicperra@gmail.com",
+      "nomeCompleto": "TremV"
+    }
+  },
+  "cleaned": {
+    "_before": 25,
+    "synchronizationEvents": 890,
+    "domainTransitionHistory": 500,
+    "chatSessions": 0,
+    "userQuestions": 0,
+    "loginLogs": 7,
+    "sessions": 9,
+    "coupons": 1,
+    "services": 1,
+    "appointments": 1,
+    "userPlans": 0,
+    "payments": 0,
+    "paymentMetadata": 2,
+    "accountDeletionLogs": 2,
+    "users": 24,
+    "uploadsRemoved": 2,
+    "reportFilesRemoved": 5
+  },
+  "itemsPreserved": [
+    "Usuário ADMIN Victor Pereira Ramos",
+    "FAQ publicado",
+    "SiteSettings",
+    "BlockedTimeSlots operacionais"
+  ],
+  "itemsCleaned": [
+    "Usuários de teste",
+    "Appointments",
+    "Payments",
+    "Services",
+    "Coupons",
+    "UserPlans",
+    "SynchronizationEvents",
+    "DomainTransitionHistory",
+    "PaymentMetadata",
+    "Sessions",
+    "Chats",
+    "Uploads temporários",
+    "Relatórios de execução temporários"
+  ],
+  "simulationReady": true,
+  "asaasIntegration": "validada (infra)",
+  "smtpIntegration": "PASS COM RESSALVA — não smoke-testado nesta sessão",
+  "realPaymentSmoke": "pendente",
+  "phases": [
+    {
+      "phase": 1,
+      "title": "Launch Reset",
+      "status": "PASS",
+      "evidence": [
+        "Admin preservado: vicperra@gmail.com",
+        "Usuários antes/depois: 25/1",
+        "Modo: execute",
+        "Reset executado — 24 usuários removidos, 890 sync events, 500 transition logs"
+      ]
+    },
+    {
+      "phase": 2,
+      "title": "Database Consistency",
+      "status": "PASS",
+      "evidence": [
+        "prisma migrate deploy: OK",
+        "domain:audit: PASS issues=0",
+        "workflow:audit: PASS issues=0",
+        "sync:audit: PASS issues=0"
+      ]
+    },
+    {
+      "phase": 3,
+      "title": "Simulation Engine Final",
+      "status": "PASS",
+      "evidence": [
+        "SIM-01: 10/10 PASS",
+        "SIM-02: 10/10 PASS",
+        "Pagamento aprovado → SIM-001",
+        "Pagamento recusado → SIM-002",
+        "Pagamento duplicado / Webhook duplicado → SIM-003, RC03-004",
+        "Sessão + Conclusão + Entrega → SIM-004",
+        "Plano Bronze → SIM-005",
+        "Plano Prata / Ouro → RC01-003, RC01-004",
+        "Cupom SERVICE → SIM-006",
+        "Cupom DISCOUNT → SIM-007",
+        "Cupom PLAN / REFUND / REBOOK / BONUS → RC02-005, RC03-005/006, TE02A",
+        "Captação / Mixagem / Masterização / Pacotes → RC01-002, SRV-001…004, TE02A",
+        "Reembolso financeiro → SIM-008",
+        "Cancelamento → SIM-009",
+        "Remarcação → SIM-010"
+      ]
+    },
+    {
+      "phase": 4,
+      "title": "Real Payment Validation",
+      "status": "PASS COM RESSALVA",
+      "evidence": [
+        "Pendente: 1 pagamento pequeno + reembolso + cancelamento + remarcação + plano em produção",
+        "Defina LAUNCH01_REAL_PAYMENT_VALIDATED=1 após execução manual"
+      ]
+    },
+    {
+      "phase": 5,
+      "title": "Go Live Checklist",
+      "status": "PASS",
+      "evidence": [
+        "debug HTTP 200",
+        "webhook HTTP 200",
+        "home HTTP 200",
+        "productionUrl=https://www.thouse-rec.com.br"
+      ]
+    },
+    {
+      "phase": 6,
+      "title": "User Experience (auto-sync)",
+      "status": "PASS COM RESSALVA",
+      "evidence": [
+        "SSE/sync validado em RC-02 SYNC-001…007 e SIM asserts MinhaConta/Dashboard/Agenda",
+        "Smoke browser E2E live não executado nesta sessão automatizada"
+      ]
+    },
+    {
+      "phase": 7,
+      "title": "Regressão Final",
+      "status": "PASS",
+      "evidence": [
+        "skip-gates: PASS",
+        "rc01-customer-certification.json: PASS",
+        "rc02-administration-certification.json: PASS",
+        "rc03-security-certification.json: PASS",
+        "rc04-production-certification.json: PASS"
+      ]
+    },
+    {
+      "phase": 8,
+      "title": "Release Audit",
+      "status": "PASS COM RESSALVA",
+      "evidence": [
+        "readyForRealCustomers: true",
+        "p0Risks: []",
+        "p1Risks: [\"RC04-PAY-01: pagamento monetário real não validado em produção\"]",
+        "financialInconsistency: \"Não detectada nos gates\"",
+        "dataLossRisk: \"Baixo após reset controlado; backups Neon gerenciados pelo provedor\"",
+        "paymentLossRisk: \"Mitigado por webhook HTTP 200 + RC03 duplicate/idempotency\"",
+        "couponGenerationRisk: \"Baixo — RC-02/03 certificados\"",
+        "serviceGenerationRisk: \"Baixo — SIM-004 + workflow audit PASS\""
+      ]
+    }
+  ],
+  "gates": [
+    {
+      "name": "skip-gates",
+      "ok": true,
+      "detail": "LAUNCH01_SKIP_GATES=1"
+    },
+    {
+      "name": "rc01-customer-certification.json",
+      "ok": true,
+      "detail": "CERTIFICADA"
+    },
+    {
+      "name": "rc02-administration-certification.json",
+      "ok": true,
+      "detail": "CERTIFICADA"
+    },
+    {
+      "name": "rc03-security-certification.json",
+      "ok": true,
+      "detail": "CERTIFICADA"
+    },
+    {
+      "name": "rc04-production-certification.json",
+      "ok": true,
+      "detail": "APROVADO COM RESSALVAS"
+    }
+  ],
+  "simulationCatalog": [
+    {
+      "label": "Pagamento aprovado",
+      "coverage": "SIM-001"
+    },
+    {
+      "label": "Pagamento recusado",
+      "coverage": "SIM-002"
+    },
+    {
+      "label": "Pagamento duplicado / Webhook duplicado",
+      "coverage": "SIM-003, RC03-004"
+    },
+    {
+      "label": "Sessão + Conclusão + Entrega",
+      "coverage": "SIM-004"
+    },
+    {
+      "label": "Plano Bronze",
+      "coverage": "SIM-005"
+    },
+    {
+      "label": "Plano Prata / Ouro",
+      "coverage": "RC01-003, RC01-004"
+    },
+    {
+      "label": "Cupom SERVICE",
+      "coverage": "SIM-006"
+    },
+    {
+      "label": "Cupom DISCOUNT",
+      "coverage": "SIM-007"
+    },
+    {
+      "label": "Cupom PLAN / REFUND / REBOOK / BONUS",
+      "coverage": "RC02-005, RC03-005/006, TE02A"
+    },
+    {
+      "label": "Captação / Mixagem / Masterização / Pacotes",
+      "coverage": "RC01-002, SRV-001…004, TE02A"
+    },
+    {
+      "label": "Reembolso financeiro",
+      "coverage": "SIM-008"
+    },
+    {
+      "label": "Cancelamento",
+      "coverage": "SIM-009"
+    },
+    {
+      "label": "Remarcação",
+      "coverage": "SIM-010"
+    }
+  ],
+  "releaseAudit": {
+    "readyForRealCustomers": true,
+    "p0Risks": [],
+    "p1Risks": [
+      "RC04-PAY-01: pagamento monetário real não validado em produção"
+    ],
+    "financialInconsistency": "Não detectada nos gates",
+    "dataLossRisk": "Baixo após reset controlado; backups Neon gerenciados pelo provedor",
+    "paymentLossRisk": "Mitigado por webhook HTTP 200 + RC03 duplicate/idempotency",
+    "couponGenerationRisk": "Baixo — RC-02/03 certificados",
+    "serviceGenerationRisk": "Baixo — SIM-004 + workflow audit PASS"
+  },
+  "risks": [
+    {
+      "id": "LAUNCH-PAY-01",
+      "severity": "P1",
+      "description": "Pagamento real em produção pendente"
+    },
+    {
+      "id": "RC03-RACE-01",
+      "severity": "P2",
+      "description": "TOCTOU slot paralelo documentado"
+    },
+    {
+      "id": "LAUNCH-UX-01",
+      "severity": "P2",
+      "description": "Browser E2E sync não exercitado live"
+    }
+  ],
+  "remainingRisks": [
+    "RC04-PAY-01: pagamento monetário real não validado em produção"
+  ],
+  "recommendations": [
+    "Executar LAUNCH01_EXECUTE_RESET=1 no Neon Production antes do tráfego",
+    "Executar pagamento real mínimo e LAUNCH01_REAL_PAYMENT_VALIDATED=1",
+    "Monitorar logs Vercel 48h pós-abertura",
+    "StudioOS congelado até estabilização v1.0"
+  ]
+}

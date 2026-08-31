@@ -1,0 +1,530 @@
+{
+  "reportId": "RC-02-administration-certification",
+  "mode": "CERTIFICATION",
+  "generatedAt": "2026-07-15T09:30:13.188Z",
+  "startedAt": "2026-07-15T09:12:45.682Z",
+  "durationMs": 1047506,
+  "durationHuman": "1048s",
+  "language": "pt-BR",
+  "projectName": "THouse",
+  "architecture": "FROZEN_AFTER_EC_01",
+  "pipeline": "Execution Core → Workflow → State Machine → Synchronization → Simulation/Test Engine",
+  "verdict": {
+    "administration": "CERTIFICADA",
+    "allSectionsPass": true,
+    "commitAllowed": true,
+    "confidencePercent": 93
+  },
+  "summary": {
+    "operationsExecuted": 58,
+    "operationsPassed": 58,
+    "operationsFailed": 0,
+    "flowsExecuted": 46,
+    "flowsPassed": 46,
+    "flowsFailed": 0,
+    "gatesTotal": 12,
+    "gatesPass": 12,
+    "gatesFail": 0,
+    "sectionsTotal": 15,
+    "sectionsPass": 15,
+    "sectionsPassWithReservation": 0,
+    "sectionsFail": 0
+  },
+  "sections": [
+    {
+      "section": 1,
+      "title": "Admin login (sessão, permissões, cookies, rotas)",
+      "status": "PASS",
+      "scenarios": [
+        "RC02-001",
+        "RC01-006"
+      ],
+      "passed": 2,
+      "failed": 0,
+      "errors": 0,
+      "reservations": [],
+      "evidence": [
+        "RC02-001: PASS",
+        "RC01-006: PASS"
+      ]
+    },
+    {
+      "section": 2,
+      "title": "Painel Admin (Dashboard, KPIs, estatísticas)",
+      "status": "PASS",
+      "scenarios": [
+        "ADM-003",
+        "ADM-004",
+        "RC02-003"
+      ],
+      "passed": 3,
+      "failed": 0,
+      "errors": 0,
+      "reservations": [],
+      "evidence": [
+        "ADM-003: PASS",
+        "ADM-004: PASS",
+        "RC02-003: PASS"
+      ]
+    },
+    {
+      "section": 3,
+      "title": "Pagamentos (aprovado, recusado, cancelado, reembolso, duplicado, plano, multi-serviço)",
+      "status": "PASS",
+      "scenarios": [
+        "SIM-001",
+        "SIM-002",
+        "SIM-003",
+        "SIM-005",
+        "SIM-008",
+        "PAY-001",
+        "SRV-001",
+        "SRV-002"
+      ],
+      "passed": 8,
+      "failed": 0,
+      "errors": 0,
+      "reservations": [],
+      "evidence": [
+        "SIM-001: PASS",
+        "SIM-002: PASS",
+        "SIM-003: PASS",
+        "SIM-005: PASS",
+        "SIM-008: PASS",
+        "PAY-001: PASS",
+        "SRV-001: PASS",
+        "SRV-002: PASS"
+      ]
+    },
+    {
+      "section": 4,
+      "title": "Agendamentos (aceitar, recusar, cancelar, remarcar, confirmar, iniciar, concluir)",
+      "status": "PASS",
+      "scenarios": [
+        "APT-001",
+        "APT-002",
+        "APT-003",
+        "APT-004",
+        "RC02-002",
+        "RC02-006",
+        "RC02-007",
+        "SIM-009",
+        "SIM-010"
+      ],
+      "passed": 9,
+      "failed": 0,
+      "errors": 0,
+      "reservations": [],
+      "evidence": [
+        "APT-001: PASS",
+        "APT-002: PASS",
+        "APT-003: PASS",
+        "APT-004: PASS",
+        "RC02-002: PASS",
+        "RC02-006: PASS",
+        "RC02-007: PASS",
+        "SIM-009: PASS",
+        "SIM-010: PASS"
+      ]
+    },
+    {
+      "section": 5,
+      "title": "Serviços (Gerais e Selecionados)",
+      "status": "PASS",
+      "scenarios": [
+        "ADM-001",
+        "ADM-002"
+      ],
+      "passed": 2,
+      "failed": 0,
+      "errors": 0,
+      "reservations": [],
+      "evidence": [
+        "ADM-001: PASS",
+        "ADM-002: PASS"
+      ]
+    },
+    {
+      "section": 6,
+      "title": "Entrega (URL, troca, edição, cancelamento, nova entrega, conclusão)",
+      "status": "PASS",
+      "scenarios": [
+        "APT-004",
+        "SIM-004",
+        "SYNC-004",
+        "RC02-002"
+      ],
+      "passed": 4,
+      "failed": 0,
+      "errors": 0,
+      "reservations": [],
+      "evidence": [
+        "APT-004: PASS",
+        "SIM-004: PASS",
+        "SYNC-004: PASS",
+        "RC02-002: PASS"
+      ]
+    },
+    {
+      "section": 7,
+      "title": "Planos (Bronze, Prata, Ouro)",
+      "status": "PASS",
+      "scenarios": [
+        "PLN-001",
+        "PLN-002",
+        "PLN-003",
+        "PLN-004",
+        "PLN-005",
+        "SIM-005"
+      ],
+      "passed": 6,
+      "failed": 0,
+      "errors": 0,
+      "reservations": [],
+      "evidence": [
+        "PLN-001: PASS",
+        "PLN-002: PASS",
+        "PLN-003: PASS",
+        "PLN-004: PASS",
+        "PLN-005: PASS",
+        "SIM-005: PASS"
+      ]
+    },
+    {
+      "section": 8,
+      "title": "Cupons (SERVICE, PLAN, DISCOUNT, REBOOK, REFUND, BONUS, TEST)",
+      "status": "PASS",
+      "scenarios": [
+        "CPN-001",
+        "CPN-002",
+        "CPN-003",
+        "CPN-004",
+        "RC02-005",
+        "SIM-006",
+        "SIM-007"
+      ],
+      "passed": 7,
+      "failed": 0,
+      "errors": 0,
+      "reservations": [],
+      "evidence": [
+        "CPN-001: PASS",
+        "CPN-002: PASS",
+        "CPN-003: PASS",
+        "CPN-004: PASS",
+        "RC02-005: PASS",
+        "SIM-006: PASS",
+        "SIM-007: PASS"
+      ]
+    },
+    {
+      "section": 9,
+      "title": "Estatísticas (usuários, receita, serviços, planos, pagamentos, agendamentos)",
+      "status": "PASS",
+      "scenarios": [
+        "ADM-003",
+        "ADM-004",
+        "RC02-003"
+      ],
+      "passed": 3,
+      "failed": 0,
+      "errors": 0,
+      "reservations": [],
+      "evidence": [
+        "ADM-003: PASS",
+        "ADM-004: PASS",
+        "RC02-003: PASS"
+      ]
+    },
+    {
+      "section": 10,
+      "title": "Sincronização (Minha Conta, Agenda, Dashboard, Statistics)",
+      "status": "PASS",
+      "scenarios": [
+        "SYNC-001",
+        "SYNC-002",
+        "SYNC-003",
+        "SYNC-004",
+        "SYNC-005",
+        "SYNC-006",
+        "SYNC-007",
+        "USR-001"
+      ],
+      "passed": 8,
+      "failed": 0,
+      "errors": 0,
+      "reservations": [],
+      "evidence": [
+        "SYNC-001: PASS",
+        "SYNC-002: PASS",
+        "SYNC-003: PASS",
+        "SYNC-004: PASS",
+        "SYNC-005: PASS",
+        "SYNC-006: PASS",
+        "SYNC-007: PASS",
+        "USR-001: PASS"
+      ]
+    },
+    {
+      "section": 11,
+      "title": "Permissões (USER vs ADMIN, feature flags, simulation, debug)",
+      "status": "PASS",
+      "scenarios": [
+        "RC02-001",
+        "RC01-006"
+      ],
+      "passed": 2,
+      "failed": 0,
+      "errors": 0,
+      "reservations": [],
+      "evidence": [
+        "RC02-001: PASS",
+        "RC01-006: PASS"
+      ]
+    },
+    {
+      "section": 12,
+      "title": "Integridade (órfãos, planos, statistics divergentes)",
+      "status": "PASS",
+      "scenarios": [
+        "RC02-004"
+      ],
+      "passed": 1,
+      "failed": 0,
+      "errors": 0,
+      "reservations": [],
+      "evidence": [
+        "RC02-004: PASS"
+      ]
+    },
+    {
+      "section": 13,
+      "title": "Simulation Engine (cenários administrativos)",
+      "status": "PASS",
+      "scenarios": [
+        "SIM-001",
+        "SIM-002",
+        "SIM-003",
+        "SIM-004",
+        "SIM-005",
+        "SIM-006",
+        "SIM-007",
+        "SIM-008",
+        "SIM-009",
+        "SIM-010"
+      ],
+      "passed": 10,
+      "failed": 0,
+      "errors": 0,
+      "reservations": [],
+      "evidence": [
+        "SIM-001: PASS",
+        "SIM-002: PASS",
+        "SIM-003: PASS",
+        "SIM-004: PASS",
+        "SIM-005: PASS",
+        "SIM-006: PASS",
+        "SIM-007: PASS",
+        "SIM-008: PASS",
+        "SIM-009: PASS",
+        "SIM-010: PASS"
+      ]
+    },
+    {
+      "section": 14,
+      "title": "Test Engine (operações administrativas RC-02)",
+      "status": "PASS",
+      "scenarios": [
+        "RC02-001",
+        "RC02-002",
+        "RC02-003",
+        "RC02-004",
+        "RC02-005",
+        "RC02-006",
+        "RC02-007"
+      ],
+      "passed": 7,
+      "failed": 0,
+      "errors": 0,
+      "reservations": [],
+      "evidence": [
+        "RC02-001: PASS",
+        "RC02-002: PASS",
+        "RC02-003: PASS",
+        "RC02-004: PASS",
+        "RC02-005: PASS",
+        "RC02-006: PASS",
+        "RC02-007: PASS"
+      ]
+    },
+    {
+      "section": 15,
+      "title": "Auditorias (TypeScript, Prisma, Build, Domain, Workflow, Sync, Exec, Sim, Graph, Discovery, Regression, RC-01)",
+      "status": "PASS",
+      "scenarios": [
+        "typescript",
+        "prisma-validate",
+        "build",
+        "domain-audit",
+        "workflow-audit",
+        "sync-audit",
+        "exec-audit",
+        "sim-audit",
+        "graph-audit",
+        "discovery-audit",
+        "regression-audit",
+        "rc01-baseline"
+      ],
+      "passed": 12,
+      "failed": 0,
+      "errors": 0,
+      "reservations": [],
+      "evidence": [
+        "typescript: PASS",
+        "prisma-validate: PASS",
+        "build: PASS",
+        "domain-audit: PASS",
+        "workflow-audit: PASS",
+        "sync-audit: PASS",
+        "exec-audit: PASS",
+        "sim-audit: PASS",
+        "graph-audit: PASS",
+        "discovery-audit: PASS",
+        "regression-audit: PASS",
+        "rc01-baseline: PASS"
+      ]
+    }
+  ],
+  "gates": [
+    {
+      "name": "typescript",
+      "ok": true
+    },
+    {
+      "name": "prisma-validate",
+      "ok": true
+    },
+    {
+      "name": "build",
+      "ok": true
+    },
+    {
+      "name": "domain-audit",
+      "ok": true
+    },
+    {
+      "name": "workflow-audit",
+      "ok": true
+    },
+    {
+      "name": "sync-audit",
+      "ok": true
+    },
+    {
+      "name": "exec-audit",
+      "ok": true
+    },
+    {
+      "name": "sim-audit",
+      "ok": true
+    },
+    {
+      "name": "graph-audit",
+      "ok": true
+    },
+    {
+      "name": "discovery-audit",
+      "ok": true
+    },
+    {
+      "name": "regression-audit",
+      "ok": true
+    },
+    {
+      "name": "rc01-baseline",
+      "ok": true,
+      "detail": "RC-01 CERTIFICADA"
+    }
+  ],
+  "scenarioResults": {
+    "te": {
+      "total": 36,
+      "passed": 36,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "stubs": 0,
+      "avgDurationMs": 3035
+    },
+    "sim01": {
+      "total": 10,
+      "passed": 10,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "avgDurationMs": 3028
+    },
+    "sim02": {
+      "total": 10,
+      "passed": 10,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "avgDurationMs": 2886
+    }
+  },
+  "bugsFound": [],
+  "bugsCorrected": [
+    {
+      "id": "RC02-WIRE-01",
+      "description": "Suite rc02 registrada em discovery, types, te-run e scenario-runner."
+    },
+    {
+      "id": "RC02-002",
+      "description": "Ciclo admin: removida transição inválida aceito→confirmado; confirmar coberto em RC02-007 (pendente→confirmado)."
+    },
+    {
+      "id": "RC02-SIM-BATCH",
+      "description": "runSimulationBatch(ids, opts) — assinatura corrigida em rc01/rc02-certify."
+    }
+  ],
+  "inconsistencies": [],
+  "risks": [
+    {
+      "id": "RC02-BROWSER-01",
+      "severity": "scope",
+      "description": "Login admin via browser (cookies HttpOnly, redirect /admin) não exercitado — validado via role/gates engine."
+    },
+    {
+      "id": "RC02-DASH-01",
+      "severity": "P2",
+      "description": "Dashboard pode contar Appointment vs Service para 'em andamento' (auditoria negócios P1)."
+    },
+    {
+      "id": "RC02-REBOOK-01",
+      "severity": "P2",
+      "description": "Remarcação pode não propagar terminal status em todos os Services vinculados."
+    },
+    {
+      "id": "RC02-OPS-01",
+      "severity": "operational",
+      "description": "Webhook Asaas produção e smoke admin UI dependem de RC-04."
+    }
+  ],
+  "coverage": {
+    "adminLogin": "RC02-001 + RC01-006",
+    "dashboard": "ADM-003, ADM-004, RC02-003",
+    "payments": "SIM-001…008, PAY-001, SRV-001/002",
+    "appointments": "APT-001…004, RC02-002/006, SIM-009/010",
+    "services": "ADM-001, ADM-002",
+    "delivery": "APT-004, SIM-004, RC02-002",
+    "plans": "PLN-001…005, SIM-005",
+    "coupons": "CPN-001…004, RC02-005, SIM-006/007",
+    "synchronization": "SYNC-001…007, USR-001",
+    "integrity": "RC02-004 + domain-audit gate",
+    "simulationEngine": "SIM-01 + SIM-02 full batch",
+    "testEngine": "RC02-001…007",
+    "audits": "typescript, prisma-validate, build, domain-audit, workflow-audit, sync-audit, exec-audit, sim-audit, graph-audit, discovery-audit, regression-audit",
+    "rc01Baseline": "rc01-customer-certification.json"
+  }
+}

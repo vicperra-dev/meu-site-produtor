@@ -1,0 +1,159 @@
+{
+  "reportId": "PH-01-product-hardening",
+  "mode": "BUSINESS_VALIDATION",
+  "generatedAt": "2026-07-15T04:46:00.000Z",
+  "language": "pt-BR",
+  "projectName": "THouse",
+  "branch": "backup-pre-formatacao",
+  "head": "pending-commit",
+  "objective": "Congelar arquitetura pós-EC-01; validar regras de negócio, UX, consistência e estabilidade para lançamento",
+  "architectureFreeze": {
+    "active": true,
+    "note": "Nenhuma nova infraestrutura, StudioOS ou módulos estruturais iniciados nesta sprint"
+  },
+  "gates": {
+    "domainAudit": "PASS",
+    "workflowAudit": "PASS",
+    "syncAudit": "PASS",
+    "executionAudit": "PASS",
+    "graphAudit": "PASS",
+    "discoveryAudit": "PASS",
+    "regressionAudit": "PASS",
+    "te02a": { "total": 21, "passed": 21 },
+    "sync01a": { "total": 7, "passed": 7 },
+    "ph01": { "total": 5, "passed": 5 },
+    "sim01": { "total": 10, "passed": 10 },
+    "sim02": { "total": 10, "passed": 10 }
+  },
+  "testCoverage": {
+    "totalScenariosDiscovered": 56,
+    "suites": ["te-s01", "te-stubs", "te02a", "sync01a", "ph01", "sim01", "sim02"],
+    "ph01NewScenarios": ["PH01-001", "PH01-002", "PH01-003", "PH01-004", "PH01-005"],
+    "businessAreasCovered": [
+      "multi-service carrinho (SRV-001)",
+      "cupom serviço vs desconto (CPN-001..004)",
+      "planos Bronze/Prata/Ouro (PLN-001..005)",
+      "cancelamento pós-aceite (CPN-003, APT)",
+      "reembolso/remarcação (CPN-003)",
+      "sincronização SSE/cursor (SYNC-001..007)",
+      "admin/minha-conta sync (USR-001, ADM)",
+      "regressão PH-01 (cupom used, stale link, heal serviços, datas, SERVICE UI)"
+    ]
+  },
+  "bugsFound": [
+    {
+      "id": "BUG-CPN-01",
+      "area": "Cupom",
+      "description": "Cupom com paymentId não marcado used no aceite → reutilização indevida",
+      "severity": "high",
+      "status": "fixed"
+    },
+    {
+      "id": "BUG-CPN-02",
+      "area": "Cupom",
+      "description": "normalizeStaleCouponAppointmentLink liberava cupom após agendamento concluído",
+      "severity": "high",
+      "status": "fixed"
+    },
+    {
+      "id": "BUG-SRV-01",
+      "area": "Multi-serviço",
+      "description": "Serviços incompletos (N<M esperado) não eram reparados automaticamente",
+      "severity": "high",
+      "status": "fixed"
+    },
+    {
+      "id": "BUG-RF-01",
+      "area": "Cancelamento",
+      "description": "Reembolso Asaas executado antes de cancelAppointment — risco de reembolso sem cancelamento",
+      "severity": "critical",
+      "status": "fixed"
+    },
+    {
+      "id": "BUG-UX-01",
+      "area": "Minha Conta",
+      "description": "Cupons SERVICE/REBOOK não exibidos na seção de disponíveis",
+      "severity": "medium",
+      "status": "fixed"
+    },
+    {
+      "id": "BUG-REG-01",
+      "area": "Cadastro",
+      "description": "Ano máximo de nascimento fixo em 2026",
+      "severity": "low",
+      "status": "fixed"
+    },
+    {
+      "id": "BUG-CK-01",
+      "area": "Carrinho",
+      "description": "checkout-carrinho não valida/aplica cupons; total do cliente confiado",
+      "severity": "high",
+      "status": "open"
+    },
+    {
+      "id": "BUG-WH-01",
+      "area": "Webhook",
+      "description": "loadMetadataForPayment fallback por userId pode associar metadata errada",
+      "severity": "medium",
+      "status": "open"
+    },
+    {
+      "id": "BUG-UX-02",
+      "area": "Pós-pagamento",
+      "description": "Sem polling/feedback na página de sucesso quando webhook atrasa (E2E-02 H-MC-02)",
+      "severity": "high",
+      "status": "open"
+    },
+    {
+      "id": "BUG-ADM-01",
+      "area": "Admin",
+      "description": "Funcionalidades de teste/admin expostas em produção sem gate adicional",
+      "severity": "medium",
+      "status": "open"
+    }
+  ],
+  "bugsFixedCount": 6,
+  "bugsOpenCount": 4,
+  "productionReadiness": {
+    "verdict": "CONDICIONAL",
+    "confidencePercent": 74,
+    "coreJourneyPercent": 58,
+    "fullJourneyPercent": 42,
+    "justification": [
+      "Correções PH-01 eliminam reutilização de cupom e reembolso antes de cancelamento",
+      "TE-02A + SYNC-01A + SIM-01/02 + PH-01 passam 100% nos gates automatizados",
+      "Webhook em produção e UX pós-pagamento ainda são riscos operacionais #1",
+      "Carrinho sem validação server-side de cupom permanece gap de negócio"
+    ],
+    "blockersBeforeProduction": [
+      "Configurar webhook Asaas em URL pública (H-WH-01)",
+      "Polling/feedback página sucesso (H-MC-02)",
+      "Smoke test sandbox registro → pagamento → minha-conta"
+    ],
+    "recommendedPostLaunch": [
+      "Validação de cupom no checkout-carrinho",
+      "Tighten metadata fallback webhook",
+      "SLA visível aguardando admin (H-AD-01)"
+    ]
+  },
+  "filesChanged": [
+    "src/app/lib/coupon-stale-appointment.ts",
+    "src/app/lib/domain/state-machine/effects.ts",
+    "src/app/lib/asaas-agendamento-payment-effects.ts",
+    "src/app/lib/ensure-appointment-services.ts",
+    "src/app/api/agendamentos/cancelar/route.ts",
+    "src/app/minha-conta/page.tsx",
+    "src/app/lib/birth-date-validation.ts",
+    "src/app/registro/page.tsx",
+    "src/app/lib/test-engine/scenarios/ph01-batch.ts",
+    "src/app/lib/execution/discovery.ts",
+    "src/app/lib/execution/types.ts",
+    "src/app/lib/execution/runner.ts",
+    "src/app/lib/execution/result.ts",
+    "src/app/lib/test-engine/types.ts",
+    "src/app/lib/test-engine/scenario-runner.ts",
+    "src/app/lib/test-engine/index.ts",
+    "scripts/te-run.ts",
+    "package.json"
+  ]
+}

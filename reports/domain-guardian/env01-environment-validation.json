@@ -1,0 +1,128 @@
+{
+  "reportId": "ENV-01-environment-validation",
+  "mode": "READ_ONLY",
+  "generatedAt": "2026-07-10T20:20:00.000Z",
+  "language": "pt-BR",
+  "projectName": "THouse Rec",
+  "branch": "pr03-clean",
+  "head": "3f20ad0",
+  "basedOn": ["EX-00-sandbox-activation", "EX-01-sandbox-execution", "SETUP-01-asaas-guide"],
+  "objective": "Confirmar ambiente local configurado corretamente antes da homologação EX-01",
+  "respostas": {
+    "1_envLocalExiste": "SIM",
+    "2_variaveis": {
+      "DATABASE_URL": "PRESENTE",
+      "ASAAS_API_KEY": "PRESENTE",
+      "NEXT_PUBLIC_SITE_URL": "PRESENTE",
+      "ASAAS_WEBHOOK_ACCESS_TOKEN": "AUSENTE"
+    },
+    "3_asaasApiKeyTipo": "SANDBOX",
+    "4_databaseUrlTipo": "LOCAL",
+    "5_nextPublicSiteUrlTipo": "LOCALHOST",
+    "6_asaasApiKeyNoEnv": "NAO",
+    "6_sobrescritaExplicacao": "ASAAS_API_KEY não existe em .env. Em dev, getAsaasApiKey() lê .env.local primeiro e depois .env; como só .env.local define a chave, não há conflito. .env.local tem precedência sobre .env no Next.js para variáveis duplicadas.",
+    "7_envProductionLocalExiste": "NAO",
+    "8_riscoChaveErrada": "BAIXO",
+    "8_riscoExplicacao": "Chave sandbox isolada em .env.local ($aact_hmlg_); .env não contém ASAAS_API_KEY. NEXT_PUBLIC_SITE_URL de localhost em .env.local sobrescreve o túnel legado em .env. Risco residual: ausência de WEBHOOK token e URL antiga ainda em .env (inativa em runtime).",
+    "9_ex01Consistencia": "APROVADO"
+  },
+  "detalhesSemValores": {
+    "envLocal": {
+      "existe": true,
+      "chavesPresentes": [
+        "SUPPORT_EMAIL",
+        "SUPPORT_EMAIL_PASSWORD",
+        "SUPPORT_DEST_EMAIL",
+        "ASAAS_API_KEY",
+        "ASAAS_SKIP_TLS_VERIFY",
+        "NEXT_PUBLIC_SITE_URL"
+      ],
+      "chavesAusentes": ["DATABASE_URL", "ASAAS_WEBHOOK_ACCESS_TOKEN"]
+    },
+    "env": {
+      "existe": true,
+      "chavesPresentes": [
+        "NEXT_PUBLIC_SITE_URL",
+        "DATABASE_URL",
+        "SUPPORT_EMAIL",
+        "SUPPORT_EMAIL_PASSWORD",
+        "SUPPORT_DEST_EMAIL"
+      ],
+      "chavesAusentes": ["ASAAS_API_KEY", "ASAAS_WEBHOOK_ACCESS_TOKEN"],
+      "nota": "NEXT_PUBLIC_SITE_URL em .env aponta para túnel loca.lt — sobrescrito por .env.local (localhost) em npm run dev"
+    },
+    "envProductionLocal": {
+      "existe": false
+    },
+    "asaasApiKey": {
+      "tipo": "SANDBOX",
+      "prefixo": "$aact_hmlg_",
+      "arquivoEfetivo": ".env.local",
+      "scriptCheck": "type=sandbox",
+      "scriptVerify": "environment=SANDBOX, sandboxOk=true"
+    },
+    "databaseUrl": {
+      "classificacao": "LOCAL",
+      "arquivoEfetivo": ".env",
+      "provider": "postgresql localhost:5432/thouse_rec"
+    },
+    "nextPublicSiteUrl": {
+      "classificacao": "LOCALHOST",
+      "valorEfetivoEmDev": "http://localhost:3000",
+      "arquivoEfetivo": ".env.local",
+      "legadoInativo": ".env contém URL de túnel — não usada em dev"
+    }
+  },
+  "scriptsReadOnly": {
+    "ex01-check-env": {
+      "exitCode": 0,
+      "DATABASE_URL": "OK provider=local",
+      "ASAAS_API_KEY": "type=sandbox",
+      "NEXT_PUBLIC_SITE_URL": "OK len=21",
+      "ASAAS_WEBHOOK_ACCESS_TOKEN": "MISSING"
+    },
+    "ex01-asaas-verify": {
+      "exitCode": 0,
+      "environment": "SANDBOX",
+      "sandboxOk": true
+    }
+  },
+  "tabelaFinal": [
+    {
+      "arquivo": ".env",
+      "finalidade": "Defaults compartilhados do projeto (commitável apenas se sem segredos — atualmente gitignored)",
+      "banco": "SIM — DATABASE_URL local",
+      "sandbox": "NÃO — sem ASAAS_API_KEY",
+      "producao": "NÃO"
+    },
+    {
+      "arquivo": ".env.local",
+      "finalidade": "Overrides locais de desenvolvimento (gitignored); maior precedência em npm run dev",
+      "banco": "Opcional — hoje ausente; herda de .env",
+      "sandbox": "SIM — ASAAS_API_KEY sandbox, NEXT_PUBLIC_SITE_URL localhost",
+      "producao": "NÃO — não deve conter $aact_prod_"
+    },
+    {
+      "arquivo": ".env.production.local",
+      "finalidade": "Overrides locais ao rodar next build/start em NODE_ENV=production na máquina",
+      "banco": "N/A — arquivo não existe",
+      "sandbox": "N/A",
+      "producao": "N/A"
+    },
+    {
+      "arquivo": "Variáveis Vercel",
+      "finalidade": "Ambiente deployado (Preview + Production); não lê .env.local",
+      "banco": "SIM — DATABASE_URL staging (Preview) ou produção",
+      "sandbox": "Preview pode usar sandbox para homologação F2",
+      "producao": "SIM — ASAAS_API_KEY $aact_prod_, domínio HTTPS, webhook produção"
+    }
+  ],
+  "ex01Criterios": {
+    "DATABASE_URL_dev": true,
+    "ASAAS_API_KEY_sandbox": true,
+    "NEXT_PUBLIC_SITE_URL_localhost": true,
+    "ASAAS_WEBHOOK_ACCESS_TOKEN": false,
+    "webhookObrigatorioEx01": false,
+    "nota": "Webhook ausente não bloqueia EX-01 (smoke até checkout sem pagamento)"
+  }
+}
